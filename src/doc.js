@@ -2734,6 +2734,7 @@ export {
   getButtonDisabledHTML,
   showTimeMap,
   getGraphContributorsRole,
+  getGraphData,
   getResourceInfo,
   getGraphFromDataBlock,
   getResourceSupplementalInfo,
