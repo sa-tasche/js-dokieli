@@ -1564,7 +1564,7 @@ DO = {
           'type': 'info',
           'timer': 10000
         }
-        addMessageToLog(message);
+        addMessageToLog(message, Config.MessageLog);
         message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>';
         showActionMessage(document.documentElement, message);
 
@@ -1607,7 +1607,7 @@ DO = {
             'type': 'info',
             'timer': 3000
           }
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);
           message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>';
           showActionMessage(document.documentElement, message);
 
@@ -3368,7 +3368,7 @@ console.log(reason);
                 'content': message,
                 'type': 'success'
               }
-              addMessageToLog(message);
+              addMessageToLog(message, Config.MessageLog);
               showActionMessage(document.documentElement, message);
             }
 
@@ -3419,7 +3419,7 @@ console.log(reason);
             'content': message,
             'type': 'info'
           }
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);
           archiveNode.insertAdjacentHTML('beforeend', ' <span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>');
         }
 
@@ -3434,7 +3434,7 @@ console.log(reason);
             'type': 'error',
             'timer': 3000
           }
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);;
           progress.innerHTML = responseMessages[response.status];
         }
 
@@ -3449,7 +3449,7 @@ console.log(reason);
             'content': message,
             'type': 'success'
           }
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);;
           progress.innerHTML = message.content
         }
 
@@ -3583,7 +3583,7 @@ console.log(reason);
                   'content': message,
                   'type': 'info'
                 }
-                addMessageToLog(message);
+                addMessageToLog(message, Config.MessageLog);;
                 progress.innerHTML = message.content
               }
 
@@ -3596,7 +3596,7 @@ console.log(reason);
                   'content': message,
                   'type': 'error'
                 }
-                addMessageToLog(message);
+                addMessageToLog(message, Config.MessageLog);;
                 progress.innerHTML = message.content;
               }
 
@@ -3611,7 +3611,7 @@ console.log(reason);
                 'content': message,
                 'type': 'error'
               }
-              addMessageToLog(message);
+              addMessageToLog(message, Config.MessageLog);;
               progress.innerHTML = message.content;
             }
           })
@@ -4085,7 +4085,7 @@ console.log(reason);
                     'type': 'error',
                     'timer': 10000
                   }
-                  addMessageToLog(message);
+                  addMessageToLog(message, Config.MessageLog);;
                   showActionMessage(document.documentElement, message);
 
                   // throw error;
@@ -4118,7 +4118,7 @@ console.log(reason);
                     'type': 'success',
                     'timer': 3000
                   }
-                  addMessageToLog(message);
+                  addMessageToLog(message, Config.MessageLog);;
                   showActionMessage(document.documentElement, message);
 
                   var buttonD = e.target.closest('button.delete')
@@ -5749,7 +5749,7 @@ console.log(e);
             'type': 'info',
             'timer': 3000
           }
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);;
           showActionMessage(document.documentElement, message);
 
           // return Promise.resolve(data);
@@ -6149,7 +6149,7 @@ console.log(response)
           'type': 'info',
           'timer': 10000
         }
-        addMessageToLog(message);
+        addMessageToLog(message, Config.MessageLog);;
         message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + message.content + '</span>';
         showActionMessage(document.documentElement, message);
 
@@ -6167,7 +6167,7 @@ console.log(response)
               'type': 'error',
               'timer': 5000
             }
-            addMessageToLog(message);
+            addMessageToLog(message, Config.MessageLog);;
             message.content = '<span class="progress">' + Icon[".fas.fa-times-circle.fa-fw"] + message.content + '</span>'; 
             showActionMessage(document.documentElement, message);
 
@@ -6228,7 +6228,7 @@ console.log(response)
                   'type': 'success',
                   'timer': 3000
                 }
-                addMessageToLog(message);
+                addMessageToLog(message, Config.MessageLog);;
                 showActionMessage(document.documentElement, message);
               })
           })
@@ -6436,7 +6436,7 @@ console.log(response)
                   'type': 'info',
                   'timer': 3000,
                 }
-                addMessageToLog(message);
+                addMessageToLog(message, Config.MessageLog);;
                 showActionMessage(document.documentElement, message);
 
                 var w = document.getElementById(id);
@@ -8717,7 +8717,7 @@ WHERE {\n\
             'content': message,
             'type': 'info'
           }
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);;
           showActionMessage(document.documentElement, message);
         }
 
@@ -10863,7 +10863,7 @@ WHERE {\n\
                     'type': 'info',
                     'timer': 3000
                   }
-                  addMessageToLog(message);
+                  addMessageToLog(message, Config.MessageLog);;
                   showActionMessage(document.documentElement, message);
                   // TODO: Perhaps use something like setCopyToClipboard instead. Use as `encodeURI(selectorIRI)` as input.
                   break;
