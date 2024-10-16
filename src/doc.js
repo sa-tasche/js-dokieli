@@ -488,6 +488,7 @@ function createActivityHTML(o) {
 
   var dl = [
     types,
+    asinReplyTo,
     asobject,
     ascontext,
     astarget,
