@@ -558,10 +558,10 @@ function getNodeLanguage(node) {
   return lang;
 }
 
-function addMessageToLog(message, options = {}) {
+function addMessageToLog(message, log, options = {}) {
   const m = Object.assign({}, message);
   m['dateTime'] = getDateTimeISO();
-  Config.MessageLog.unshift(m);
+  log.unshift(m);
 }
 
 function handleActionMessage(resolved, rejected) {
