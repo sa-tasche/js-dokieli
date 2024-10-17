@@ -488,6 +488,7 @@ function createActivityHTML(o) {
 
   var dl = [
     types,
+    asinReplyTo,
     asobject,
     ascontext,
     astarget,
@@ -557,10 +558,10 @@ function getNodeLanguage(node) {
   return lang;
 }
 
-function addMessageToLog(message, options = {}) {
+function addMessageToLog(message, log, options = {}) {
   const m = Object.assign({}, message);
   m['dateTime'] = getDateTimeISO();
-  Config.MessageLog.unshift(m);
+  log.unshift(m);
 }
 
 function handleActionMessage(resolved, rejected) {
@@ -2733,6 +2734,7 @@ export {
   getButtonDisabledHTML,
   showTimeMap,
   getGraphContributorsRole,
+  getGraphData,
   getResourceInfo,
   getGraphFromDataBlock,
   getResourceSupplementalInfo,
