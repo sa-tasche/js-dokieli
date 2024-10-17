@@ -127,22 +127,89 @@ describe("createHTML", () => {
 });
 
 describe("createFeedXML", () => {
-  it("creates feed XML string", () => {
-    const feed = {
-      language: "en",
-      title: "Test Feed",
-      items: {
-        "https://example.com/item1": {
-          title: "Item 1",
-          description: "Description of item 1",
-        },
+  const feed = {
+    language: "en",
+    title: "Test Feed",
+    self: "https://example.com/feed",
+    origin: "https://example.com",
+    description: "Test feed description",
+    author: {
+      uri: "https://example.com/author",
+      name: "Author Name"
+    },
+    items: {
+      "https://example.com/item1": {
+        title: "Item 1",
+        description: "Description of item 1",
+        published: "2024-10-17T10:00:00Z",
+        updated: "2024-10-17T11:00:00Z",
+        author: [
+          { uri: "https://example.com/author", name: "Author Name", email: "author@example.com" }
+        ]
       },
-    };
+      "https://example.com/item2": {
+        title: "Item 2",
+        description: "Description of item 2",
+        updated: "2024-10-16T10:00:00Z",
+      }
+    }
+  };
+
+  it("creates Atom XML feed", () => {
     const result = createFeedXML(feed, { contentType: "application/atom+xml" });
-    expect(result).toContain("<title>Test Feed</title>");
-    expect(result).toContain("<title>Item 1</title>");
+
+    expect(result).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
+    expect(result).toContain('<title>Test Feed</title>');
+    expect(result).toContain('<link href="https://example.com/feed" rel="self" />');
+    expect(result).toContain('<rights>Copyright 2024 Author Name . Rights and license are feed only.</rights>');
+    expect(result).toContain('<generator uri="https://dokie.li/">dokieli</generator>');
+
+    expect(result).toContain('<entry>');
+    expect(result).toContain('<id>https://example.com/item1</id>');
+    expect(result).toContain('<title>Item 1</title>');
+    expect(result).toContain('<published>2024-10-17T10:00:00Z</published>');
+    expect(result).toContain('<updated>2024-10-17T11:00:00Z</updated>');
+    expect(result).toContain('<author>');
+    expect(result).toContain('<name>Author Name</name>');
+    expect(result).toContain('<email>author@example.com</email>');
+    expect(result).toContain('</entry>');
+
+    expect(result).toContain('<entry>');
+    expect(result).toContain('<id>https://example.com/item2</id>');
+    expect(result).toContain('<title>Item 2</title>');
+    expect(result).toContain('<updated>2024-10-16T10:00:00Z</updated>');
+    expect(result).toContain('</entry>');
+  });
+
+  it("creates RSS XML feed", () => {
+    const result = createFeedXML(feed, { contentType: "application/rss+xml" });
+
+    expect(result).toContain('<?xml version="1.0" encoding="utf-8"?>');
+    expect(result).toContain('<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">');
+    expect(result).toContain('<channel>');
+    expect(result).toContain('<title>Test Feed</title>');
+    expect(result).toContain('<link>https://example.com</link>');
+    expect(result).toContain('<description>Test feed description</description>');
+    expect(result).toContain('<copyright>Copyright 2024 Author Name . Rights and license are feed only.</copyright>');
+    expect(result).toContain('<generator>https://dokie.li/</generator>');
+
+    expect(result).toContain('<item>');
+    expect(result).toContain('<guid>https://example.com/item1</guid>');
+    expect(result).toContain('<title>Item 1</title>');
+    expect(result).toContain('<pubDate>Thu, 17 Oct 2024 11:00:00 GMT</pubDate>');
+    expect(result).toContain('<description>Description of item 1</description>');
+    expect(result).toContain('<author>author@example.com (Author Name)</author>');
+    expect(result).toContain('</item>');
+
+    expect(result).toContain('<item>');
+    expect(result).toContain('<guid>https://example.com/item2</guid>');
+    expect(result).toContain('<title>Item 2</title>');
+    expect(result).toContain('<pubDate>Wed, 16 Oct 2024 10:00:00 GMT</pubDate>');
+    expect(result).toContain('<description>Description of item 2</description>');
+    expect(result).toContain('</item>');
   });
 });
+
 
 describe("dumpNode", () => {
   let options, skipAttributes, voidElements, noEsc;
