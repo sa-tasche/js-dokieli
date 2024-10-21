@@ -1391,6 +1391,7 @@ body>header li a {
 #home #supporters li {
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 #home #supporters a {
@@ -1551,7 +1552,7 @@ body>header li a {
   #home #supporters ul {
     display: grid;
     align-items: start;
-    grid-template-columns: repeat(4, 1fr);
+    justify-items: center;
     grid-column-gap: 4em;
     grid-row-gap: 3.5em;
   }
