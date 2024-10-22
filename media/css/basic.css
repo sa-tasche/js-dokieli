@@ -1304,6 +1304,10 @@ body>header li a {
   text-decoration: none;
 }
 
+#home h1 {
+  font-size:3em;
+}
+
 #home #get-involved h2,
 #home #introduction h2,
 #home #features h2 {
@@ -1486,11 +1490,6 @@ body>header li a {
 
   dd {
     margin-left: 1em
-  }
-
-
-  h1 {
-    font-size:3em;
   }
 
   #home #features div,
