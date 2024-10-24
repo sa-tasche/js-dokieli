@@ -5,7 +5,7 @@ import { deleteResource } from './fetcher.js'
 import { removeChildren, fragmentFromString } from './util.js'
 import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo } from './doc.js'
 import { Icon } from './template.js'
-import { constructGraph, getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentOccupations, getAgentPublications, getAgentMade } from './graph.js'
+import { constructGraph, getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade } from './graph.js'
 import { removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
 import solidAuth, { logout, popupLogin } from 'solid-auth-client'
 
@@ -312,6 +312,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
         PreferencesFile: getAgentPreferencesFile(s),
         PublicTypeIndex: getAgentPublicTypeIndex(s),
         PrivateTypeIndex: getAgentPrivateTypeIndex(s),
+        Liked: getAgentLiked(s),
         Occupations: getAgentOccupations(s),
         Publications: getAgentPublications(s),
         Made: getAgentMade(s),

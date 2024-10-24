@@ -669,6 +669,7 @@ export default {
     "ashref": { "@id": "https://www.w3.org/ns/activitystreams#href", "@type": "@id" },
     "asfollowing": { "@id": "https://www.w3.org/ns/activitystreams#following", "@type": "@id" },
     "asoutbox": { "@id": "https://www.w3.org/ns/activitystreams#outbox", "@type": "@id", "@array": true },
+    "asliked": { "@id": "https://www.w3.org/ns/activitystreams#liked", "@type": "@id", "@array": true },
     "asitems": { "@id": "https://www.w3.org/ns/activitystreams#items", "@type": "@id", "@array": true },
     "asorderedItems": { "@id": "https://www.w3.org/ns/activitystreams#orderedItems", "@type": "@id", "@array": true },
     "astag": { "@id": "https://www.w3.org/ns/activitystreams#tag", "@type": "@id", "@array": true },

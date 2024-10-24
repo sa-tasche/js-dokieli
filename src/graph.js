@@ -666,6 +666,7 @@ function getAgentSupplementalInfo(iri) {
         var storage = getAgentStorage(s) || [];
         var outbox = getAgentOutbox(s) || [];
         var knows = getAgentKnows(s) || [];
+        var liked = getAgentLiked(s) || [];
         var occupations = getAgentOccupations(s) || [];
         var publications = getAgentPublications(s) || [];
         var made = getAgentMade(s) || [];
@@ -687,6 +688,12 @@ function getAgentSupplementalInfo(iri) {
           Config.User.Knows = (Config.User.Knows)
             ? uniqueArray(Config.User.Knows.concat(knows))
             : knows;
+        }
+
+        if (liked.length > 0) {
+          Config.User.Liked = (Config.User.Liked)
+            ? uniqueArray(Config.User.Liked.concat(liked))
+            : liked;
         }
 
         if (occupations.length > 0) {
@@ -754,6 +761,7 @@ function getAgentSeeAlso(g, baseURI, subjectURI) {
             var s = g.child(subjectURI)
 
             var knows = getAgentKnows(s) || [];
+            var liked = getAgentLiked(s) || [];
             var occupations = getAgentOccupations(s) || [];
             var publications = getAgentPublications(s) || [];
             var made = getAgentMade(s) || [];
@@ -762,6 +770,12 @@ function getAgentSeeAlso(g, baseURI, subjectURI) {
               Config.User.Knows = (Config.User.Knows)
                 ? uniqueArray(Config.User.Knows.concat(knows))
                 : knows;
+            }
+
+            if (liked.length > 0) {
+              Config.User.Liked = (Config.User.Liked)
+                ? uniqueArray(Config.User.Liked.concat(liked))
+                : liked;
             }
 
             if (occupations.length > 0) {
@@ -1037,6 +1051,12 @@ function getAgentPrivateTypeIndex (s) {
 function getAgentPreferencesFile (s) {
   return (s.pimpreferencesFile && s.pimpreferencesFile.length > 0)
     ? s.pimpreferencesFile
+    : undefined
+}
+
+function getAgentLiked (s) {
+  return (s.asliked && s.asliked._array.length > 0)
+    ? s.asliked._array
     : undefined
 }
 
@@ -1437,6 +1457,7 @@ export {
   getAgentPublicTypeIndex,
   getAgentPrivateTypeIndex,
   getAgentPreferencesFile,
+  getAgentLiked,
   getAgentOccupations,
   getAgentPublications,
   getAgentMade,
