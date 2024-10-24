@@ -52,9 +52,7 @@ DO = {
       DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length > 0) ? DO.C.CollectionPages : [];
       DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length > 0) ? DO.C.Collections : [];
 
-      var pIRI = getProxyableIRI(url);
-
-      return getResourceGraph(pIRI, options.headers, options)
+      return getResourceGraph(url, options.headers, options)
         .then(
           function(i) {
             var s = i.child(url);
@@ -208,120 +206,108 @@ DO = {
         showProgress(e)
       }
 
-      var promises = []
+      var promises = [];
 
-      var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
-
-      if (DO.C.User.TypeIndex) {
-        var publicTypeIndexes = DO.C.User.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']] || {};
-        var privateTypeIndexes = DO.C.User.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']] || {};
-        //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
-        var typeIndexes = Object.assign({}, publicTypeIndexes, privateTypeIndexes);
-
-        Object.values(typeIndexes).forEach(typeRegistration => {
-          var forClass = typeRegistration[DO.C.Vocab['solidforClass']['@id']];
-          var instance = typeRegistration[DO.C.Vocab['solidinstance']['@id']];
-          var instanceContainer = typeRegistration[DO.C.Vocab['solidinstanceContainer']['@id']];
-
-          if (documentTypes.includes(forClass)) {
-            if (instance) {
-              DO.U.showActivities(instance, { excludeMarkup: true });
-            }
-            if (instanceContainer) {
-              DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer' });
-            }
-          }
-        });
-      }
-
-      //XXX: Consider whether to look into Storage/Outbox if TypeIndex exists or in what specific cases
-
-      if (DO.C.User.Storage && DO.C.User.Storage.length > 0) {
-        if(DO.C.User.Outbox && DO.C.User.Outbox.length > 0) {
-          if(DO.C.User.Storage[0] == DO.C.User.Outbox[0]) {
-            DO.U.showActivitiesSources(DO.C.User.Outbox[0])
-          }
-          else {
-            DO.U.showActivitiesSources(DO.C.User.Storage[0])
-            DO.U.showActivitiesSources(DO.C.User.Outbox[0])
-          }
-        }
-        else {
-          DO.U.showActivitiesSources(DO.C.User.Storage[0])
-        }
-      }
-      else if (DO.C.User.Outbox && DO.C.User.Outbox.length > 0) {
-        DO.U.showActivitiesSources(DO.C.User.Outbox[0])
-      }
-
-      //TODO: Process contact's TypeIndex
+      promises = promises.concat(DO.U.processAgentActivities(DO.C.User));
 
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
-        var sAS = function(iri) {
-          return DO.U.showActivitiesSources(iri)
-            .catch(() => {
-              return Promise.resolve()
-            })
-        }
-
         Object.keys(DO.C.User.Contacts).forEach(function(iri){
-          var o = DO.C.User.Contacts[iri].Outbox
-          if (o) {
-            promises.push(sAS(o[0]))
-          }
-
-          var s = DO.C.User.Contacts[iri].Storage
-          if (s) {
-            promises.push(sAS(s[0]))
-          }
-        })
-
-        return Promise.all(promises)
-          .then(r => {
-            removeProgress(e)
-          });
+          var contact = DO.C.User.Contacts[iri];
+          promises = promises.concat(DO.U.processAgentActivities(contact));
+        });
       }
       else {
-        return getUserContacts(DO.C.User.IRI)
+        getUserContacts(DO.C.User.IRI)
           .catch(() => {
             removeProgress(e)
           })
           .then(contacts => {
-            if(contacts.length > 0) {
+            if (contacts.length > 0) {
               contacts.forEach(function(url) {
                 getSubjectInfo(url).then(subject => {
                   DO.C.User.Contacts[url] = subject;
 
-                  var outbox = DO.C.User.Contacts[url]['Outbox'];
-                  var storage = DO.C.User.Contacts[url]['Storage'];
+                  if (!subject.Graph) return;
 
-                  if (storage && storage.length > 0) {
-                    if(outbox && outbox.length > 0) {
-                      if(storage[0] == outbox[0]) {
-                        DO.U.showActivitiesSources(outbox[0])
-                      }
-                      else {
-                        DO.U.showActivitiesSources(storage[0])
-                        DO.U.showActivitiesSources(outbox[0])
-                      }
-                    }
-                    else {
-                      DO.U.showActivitiesSources(storage[0])
-                    }
-                  }
-                  else if (outbox && outbox.length > 0) {
-                    DO.U.showActivitiesSources(outbox[0])
-                  }
-
+                  promises = promises.concat(DO.U.processAgentActivities(DO.C.User.Contacts[url]));
                   DO.C.User['ContactsOutboxChecked'] = true;
                 })
               });
             }
           })
-          .finally(() => {
-            removeProgress(e);
-          });
       }
+
+      Promise.allSettled(promises).then(r => removeProgress(e))
+    },
+
+    processAgentActivities: function(agent) {
+      if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
+        return DO.U.processAgentTypeIndex(agent)
+      }
+      //TODO: Need proper filtering of storage/outbox matching an object of interest
+      // else {
+      //   return DO.U.processAgentStorageOutbox(agent)
+      // }
+    },
+
+    processAgentTypeIndex: function(agent) {
+      var promises = [];
+      var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
+
+      var publicTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']] || {};
+      var privateTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']] || {};
+      //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
+      var typeIndexes = Object.assign({}, publicTypeIndexes, privateTypeIndexes);
+      var recognisedTypes = [];
+
+      Object.values(typeIndexes).forEach(typeRegistration => {
+        var forClass = typeRegistration[DO.C.Vocab['solidforClass']['@id']];
+        var instance = typeRegistration[DO.C.Vocab['solidinstance']['@id']];
+        var instanceContainer = typeRegistration[DO.C.Vocab['solidinstanceContainer']['@id']];
+
+        if (documentTypes.includes(forClass)) {
+          recognisedTypes.push(forClass);
+
+          if (instance) {
+            promises.push(DO.U.showActivities(instance, { excludeMarkup: true }));
+          }
+
+          if (instanceContainer) {
+            promises.push(DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer' }));
+          }
+        }
+      });
+
+//       TODO: Need proper filtering of storage/outbox matching an object of interest
+//       if (recognisedTypes.length == 0) {
+// console.log(agent, recognisedTypes);
+//         promises.push(DO.U.processAgentStorageOutbox(agent));
+//       }
+
+      return promises;
+    },
+
+    processAgentStorageOutbox: function(agent) {
+      var promises = [];
+      if (agent.Storage && agent.Storage.length > 0) {
+        if (agent.Outbox && agent.Outbox.length > 0) {
+          if (agent.Storage[0] === agent.Outbox[0]) {
+            promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
+          }
+          else {
+            promises.push(DO.U.showActivitiesSources(agent.Storage[0]));
+            promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
+          }
+        }
+        else {
+          promises.push(DO.U.showActivitiesSources(agent.Storage[0]))
+        }
+      }
+      else if (agent.Outbox && agent.Outbox.length > 0) {
+        promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
+      }
+
+      return promises;
     },
 
     showActivitiesSources: function(url, options = {}) {
@@ -340,7 +326,7 @@ DO = {
             promises.push(pI(items[i]));
           }
 
-          return Promise.all(promises);
+          return Promise.allSettled(promises);
         },
         function(reason) {
           console.log(url + ' has no activities.');
@@ -368,12 +354,12 @@ DO = {
       DO.C.Notification[url] = {};
       DO.C.Notification[url]['Activities'] = [];
 
-      var pIRI = getProxyableIRI(url);
+      // var pIRI = getProxyableIRI(url);
       var documentURL = DO.C.DocumentURL;
 
       var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
-
-      return getResourceGraph(pIRI, options.headers, options).then(
+// console.log(pIRI)
+      return getResourceGraph(url, options.headers, options).then(
         function(g) {
           DO.C.Notification[url]['Graph'] = g;
 

@@ -317,8 +317,20 @@ function getSubjectInfo (subjectIRI, options = {}) {
         Publications: getAgentPublications(s),
         Made: getAgentMade(s),
       }
+    })
+    .then(agent => {
+      if (!agent.Graph) return agent;
+
+      return getAgentTypeIndex(agent.Graph)
+        .then(typeIndexes => {
+          Object.keys(typeIndexes).forEach(typeIndexType => {
+            agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
+          });
+
+          return agent;
+        })
     });
-}
+  }
 
 function afterSignIn () {
   getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
@@ -326,7 +338,7 @@ function afterSignIn () {
     updateDocumentDoButtonStates();
   });
 
-  getAgentTypeIndex(Config.User.IRI).then(typeIndexes => {
+  getAgentTypeIndex(Config.User.Graph).then(typeIndexes => {
     Object.keys(typeIndexes).forEach(typeIndexType => {
       Config.User.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
     });

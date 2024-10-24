@@ -847,7 +847,7 @@ function getUserContacts(iri) {
   return fyn(iri).then(function(i){ return Config.User.Knows || []; });
 }
 
-function getAgentTypeIndex(iri) {
+function getAgentTypeIndex(s) {
   //XXX: TypeRegistration forClasses of interest but for now lets store what we find without filtering.
   // const TypeRegistrationClasses = [Config.Vocab['oaAnnotation']['@id'], Config.Vocab['asAnnounce']['@id']];
 
@@ -897,11 +897,14 @@ function getAgentTypeIndex(iri) {
 
   var promises = []
 
-  if (Config.User.PublicTypeIndex) {
-    promises.push(fetchTypeRegistration(Config.User.PublicTypeIndex, Config.Vocab['solidpublicTypeIndex']['@id']))
+  var publicTypeIndex = getAgentPublicTypeIndex(s);
+  var privateTypeIndex = getAgentPrivateTypeIndex(s);
+
+  if (publicTypeIndex) {
+    promises.push(fetchTypeRegistration(publicTypeIndex, Config.Vocab['solidpublicTypeIndex']['@id']))
   }
-  if (Config.User.PrivateTypeIndex) {
-    promises.push(fetchTypeRegistration(Config.User.PrivateTypeIndex, Config.Vocab['solidprivateTypeIndex']['@id']))
+  if (privateTypeIndex) {
+    promises.push(fetchTypeRegistration(privateTypeIndex, Config.Vocab['solidprivateTypeIndex']['@id']))
   }
 
   return Promise.allSettled(promises)
