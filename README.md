@@ -145,9 +145,7 @@ For the scholars among us, see the authoring guidelines below. View the [ACM SIG
 
 ## Supported By
 
-* [Crosscloud](https://web.archive.org/web/20161002075010/http://crosscloud.org/) (2015-10–2016-09)
-* [MIT CSAIL](https://www.csail.mit.edu/) (2015-10–2016-09)
-* [NLnet](https://nlnet.nl/) (2024-02)
+* [NLnet](https://nlnet.nl/) (2024-02–present)
 
 ## Contributors
 
@@ -156,6 +154,12 @@ For the scholars among us, see the authoring guidelines below. View the [ACM SIG
 </a>
 
 ## Acknowledgements
+
+The following organisations have supported a part of the research and development on dokieli:
+
+* [Massachusetts Institute of Technology](https://web.mit.edu/) (2015-10–2016-09)
+* [Qatar Computing Research Institute](https://www.hbku.edu.qa/en/qcri) (2015-10–2016-09)
+* [Deutsche Forschungsgemeinschaft](https://www.dfg.de/) (2016-09–2017-03)
 
 We would also like to express our gratitude to the following individuals for their support:
 
