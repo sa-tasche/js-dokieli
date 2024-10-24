@@ -157,9 +157,11 @@ For the scholars among us, see the authoring guidelines below. View the [ACM SIG
 
 The following organisations have supported a part of the research and development on dokieli:
 
-* [Massachusetts Institute of Technology](https://web.mit.edu/) (2015-10–2016-09)
-* [Qatar Computing Research Institute](https://www.hbku.edu.qa/en/qcri) (2015-10–2016-09)
-* [Deutsche Forschungsgemeinschaft](https://www.dfg.de/) (2016-09–2017-03)
+* [Massachusetts Institute of Technology](https://web.mit.edu/) (2015–2016)
+* [Qatar Computing Research Institute](https://www.hbku.edu.qa/en/qcri) (2015–2016)
+* [Deutsche Forschungsgemeinschaft](https://www.dfg.de/) (2016–2017)
+* [University of Bonn](https://www.uni-bonn.de/en) (2017)
+* [TIB – Leibniz-Informationszentrum Technik und Naturwissenschaften](https://www.tib.eu/en/) (2017-2019)
 
 We would also like to express our gratitude to the following individuals for their support:
 
