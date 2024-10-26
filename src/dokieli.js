@@ -257,7 +257,12 @@ DO = {
       var publicTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']] || {};
       var privateTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']] || {};
       //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
-      var typeIndexes = Object.assign({}, publicTypeIndexes, privateTypeIndexes);
+      var typeIndexes = Object.assign({}, publicTypeIndexes);
+
+      if (agent.IRI == DO.C.User.IRI) {
+        typeIndexes = Object.assign(typeIndexes, privateTypeIndexes);
+      }
+
       var recognisedTypes = [];
 
       Object.values(typeIndexes).forEach(typeRegistration => {
@@ -269,11 +274,11 @@ DO = {
           recognisedTypes.push(forClass);
 
           if (instance) {
-            promises.push(DO.U.showActivities(instance, { excludeMarkup: true }));
+            promises.push(DO.U.showActivities(instance, { excludeMarkup: true, agent: agent.IRI }));
           }
 
           if (instanceContainer) {
-            promises.push(DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer' }));
+            promises.push(DO.U.showActivitiesSources(instanceContainer, { activityType: 'instanceContainer', agent: agent.IRI }));
           }
         }
       });
@@ -317,7 +322,7 @@ DO = {
 
           for (var i = 0; i < items.length && i < DO.C.CollectionItemsLimit; i++) {
             var pI = function(iri) {
-              return DO.U.showActivities(iri)
+              return DO.U.showActivities(iri, options)
                 .catch(() => {
                   return Promise.resolve()
                 })
@@ -354,18 +359,22 @@ DO = {
       DO.C.Notification[url] = {};
       DO.C.Notification[url]['Activities'] = [];
 
-      // var pIRI = getProxyableIRI(url);
       var documentURL = DO.C.DocumentURL;
 
       var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
-// console.log(pIRI)
-      return getResourceGraph(url, options.headers, options).then(
-        function(g) {
+
+      return getResourceGraph(url, options.headers, options)
+        //TODO: Needs throws handled from functions calling showActivities
+        // .catch((e) => {
+        //   throw e;
+        // })
+        .then(g => {
+          if (!g) return;
+
           DO.C.Notification[url]['Graph'] = g;
 
           var currentPathURL = window.location.origin + window.location.pathname;
 
-// console.log(g);
           var subjectsReferences = [];
           var subjects = [];
           g.graph().toArray().forEach(function(t){
@@ -386,13 +395,9 @@ DO = {
                   if(s.ascontext && s.ascontext.at(0)){
                     var context = s.ascontext.at(0);
                     subjectsReferences.push(context);
-                    return DO.U.positionInteraction(context).then(
-                      function(iri){
-                        return iri;
-                      },
-                      function(reason){
-                        console.log(context + ': Context is unreachable');
-                      });
+                    return DO.U.positionInteraction(context)
+                      .then(iri => iri)
+                      .catch(e => console.log(context + ': context is unreachable', e));
                   }
                   else {
                     var iri = s.iri().toString();
@@ -456,32 +461,28 @@ DO = {
                 if(s.assubject && s.assubject.at(0) && s.asrelationship && s.asrelationship.at(0) && s.asobject && s.asobject.at(0) && getPathURL(s.asobject.at(0)) == currentPathURL) {
                   var subject = s.assubject.at(0);
                   subjectsReferences.push(subject);
-                  return DO.U.positionInteraction(subject).then(
-                    function(iri){
-                      return iri;
-                    },
-                    function(reason){
-                      console.log(subject + ': subject is unreachable');
-                    });
+                  return DO.U.positionInteraction(subject)
+                    .then(iri => iri)
+                    .catch(e => console.log(subject + ': subject is unreachable', e));
                 }
               }
               else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Announce') > -1 || resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Create') > -1) {
                 if(s.asobject && s.asobject.at(0) && s.astarget && s.astarget.at(0)) {
-                  var options = {};
+                  var o = {};
 
                   var targetPathURL = getPathURL(s.astarget.at(0));
 
                   if (targetPathURL == currentPathURL) {
-                    options['targetInOriginalResource'] = true;
+                    o['targetInOriginalResource'] = true;
                   }
                   else if (DO.C.Resource[documentURL].graph.rellatestversion && targetPathURL == getPathURL(DO.C.Resource[documentURL].graph.rellatestversion)) {
-                    options['targetInMemento'] = true;
+                    o['targetInMemento'] = true;
                   }
                   else if (DO.C.Resource[documentURL].graph.owlsameAs && DO.C.Resource[documentURL].graph.owlsameAs.at(0) == targetPathURL) {
-                    options['targetInSameAs'] = true;
+                    o['targetInSameAs'] = true;
                   }
 
-                  if (options['targetInOriginalResource'] || options['targetInMemento'] || options['targetInSameAs']){
+                  if (o['targetInOriginalResource'] || o['targetInMemento'] || o['targetInSameAs']){
                     var object = s.asobject.at(0);
                     var target = s.astarget.at(0);
                     subjectsReferences.push(object);
@@ -503,7 +504,7 @@ DO = {
                           // if(citedEntity) {
                             citedEntity.forEach(function(cE) {
                               if(cE.startsWith(currentPathURL)) {
-                                options['objectCitingEntity'] = true;
+                                o['objectCitingEntity'] = true;
                                 citation = {
                                   'citingEntity': object,
                                   'citationCharacterization': citationCharacterization,
@@ -515,18 +516,13 @@ DO = {
                         })
                       // }
 
-                      if (options['objectCitingEntity']) {
+                      if (o['objectCitingEntity']) {
                         return DO.U.showCitations(citation, s);
                       }
                       else {
-                        return DO.U.positionInteraction(object, getDocumentContentNode(document), options).then(
-                          function(iri){
-                            return iri;
-                          },
-                          function(reason){
-                            // console.log(reason);
-                            console.log(object + ': object is unreachable');
-                          });
+                        return DO.U.positionInteraction(object, getDocumentContentNode(document), o)
+                          .then(iri => iri)
+                          .catch(e => console.log(object + ': object is unreachable', e));
                       }
                     }
                   }
@@ -545,13 +541,9 @@ DO = {
                     return DO.U.showAnnotation(object, s);
                   }
                   else {
-                    return DO.U.positionInteraction(object).then(
-                      function(iri){
-                        return iri;
-                      },
-                      function(reason){
-                        console.log(object + ': object is unreachable');
-                      });
+                    return DO.U.positionInteraction(object)
+                      .then(iri => iri)
+                      .catch(e => console.log(object + ': object is unreachable', e));
                   }
                 }
               }
@@ -561,6 +553,67 @@ DO = {
               else if (!subjectsReferences.includes(i) && documentTypes.some(item => resourceTypes.includes(item)) && s.asinReplyTo && s.asinReplyTo.at(0) && getPathURL(s.asinReplyTo.at(0)) == currentPathURL) {
                   subjectsReferences.push(i);
                 return DO.U.showAnnotation(i, s);
+              }
+              else if (resourceTypes.indexOf('http://www.w3.org/2002/01/bookmark#Bookmark') > -1 && s.bookmarkrecalls && getPathURL(s.bookmarkrecalls) == currentPathURL ) {
+                var iri = s.iri().toString();
+                var targetIRI = s.bookmarkrecalls;
+                var motivatedBy = 'bookmark:Bookmark';
+                var id = String(Math.abs(hashCode(iri)));
+                var refId = 'r-' + id;
+                var refLabel = id;
+
+                var bodyText = 'Bookmarked';
+
+                var noteData = {
+                  "type": 'article',
+                  "mode": "read",
+                  "motivatedByIRI": motivatedBy,
+                  "id": id,
+                  "refId": refId,
+                  "refLabel": refLabel,
+                  // "iri": iri,
+                  "creator": {},
+                  "target": {
+                    "iri": targetIRI
+                  },
+                  "body": bodyText,
+                  "license": {}
+                };
+
+                var creator = options.agent;
+                //TODO: Move to graph.js?
+                Object.keys(DO.C.Actor.Property).some(key => {
+                  if (s[key] && s[key].at(0)) {
+                    creator = s[key].at(0);
+                    return true;
+                  }
+                })
+
+                if (creator){
+                  noteData['creator'] = {
+                    'iri': creator
+                  }
+                  var a = g.child(noteData['creator']['iri']);
+                  var actorName = getAgentName(a);
+                  var actorImage = getGraphImage(a);
+
+                  if(typeof actorName != 'undefined') {
+                    noteData['creator']['name'] = actorName;
+                  }
+                  if(typeof actorImage != 'undefined') {
+                    noteData['creator']['image'] = actorImage;
+                  }
+                }
+
+                if (s.dctermsmodified || s.dctermscreated ){
+                  noteData['datetime'] = s.dctermsmodified || s.dctermscreated;
+                }
+                if (s.schemalicense){
+                  noteData.license["iri"] = s.schemalicense;
+                  noteData.license["name"] = DO.C.License[noteData.license["iri"]].name;
+                }
+
+                DO.U.addInteraction(noteData);
               }
               else {
                 // console.log(i + ' has unrecognised types: ' + resourceTypes);
@@ -572,11 +625,12 @@ DO = {
               // return Promise.reject({'message': 'Activity has no type. What to do?'});
             }
           });
-        },
-        function(reason) {
-          console.log(url + ': is unreachable. ' + reason);
-          return reason;
         }
+        // ,
+        // function(reason) {
+        //   console.log(url + ': is unreachable. ' + reason);
+        //   return reason;
+        // }
       );
     },
 
@@ -8416,7 +8470,7 @@ WHERE {\n\
           targetLabel = 'Comments on';
           aAbout = '#' + n.id;
           break;
-        case 'oa:bookmarking':
+        case 'oa:bookmarking': case 'bookmark:Bookmark':
           motivatedByLabel = 'bookmarks';
           targetLabel = 'Bookmarked';
           aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
