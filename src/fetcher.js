@@ -238,6 +238,10 @@ function getResource (url, headers = {}, options = {}) {
         throw error
       }
       else if (error?.status == 401) {
+        if (options.hasRetriedWithCredentials) {
+          throw new Error('401 retries failed', { cause: error });
+        }
+        options.hasRetriedWithCredentials = true
         options.noCredentials = false
         options.credentials = 'include'
 // console.log('status: 401')
