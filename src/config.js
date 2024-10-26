@@ -552,6 +552,7 @@ export default {
     "dctermsdate": "http://purl.org/dc/terms/date",
     "dctermsissued": "http://purl.org/dc/terms/issued",
     "dctermscreated": "http://purl.org/dc/terms/created",
+    "dctermsmodified": "http://purl.org/dc/terms/modified",
     "dctermslanguage": "http://purl.org/dc/terms/language",
     "dctermslicense": { "@id": "http://purl.org/dc/terms/license", "@type": "@id" },
     "dctermsrights": { "@id": "http://purl.org/dc/terms/rights", "@type": "@id" },
