@@ -392,6 +392,7 @@ export default {
       "http://schema.org/performer":"performer",
       "http://schema.org/publisher":"publisher",
       "http://xmlns.com/foaf/0.1/knows":"knows",
+      "http://xmlns.com/foaf/0.1/maker":"maker",
       "https://www.w3.org/ns/activitystreams#actor":"actor"
     }
   },
@@ -480,6 +481,7 @@ export default {
     "foafdepiction": { "@id": "http://xmlns.com/foaf/0.1/depiction", "@type": "@id" },
     "foafnick": "http://xmlns.com/foaf/0.1/nick",
     "foafmade": { "@id": "http://xmlns.com/foaf/0.1/made", "@type": "@id", "@array": true },
+    "foafmaker": { "@id": "http://xmlns.com/foaf/0.1/maker", "@type": "@id", "@array": true },
     "foafknows": { "@id": "http://xmlns.com/foaf/0.1/knows", "@type": "@id", "@array": true },
     "foafprimaryTopic": { "@id": "http://xmlns.com/foaf/0.1/primaryTopic", "@type": "@id" },
     "foafmbox": "http://xmlns.com/foaf/0.1/mbox",
