@@ -8456,12 +8456,12 @@ WHERE {\n\
           creatorName = n.creator.name;
           creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
         }
-        else if (DO.C.User.Name && (creatorIRI == DO.C.User.IRI || DO.C.User.SameAs.includes(creatorIRI))) {
+        else if (DO.C.User.Name && (creatorIRI == DO.C.User.IRI || DO.C.User?.SameAs.includes(creatorIRI))) {
           creatorName = DO.C.User.Name;
           creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
         }
         //XXX: This could potentially incorporate checking the sameAses of all contacts to match creatorIRI
-        else if (DO.C.User.Contacts[creatorIRI].Name && DO.C.User.Contacts[creatorIRI]) {
+        else if (DO.C.User.Contacts && DO.C.User.Contacts[creatorIRI] && DO.C.User.Contacts[creatorIRI].Name) {
           creatorName = DO.C.User.Contacts[creatorIRI].Name;
           creatorNameIRI = creatorName;
         }
@@ -8474,7 +8474,7 @@ WHERE {\n\
           img = (n.mode == 'read') ? getProxyableIRI(DO.C.User.Image) : DO.C.User.Image;
         }
         else {
-          img = (DO.C.User.Contacts[creatorIRI] && DO.C.User.Contacts[creatorIRI].Image) ? DO.C.User.Contacts[creatorIRI].Image : img;
+          img = (DO.C.User.Contacts && DO.C.User.Contacts[creatorIRI] && DO.C.User.Contacts[creatorIRI].Image) ? DO.C.User.Contacts[creatorIRI].Image : img;
         }
         creatorImage = '<img alt="" height="48" rel="schema:image" src="' + img + '" width="48" /> ';
 
