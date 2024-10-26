@@ -189,7 +189,8 @@ export default {
     "oa:highlighting": "#",
     "oa:linking": "※",
     "oa:questioning": "?",
-    "oa:replying": "💬"
+    "oa:replying": "💬",
+    "bookmark:Bookmark": "🔖"
   },
 
   DocumentDoItems: [
@@ -422,7 +423,8 @@ export default {
     'https://www.w3.org/ns/activitystreams#Article',
     'https://www.w3.org/ns/activitystreams#Note',
     'https://www.w3.org/ns/activitystreams#Document',
-    'http://www.w3.org/ns/oa#Annotation'
+    'http://www.w3.org/ns/oa#Annotation',
+    'http://www.w3.org/2002/01/bookmark#Bookmark'
   ],
 
   CollectionTypes: [
@@ -690,6 +692,10 @@ export default {
 
     "siocreplyof": { "@id": "http://rdfs.org/sioc/ns#reply_of", "@type": "@id", "@array": true },
     "siocavatar": { "@id": "http://rdfs.org/sioc/ns#avatar", "@type": "@id" },
+
+    "bookmarkBookmark": { "@id": "http://www.w3.org/2002/01/bookmark#Bookmark", "@type": "@id" },
+    "bookmarkrecalls": { "@id": "http://www.w3.org/2002/01/bookmark#recalls", "@type": "@id" },
+    "bookmarkhasTopic": { "@id": "http://www.w3.org/2002/01/bookmark#hasTopic", "@type": "@id" },
 
     "ldpinbox": { "@id": "http://www.w3.org/ns/ldp#inbox", "@type": "@id", "@array": true },
     "ldpcontains": { "@id": "http://www.w3.org/ns/ldp#contains", "@type": "@id", "@array": true },
