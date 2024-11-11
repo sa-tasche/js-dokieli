@@ -94,7 +94,7 @@ explains dokieli's principles, architectural and design patterns.
 * Views for screen and print (e.g., ACM, LNCS) - yes, you can output to a *paper user interface*: PDF
 * .. and [many more on the way](https://github.com/dokieli/dokieli/issues/).
 
-Let's make it so together! You are welcome to create [issues](https://github.com/dokieli/dokieli/issues/), [discuss](https://matrix.to/#/#dokieli:matrix.org), or pull requests.
+Let's make it so together! You are welcome to create [issues](https://github.com/dokieli/dokieli/issues/), [discuss](https://matrix.to/#/%23dokieli:matrix.org), or pull requests.
 
 ## Screencasts
 
