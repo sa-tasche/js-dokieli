@@ -11164,7 +11164,7 @@ WHERE {\n\
 
                 return inboxPromise
                   .catch(error => {
-                    console.log('Error fetching ldp:inbox and as:inbox endpoint:', error)
+                    // console.log('Error fetching ldp:inbox and as:inbox endpoint:', error)
                     throw error
                   })
                   .then(inboxes => {
