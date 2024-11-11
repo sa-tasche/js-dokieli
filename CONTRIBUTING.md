@@ -10,7 +10,7 @@ contains the source code of the work on [dokieli](https://dokie.li/) project.
 * Use it. Break it. Report it. Fix it.
 * Improve documentation (for the website or repository)
 * Publish or translate articles and share them. Add yours to the [examples in the wild](https://github.com/dokieli/dokieli/wiki#examples-in-the-wild).
-* Join the [dokieli chat](https://matrix.to/#/#linkeddata_dokieli:gitter.im) for help and discussion.
+* Join the [dokieli chat](https://matrix.to/#/#dokieli:matrix.org) for help and discussion.
 * Encourage the ideas/movement and however else you want to contribute.
 * We want your feedback! Create issues (or PRs!) for use cases or features or you would like to have.
 
