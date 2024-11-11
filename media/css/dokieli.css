@@ -786,6 +786,10 @@ margin:0;
 width:auto;
 }
 
+#document-notifications section {
+color:#000 !important;
+}
+
 /*aside.note dl.published,
 aside.note dl.license,
 aside.note dl.rights {
@@ -1714,6 +1718,10 @@ img[width="48"][height="48"] {
 max-height:48px;
 max-width:48px;
 margin-right:0.5em;
+}
+
+*:has(span.ref[typeof~="http://purl.org/dc/dcmitype/Text"]) {
+overflow: visible !important;
 }
 
 span.ref[typeof~="http://purl.org/dc/dcmitype/Text"] {
