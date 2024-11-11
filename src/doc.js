@@ -2604,7 +2604,7 @@ function showResourceAudienceAgentOccupations() {
             'timer': 5000
           }
 
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);
           showActionMessage(document.documentElement, message);
         }
       });
@@ -2640,7 +2640,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
             'type': 'info',
             'timer': 3000
           }
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);
           showActionMessage(document.documentElement, message);
         })
         .catch(error => {
@@ -2650,7 +2650,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
             'type': 'error',
             'timer': 3000
           }
-          addMessageToLog(message);
+          addMessageToLog(message, Config.MessageLog);
           showActionMessage(document.documentElement, message);
         });
     }
