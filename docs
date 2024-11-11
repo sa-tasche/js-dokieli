@@ -190,7 +190,7 @@
                           <tr><th>Baz</th><td>!</td><td>@</td><td>#</td><td>3</td></tr>
                         </tbody>
                         <tfoot>
-                          <tr><td colspan="4">Table columns list the dimensions: d<sub>1</sub>, d<sub>2</sub>, d<sub>3</sub>, and the measure: m<sub>1</sub>.</td></tr>
+                          <tr><td colspan="5">Table columns list the dimensions: d<sub>1</sub>, d<sub>2</sub>, d<sub>3</sub>, and the measure: m<sub>1</sub>.</td></tr>
                         </tfoot>
                       </table>
                     </dd>
@@ -375,7 +375,7 @@
                       <p>Here is an annotation resource at <a href="https://linkedresearch.org/annotation/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f">https://linkedresearch.org/annotation/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f</a> with all information human-visible and machine-readable (HTML+RDFa):</p>
 
                       <figure id="html-annotation-view">
-                        <object data="https://linkedresearch.org/annotation/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f" height="680" type="text/html" width="100%"></object>
+                        <object data="https://linkedresearch.org/annotation/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f" height="680" type="text/html"></object>
                         <figcaption>A reply Web Annotation with replying motivation</figcaption>
                       </figure>
 
@@ -492,7 +492,7 @@
                       <p>Here is a notification resource at <a href="https://linkedresearch.org/inbox/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f">https://linkedresearch.org/inbox/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f</a> with all information human-visible and machine-readable (HTML+RDFa):</p>
 
                       <figure id="html-notification-view">
-                        <object data="https://linkedresearch.org/inbox/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f" height="420" type="text/html" width="100%"></object>
+                        <object data="https://linkedresearch.org/inbox/csarven.ca/dokieli-rww/b6738766-3ce5-4054-96a9-ced7f05b439f" height="420" type="text/html"></object>
                         <figcaption>A notification referring to an annotation</figcaption>
                       </figure>
 
@@ -720,10 +720,10 @@
                         <dd>List of tables in the document and links to them.</dd>
                       </dl>
                     </dd>
-                  </dl>
 
-                  <dt id="document-metadata">Document metadata</dt>
-                  <dd>Based on document's underlying structured data, displays information about its contributors such as editors and authors, number of citations, requirements, advisements, concepts, statements, as well as an estimated reading time, number of characters, words, and bytes.</dd>
+                    <dt id="document-metadata">Document metadata</dt>
+                    <dd>Based on document's underlying structured data, displays information about its contributors such as editors and authors, number of citations, requirements, advisements, concepts, statements, as well as an estimated reading time, number of characters, words, and bytes.</dd>
+                  </dl>
                 </div>
               </section>
 
