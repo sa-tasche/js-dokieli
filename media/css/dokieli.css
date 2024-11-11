@@ -584,6 +584,13 @@ position:static;
 display:none;
 }
 
+@media (max-width: 768px) {
+#document-notifications {
+max-width:calc(100% - 3em);
+padding: 0;
+}
+}  
+
 #document-notifications {
 position: fixed;
 top: 0;
