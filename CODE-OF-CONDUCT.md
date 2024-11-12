@@ -14,7 +14,7 @@ diverse, inclusive, and healthy community.
 
 In addition to this Code of Conduct, we adhere to the [Positive Work Environment
 at W3C: Code of Ethics and Professional
-Conduct](https://www.w3.org/Consortium/cepc/).
+Conduct](https://www.w3.org/policies/code-of-conduct/).
 
 ## Our Standards
 
