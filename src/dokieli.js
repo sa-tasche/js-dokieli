@@ -9,7 +9,7 @@
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -2301,7 +2301,9 @@ DO = {
 
       if (graphEditors) {
         graphEditors.forEach(i => {
-          editors.push('<li>' + getGraphLabelOrIRI(g.child(i)) + '</li>');
+          let name = getGraphLabelOrIRI(g.child(i));
+          name = (name === i) ? getUserLabelOrIRI(i) : name;
+          editors.push(`<li>${name}</li>`);
         });
         if (editors.length > 0){
           editors = '<tr class="people"><th>Editors</th><td><ul class="editors">' + editors.join('') + '</ul></td></tr>';
@@ -2310,7 +2312,9 @@ DO = {
 
       if (graphAuthors) {
         graphAuthors.forEach(i => {
-          authors.push('<li>' + getGraphLabelOrIRI(g.child(i)) + '</li>');
+          let name = getGraphLabelOrIRI(g.child(i));
+          name = (name === i) ? getUserLabelOrIRI(i) : name;
+          authors.push(`<li>${name}</li>`);
         });
         if (authors.length > 0){
           authors = '<tr class="people"><th>Authors</th><td><ul class="authors">' + authors.join('') + '</ul></td></tr>';
@@ -2319,7 +2323,9 @@ DO = {
 
       if (graphContributors) {
         graphContributors.forEach(i => {
-          contributors.push('<li>' + getGraphLabelOrIRI(g.child(i)) + '</li>');
+          let name = getGraphLabelOrIRI(g.child(i));
+          name = (name === i) ? getUserLabelOrIRI(i) : name;
+          contributors.push(`<li>${name}</li>`);
         });
         if (contributors.length > 0){
           contributors = '<tr class="people"><th>Contributors</th><td><ul class="contributors">' + contributors.join('') + '</ul></td></tr>';
@@ -2328,7 +2334,9 @@ DO = {
 
       if (graphPerformers) {
         graphPerformers.forEach(i => {
-          performers.push('<li>' + getGraphLabelOrIRI(g.child(i)) + '</li>');
+          let name = getGraphLabelOrIRI(g.child(i));
+          name = (name === i) ? getUserLabelOrIRI(i) : name;
+          performers.push(`<li>${name}</li>`);
         });
         if (performers.length > 0){
           performers = '<tr class="people"><th>Performers</th><td><ul class="performers">' + performers.join('') + '</ul></td></tr>';
@@ -8779,14 +8787,9 @@ WHERE {\n\
           creatorName = n.creator.name;
           creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
         }
-        else if (DO.C.User.Name && (creatorIRI == DO.C.User.IRI || DO.C.User?.SameAs.includes(creatorIRI))) {
-          creatorName = DO.C.User.Name;
-          creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
-        }
-        //XXX: This could potentially incorporate checking the sameAses of all contacts to match creatorIRI
-        else if (DO.C.User.Contacts && DO.C.User.Contacts[creatorIRI] && DO.C.User.Contacts[creatorIRI].Name) {
-          creatorName = DO.C.User.Contacts[creatorIRI].Name;
-          creatorNameIRI = creatorName;
+        else {
+          creatorName = getUserLabelOrIRI(creatorIRI);
+          creatorNameIRI = (creatorName == creatorIRI) ? creatorName : '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
         }
 
         var img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
