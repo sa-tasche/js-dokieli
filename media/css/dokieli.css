@@ -1838,6 +1838,9 @@ line-height:1.2;
 word-wrap:break-word;
 font-weight:normal;
 }
+.medium-editor-toolbar-form a[class^="medium-editor-toolbar-"] {
+font-size:1.25em;
+}
 
 
 figure [typeof="schema:Map"] {
@@ -1895,7 +1898,7 @@ margin:0;
 text-decoration:underline;
 }
 
-.medium-editor-toolbar-form textarea {
+.medium-editor-toolbar-form textarea[name="content"] {
 padding:0.5em;
 width:calc(100% - 1em - 2px);
 width:-moz-available;
@@ -1909,7 +1912,7 @@ font-size:1em;
 }
 .medium-editor-toolbar-form select[id$="-language"],
 .medium-editor-toolbar-form select[id$="-license"] {
-margin-top:0.1em;
+margin-top:0.25em;
 vertical-align:top;
 }
 
@@ -1923,7 +1926,7 @@ line-height:1;
 }
 .medium-editor-toolbar-form .annotation-inbox,
 .medium-editor-toolbar-form .annotation-location-selection {
-margin: 0.3em 1em 0 1em;
+margin: 0 1em 0 1em;
 display:inline-block;
 vertical-align: top;
 }
