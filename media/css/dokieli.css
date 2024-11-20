@@ -1135,7 +1135,7 @@ margin-left:0;
   grid-template-columns: 1fr 1fr;
 }
 #document-views ul {
-max-width:75%;
+max-width:70%;
 float:left;
 }
 #document-views ul li {
@@ -1230,7 +1230,7 @@ float:none;
 
 #document-menu #document-views > svg.fas {
 float:left;
-margin:0.25em 1em 0 2.75em
+margin:0.25em 1em 0 2.5em;
 }
 
 #document-menu .editor-disable,
