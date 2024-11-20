@@ -9,7 +9,7 @@
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -2254,7 +2254,7 @@ DO = {
 
       var content = selectArticleNode(document);
       var count = DO.U.contentCount(content);
-      var authors = [], contributors = [], editors = [];
+      var authors = [], contributors = [], editors = [], performers = [];
       var citationsTo = [];
       var requirements = [];
       var advisements = [];
@@ -2294,34 +2294,48 @@ DO = {
       var g = s.child(options['subjectURI']);
 // console.log(g)
 
-      if(g.schemaeditor._array.length > 0) {
-        g.schemaeditor.forEach(function(s){
-          editors.push('<li>' + getGraphLabelOrIRI(g.child(s)) + '</li>');
+      var graphEditors = getGraphEditors(g);
+      var graphAuthors = getGraphAuthors(g);
+      var graphContributors = getGraphContributors(g);
+      var graphPerformers = getGraphPerformers(g);
+
+      if (graphEditors) {
+        graphEditors.forEach(i => {
+          editors.push('<li>' + getGraphLabelOrIRI(g.child(i)) + '</li>');
         });
-        if(editors.length > 0){
+        if (editors.length > 0){
           editors = '<tr class="people"><th>Editors</th><td><ul class="editors">' + editors.join('') + '</ul></td></tr>';
         }
       }
 
-      if(g.schemaauthor._array.length > 0) {
-        g.schemaauthor.forEach(function(s){
-          authors.push('<li>' + getGraphLabelOrIRI(g.child(s)) + '</li>');
+      if (graphAuthors) {
+        graphAuthors.forEach(i => {
+          authors.push('<li>' + getGraphLabelOrIRI(g.child(i)) + '</li>');
         });
-        if(authors.length > 0){
+        if (authors.length > 0){
           authors = '<tr class="people"><th>Authors</th><td><ul class="authors">' + authors.join('') + '</ul></td></tr>';
         }
       }
 
-      if(g.schemacontributor._array.length > 0) {
-        g.schemacontributor.forEach(function(s){
-          contributors.push('<li>' + getGraphLabelOrIRI(g.child(s)) + '</li>');
+      if (graphContributors) {
+        graphContributors.forEach(i => {
+          contributors.push('<li>' + getGraphLabelOrIRI(g.child(i)) + '</li>');
         });
-        if(contributors.length > 0){
+        if (contributors.length > 0){
           contributors = '<tr class="people"><th>Contributors</th><td><ul class="contributors">' + contributors.join('') + '</ul></td></tr>';
         }
       }
 
-      var data = authors + editors + contributors + citations + requirements + advisements + concepts + statements;
+      if (graphPerformers) {
+        graphPerformers.forEach(i => {
+          performers.push('<li>' + getGraphLabelOrIRI(g.child(i)) + '</li>');
+        });
+        if (performers.length > 0){
+          performers = '<tr class="people"><th>Performers</th><td><ul class="performers">' + performers.join('') + '</ul></td></tr>';
+        }
+      }
+
+      var data = authors + editors + contributors + performers + citations + requirements + advisements + concepts + statements;
 
           // <tr><th>Lines</th><td>' + count.lines + '</td></tr>\n\
           // <tr><th>A4 Pages</th><td>' + count.pages.A4 + '</td></tr>\n\
