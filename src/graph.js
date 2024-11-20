@@ -1203,6 +1203,20 @@ function getGraphLabelOrIRI(s) {
   return getGraphLabel(s) || s.iri().toString();
 }
 
+function getUserLabelOrIRI(iri) {
+  let name = iri;
+
+  if (Config.User.Name && (iri == Config.User.IRI || Config.User?.SameAs.includes(iri))) {
+    name = Config.User.Name;
+  }
+  //XXX: This could potentially incorporate checking the sameAses of all contacts to match iri
+  else if (Config.User.Contacts && Config.User.Contacts[iri] && Config.User.Contacts[iri].Name) {
+    name = Config.User.Contacts[iri].Name;
+  }
+
+  return name;
+}
+
 function getGraphConceptLabel(g, options) {
   var labels = {
     prefLabel: [],
@@ -1509,5 +1523,6 @@ export {
   getGraphAudience,
   getACLResourceGraph,
   getAccessSubjects,
-  getAuthorizationsMatching
+  getAuthorizationsMatching,
+  getUserLabelOrIRI
 }
