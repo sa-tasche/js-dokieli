@@ -6,7 +6,7 @@ import { removeChildren, fragmentFromString } from './util.js'
 import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupplementalInfo, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, handleDeleteNote } from './doc.js'
 import { Icon } from './template.js'
 import { constructGraph, getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade } from './graph.js'
-import { removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
+import { removeLocalStorageAuthClient, removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
 import solidAuth, { logout, popupLogin } from 'solid-auth-client'
 
 // const { OIDCWebClient } = require('@trust/oidc-web')
@@ -64,8 +64,11 @@ async function showUserSigninSignout (node) {
 
     userInfo.addEventListener('click', async function(e) {
       if (e.target.closest('.signout-user')) {
+        removeLocalStorageDocument()
+
         if (Config.User.OIDC) {
           await logout();
+          removeLocalStorageAuthClient()
         }
 
         removeLocalStorageProfile()
