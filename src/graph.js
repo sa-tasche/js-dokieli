@@ -7,7 +7,7 @@ import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAb
 import { uniqueArray } from './util.js'
 import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
 import LinkHeader from "http-link-header";
-import * as DOMPurify from 'dompurify';
+import DOMPurify from 'dompurify';
 
 const store = ld.store;
 

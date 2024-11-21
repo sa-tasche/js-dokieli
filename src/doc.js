@@ -9,7 +9,7 @@ const SimpleRDF = ld.SimpleRDF
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes } from './graph.js'
 import { createRDFaHTML, Icon } from './template.js'
 import LinkHeader from "http-link-header";
-import * as DOMPurify from 'dompurify';
+import DOMPurify from 'dompurify';
 
 function escapeCharacters(string) {
   return String(string).replace(/[&<>"']/g, function (match) {

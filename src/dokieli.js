@@ -29,7 +29,7 @@ import { micromark as marked } from 'micromark'
 import { gfm, gfmHtml } from 'micromark-extension-gfm'
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter'
 import LinkHeader from 'http-link-header';
-import * as DOMPurify from 'dompurify';
+import DOMPurify from 'dompurify';
 import * as ld from './simplerdf.cjs'
 import Config from './config.js';
 
