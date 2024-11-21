@@ -1,8 +1,8 @@
 'use strict'
 
 import Config from './config.js';
-import * as leaflet from 'leaflet';
-import * as leafletGpx from 'leaflet-gpx';
+import leaflet from 'leaflet';
+import leafletGpx from 'leaflet-gpx';
 const L = { ...leaflet, ...leafletGpx };
 import { fragmentFromString, generateAttributeId, convertToISO8601Duration } from './util.js'
 import { getAgentHTML, createDateHTML, selectArticleNode, setCopyToClipboard } from './doc.js'
