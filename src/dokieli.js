@@ -23,7 +23,7 @@ import { Icon, createRDFaHTML } from './template.js'
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
-import shower from 'shower'
+import shower from '@shower/core'
 import { diffChars } from 'diff'
 import { micromark as marked } from 'micromark'
 import { gfm, gfmHtml } from 'micromark-extension-gfm'
