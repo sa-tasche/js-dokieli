@@ -138,7 +138,7 @@ function disableAutoSave(key, options) {
 function removeLocalStorageItem(key) {
   if (!key) { Promise.resolve(); }
 
-  // console.log(getDateTimeISO() + ': ' + key + ' removed.')
+  console.log(getDateTimeISO() + ': ' + key + ' removed from local storage.')
 
   if (Config.WebExtension) {
     var browser = (typeof browser !== 'undefined') ? browser : chrome;
@@ -151,6 +151,18 @@ function removeLocalStorageItem(key) {
   else {
     return Promise.reject({'message': 'storage is unavailable'})
   }
+}
+
+function removeLocalStorageAuthClient(key) {
+  key = key || 'solid-auth-client';
+
+  return removeLocalStorageItem(key)
+}
+
+function removeLocalStorageDocument(key) {
+  key = key || Config.DocumentURL;
+
+  return removeLocalStorageItem(key)
 }
 
 function removeLocalStorageProfile(key) {
@@ -308,6 +320,8 @@ export {
   enableAutoSave,
   disableAutoSave,
   removeLocalStorageItem,
+  removeLocalStorageAuthClient,
+  removeLocalStorageDocument,
   removeLocalStorageProfile,
   getLocalStorageProfile,
   updateLocalStorageProfile,
