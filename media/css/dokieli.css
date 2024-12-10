@@ -891,9 +891,9 @@ a.highlight,
 
 .highlight-structure [rel],
 .highlight-structure [property] {
-border-radius:0.25em;
+  border-radius:0.25em;
+  border:1px solid #ccc;
 }
-
 .highlight-structure [typeof~="skos:Concept"],
 .highlight-structure [typeof~="skos:Collection"] {
   /* background-color:#d1001c;
@@ -905,8 +905,12 @@ border-radius:0.25em;
   [rel~="skos:topConceptOf"],
   [rel~="skos:inScheme"],
   [rel~="skos:semanticRelation"],
-  [rel~="schema:audience"] {
-    &[resource], &[href], > [about], > [resource], > [href] {
+  [rel~="schema:audience"],
+  [rel~="schema:hasOccupation"] {
+    &[href], &[resource],
+    &:not([resource]) [about],
+    &:not([resource]) [href],
+    &:not([resource]) [resource] {
       /* background-color:#d1001c;
       color:#fff; */
       border:1px solid #d1001c;
@@ -920,12 +924,13 @@ border-radius:0.25em;
   color:#000; */
   border:1px solid #FFB900;
 }
-.highlight-structure {
-  [rel~="schema:presentedAt"] {
-    &[resource], &[href], > [about], > [resource], > [href] {
-      background-color:#FFB900;
-      color:#000;
-    }
+.highlight-structure [rel~="schema:presentedAt"] {
+  &[href], &[resource],
+  &:not([resource]) [about],
+  &:not([resource]) [href],
+  &:not([resource]) [resource] {
+    background-color:#FFB900;
+    color:#000;
   }
 }
 .highlight-structure [typeof~="qb:DataSet"] {
@@ -937,7 +942,10 @@ border-radius:0.25em;
   border:1px solid #ff00ff;
 }
 .highlight-structure [rel~="odrl:hasPolicy"] {
-  &[resource], &[href], > [about], > [resource], > [href] {
+  &[href], &[resource],
+  &:not([resource]) [about],
+  &:not([resource]) [href],
+  &:not([resource]) [resource] {
     /* background-color:#ff00ff;
     color:#fff; */
     border:1px solid #ff00ff;
@@ -954,15 +962,6 @@ border-radius:0.25em;
   border:1px solid #009999;
 }
 .highlight-structure {
-  [rel~="foaf:knows"][href],
-  [rel~="foaf:knows"][resource],
-  [rel~="foaf:knows"]:not[href]:not[resource] > [href],
-  [rel~="foaf:knows"]:not[href]:not[resource] > [resource] {
-    background-color:#900090;
-    color:#fff;
-  }
-}
-.highlight-structure {
   [rel~="dcterms:creator"],
   [rel~="dcterms:publisher"],
   [rel~="schema:author"],
@@ -975,7 +974,10 @@ border-radius:0.25em;
   [rel~="foaf:maker"],
   [rel~="as:actor"],
   [rel~="as:attributedTo"] {
-    &[resource], &[href], > [about], > [resource], > [href] {
+    &[href], &[resource],
+    &:not([resource]) [about],
+    &:not([resource]) [href],
+    &:not([resource]) [resource] {
       background-color:#900090;
       color:#fff;
     }
@@ -983,7 +985,10 @@ border-radius:0.25em;
 }
 .highlight-structure {
   [rel*="cito:"] {
-    &[resource], &[href], > [about], > [resource], > [href] {
+    &[href], &[resource],
+    &:not([resource]) [about],
+    &:not([resource]) [href],
+    &:not([resource]) [resource] {
       background-color:#00ffff;
       color:#000;
     }
@@ -1000,7 +1005,10 @@ border-radius:0.25em;
 }
 .highlight-structure {
   [rel~="spec:testSuite"] {
-    &[resource], &[href], > [about], > [resource], > [href] {
+    &[href], &[resource],
+    &:not([resource]) [about],
+    &:not([resource]) [href],
+    &:not([resource]) [resource] {
       background-color:#ff7f00;
       color:#000;
     }
