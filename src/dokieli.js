@@ -2574,11 +2574,11 @@ DO = {
       var articleNode = selectArticleNode(document);
       var sections = articleNode.querySelectorAll('section:not(section section):not([id^=table-of]):not([id^=list-of])');
 
+      DO.U.showListOfStuff(documentItems);
+
+      DO.U.showHighlightStructuredData(documentItems);
+
       if (sections.length > 0) {
-        DO.U.showListOfStuff(documentItems);
-
-        DO.U.showHighlightStructuredData(documentItems);
-
         DO.U.showTableOfContents(documentItems, sections)
 
         if(DO.C.SortableList && DO.C.EditorEnabled) {
@@ -2723,6 +2723,8 @@ DO = {
 
       var documentURL = DO.C.DocumentURL;
 
+      var rootNode = selectArticleNode(document);
+
       if(id == 'references'){
         buildReferences();
       }
@@ -2731,7 +2733,7 @@ DO = {
         var selector = DO.C.ListOfStuff[id].selector;
         var titleSelector = DO.C.ListOfStuff[id].titleSelector;
 
-        var nodes = document.querySelectorAll('section:not([class~="do"]) ' + selector);
+        var nodes = rootNode.querySelectorAll('*:not([class~="do"]) ' + selector);
 
         if (id == 'table-of-contents' || id == 'list-of-concepts' || nodes.length > 0) {
           var tId = document.getElementById(id);
