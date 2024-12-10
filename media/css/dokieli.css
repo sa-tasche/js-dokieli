@@ -895,78 +895,116 @@ border-radius:0.25em;
 }
 
 .highlight-structure [typeof~="skos:Concept"],
-.highlight-structure [typeof~="skos:Collection"],
-.highlight-structure [rel~="skos:hasTopConcept"][resource], .highlight-structure [rel~="skos:hasTopConcept"][href], .highlight-structure [rel~="skos:hasTopConcept"] > [resource], .highlight-structure [rel~="skos:hasTopConcept"] > [href],
-.highlight-structure [rel~="skos:topConceptOf"][resource], .highlight-structure [rel~="skos:topConceptOf"][href], .highlight-structure [rel~="skos:topConceptOf"] > [resource], .highlight-structure [rel~="skos:topConceptOf"] > [href],
-.highlight-structure [rel~="skos:inScheme"][resource], .highlight-structure [rel~="skos:inScheme"][href], .highlight-structure [rel~="skos:inScheme"] > [resource], .highlight-structure [rel~="skos:inScheme"] > [href],
-.highlight-structure [rel~="skos:semanticRelation"][resource], .highlight-structure [rel~="skos:semanticRelation"][href], .highlight-structure [rel~="skos:semanticRelation"] > [resource], .highlight-structure [rel~="skos:semanticRelation"] > [href],
-.highlight-structure [rel~="schema:audience"][resource], .highlight-structure [rel~="schema:audience"][href], .highlight-structure [rel~="schema:audience"] > [resource], .highlight-structure [rel~="schema:audience"] > [href] {
-  background-color:#d1001c;
-color:#fff;
+.highlight-structure [typeof~="skos:Collection"] {
+  /* background-color:#d1001c;
+  color:#fff; */
+  border:1px solid #d1001c;
+}
+.highlight-structure {
+  [rel~="skos:hasTopConcept"],
+  [rel~="skos:topConceptOf"],
+  [rel~="skos:inScheme"],
+  [rel~="skos:semanticRelation"],
+  [rel~="schema:audience"] {
+    &[resource], &[href], > [about], > [resource], > [href] {
+      /* background-color:#d1001c;
+      color:#fff; */
+      border:1px solid #d1001c;
+    }
+  }
 }
 .highlight-structure [typeof~="schema:Event"],
 .highlight-structure [typeof~="bibo:Event"],
-.highlight-structure [typeof~="bibo:Conference"],
-.highlight-structure [rel~="schema:presentedAt"][resource], .highlight-structure [rel~="schema:presentedAt"][href], .highlight-structure [rel~="schema:presentedAt"] > [resource], .highlight-structure [rel~="schema:presentedAt"] > [href] {
-  background-color:#FFB900;
-color:#000;
+.highlight-structure [typeof~="bibo:Conference"] {
+  /* background-color:#FFB900;
+  color:#000; */
+  border:1px solid #FFB900;
+}
+.highlight-structure {
+  [rel~="schema:presentedAt"] {
+    &[resource], &[href], > [about], > [resource], > [href] {
+      background-color:#FFB900;
+      color:#000;
+    }
+  }
 }
 .highlight-structure [typeof~="qb:DataSet"] {
-  background-color:#ff7f00;
-color:#000;
+  /* background-color:#ff7f00;
+  color:#000; */
+  border:1px solid #ff7f00;
 }
-.highlight-structure [typeof~="doap:Specification"],
+.highlight-structure [typeof~="doap:Specification"] {
+  border:1px solid #ff00ff;
+}
 .highlight-structure [rel~="odrl:hasPolicy"] {
-  background-color:#ff00ff;
-color:#fff;
+  &[resource], &[href], > [about], > [resource], > [href] {
+    /* background-color:#ff00ff;
+    color:#fff; */
+    border:1px solid #ff00ff;
+  }
 }
-.highlight-structure [typeof~="odrl:"] {
-  background-color:#0088ee;
-color:#000;
+.highlight-structure [typeof*="odrl:"] {
+  /* background-color:#0088ee;
+  color:#000; */
+  border:1px solid #0088ee;
 }
 .highlight-structure [typeof~="bibo:Slide"] {
-background-color:#009999;
-color:#000;
+  /* background-color:#009999;
+  color:#000; */
+  border:1px solid #009999;
 }
-.highlight-structure [about][rel~="foaf:knows"], .highlight-structure [about][rel~="foaf:knows"][href], .highlight-structure [about] >[rel~="foaf:knows"], .highlight-structure [about] > [rel~="foaf:knows"] {
-  background-color:#900090;
-  color:#fff;
-}
-.highlight-structure [rel~="dcterms:creator"],
-.highlight-structure [rel~="dcterms:publisher"],
-.highlight-structure [rel~="schema:author"],
-.highlight-structure [rel~="schema:contributor"],
-.highlight-structure [rel~="schema:creator"],
-.highlight-structure [rel~="schema:editor"],
-.highlight-structure [rel~="schema:performer"],
-.highlight-structure [rel~="schema:publisher"],
-.highlight-structure [rel~="foaf:knows"],
-.highlight-structure [rel~="foaf:maker"],
-.highlight-structure [rel~="as:actor"],
-.highlight-structure [rel~="as:attributedTo"] {
-  [resource], [href], > [resource], > [href] {
+.highlight-structure {
+  [rel~="foaf:knows"][href],
+  [rel~="foaf:knows"][resource],
+  [rel~="foaf:knows"]:not[href]:not[resource] > [href],
+  [rel~="foaf:knows"]:not[href]:not[resource] > [resource] {
     background-color:#900090;
     color:#fff;
   }
 }
-.highlight-structure [rel~="cito:"] {
-  [resource], [href], > [resource], > [href] {
-    background-color:#00ffff;
-    color:#000;
+.highlight-structure {
+  [rel~="dcterms:creator"],
+  [rel~="dcterms:publisher"],
+  [rel~="schema:author"],
+  [rel~="schema:contributor"],
+  [rel~="schema:creator"],
+  [rel~="schema:editor"],
+  [rel~="schema:performer"],
+  [rel~="schema:publisher"],
+  [rel~="foaf:knows"],
+  [rel~="foaf:maker"],
+  [rel~="as:actor"],
+  [rel~="as:attributedTo"] {
+    &[resource], &[href], > [about], > [resource], > [href] {
+      background-color:#900090;
+      color:#fff;
+    }
+  }
+}
+.highlight-structure {
+  [rel*="cito:"] {
+    &[resource], &[href], > [about], > [resource], > [href] {
+      background-color:#00ffff;
+      color:#000;
+    }
   }
 }
 .highlight-structure [rel~="spec:requirement"],
-.highlight-structure [property~="spec:requirementReference"] {
+.highlight-structure [rel~="spec:requirementReference"] {
   background-color:#9a3a00;
-color:#fff;
+  color:#fff;
 }
 .highlight-structure [rel~="spec:advisement"] {
   background-color:#9a6c00;
-color:#fff;
+  color:#fff;
 }
-.highlight-structure [rel~="spec:testSuite"][resource], .highlight-structure [rel~="spec:testSuite"][href], .highlight-structure [rel~="spec:testSuite"] > [resource], .highlight-structure [rel~="spec:testSuite"] > [href] {
-  background-color:#ff7f00;
-color:#000;
+.highlight-structure {
+  [rel~="spec:testSuite"] {
+    &[resource], &[href], > [about], > [resource], > [href] {
+      background-color:#ff7f00;
+      color:#000;
+    }
+  }
 }
 
 #document-action-message > ul > li {
