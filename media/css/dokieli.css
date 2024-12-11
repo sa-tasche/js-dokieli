@@ -889,17 +889,100 @@ a.highlight,
 .highlight .highlight { background-color:#0099FF; color:#000000; }
 .highlight .highlight .highlight { background-color:#0000FF; color:#FFFFFF; }
 
+/* Consider: */
+/* Filter dokieli nodes: *:not([class~="do"]) */
+/* Filter empty nodes: :not(:empty) */
 .highlight-structure [rel],
 .highlight-structure [property] {
   border-radius:0.25em;
   border:1px solid #ccc;
 }
-.highlight-structure [typeof~="skos:Concept"],
-.highlight-structure [typeof~="skos:Collection"] {
-  /* background-color:#d1001c;
-  color:#fff; */
-  border:1px solid #d1001c;
+.highlight-structure [typeof] {
+  position:relative;
 }
+.highlight-structure [typeof]:after {
+  display:inline-block;
+  position:absolute;
+  top:-1.8em;
+  right:0;
+  padding:0.2em;
+  font-size:1em;
+  font-weight:bold;
+  font-style:italic;
+  box-shadow:inset -2px -2px 1px #eee;
+}
+.highlight-structure [typeof]:hover:after {
+  display:none;
+}
+.highlight-structure [typeof~="doap:Specification"]:after {
+  /* border:1px solid #ff00ff; */
+  content:"Specification";
+  background:#ff00ff;
+  color:#fff;
+}
+.highlight-structure [typeof~="skos:Concept"]:after {
+  content:"Concept";
+}
+.highlight-structure [typeof~="skos:Collection"]:after {
+  content:"Collection";
+}
+.highlight-structure [typeof~="skos:ConceptScheme"]:after {
+  content:"Concept Scheme";
+}
+.highlight-structure [typeof*="skos:"]:after {
+  background-color:#d1001c;
+  color:#fff;
+}
+.highlight-structure [typeof~="schema:Event"]:after,
+.highlight-structure [typeof~="bibo:Event"]:after {
+  content:"Event";
+}
+.highlight-structure [typeof~="bibo:Conference"]:after {
+  content:"Conference";
+}
+.highlight-structure [typeof~="schema:Event"]:after,
+.highlight-structure [typeof~="bibo:Event"]:after,
+.highlight-structure [typeof~="bibo:Conference"]:after {
+  background-color:#FFB900;
+  color:#000;
+}
+.highlight-structure [typeof~="qb:DataSet"]:after {
+  content:"DataSet";
+  background-color:#ff7f00;
+  color:#000;
+}
+.highlight-structure [typeof~="odrl:Policy"]:after {
+  content:"Policy";
+}
+.highlight-structure [typeof~="odrl:Offer"]:after {
+  content:"Offer";
+}
+.highlight-structure [typeof~="odrl:Agreement"]:after {
+  content:"Agreement";
+}
+.highlight-structure [typeof~="odrl:Permission"]:after {
+  content:"Permission";
+}
+.highlight-structure [typeof~="odrl:Prohibition"]:after {
+  content:"Prohibition";
+}
+.highlight-structure [typeof~="odrl:Duty"]:after {
+  content:"Duty";
+}
+.highlight-structure [typeof~="odrl:Asset"]:after {
+  content:"Asset";
+}
+.highlight-structure [typeof*="odrl:"]:after {
+  background-color:#0088ee;
+  color:#000;
+}
+.highlight-structure [typeof~="bibo:Slide"]:after {
+  content:"Slide";
+  background-color:#009999;
+  color:#000;
+}
+
+
 .highlight-structure {
   [rel~="skos:hasTopConcept"],
   [rel~="skos:topConceptOf"],
@@ -917,13 +1000,7 @@ a.highlight,
     }
   }
 }
-.highlight-structure [typeof~="schema:Event"],
-.highlight-structure [typeof~="bibo:Event"],
-.highlight-structure [typeof~="bibo:Conference"] {
-  /* background-color:#FFB900;
-  color:#000; */
-  border:1px solid #FFB900;
-}
+
 .highlight-structure [rel~="schema:presentedAt"] {
   &[href], &[resource],
   &:not([resource]) [about],
@@ -933,14 +1010,8 @@ a.highlight,
     color:#000;
   }
 }
-.highlight-structure [typeof~="qb:DataSet"] {
-  /* background-color:#ff7f00;
-  color:#000; */
-  border:1px solid #ff7f00;
-}
-.highlight-structure [typeof~="doap:Specification"] {
-  border:1px solid #ff00ff;
-}
+
+
 .highlight-structure [rel~="odrl:hasPolicy"] {
   &[href], &[resource],
   &:not([resource]) [about],
@@ -951,16 +1022,7 @@ a.highlight,
     border:1px solid #ff00ff;
   }
 }
-.highlight-structure [typeof*="odrl:"] {
-  /* background-color:#0088ee;
-  color:#000; */
-  border:1px solid #0088ee;
-}
-.highlight-structure [typeof~="bibo:Slide"] {
-  /* background-color:#009999;
-  color:#000; */
-  border:1px solid #009999;
-}
+
 .highlight-structure {
   [rel~="dcterms:creator"],
   [rel~="dcterms:publisher"],
