@@ -2594,13 +2594,14 @@ DO = {
     showHighlightStructuredData: function(node) {
       if (!node) { return; }
 
-      var html = '<section id="highlight-data" class="do"><h2>Highlight Data</h2><ul><li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" /> <label for="highlight-structured-data">Structure</label></li></ul></section>';
+      var contextNode = selectArticleNode(document);
+      var checked = (contextNode.classList.contains('highlight-structure')) ? 'checked="checked"' : '';
+
+      var html = `<section id="highlight-data" class="do"><h2>Highlight Data</h2><ul><li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" ${checked}/> <label for="highlight-structured-data">Structure</label></li></ul></section>`;
 
       node.insertAdjacentHTML('beforeend', html);
 
       var structuredData = document.querySelector('#highlight-data')
-
-      var contextNode = selectArticleNode(document);
 
       structuredData.addEventListener('change', function(e){
         var input = e.target.closest('#highlight-structured-data');
