@@ -7,9 +7,9 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -25,32 +25,30 @@ import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
 import shower from '@shower/core'
 import { diffChars } from 'diff'
-import { micromark as marked } from 'micromark'
-import { gfm, gfmHtml } from 'micromark-extension-gfm'
-import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter'
 import LinkHeader from 'http-link-header';
 import DOMPurify from 'dompurify';
-import * as ld from './simplerdf.cjs'
+import rdf from 'rdf-ext';
 import Config from './config.js';
 
+const ns = Config.ns;
 let DO;
 
-if(typeof window.DO === 'undefined'){
-const SimpleRDF = ld.SimpleRDF
+if (typeof window.DO === 'undefined'){
+
 DO = {
   C: Config,
 
   U: {
     getItemsList: function(url, options) {
-      url = url || window.location.origin + window.location.pathname;
+      url = url || currentLocation();
       options = options || {};
       options['resourceItems'] = options.resourceItems || [];
       options['headers'] = options.headers || {};
       options['excludeMarkup'] = true;
 
       DO.C['CollectionItems'] = DO.C['CollectionItems'] || {};
-      DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length > 0) ? DO.C.CollectionPages : [];
-      DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length > 0) ? DO.C.Collections : [];
+      DO.C['CollectionPages'] = ('CollectionPages' in DO.C && DO.C.CollectionPages.length) ? DO.C.CollectionPages : [];
+      DO.C['Collections'] = ('Collections' in DO.C && DO.C.Collections.length) ? DO.C.Collections : [];
 
       const mediaTypeURIPrefix = "http://www.w3.org/ns/iana/media-types/";
       //TODO: Move this elsewhere (call from DO.C.init()?) where it runs once and stores it in e.g, DO.C.MediaTypeURIs
@@ -65,41 +63,42 @@ DO = {
           function(g) {
             if (!g || g.resource) return [];
 
-            var s = g.child(url);
+            var s = g.node(rdf.namedNode(url));
 // console.log(s.toString());
 
-            var types = s.rdftype;
-            if (types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) > -1 ||
-               types.indexOf(DO.C.Vocab['asCollection']["@id"]) > -1 ||
-               types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) > -1) {
+            var types = getGraphTypes(s);
+
+            if (types.includes(ns.ldp.Container.value) ||
+               types.includes(ns.as.Collection.value) ||
+               types.includes(ns.as.OrderedCollection.value)) {
               DO.C.Collections.push(url);
             }
 
-            if (types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) < 0 &&
-               types.indexOf(DO.C.Vocab['asCollection']["@id"]) < 0 &&
-               types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) < 0) {
+            if (!types.includes(ns.ldp.Container.value) &&
+               !types.includes(ns.as.Collection.value) &&
+               !types.includes(ns.as.OrderedCollection.value)) {
               DO.C.CollectionPages.push(url);
             }
 
-            var items = [s.asitems, s.asorderedItems, s.ldpcontains];
-            Object.keys(items).forEach(function(i) {
-              items[i].forEach(function(resource){
+            var items = [s.out(ns.as.items).values, s.out(ns.as.orderedItems).values, s.out(ns.ldp.contains).values];
+
+            items.forEach(i => {
+              i.forEach(resource => {
 // console.log(resource)
+                var r = s.node(rdf.namedNode(resource));
 
-                var r = s.child(resource);
-
-                if (r.rdffirst || r.rdfrest) {
+                if (r.out(ns.rdf.first).values.length || r.out(ns.rdf.rest).values.length) {
                   options.resourceItems = options.resourceItems.concat(traverseRDFList(s, resource));
                 }
                 else {
                   //FIXME: This may need to be processed outside of items? See also comment above about processing Collection and CollectionPages.
-                  var types = r.rdftype._array || [];
+                  var types = getGraphTypes(r);
                   //Include only non-container/collection and items that's not from an RDFList
-                  if (types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) < 0 &&
-                     types.indexOf(DO.C.Vocab['asCollection']["@id"]) < 0 &&
-                     types.indexOf(DO.C.Vocab['asCollectionPage']["@id"]) < 0 &&
-                     types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) < 0 &&
-                     types.indexOf(DO.C.Vocab['asOrderedCollectionPage']["@id"]) < 0) {
+                  if (!types.includes(ns.ldp.Container.value) &&
+                     !types.includes(ns.as.Collection.value) &&
+                     !types.includes(ns.as.CollectionPage.value) &&
+                     !types.includes(ns.as.OrderedCollection.value) &&
+                     !types.includes(ns.as.OrderedCollectionPage.value)) {
                     //XXX: The following is not used at the moment:
                     // DO.C.CollectionItems[resource] = s;
 
@@ -114,11 +113,14 @@ DO = {
               });
             });
 
-            if (s.asfirst && DO.C.CollectionPages.indexOf(s.asfirst) < 0) {
-              return DO.U.getItemsList(s.asfirst, options);
+            var first = s.out(ns.as.first).values;
+            var next = s.out(ns.as.next).values;
+
+            if (first.length && !DO.C.CollectionPages.includes(first[0])) {
+              return DO.U.getItemsList(first[0], options);
             }
-            else if (s.asnext && DO.C.CollectionPages.indexOf(s.asnext) < 0) {
-              return DO.U.getItemsList(s.asnext, options);
+            else if (next.length && !DO.C.CollectionPages.includes(next[0])) {
+              return DO.U.getItemsList(next[0], options);
             }
             else {
               return uniqueArray(options.resourceItems);
@@ -132,62 +134,53 @@ DO = {
 
 
     getNotifications: function(url) {
-      url = url || window.location.origin + window.location.pathname;
+      url = url || currentLocation();
       var notifications = [];
 
       DO.C.Inbox[url] = {};
       DO.C.Inbox[url]['Notifications'] = [];
 
       return getResourceGraph(url)
-        .then(
-          function(i) {
-            DO.C.Inbox[url]['Graph'] = i;
+        .then(g => {
+          DO.C.Inbox[url]['Graph'] = g;
 
-            var s = i.child(url);
-            s.ldpcontains.forEach(function(resource) {
+          var s = g.node(rdf.namedNode(url));
+          s.out(ns.ldp.contains).values.forEach(resource => {
 // console.log(resource);
-              var types = s.child(resource).rdftype;
+            var types = getGraphTypes(s.node(rdf.namedNode(resource)));
 // console.log(types);
-              if(types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) < 0) {
-                notifications.push(resource);
-              }
-            });
+            if(!types.includes(ns.ldp.Container.value)) {
+              notifications.push(resource);
+            }
+          });
 // console.log(notifications);
-            if (notifications.length > 0) {
-              DO.C.Inbox[url]['Notifications'] = notifications;
-              return notifications;
-            }
-            else {
-              var reason = {"message": "There are no notifications."};
-              return Promise.reject(reason);
-            }
-          },
-          function(reason) {
-// console.log(reason);
-            return reason;
+          if (notifications.length) {
+            DO.C.Inbox[url]['Notifications'] = notifications;
+            return notifications;
           }
-        );
+          else {
+            var reason = {"message": "There are no notifications."};
+            return Promise.reject(reason);
+          }
+        });
     },
 
-    showInboxNotifications: function() {
-      getLinkRelation(DO.C.Vocab['ldpinbox']['@id'], null, DO.C.DocumentString).then(
-        function(i) {
-          i.forEach(function(inboxURL) {
+    showInboxNotifications: function(url, data) {
+      //TODO: Consider checking multiple getLinkRelation, [ns.ldp.inbox.value, ns.as.inbox.value]
+      getLinkRelation(ns.ldp.inbox.value, url, data)
+        .then(i => {
+          i.forEach(inboxURL => {
             if (!DO.C.Inbox[inboxURL]) {
               DO.U.showNotificationSources(inboxURL);
             }
           });
-        },
-        function(reason) {
-// console.log(reason);
-        }
-      );
+        });
     },
 
     showNotificationSources: function(url) {
       DO.U.getNotifications(url).then(
         function(notifications) {
-          notifications.forEach(function(notification) {
+          notifications.forEach(notification => {
             DO.U.showActivities(notification, { notification: true });
            });
         },
@@ -220,7 +213,7 @@ DO = {
       showProgress();
 
       var processContacts = (contacts) => {
-        if (contacts.length > 0) {
+        if (contacts.length) {
           var contactsPromises = contacts.map((url) =>
             getSubjectInfo(url).then((subject) => {
               if (subject.Graph) {
@@ -253,7 +246,7 @@ DO = {
       };
 
       function getContactsAndActivities() {
-        if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0) {
+        if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length) {
           return processExistingContacts(DO.C.User.Contacts);
         } else if (DO.C.User.IRI) {
           return getUserContacts(DO.C.User.IRI).then(processContacts);
@@ -286,17 +279,17 @@ DO = {
       var promises = [];
       var documentTypes = DO.C.ActivitiesObjectTypes.concat(Object.keys(DO.C.ResourceType));
 
-      var publicTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']] || {};
-      var privateTypeIndexes = agent.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']] || {};
+      var publicTypeIndexes = agent.TypeIndex[ns.solid.publicTypeIndex.value] || {};
+      var privateTypeIndexes = agent.TypeIndex[ns.solid.privateTypeIndex.value] || {};
       //XXX: Perhaps these shouldn't be merged and kept apart or have the UI clarify what's public/private, and additional engagements keep that context
       var typeIndexes = Object.assign({}, publicTypeIndexes, privateTypeIndexes);
 
       var recognisedTypes = [];
 
       Object.values(typeIndexes).forEach(typeRegistration => {
-        var forClass = typeRegistration[DO.C.Vocab['solidforClass']['@id']];
-        var instance = typeRegistration[DO.C.Vocab['solidinstance']['@id']];
-        var instanceContainer = typeRegistration[DO.C.Vocab['solidinstanceContainer']['@id']];
+        var forClass = typeRegistration[ns.solid.forClass.value];
+        var instance = typeRegistration[ns.solid.instance.value];
+        var instanceContainer = typeRegistration[ns.solid.instanceContainer.value];
 
         if (documentTypes.includes(forClass)) {
           recognisedTypes.push(forClass);
@@ -323,8 +316,8 @@ DO = {
 
     processAgentStorageOutbox: function(agent) {
       var promises = [];
-      if (agent.Storage && agent.Storage.length > 0) {
-        if (agent.Outbox && agent.Outbox.length > 0) {
+      if (agent.Storage && agent.Storage.length) {
+        if (agent.Outbox && agent.Outbox.length) {
           if (agent.Storage[0] === agent.Outbox[0]) {
             promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
           }
@@ -337,7 +330,7 @@ DO = {
           promises.push(DO.U.showActivitiesSources(agent.Storage[0]))
         }
       }
-      else if (agent.Outbox && agent.Outbox.length > 0) {
+      else if (agent.Outbox && agent.Outbox.length) {
         promises.push(DO.U.showActivitiesSources(agent.Outbox[0]));
       }
 
@@ -395,6 +388,7 @@ DO = {
         //   return [];
         // })
         .then(g => {
+          // console.log(g)
           if (!g || g.resource) return;
 
           if (options.notification) {
@@ -407,21 +401,20 @@ DO = {
             DO.C.Activity[url]['Graph'] = g;
           }
 
-          var currentPathURL = window.location.origin + window.location.pathname;
+          var currentPathURL = currentLocation();
 
           var subjectsReferences = [];
           var subjects = [];
-          g.graph().toArray().forEach(function(t){
-            subjects.push(t.subject.nominalValue);
+          g.out().quads().forEach(t => {
+            subjects.push(t.subject.value);
           });
           subjects = uniqueArray(subjects);
 
-          subjects.forEach(function(i){
-            var s = g.child(i)
-// console.log(s)
-            var types = s.rdftype._array || [];
+          subjects.forEach(i => {
+            var s = g.node(rdf.namedNode(i));
+            var types = getGraphTypes(s);
 
-            if (types.length > 0) {
+            if (types.length) {
               var resourceTypes = types;
 
               var language = getGraphLanguage(s);
@@ -429,25 +422,26 @@ DO = {
               var rights = getGraphRights(s);
 
               //XXX: May need to be handled in a similar way to to as:Anounce/Create?
-              if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1 ||
-                 resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Dislike') > -1){
-                if(s.asobject && s.asobject.at(0) && getPathURL(s.asobject.at(0)) == currentPathURL ) {
-                  if(s.ascontext && s.ascontext.at(0)){
-                    var context = s.ascontext.at(0);
-                    subjectsReferences.push(context);
-                    return DO.U.showActivities(context)
+              if (resourceTypes.includes(ns.as.Like.value) ||
+                 resourceTypes.includes(ns.as.Dislike.value)){
+                var object = s.out(ns.as.object).values;
+                if (object.length && getPathURL(object.values[0]) == currentPathURL) {
+                  var context = s.out(ns.as.context).values;
+                  if (context.length) {
+                    subjectsReferences.push(context[0]);
+                    return DO.U.showActivities(context[0])
                       .then(iri => iri)
-                      .catch(e => console.log(context + ': context is unreachable', e));
+                      .catch(e => console.log(context[0] + ': context is unreachable', e));
                   }
                   else {
-                    var iri = s.iri().toString();
-                    var targetIRI = s.asobject.at(0);
+                    var iri = s.term.value;
+                    var targetIRI = object[0];
                     // var motivatedBy = 'oa:assessing';
                     var id = generateUUID(iri);
                     var refId = 'r-' + id;
                     var refLabel = id;
 
-                    var bodyValue = (resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Like') > -1) ? 'Liked' : 'Disliked';
+                    var bodyValue = (resourceTypes.includes(ns.as.Like.value)) ? 'Liked' : 'Disliked';
                     var motivatedBy = bodyValue.slice(0, -1);
 
                     var noteData = {
@@ -479,22 +473,23 @@ DO = {
 
                     noteData["body"] = [bodyObject];
 
-                    if (s.asactor && s.asactor.at(0)){
+                    var actor = s.out(ns.as.actor).values;
+                    if (actor.length) {
                       noteData['creator'] = {
-                        'iri': s.asactor.at(0)
+                        'iri': actor[0]
                       }
-                      var a = g.child(noteData['creator']['iri']);
+                      var a = g.node(rdf.namedNode(noteData['creator']['iri']));
                       var actorName = getAgentName(a);
                       var actorImage = getGraphImage(a);
 
-                      if(typeof actorName != 'undefined') {
+                      if (typeof actorName != 'undefined') {
                         noteData['creator']['name'] = actorName;
                       }
-                      if(typeof actorImage != 'undefined') {
+                      if (typeof actorImage != 'undefined') {
                         noteData['creator']['image'] = actorImage;
                       }
                     }
-                    else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Dislike') > -1) {
+                    else if (resourceTypes.includes(ns.as.Dislike.value)) {
                       noteData['creator'] = {
                         'name': 'Anonymous Coward'
                       }
@@ -509,40 +504,40 @@ DO = {
                   }
                 }
               }
-              else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Relationship') > -1){
-                if(s.assubject && s.assubject.at(0) && s.asrelationship && s.asrelationship.at(0) && s.asobject && s.asobject.at(0) && getPathURL(s.asobject.at(0)) == currentPathURL) {
-                  var subject = s.assubject.at(0);
+              else if (resourceTypes.includes(ns.as.Relationship.value)) {
+                if (s.out(ns.as.subject).values.length && as.out(as.relationship).values.length && s.out(ns.as.object).values.length && getPathURL(s.out(ns.as.object).values[0]) == currentPathURL) {
+                  var subject = s.out(ns.as.subject).values[0];
                   subjectsReferences.push(subject);
                   return DO.U.showActivities(subject)
                     .then(iri => iri)
                     .catch(e => console.log(subject + ': subject is unreachable', e));
                 }
               }
-              else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Announce') > -1 || resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Create') > -1) {
+              else if (resourceTypes.includes(ns.as.Announce.value) || resourceTypes.includes(ns.as.Create.value)) {
                 var o = {};
 
-                var object = (s.asobject && s.asobject.at(0)) ? s.asobject.at(0) : undefined;
+                var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
                 //TODO: if no object, leave.
 
-                var target = (s.astarget && s.astarget.at(0)) ? s.astarget.at(0) : undefined;
+                var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
 
-                var objectGraph = s.child(object);
-                var inReplyTo = objectGraph.asinReplyTo && objectGraph.asinReplyTo.at(0);
+                var objectGraph = s.node(rdf.namedNode(object));
+                var inReplyTo = objectGraph.out(ns.as.inReplyTo).values.length && objectGraph.out(ns.as.inReplyTo).values[0];
 
-                if(object && (target || inReplyTo)) {
+                if (object && (target || inReplyTo)) {
                   var targetPathURL = getPathURL(target) || getPathURL(inReplyTo);
 
                   if (targetPathURL == currentPathURL) {
                     o['targetInOriginalResource'] = true;
                   }
-                  else if (DO.C.Resource[documentURL].graph.rellatestversion && targetPathURL == getPathURL(DO.C.Resource[documentURL].graph.rellatestversion)) {
+                  else if (DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values.length && targetPathURL == getPathURL(DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0])) {
                     o['targetInMemento'] = true;
                   }
-                  else if (DO.C.Resource[documentURL].graph.owlsameAs && DO.C.Resource[documentURL].graph.owlsameAs.at(0) == targetPathURL) {
+                  else if (DO.C.Resource[documentURL].graph.out(ns.owl.sameAs).values.length && DO.C.Resource[documentURL].graph.out(ns.owl.sameAs).values[0] == targetPathURL) {
                     o['targetInSameAs'] = true;
                   }
 
-                  if (o['targetInOriginalResource'] || o['targetInMemento'] || o['targetInSameAs']){
+                  if (o['targetInOriginalResource'] || o['targetInMemento'] || o['targetInSameAs']) {
                     subjectsReferences.push(object);
 
                     if (options.notification) {
@@ -553,14 +548,14 @@ DO = {
                       return DO.U.showAnnotation(object, s, o);
                     }
                     else {
-                      s = s.child(object);
+                      s = s.node(rdf.namedNode(object));
                       var citation = {};
 
                       // if (target.startsWith(currentPathURL)) {
-                        Object.keys(DO.C.Citation).forEach(function(citationCharacterization){
-                          var citedEntity = s[citationCharacterization];
+                        Object.keys(DO.C.Citation).forEach(citationCharacterization => {
+                          var citedEntity = s.out(rdf.namedNode(citationCharacterization)).values;
                           // if(citedEntity) {
-                            citedEntity.forEach(function(cE) {
+                            citedEntity.forEach(cE => {
                               if(cE.startsWith(currentPathURL)) {
                                 o['objectCitingEntity'] = true;
                                 citation = {
@@ -591,10 +586,11 @@ DO = {
                 // var iri = s.iri().toString();
                 // return DO.U.showCitations(iri, s)
               // }
-              else if(resourceTypes.indexOf('https://www.w3.org/ns/activitystreams#Add') > -1) {
-                var object = s.asobject ? s.asobject.at(0) : undefined;
-                var target = s.astarget ? s.astarget.at(0) : undefined;
-                var origin = s.asorigin ? s.asorigin.at(0) : undefined;
+              else if(resourceTypes.includes(ns.as.Add.value)) {
+                var object = s.out(ns.as.object).values.length ? s.out(ns.as.object).values[0] : undefined;
+                var target = s.out(ns.as.target).values.length ? s.out(ns.as.target).values[0] : undefined;
+                var origin = s.out(ns.as.origin).values.length ? s.out(ns.as.origin).values[0] : undefined;
+
 
                 if (object && (target || origin)) {
                   var targetPathURL = getPathURL(target);
@@ -617,16 +613,16 @@ DO = {
                   }
                 }
               }
-              else if(resourceTypes.indexOf('http://www.w3.org/ns/oa#Annotation') > -1 && getPathURL(s.oahasTarget) == currentPathURL && !subjectsReferences.includes(i)) {
+              else if (resourceTypes.includes(ns.oa.Annotation.value) && getPathURL(s.out(ns.oa.hasTarget).values[0]) == currentPathURL && !subjectsReferences.includes(i)) {
                 return DO.U.showAnnotation(i, s);
               }
-              else if (!subjectsReferences.includes(i) && documentTypes.some(item => resourceTypes.includes(item)) && s.asinReplyTo && s.asinReplyTo.at(0) && getPathURL(s.asinReplyTo.at(0)) == currentPathURL) {
+              else if (!subjectsReferences.includes(i) && documentTypes.some(item => resourceTypes.includes(item)) && s.out(ns.as.inReplyTo).values.length && s.out(ns.as.inReplyTo).values[0] && getPathURL(s.out(ns.as.inReplyTo).values[0]) == currentPathURL) {
                   subjectsReferences.push(i);
                 return DO.U.showAnnotation(i, s);
               }
-              else if (resourceTypes.indexOf('http://www.w3.org/2002/01/bookmark#Bookmark') > -1 && s.bookmarkrecalls && getPathURL(s.bookmarkrecalls) == currentPathURL ) {
-                var iri = s.iri().toString();
-                var targetIRI = s.bookmarkrecalls;
+              else if (resourceTypes.includes(ns.bookmark.Bookmark.value) && s.out(ns.bookmark.recalls).values.length && getPathURL(s.out(ns.bookmark.recalls).values[0]) == currentPathURL ) {
+                var iri = s.term.value;
+                var targetIRI = s.out(ns.bookmark.recalls).values[0];
                 var motivatedBy = 'bookmark:Bookmark';
                 var id = generateUUID(iri);
                 var refId = 'r-' + id;
@@ -652,8 +648,9 @@ DO = {
                 var creator = options.agent;
                 //TODO: Move to graph.js?
                 Object.keys(DO.C.Actor.Property).some(key => {
-                  if (s[key] && s[key].at(0)) {
-                    creator = s[key].at(0);
+                  const { values } = s.out(rdf.namedNode(key));
+                  if (values.length) {
+                    creator = values[0];
                     return true;
                   }
                 })
@@ -662,27 +659,28 @@ DO = {
                   noteData['creator'] = {
                     'iri': creator
                   }
-                  var a = g.child(noteData['creator']['iri']);
+                  var a = g.node(rdf.namedNode(noteData['creator']['iri']));
                   var actorName = getAgentName(a);
                   var actorImage = getGraphImage(a);
 
-                  if(typeof actorName != 'undefined') {
+                  if (typeof actorName != 'undefined') {
                     noteData['creator']['name'] = actorName;
                   }
-                  if(typeof actorImage != 'undefined') {
+                  if (typeof actorImage != 'undefined') {
                     noteData['creator']['image'] = actorImage;
                   }
                 }
 
                 var datetime = getGraphDate(s);
-                if (datetime){
+                if (datetime) {
                   noteData['datetime'] = datetime;
                 }
 
-                if (license){
+                if (license) {
                   noteData['license'] = license;
                 }
-                if (rights){
+
+                if (rights) {
                   noteData['rights'] = rights;
                 }
 
@@ -709,7 +707,7 @@ DO = {
 
     //Borrowed some of the d3 parts from https://bl.ocks.org/mbostock/4600693
     showVisualisationGraph: function(url, data, selector, options) {
-      url = url || window.location.origin + window.location.pathname;
+      url = url || currentLocation();
       selector = selector || 'body';
       options = options || {};
       options['contentType'] = options.contentType || 'text/html';
@@ -794,7 +792,7 @@ DO = {
       group = Object.assign(group, legendCategories);
 
       // var a = [];
-      // Object.keys(group).forEach(function(i){
+      // Object.keys(group).forEach(i => {
       //   a.push('<div style="background-color:' + group[i].color + '; width:5em; height:5em;">' + group[i].label + '</div>');
       // });
       // getDocumentContentNode(document).insertAdjacentHTML('beforeend', a.join(''));
@@ -817,7 +815,7 @@ DO = {
 
       var graphView = document.querySelector(selector);
       graphView.insertAdjacentHTML('beforeend', '<button class="export" title="Export graph as SVG">Export</button>');
-      graphView.addEventListener('click', function(e) {
+      graphView.addEventListener('click', (e) => {
         if (e.target.closest('button.export')) {
           var svgNode = graphView.querySelector('svg[typeof="http://purl.org/dc/dcmitype/Image"]');
 
@@ -837,7 +835,7 @@ DO = {
       width = options.width || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["width"]);
       height = options.height || parseInt(s.ownerDocument.defaultView.getComputedStyle(s, null)["height"]);
 
-      if('title' in options) {
+      if ('title' in options) {
         svg.append('title')
           .attr('property', 'dcterms:title')
           .text(options.title);
@@ -856,7 +854,7 @@ DO = {
             .attr("y", 20)
             .text("Resources: ")
 
-        go.resources.forEach(function(i, index){
+        go.resources.forEach((i, index) => {
           graphResources
             .append('a')
               .attr('fill', legendCategories[7].color)
@@ -943,18 +941,18 @@ DO = {
           .enter()
           .append("circle")
             .attr("cx", 10)
-            .attr("cy", function(d,i){ return 150 + i*25 })
+            .attr("cy", (d, i) => { return 150 + i*25 })
             .attr("r", nodeRadius)
-            .attr("fill", function(d){ return legendInfo[d].color })
+            .attr("fill", (d) => { return legendInfo[d].color })
 
         graphLegend.selectAll("foobarbazqux")
           .data(legendGroups)
           .enter()
           .append("text")
             .attr("x", 25)
-            .attr("y", function(d,i){ return 155 + i*25 })
-            .attr("fill", function(d){ return legendInfo[d].color })
-            .text(function(d){ return legendInfo[d].label + ' (' + legendInfo[d].count + ')'} )
+            .attr("y", (d, i) => { return 155 + i*25 })
+            .attr("fill", (d) => { return legendInfo[d].color })
+            .text((d) => { return legendInfo[d].label + ' (' + legendInfo[d].count + ')'} )
       }
 
       function handleResource (iri, headers, options) {
@@ -998,10 +996,9 @@ DO = {
 
       function buildGraphObject(graph, options) {
         var graphObject = {};
-
         var nodes = graph.nodes;
         var nodeById = new Map();
-        nodes.forEach(function(n){
+        nodes.forEach(n => {
           nodeById.set(n.id, n);
         })
         var links = graph.links;
@@ -1011,11 +1008,12 @@ DO = {
 // console.log(nodeById)
         var uniqueNodes = {};
 
-        links.forEach(function(link) {
+        links.forEach(link => {
           var s = link.source = nodeById.get(link.source),
               t = link.target = nodeById.get(link.target),
               i = {}; // intermediate node
               // linkValue = link.value
+
           nodes.push(i);
 
           if (uniqueNodes[s.id] > -1) {
@@ -1089,7 +1087,7 @@ DO = {
           .append('circle')
             .attr('r', nodeRadius)
             .attr('fill', function(d) { return group[d.group].color; })
-            .attr('stroke', function (d) {
+            .attr('stroke', function(d) {
               if (d.visited) { return group[3].color }
               else if (d.group == 4) { return group[2].color }
               else { return group[7].color }})
@@ -1173,32 +1171,34 @@ DO = {
       var optionsNormalisation = restOptions;
 
       if (typeof data == 'string') {
-        return getGraphFromData(data, options).then(function(g){
-          return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
-        });
+        return getGraphFromData(data, options)
+          .then(g => {
+            return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
+          });
       }
       else if (typeof data == 'object') {
         return DO.U.convertGraphToVisualisationGraph(requestURL, data, options);
       }
       else if (typeof data == 'undefined') {
         if (DO.C.Resource[documentURL] && DO.C.Resource[documentURL].graph) {
-          return DO.U.convertGraphToVisualisationGraph(requestURL, DO.C.Resource[documentURL].graph.graph(), options);
+          return DO.U.convertGraphToVisualisationGraph(requestURL, DO.C.Resource[documentURL].graph, options);
         }
         else {
           data = getDocument(null, optionsNormalisation);
-          return getGraphFromData(data, options).then(function(g){
-            return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
-          });
+          return getGraphFromData(data, options)
+            .then(g => {
+              return DO.U.convertGraphToVisualisationGraph(requestURL, g, options);
+            });
         }
       }
     },
 
+    //TODO: Review grapoi
     convertGraphToVisualisationGraph: function(url, g, options){
 // console.log(g);
       DO.C['Graphs'] = DO.C['Graphs'] || {};
-      g = SimpleRDF(DO.C.Vocab, options['subjectURI'], g, ld.store).child(url);
-// console.log(g.toString())
-      var dataGraph = SimpleRDF();
+
+      var dataGraph = rdf.grapoi({ dataset: rdf.dataset().addAll(g.dataset)});
       var graphs = {};
       graphs[options['subjectURI']] = g;
 
@@ -1208,20 +1208,18 @@ DO = {
 
       DO.C['Graphs'][options['subjectURI']] = g;
 
-      Object.keys(graphs).forEach(function(i){
-        var g = graphs[i].graph();
-
-        dataGraph.graph().addAll(g);
+      Object.keys(graphs).forEach(i => {
+        dataGraph.dataset.addAll(graphs[i].dataset);
       });
 
       var graphData = {"nodes":[], "links": [], "resources": options.resources };
       var graphNodes = [];
 
-      dataGraph.graph().toArray().forEach(function(t){
-        if(
-          // t.predicate.nominalValue == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' ||
-          // t.predicate.nominalValue == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' ||
-          t.object.nominalValue == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
+      dataGraph.out().quads().forEach(t => {
+        if (
+          // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' ||
+          // t.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' ||
+          t.object.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
           ) {
           return;
         }
@@ -1232,9 +1230,9 @@ DO = {
         var sVisited = false;
         var oVisited = false;
 
-        switch(t.subject.interfaceName) {
+        switch(t.subject.termType) {
           default: case 'NamedNode':
-            if (stripFragmentFromString(t.subject.nominalValue) != url) {
+            if (stripFragmentFromString(t.subject.value) != url) {
               sGroup = 7;
             }
             break;
@@ -1243,9 +1241,9 @@ DO = {
             break;
         }
 
-        switch(t.object.interfaceName) {
+        switch(t.object.termType) {
           default: case 'NamedNode':
-            if (stripFragmentFromString(t.object.nominalValue) != url) {
+            if (stripFragmentFromString(t.object.value) != url) {
               oGroup = 7;
             }
             break;
@@ -1257,143 +1255,146 @@ DO = {
             break;
         }
 
-        if (t.subject.nominalValue.startsWith('http://example.com/.well-known/genid/')) {
+        if (t.subject.value.startsWith('http://example.com/.well-known/genid/')) {
           sGroup = 8;
         }
-        if (t.object.nominalValue.startsWith('http://example.com/.well-known/genid/')) {
+        if (t.object.value.startsWith('http://example.com/.well-known/genid/')) {
           oGroup = 8;
         }
 
-        if (t.predicate.nominalValue == DO.C.Vocab['rdftype']['@id']){
+        if (t.predicate.value == ns.rdf.type.value){
           oGroup = 6;
 
-          if (isActorType(t.object.nominalValue)) {
+          if (isActorType(t.object.value)) {
             sGroup = 10;
           }
 
-          switch (t.object.nominalValue) {
-            case DO.C.Vocab['qbDataSet']['@id']:
+          switch (t.object.value) {
+            case ns.qb.DataSet.value:
               oGroup = 11;
               break;
-            case DO.C.Vocab['doapSpecification']['@id']:
+            case ns.doap.Specification.value:
               sGroup = 14;
               break;
-            case DO.C.Vocab['odrlAgreement']['@id']:
-            case DO.C.Vocab['odrlAssertion']['@id']:
-            case DO.C.Vocab['odrlOffer']['@id']:
-            case DO.C.Vocab['odrlPolicy']['@id']:
-            case DO.C.Vocab['odrlPrivacy']['@id']:
-            case DO.C.Vocab['odrlRequest']['@id']:
-            case DO.C.Vocab['odrlSet']['@id']:
-            case DO.C.Vocab['odrlTicket']['@id']:
+            case ns.odrl.Agreement.value:
+            case ns.odrl.Assertion.value:
+            case ns.odrl.Offer.value:
+            case ns.odrl.Policy.value:
+            case ns.odrl.Privacy.value:
+            case ns.odrl.Request.value:
+            case ns.odrl.Set.value:
+            case ns.odrl.Ticket.value:
               sGroup = 15;
               break;
-            case DO.C.Vocab['schemaEvent']['@id']:
-            case DO.C.Vocab['biboEvent']['@id']:
-            case DO.C.Vocab['biboConference']['@id']:
+            case ns.schema.Event.value:
+            case ns.bibo.Event.value:
+            case ns.bibo.Conference.value:
               sGroup = 16;
               break;
-            case DO.C.Vocab['biboSlide']['@id']:
+            case ns.bibo.Slide.value:
               sGroup = 17;
               break;
+            // case ns.skos.Collection.value:
+            //   sGroup = 18; //Assign Concepts colour to Collection?
+            //   break;
           }
         }
 
-        if (t.subject.nominalValue == 'http://purl.org/ontology/bibo/presentedAt') {
+        if (t.subject.value == 'http://purl.org/ontology/bibo/presentedAt') {
           oGroup = 16;
         }
-        if (Config.Event.Property.hasOwnProperty(t.predicate.nominalValue)) {
+        if (Config.Event.Property.hasOwnProperty(t.predicate.value)) {
           sGroup = 16;
         }
 
-        if (isActorProperty(t.predicate.nominalValue)) {
+        if (isActorProperty(t.predicate.value)) {
           oGroup = 10;
         }
-        if (t.predicate.nominalValue.startsWith('http://purl.org/spar/cito/')) {
+        if (t.predicate.value.startsWith('http://purl.org/spar/cito/')) {
           oGroup = 9;
         }
-        switch(t.predicate.nominalValue) {
-          case DO.C.Vocab['foafknows']['@id']:
+        switch(t.predicate.value) {
+          case ns.foaf.knows.value:
             sGroup = 10;
             oGroup = 10;
             break;
-          case DO.C.Vocab['specrequirement']['@id']:
-          case DO.C.Vocab['specrequirementReference']['@id']:
+          case ns.spec.requirement.value:
+          case ns.spec.requirementReference.value:
             oGroup = 12;
             break;
-          case DO.C.Vocab['specadvisement']['@id']:
+          case ns.spec.advisement.value:
             oGroup = 13;
             break;
-          case DO.C.Vocab['spectestSuite']['@id']:
+          case ns.spec.testSuite.value:
             oGroup = 11;
             break;
-          case DO.C.Vocab['odrlhasPolicy']['@id']:
-            oGroup = 14;
+          case ns.odrl.hasPolicy.value:
+            oGroup = 15;
             break;
-          case DO.C.Vocab['skoshasTopConcept']['@id']:
-          case DO.C.Vocab['skosinScheme']['@id']:
-          case DO.C.Vocab['skosCollection']['@id']:
-          case DO.C.Vocab['skossemanticRelation']['@id']:
-          case DO.C.Vocab['skostopConceptOf']['@id']:
-          case DO.C.Vocab['schemaaudience']['@id']:
+          case ns.skos.hasTopConcept.value:
+          case ns.skos.inScheme.value:
+          case ns.skos.semanticRelation.value:
+          case ns.skos.topConceptOf.value:
+          case ns.schema.audience.value:
             oGroup = 18;
             break;
         }
 
-        if (DO.C.Graphs[t.subject.nominalValue]) {
+        if (DO.C.Graphs[t.subject.value]) {
           // sGroup = 1;
           sVisited = true;
         }
-        if (DO.C.Graphs[t.object.nominalValue]) {
+        if (DO.C.Graphs[t.object.value]) {
           // oGroup = 1;
           oVisited = true;
         }
 
         //Initial root node
-        if (t.subject.nominalValue == url) {
+        if (t.subject.value == url) {
           sGroup = 5;
           sVisited = true;
         }
 
-        if (t.object.nominalValue == url) {
+        if (t.object.value == url) {
           oGroup = 5;
           oVisited = true;
         }
 
         //FIXME: groups are set once - not updated.
 
-        var objectValue = t.object.nominalValue;
-        if (t.object.interfaceName == 'Literal') {
+        var objectValue = t.object.value;
+        if (t.object.termType == 'Literal') {
           //TODO: Revisit
-          // if(t.object.datatype.nominalValue == 'http://www.w3.org/rdf/1999/02/22-rdf-syntax-ns#HTML') {
+          // if(t.object.datatype.termType.value == 'http://www.w3.org/rdf/1999/02/22-rdf-syntax-ns#HTML') {
           // }
           // objectValue = escapeCharacters(objectValue);
           objectValue = DOMPurify.sanitize(objectValue);
         }
 
-        if(graphNodes.indexOf(t.subject.nominalValue) == -1) {
-          graphNodes.push(t.subject.nominalValue);
-          graphData.nodes.push({"id": t.subject.nominalValue, "group": sGroup, "visited": sVisited });
-        }
-        if(graphNodes.indexOf(t.object.nominalValue) == -1) {
-          if (t.object.nominalValue in DO.C.Resource) {
-            // console.log(t.object.nominalValue)
-            DO.C.Resource[t.object.nominalValue].rdftype.forEach(function(type){
-              if (isActorType(type)) {
-                // console.log(type)
-                oGroup = 10
-              }
-            })
+        if (!g.node(rdf.namedNode(t.object.value)).out(ns.rdf.type).values.length) {
+          if (!graphNodes.includes(t.subject.value)) {
+            graphNodes.push(t.subject.value);
+            graphData.nodes.push({"id": t.subject.value, "group": sGroup, "visited": sVisited });
           }
+          if (!graphNodes.includes(t.object.value)) {
+            if (t.object.value in DO.C.Resource) {
+              // console.log(t.object.value)
+              DO.C.Resource[t.object.value].graph.out(ns.rdf.type).values.forEach(type => {
+                if (isActorType(type)) {
+                  // console.log(type)
+                  oGroup = 10
+                }
+              })
+            }
 
-          graphNodes.push(objectValue);
-          graphData.nodes.push({"id": objectValue, "group": oGroup, "visited": oVisited });
+            graphNodes.push(objectValue);
+            graphData.nodes.push({"id": objectValue, "group": oGroup, "visited": oVisited });
+          }
         }
 
-        graphData.links.push({"source": t.subject.nominalValue, "target": objectValue, "value": t.predicate.nominalValue});
+        graphData.links.push({"source": t.subject.value, "target": objectValue, "value": t.predicate.value});
       });
 // console.log(graphNodes)
-// console.log(graph)
 
       graphNodes = undefined;
       return Promise.resolve(graphData);
@@ -1410,7 +1411,7 @@ DO = {
         DO.U.showGraphResources(resources, selector, options);
       }
       else {
-        var property = (resources && 'filter' in options && 'predicates' in options.filter && options.filter.predicates.length > 0) ? options.filter.predicates[0] : DO.C.Vocab['ldpinbox']['@id'];
+        var property = (resources && 'filter' in options && 'predicates' in options.filter && options.filter.predicates.length) ? options.filter.predicates[0] : ns.ldp.inbox.value;
         var iri = (resources) ? resources : location.href.split(location.search||location.hash||/[?#]/)[0];
 
         getLinkRelation(property, iri).then(
@@ -1424,6 +1425,7 @@ DO = {
       }
     },
 
+    //TODO: Review grapoi
     showGraphResources: function(resources, selector, options) {
       selector = selector || getDocumentContentNode(document);
       options = options || {};
@@ -1431,48 +1433,49 @@ DO = {
         resources = uniqueArray(resources);
       }
 
-      DO.U.processResources(resources, options).then(
-        function(urls) {
+      DO.U.processResources(resources, options)
+        .then(urls => {
           var promises = [];
-          urls.forEach(function(url) {
-            // console.log(u);
+          urls.forEach(url => {
             // window.setTimeout(function () {
-              // var pIRI = getProxyableIRI(u);
               promises.push(getResourceGraph(url));
             // }, 1000)
           });
 
-          var dataGraph = SimpleRDF();
+          Promise.allSettled(promises)
+            .then(resolvedPromises => {
+              const dataset = rdf.dataset();
+        
+              resolvedPromises.forEach(response => {
+// console.log(response.value)
+                if (response.value) {
+                  dataset.addAll(response.value.dataset);
+                }
+              })
 
-          Promise.all(promises)
-            .then(function(graphs) {
-              graphs.forEach(function(g){
-                g = g.graph();
-
-                dataGraph.graph().addAll(g);
-              });
+              var g = rdf.grapoi({ dataset });
 
               if ('filter' in options) {
-                dataGraph = dataGraph.graph().filter(function(g) {
-                  if ('subjects' in options.filter && options.filter.subjects.length > 0 && options.filter.subjects.indexOf(g.subject.nominalValue) >= 0) {
+                const quads = g.out().quads().map(g => {
+                  if ('subjects' in options.filter && options.filter.subjects.length && options.filter.subjects.includes(g.subject.value)) {
                     return g;
                   }
-                  if ('predicates' in options.filter && options.filter.predicates.length > 0 && options.filter.predicates.indexOf(g.predicate.nominalValue) >= 0) {
+                  if ('predicates' in options.filter && options.filter.predicates.length && options.filter.predicates.includes(g.predicate.value)) {
                     return g;
                   }
                 });
+
+                dataset = rdf.dataset(quads);
               }
 
-              serializeGraph(dataGraph, { 'contentType': 'text/turtle' })
-                .then(function(data){
-                  options['contentType'] = 'text/turtle';
-                  options['resources'] = resources;
-                  // options['subjectURI'] = url;
-                  //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
-                  DO.U.showVisualisationGraph(options.subjectURI, data, selector, options);
-                });
+              // serializeGraph(dataset, { 'contentType': 'text/turtle' })
+              options['contentType'] = 'text/turtle';
+              options['resources'] = resources;
+              // options['subjectURI'] = url;
+              //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
+              DO.U.showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
             });
-        });
+      });
     },
 
     processResources: function(resources, options) {
@@ -1503,7 +1506,7 @@ DO = {
         var selectorsArray = matches[1].split(',')
         var selector = {};
 
-        selectorsArray.forEach(function(s){
+        selectorsArray.forEach(s => {
           var kv = s.split('=');
 
           if (kv.length == 2) {
@@ -1529,7 +1532,7 @@ DO = {
     showTextQuoteSelector: function(containerNode) {
       var motivatedBy = 'oa:highlighting';
       var selector = DO.U.getTextQuoteSelectorFromLocation(document.location);
-      if (selector && selector.exact && selector.exact.length > 0) {
+      if (selector && selector.exact && selector.exact.length) {
         //XXX: TODO: Copied from showAnnotation
 
         var refId = document.location.hash.substring(1);
@@ -1543,17 +1546,22 @@ DO = {
           'do': true,
           'mode': '#selector'
         };
-
+// console.log(selector)
+// console.log(refId)
         DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
       }
     },
 
     importTextQuoteSelector: function(containerNode, selector, refId, motivatedBy, docRefType, options) {
+// console.log(containerNode)
+// console.log(selector)
+// console.log(refId)
+// console.log(motivatedBy)
+// console.log(docRefType)
+// console.log(options)
       var containerNodeTextContent = containerNode.textContent;
       //XXX: Seems better?
       // var containerNodeTextContent = fragmentFromString(getDocument(containerNode)).textContent.trim();
-
-
 // console.log(containerNodeTextContent);
       options = options || {};
 
@@ -1570,7 +1578,7 @@ DO = {
       var textMatches = matchAllIndex(containerNodeTextContent, new RegExp(phrase, 'g'));
 // console.log(textMatches)
 
-      textMatches.forEach(function(item) {
+      textMatches.forEach(item => {
 // console.log('phrase:')
 // console.log(phrase)
 // console.log(item)
@@ -1606,7 +1614,6 @@ DO = {
         var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
 // console.log(selectedParentNodeValue)
 
-// console.log(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length))
         var selectionUpdated = fragmentFromString(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length));
 // console.log(selectionUpdated)
 
@@ -1703,7 +1710,7 @@ DO = {
         });
 // console.log(urls);
 
-        if (urls.length > 0) {
+        if (urls.length) {
           // var options = {'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'filter': { 'subjects': [docURI, iri] }, 'title': iri };
           var options = {'subjectURI': urls[0], 'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'title': urls[0] };
 
@@ -1761,12 +1768,22 @@ DO = {
 
       //Fugly
       function checkResourceInfo() {
+// console.log(DO.C.Resource[documentURL])
+
         if (documentURL in DO.C.Resource && 'state' in DO.C.Resource[documentURL]) {
           DO.U.processPotentialAction(DO.C.Resource[documentURL]);
+
+          if (DO.C.Resource[documentURL].inbox?.length && !DO.C.Inbox[DO.C.Resource[documentURL].inbox[0]]) {
+            DO.U.showNotificationSources(DO.C.Resource[documentURL].inbox[0]);
+          }
         }
         else {
-          getResourceInfo(DO.C.DocumentString).then(function(resourceInfo){
+          getResourceInfo(DO.C.DocumentString).then(resourceInfo => {
             DO.U.processPotentialAction(resourceInfo);
+
+            if (DO.C.Resource[documentURL].inbox?.length && !DO.C.Inbox[DO.C.Resource[documentURL].inbox[0]]) {
+              DO.U.showNotificationSources(DO.C.Resource[documentURL].inbox[0]);
+            }
           });
           // window.setTimeout(checkResourceInfo, 100);
         }
@@ -1783,7 +1800,7 @@ DO = {
     },
 
     processActivateAction: function() {
-      document.addEventListener('click', function(e) {
+      document.addEventListener('click', (e) => {
         if (e.target.closest('[about="#document-menu"][typeof="schema:ActivateAction"], [href="#document-menu"][typeof="schema:ActivateAction"], [resource="#document-menu"][typeof="schema:ActivateAction"]')) {
           e.preventDefault();
           e.stopPropagation();
@@ -1798,22 +1815,23 @@ DO = {
       });
     },
 
+    //TODO: Review grapoi
     processPotentialAction: function(resourceInfo) {
       var g = resourceInfo.graph;
-      var triples = g._graph;
-      triples.forEach(function(t){
-        var s = t.subject.nominalValue;
-        var p = t.predicate.nominalValue;
-        var o = t.object.nominalValue;
+      var triples = g.out().quads();
+      triples.forEach(t => {
+        var s = t.subject.value;
+        var p = t.predicate.value;
+        var o = t.object.value;
 
-        if(p == DO.C.Vocab['schemapotentialAction']['@id']) {
+        if (p == ns.schema.potentialAction.value) {
           var action = o;
           var documentOrigin = (document.location.origin === "null") ? "file://" : document.location.origin;
           var originPathname = documentOrigin + document.location.pathname;
 // console.log(originPathname)
 // console.log(action.startsWith(originPathname + '#'))
           if (action.startsWith(originPathname)) {
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', (e) => {
               var fragment = action.substr(action.lastIndexOf('#'));
 // console.log(fragment)
               if (fragment) {
@@ -1826,9 +1844,8 @@ DO = {
                   e.preventDefault();
                   e.stopPropagation();
 
-                  var so = g.child(action).schemaobject;
-                  if (typeof so !== 'undefined') {
-                    so = so.iri().toString();
+                  var so = g.node(rdf.namedNode(action)).out(ns.schema.object).values;
+                  if (so.length) {
                     selector = '#' + element.closest('[id]').id;
 
                     var svgGraph = document.querySelector(selector + ' svg');
@@ -1837,13 +1854,13 @@ DO = {
                       svgGraph.parentNode.removeChild(svgGraph);
                     }
                     else {
-                      serializeGraph(g, { 'contentType': 'text/turtle' })
-                        .then(function(data){
+                      // serializeGraph(g, { 'contentType': 'text/turtle' })
+                      //   .then(data => {
                           var options = {};
-                          options['subjectURI'] = so;
+                          options['subjectURI'] = so[0];
                           options['contentType'] = 'text/turtle';
-                          DO.U.showVisualisationGraph(options.subjectURI, data, selector, options);
-                        });
+                          DO.U.showVisualisationGraph(options.subjectURI, g.dataset.toCanonical(), selector, options);
+                        // });
                     }
                   }
                 }
@@ -1857,7 +1874,7 @@ DO = {
 
     showDocumentInfo: function() {
       document.documentElement.appendChild(fragmentFromString('<menu id="document-menu" class="do"><button class="show" title="Open menu">' + Icon[".fas.fa-bars"] + '</button><header></header><div></div><footer><dl><dt>About</dt><dd id="about-dokieli"><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><a href="https://dokie.li/" target="_blank">dokieli</a> is an ' + Icon[".fab.fa-osi"] + ' <a href="https://github.com/dokieli/dokieli" target="_blank">open source</a> project. There is ' + Icon[".fas.fa-flask"] + ' <a href="https://dokie.li/docs" target="_blank">documentation</a> and public ' + Icon[".fas.fa-comments"] + ' <a href="https://matrix.to/#/%23dokieli:matrix.org" target="_blank">chat</a>. Made with fun.</dd></dl></footer></menu>'));
-      document.querySelector('#document-menu').addEventListener('click', function(e) {
+      document.querySelector('#document-menu').addEventListener('click', (e) => {
         var button = e.target.closest('button');
         if(button){
           if (button.classList.contains('show')) {
@@ -1999,7 +2016,7 @@ DO = {
       }
       s += '<li><button title="Change to native device/browser view">Native</button></li>';
 
-      if (stylesheets.length > 0) {
+      if (stylesheets.length) {
         for (var i = 0; i < stylesheets.length; i++) {
           var stylesheet = stylesheets[i];
           var view = stylesheet.getAttribute('title');
@@ -2022,7 +2039,7 @@ DO = {
       }
 
       if(DO.C.GraphViewerAvailable) {
-        document.querySelector('#document-views.do').addEventListener('click', function(e){
+        document.querySelector('#document-views.do').addEventListener('click', (e) => {
           if (e.target.closest('.resource-visualise')) {
             if(document.querySelector('#graph-view')) { return; }
 
@@ -2033,7 +2050,7 @@ DO = {
             document.documentElement.appendChild(fragmentFromString('<aside id="graph-view" class="do on">' + DO.C.Button.Close + '<h2>Graph view</h2></aside>'));
 
             var graphView = document.getElementById('graph-view');
-            graphView.addEventListener('click', function(e) {
+            graphView.addEventListener('click', (e) => {
               if (e.target.closest('button.close')) {
                 var rv = document.querySelector('#document-views .resource-visualise');
                 if (rv) {
@@ -2164,7 +2181,7 @@ DO = {
         }
 
         var scriptCurrentData = {};
-        if (scriptCurrent.length > 0) {
+        if (scriptCurrent.length) {
           for(var i = 0; i < scriptCurrent.length; i++) {
             var v = scriptCurrent[i];
             var id = v.id;
@@ -2191,7 +2208,7 @@ DO = {
         document.querySelector('#embed-data-turtle textarea').focus();
         var a = document.querySelectorAll('#embed-data-entry nav a');
         for(let i = 0; i < a.length; i++) {
-          a[i].addEventListener('click', function(e) {
+          a[i].addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
 
@@ -2207,19 +2224,19 @@ DO = {
           });
         }
 
-        document.querySelector('#embed-data-entry button.close').addEventListener('click', function(e) {
+        document.querySelector('#embed-data-entry button.close').addEventListener('click', (e) => {
           document.querySelector('button.embed-data-meta').removeAttribute('disabled');
         });
 
         var buttonSave = document.querySelectorAll('#embed-data-entry button.save');
         for (let i = 0; i < buttonSave.length; i++) {
-          buttonSave[i].addEventListener('click', function(e) {
+          buttonSave[i].addEventListener('click', (e) => {
             var textarea = e.target.parentNode.querySelector('textarea');
             var name = textarea.getAttribute('name');
             var scriptEntry = textarea.value;
             var script = document.getElementById(name);
 
-            if (scriptEntry.length > 0) {
+            if (scriptEntry.length) {
               //If there was a script already
               if (script) {
                 script.textContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
@@ -2247,6 +2264,7 @@ DO = {
       // edih.addEventListener('click', eventEmbedData);
     },
 
+    //TODO: Review grapoi
     showDocumentMetadata: function(node) {
       if(document.querySelector('#document-metadata')) { return; }
 
@@ -2260,23 +2278,24 @@ DO = {
       var advisements = [];
       var skos = [];
 
-      var subjectURI = window.location.origin + window.location.pathname;
-      var options = {'contentType': 'text/html', 'subjectURI': subjectURI };
+      // var subjectURI = currentLocation();
+      // var options = {'contentType': 'text/html', 'subjectURI': subjectURI };
+// console.log(options)
+      var g = DO.C.Resource[documentURL].graph;
+      var citations = Object.keys(DO.C.Citation).concat([ns.dcterms.references.value, ns.schema.citation.value]);
+      var triples = g.out().quads();
+      // g.out().terms.length
+      for (const t of triples) {
+// console.log(t)
+        var s = t.subject.value;
+        var p = t.predicate.value;
+        var o = t.object.value;
 
-      var s = DO.C.Resource[documentURL].graph;
- // console.log(s)
-
-      var triples = s._graph;
-      var citations = Object.keys(DO.C.Citation).concat(DO.C.Vocab["schemacitation"]["@id"]);
-      triples.forEach(function(t){
-        var s = t.subject.nominalValue;
-        var p = t.predicate.nominalValue;
-        var o = t.object.nominalValue;
-
-        if(citations.indexOf(p) > -1) {
+        //TODO: Distinguish between external/internal for DO.C.Resource[documentURL].citations (right now it is external only), then use that for citations in showDocumentMetadata instead of using this triples.forEach
+        if (citations.includes(p)) {
           citationsTo.push(t);
         }
-      });
+      };
 
       requirements = (DO.C.Resource[documentURL].spec && DO.C.Resource[documentURL].spec['requirement']) ? Object.keys(DO.C.Resource[documentURL].spec['requirement']) : [];
       advisements = (DO.C.Resource[documentURL].spec && DO.C.Resource[documentURL].spec['advisement']) ? Object.keys(DO.C.Resource[documentURL].spec['advisement']) : [];
@@ -2286,13 +2305,11 @@ DO = {
       requirements = '<tr class="requirements"><th>Requirements</th><td>' + requirements.length + '</td></tr>';
       advisements = '<tr class="advisements"><th>Advisements</th><td>' + advisements.length + '</td></tr>';
       var conceptsList = [];
-      conceptsList = (skos.type && skos.type[DO.C.Vocab['skosConcept']['@id']]) ? skos.type[DO.C.Vocab['skosConcept']['@id']] : conceptsList;
+      conceptsList = (skos.type && skos.type[ns.skos.Concept.value]) ? skos.type[ns.skos.Concept.value] : conceptsList;
 
       var concepts = '<tr class="concepts"><th>Concepts</th><td>' + conceptsList.length + '</td></tr>';
-      var statements = '<tr class="statements"><th>Statements</th><td>' + triples.length + '</td></tr>';
-
-      var g = s.child(options['subjectURI']);
-// console.log(g)
+      // TODO: Review grapoi . Check it matches expected
+      var statements = '<tr class="statements"><th>Statements</th><td>' + g.out().terms.length + '</td></tr>';
 
       var graphEditors = getGraphEditors(g);
       var graphAuthors = getGraphAuthors(g);
@@ -2301,44 +2318,48 @@ DO = {
 
       if (graphEditors) {
         graphEditors.forEach(i => {
-          let name = getGraphLabelOrIRI(g.child(i));
+          var go = g.node(rdf.namedNode(i));
+          let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           editors.push(`<li>${name}</li>`);
         });
-        if (editors.length > 0){
+        if (editors.length){
           editors = '<tr class="people"><th>Editors</th><td><ul class="editors">' + editors.join('') + '</ul></td></tr>';
         }
       }
 
       if (graphAuthors) {
         graphAuthors.forEach(i => {
-          let name = getGraphLabelOrIRI(g.child(i));
+          var go = g.node(rdf.namedNode(i));
+          let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           authors.push(`<li>${name}</li>`);
         });
-        if (authors.length > 0){
+        if (authors.length){
           authors = '<tr class="people"><th>Authors</th><td><ul class="authors">' + authors.join('') + '</ul></td></tr>';
         }
       }
 
       if (graphContributors) {
         graphContributors.forEach(i => {
-          let name = getGraphLabelOrIRI(g.child(i));
+          var go = g.node(rdf.namedNode(i));
+          let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           contributors.push(`<li>${name}</li>`);
         });
-        if (contributors.length > 0){
+        if (contributors.length){
           contributors = '<tr class="people"><th>Contributors</th><td><ul class="contributors">' + contributors.join('') + '</ul></td></tr>';
         }
       }
 
       if (graphPerformers) {
         graphPerformers.forEach(i => {
-          let name = getGraphLabelOrIRI(g.child(i));
+          var go = g.node(rdf.namedNode(i));
+          let name = getGraphLabelOrIRI(go);
           name = (name === i) ? getUserLabelOrIRI(i) : name;
           performers.push(`<li>${name}</li>`);
         });
-        if (performers.length > 0){
+        if (performers.length){
           performers = '<tr class="people"><th>Performers</th><td><ul class="performers">' + performers.join('') + '</ul></td></tr>';
         }
       }
@@ -2368,7 +2389,7 @@ DO = {
       var doctype = (node instanceof Element && node.tagName.toLowerCase() === 'html') ? getDoctype() : '';
       var content = node.textContent.trim();
       var contentCount = { readingTime:1, words:0, chars:0, lines:0, pages:{A4:1, USLetter:1}, bytes:0 };
-      if (content.length > 0) {
+      if (content.length) {
         var lineHeight = node.ownerDocument.defaultView.getComputedStyle(node, null)["line-height"];
         var linesCount = Math.ceil(node.clientHeight / parseInt(lineHeight));
         contentCount = {
@@ -2383,12 +2404,13 @@ DO = {
       return contentCount;
     },
 
+    //TODO: Review grapoi
     showExtendedConcepts: function() {
       var documentURL = DO.C.DocumentURL;
       var citationsList = DO.C.Resource[documentURL].citations;
 
       var promises = [];
-      citationsList.forEach(function(url) {
+      citationsList.forEach(url => {
         // console.log(u);
         // window.setTimeout(function () {
           // var pIRI = getProxyableIRI(u);
@@ -2396,15 +2418,19 @@ DO = {
         // }, 1000)
       });
 
-      var dataGraph = SimpleRDF();
+      var dataset = rdf.dataset();
       var html = [];
+      var options = { 'resources': [] };
 
-      return Promise.all(promises.map(p => p.catch(e => e)))
-        .then(function(graphs) {
-          graphs.forEach(function(g){
-// console.log(g)
-            if (g && g._graph.length > 0){
-              var documentURL = g.iri().toString();
+      return Promise.allSettled(promises)
+        .then(results => results.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value))
+        .then(graphs => {
+// console.log(graphs);
+          graphs.forEach(g => {
+            if (g && g.out().terms.length){
+            // if (g) {
+              var documentURL = g.term.value;
+              g = rdf.grapoi({dataset: g.dataset})
 // console.log(documentURL)
 // console.log(g)
               DO.C.Resource[documentURL] = DO.C.Resource[documentURL] || {};
@@ -2412,10 +2438,11 @@ DO = {
               DO.C.Resource[documentURL]['skos'] = getResourceInfoSKOS(g);
               DO.C.Resource[documentURL]['title'] = getGraphLabel(g) || documentURL;
 
-              if (DO.C.Resource[documentURL]['skos']['graph']._graph.length > 0) {
+              if (DO.C.Resource[documentURL]['skos']['graph'].out().terms.length) {
                 html.push('<section><h4><a href="' + documentURL + '">' + DO.C.Resource[documentURL]['title'] + '</a></h4><div><dl>' + DO.U.getDocumentConceptDefinitionsHTML(documentURL) + '</dl></div></section>');
 
-                dataGraph.graph().addAll(DO.C.Resource[documentURL]['skos']['graph']);
+                dataset.addAll(DO.C.Resource[documentURL]['skos']['graph'].dataset);
+                options['resources'].push(documentURL);
               }
             }
           });
@@ -2443,18 +2470,19 @@ DO = {
 
           var selector = '#' + id + ' figure';
 
-          aC.addEventListener('click', function(e){
+          aC.addEventListener('click', (e) => {
             var button = e.target.closest('button.graph');
             if (button) {
               button.parentNode.removeChild(button);
 
-              serializeGraph(dataGraph, { 'contentType': 'text/turtle' })
-                .then(function(data){
-                  var options = {};
+              // serializeGraph(dataset, { 'contentType': 'text/turtle' })
+              //   .then(data => {
+              ///FIXME: This DO.C.DocumentURL doesn't seem right other than what the visualisation's root node becomes?
                   options['subjectURI'] = DO.C.DocumentURL;
                   options['contentType'] = 'text/turtle';
-                  DO.U.showVisualisationGraph(options.subjectURI, data, selector, options);
-                });
+                  //FIXME: For multiple graphs (fetched resources), options.subjectURI is the last item, so it is inaccurate
+                  DO.U.showVisualisationGraph(options.subjectURI, dataset.toCanonical(), selector, options);
+                // });
             }
           })
 
@@ -2462,32 +2490,32 @@ DO = {
 
 
 // console.log(DO.C.Resource)
-          return dataGraph;
+          return dataset;
         });
     },
 
+    //TODO: Review grapoi
     getDocumentConceptDefinitionsHTML: function(documentURL) {
 // console.log(documentURL)
-      var g;
       var s = '';
-      Object.keys(DO.C.Resource[documentURL]['skos']['type']).forEach(function(rdftype) {
+      Object.keys(DO.C.Resource[documentURL]['skos']['type']).forEach(rdftype => {
 // console.log(rdftype)
         s += '<dt>' + DO.C.SKOSClasses[rdftype] + 's</dt>';
 
-        if (rdftype == DO.C.Vocab['skosConcept']['@id']) {
+        if (rdftype == ns.skos.Concept.value) {
           s += '<dd><ul>';
         }
 
-        sortToLower(DO.C.Resource[documentURL]['skos']['type'][rdftype]).forEach(function(subject) {
-// console.log(subject)
-          g = DO.C.Resource[documentURL]['graph'].child(subject);
+        sortToLower(DO.C.Resource[documentURL]['skos']['type'][rdftype]).forEach(subject => {
+          var g = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(subject));
 
           var conceptLabel = sortToLower(getGraphConceptLabel(g));
-          conceptLabel = (conceptLabel.length > 0) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
+// console.log(conceptLabel)
+          conceptLabel = (conceptLabel.length) ? conceptLabel.join(' / ') : getFragmentOrLastPath(subject);
           conceptLabel = conceptLabel.trim();
           conceptLabel = '<a href="' + subject + '">' + conceptLabel + '</a>';
 
-          if (rdftype == DO.C.Vocab['skosConcept']['@id']) {
+          if (rdftype == ns.skos.Concept.value) {
             s += '<li>' + conceptLabel + '</li>';
           }
           else {
@@ -2495,18 +2523,19 @@ DO = {
             s += '<dl>';
             s += '<dt>' + conceptLabel + '</dt><dd><ul>';
 
-            var hasConcepts = [DO.C.Vocab['skoshasTopConcept']['@id'], DO.C.Vocab['skosmember']['@id']];
+            var hasConcepts = [ns.skos.hasTopConcept.value, ns.skos.member.value];
 
-            hasConcepts.forEach(function(hasConcept) {
+            hasConcepts.forEach(hasConcept => {
               var concept = DO.C.Resource[documentURL]['skos']['data'][subject][hasConcept];
 
-              if (concept && concept.length > 0) {
-                sortToLower(concept).forEach(function(c) {
-                  var conceptGraph = DO.C.Resource[documentURL]['graph'].child(c);
+              if (concept?.length) {
+                sortToLower(concept).forEach(c => {
+                  var conceptGraph = DO.C.Resource[documentURL]['graph'].node(rdf.namedNode(c));
                   var cLabel = getGraphConceptLabel(conceptGraph);
-                  cLabel = (cLabel.length > 0) ? cLabel : [getFragmentOrLastPath(c)];
-                  cLabel.forEach(function(cL) {
+                  cLabel = (cLabel.length) ? cLabel : [getFragmentOrLastPath(c)];
+                  cLabel.forEach(cL => {
                     cL = cL.trim();
+                    console.log(cL)
                     s += '<li><a href="' + c + '">' + cL + '</a></li>';
                   });
                 });
@@ -2517,7 +2546,7 @@ DO = {
           }
         })
 
-        if (rdftype == DO.C.Vocab['skosConcept']['@id']) {
+        if (rdftype == ns.skos.Concept.value) {
           s += '</ul></dd>';
         }
       });
@@ -2537,7 +2566,7 @@ DO = {
         else {
           var db = DO.C.Resource[documentURL].headers.linkHeaders.rel('describedby');
 
-          var missingResource = db.filter(function(relationItem) { return !DO.C.Resource[relationItem.uri]; });
+          var missingResource = db.filter(relationItem => { return !DO.C.Resource[relationItem.uri]; });
 
           if (missingResource == undefined) {
             window.setTimeout(waitUntil, 250);
@@ -2549,7 +2578,7 @@ DO = {
               }
             });
 
-            if (html.length > 0) {
+            if (html.length) {
               node.insertAdjacentHTML('beforeend', html);
 
               var nodes = document.querySelectorAll('#' + node.id + ' [id^="notification-subscriptions-"]');
@@ -2578,10 +2607,10 @@ DO = {
 
       DO.U.showHighlightStructuredData(documentItems);
 
-      if (sections.length > 0) {
+      if (sections.length) {
         DO.U.showTableOfContents(documentItems, sections)
 
-        if(DO.C.SortableList && DO.C.EditorEnabled) {
+        if (DO.C.SortableList && DO.C.EditorEnabled) {
           DO.U.sortToC();
         }
       }
@@ -2603,7 +2632,7 @@ DO = {
 
       var structuredData = document.querySelector('#highlight-data')
 
-      structuredData.addEventListener('change', function(e){
+      structuredData.addEventListener('change', (e) => {
         var input = e.target.closest('#highlight-structured-data');
         if (input) {
           if (input.checked) {
@@ -2624,7 +2653,7 @@ DO = {
         disabledInput = ' disabled="disabled"';
       }
 
-      Object.keys(DO.C.ListOfStuff).forEach(function(id) {
+      Object.keys(DO.C.ListOfStuff).forEach(id => {
         var checkedInput = '';
         var label = DO.C.ListOfStuff[id].label;
         var selector = DO.C.ListOfStuff[id].selector;
@@ -2640,11 +2669,11 @@ DO = {
         s.push('<li><input id="l-o-s-' + id +'" type="checkbox"' + disabledInput + checkedInput + '/><label for="l-o-s-' + id + '">' + label + '</label></li>');
       });
 
-      if (s.length > 0) {
+      if (s.length) {
         node.insertAdjacentHTML('beforeend', '<section id="list-of-stuff" class="do"><h2>List of Stuff</h2><ul>' + s.join('') + '</ul></section>');
 
-        if(DO.C.EditorEnabled) {
-          document.getElementById('list-of-stuff').addEventListener('click', function(e){
+        if (DO.C.EditorEnabled) {
+          document.getElementById('list-of-stuff').addEventListener('click', (e) => {
             if (e.target.closest('input')) {
               var id = e.target.id.slice(6);
               if(!e.target.getAttribute('checked')) {
@@ -2706,7 +2735,7 @@ DO = {
             s += '<li' + currentHash + dataId + '><a href="#' + section.id + '">' + heading.textContent + '</a>';
             var subsections = section.parentNode.querySelectorAll('[id="' + section.id + '"] > div > section[rel*="hasPart"]:not([class~="slide"]), [id="' + section.id + '"] > section[rel*="hasPart"]:not([class~="slide"])');
 
-            if (subsections.length > 0) {
+            if (subsections.length) {
               s += '<ol'+ attributeClass +'>';
               s += DO.U.getListOfSections(subsections, options);
               s += '</ol>';
@@ -2736,7 +2765,7 @@ DO = {
 
         var nodes = rootNode.querySelectorAll('*:not([class~="do"]) ' + selector);
 
-        if (id == 'table-of-contents' || id == 'list-of-concepts' || nodes.length > 0) {
+        if (id == 'table-of-contents' || id == 'list-of-concepts' || nodes.length) {
           var tId = document.getElementById(id);
 
           if(tId) { tId.parentNode.removeChild(tId); }
@@ -2764,7 +2793,7 @@ DO = {
               s += '<section id="' + id + '">';
               s += '<h2>' + label + '</h2>';
               var d = DO.C.Resource[documentURL].citations || [];
-              if (d.length > 0) {
+              if (d.length) {
                 s += '<div><p id="include-concepts"><button class="add">Include concepts</button> from <data value="' + d.length + '">' + d.length + '</data> external references.</p>';
               }
               s += '<dl>';
@@ -2796,9 +2825,9 @@ DO = {
               s += '<caption>Conformance Requirements and Test Coverage</caption>'
               s += '<thead><tr><th colspan="3">Requirement</th></tr><tr><th>Subject</th><th>Level</th><th>Statement</th></tr></thead>';
               s += '<tbody>';
-              Object.keys(DO.C.Resource[documentURL]['spec']['requirement']).forEach(function(i) {
+              Object.keys(DO.C.Resource[documentURL]['spec']['requirement']).forEach(i => {
 // console.log(DO.C.Resource[documentURL]['spec'][i])
-                var statement = DO.C.Resource[documentURL]['spec']['requirement'][i][DO.C.Vocab['specstatement']['@id']] || i;
+                var statement = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.statement.value] || i;
                 //FIXME: This selector is brittle.
                 // var requirementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
                 var requirementIRI = document.querySelector('#document-latest-published-version [rel~="rel:latest-version"]');
@@ -2807,14 +2836,14 @@ DO = {
                 requirementIRI = i.replace(stripFragmentFromString(i), requirementIRI);
                 statement = '<a href="' + requirementIRI + '">' + statement + '</a>';
 
-                var requirementSubjectIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][DO.C.Vocab['specrequirementSubject']['@id']];
+                var requirementSubjectIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementSubject.value];
                 var requirementSubjectLabel = requirementSubjectIRI || '<span class="warning">?</span>';
                 if (requirementSubjectLabel.startsWith('http')) {
                   requirementSubjectLabel = getFragmentFromString(requirementSubjectIRI) || getURLLastPath(requirementSubjectIRI) || requirementSubjectLabel;
                 }
                 var requirementSubject = '<a href="' + requirementSubjectIRI + '">' + requirementSubjectLabel + '</a>';
 
-                var requirementLevelIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][DO.C.Vocab['specrequirementLevel']['@id']];
+                var requirementLevelIRI = DO.C.Resource[documentURL]['spec']['requirement'][i][ns.spec.requirementLevel.value];
                 var requirementLevelLabel = requirementLevelIRI || '<span class="warning">?</span>';
                 if (requirementLevelLabel.startsWith('http')) {
                   requirementLevelLabel = getFragmentFromString(requirementLevelIRI) || getURLLastPath(requirementLevelIRI) || requirementLevelLabel;
@@ -2835,9 +2864,9 @@ DO = {
               s += '<caption>Non-normative Advisements</caption>'
               s += '<thead><tr><th colspan="2">Advisement</th></tr><tr><th>Level</th><th>Statement</th></tr></thead>';
               s += '<tbody>';
-              Object.keys(DO.C.Resource[documentURL]['spec']['advisement']).forEach(function(i) {
+              Object.keys(DO.C.Resource[documentURL]['spec']['advisement']).forEach(i => {
 // console.log(DO.C.Resource[documentURL]['spec']['advisement'][i])
-                var statement = DO.C.Resource[documentURL]['spec']['advisement'][i][DO.C.Vocab['specstatement']['@id']] || i;
+                var statement = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.statement.value] || i;
                 //FIXME: This selector is brittle.
                 //TODO: Revisit this:
                 // var advisementIRI = document.querySelector('#document-identifier [rel="owl:sameAs"]');
@@ -2847,14 +2876,14 @@ DO = {
                 advisementIRI = i.replace(stripFragmentFromString(i), advisementIRI);
                 statement = '<a href="' + advisementIRI + '">' + statement + '</a>';
 
-                // var advisementSubjectIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][DO.C.Vocab['specadvisementSubject']['@id']];
+                // var advisementSubjectIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementSubject.value];
                 // var advisementSubjectLabel = advisementSubjectIRI || '<span class="warning">?</span>';
                 // if (advisementSubjectLabel.startsWith('http')) {
                 //   advisementSubjectLabel = getFragmentFromString(advisementSubjectIRI) || getURLLastPath(advisementSubjectIRI) || advisementSubjectLabel;
                 // }
                 // var advisementSubject = '<a href="' + advisementSubjectIRI + '">' + advisementSubjectLabel + '</a>';
 
-                var advisementLevelIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][DO.C.Vocab['specadvisementLevel']['@id']];
+                var advisementLevelIRI = DO.C.Resource[documentURL]['spec']['advisement'][i][ns.spec.advisementLevel.value];
                 var advisementLevelLabel = advisementLevelIRI || '<span class="warning">?</span>';
                 if (advisementLevelLabel.startsWith('http')) {
                   advisementLevelLabel = getFragmentFromString(advisementLevelIRI) || getURLLastPath(advisementLevelIRI) || advisementLevelLabel;
@@ -2870,16 +2899,16 @@ DO = {
               s += '</tbody>';
             }
             else if (id == 'list-of-abbreviations') {
-              if (nodes.length > 0) {
+              if (nodes.length) {
                 nodes = [].slice.call(nodes);
-                nodes.sort(function(a, b) {
+                nodes.sort((a, b) => {
                   return a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase());
                 });
               }
 
               var processed = [];
               for (var i = 0; i < nodes.length; i++) {
-                if (processed.indexOf(nodes[i].textContent) < 0) {
+                if (!processed.includes(nodes[i].textContent)) {
                   s += '<dt>' + nodes[i].textContent + '</dt>';
                   s += '<dd>' + nodes[i].getAttribute(titleSelector) + '</dd>';
                   processed.push(nodes[i].textContent);
@@ -2958,50 +2987,55 @@ DO = {
         }
       }
 
-      insertDocumentLevelHTML(document, s, { 'id': id });
+      insertDocumentLevelHTML(document, s, { id });
 
       if (id == 'table-of-requirements') {
-        var testSuites = DO.C.Resource[documentURL].graph.spectestSuite;
-        if (testSuites && testSuites.at(0)) {
+        var options = { noCredentials: true };
+        // var options = {};
+        var testSuites = DO.C.Resource[documentURL].graph.out(ns.spec.testSuite).values;
+// testSuites = [];
+// console.log(testSuites)
+        if (testSuites.length) {
           //TODO: Process all spec:testSuites
-          var url = testSuites.at(0);
+          var url = testSuites[0];
 
-          getResourceGraph(url).then(
-            function(g){
-// console.log(g)
+          getResourceGraph(url, null, options)
+            .then(g => {
+// console.log(g.out().values)
               if (g) {
                 DO.U.insertTestCoverageToTable(id, g);
               }
-            },
-            function(reason){
+            })
+            .catch(reason => {
 console.log(reason);
-            }
-          );
+            });
         }
 
-        var predecessorVersion = DO.C.Resource[documentURL].graph.relpredecessorversion;
-        if (predecessorVersion) {
-          url = predecessorVersion;
+        var predecessorVersion = DO.C.Resource[documentURL].graph.out(ns.rel['predecessor-version']).values;
+// predecessorVersion = [];
+        if (predecessorVersion.length) {
+          url = predecessorVersion[0];
 
           var sourceGraph = DO.C.Resource[documentURL].graph;
-          var sourceGraphURI = sourceGraph.iri().toString();
-
+          var sourceGraphURI = sourceGraph.term.value;
+// console.log(sourceGraphURI)
           var buttonTextDiffRequirements = 'Diff requirements with the predecessor version';
 
           var table = document.getElementById(id);
           var thead = table.querySelector('thead');
           thead.querySelector('tr > th').insertAdjacentHTML('beforeend', '<button id="include-diff-requirements" class="do add" disabled="disabled" title="' + buttonTextDiffRequirements + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</button>');
 
-          getResourceGraph(url).then(
-            function(targetGraph){
+          getResourceGraph(url, null, options)
+            .then(targetGraph => {
               if (targetGraph) {
-                var targetGraphURI = targetGraph.iri().toString();
+                var targetGraphURI = targetGraph.term.value;
+// console.log(targetGraphURI)
 
                 var buttonRD = document.getElementById('include-diff-requirements');
                 buttonRD.innerHTML = Icon[".fas.fa-plus-minus"];
                 buttonRD.disabled = false;
 
-                buttonRD.addEventListener('click', function(e) {
+                buttonRD.addEventListener('click', (e) => {
                   var button = e.target.closest('button');
                   if (button){
                     if (button.classList.contains('add')) {
@@ -3033,23 +3067,19 @@ console.log(reason);
                         var sR = tr.getAttribute('about');
                         var td = tr.querySelector('td:nth-child(3)');
                         var sourceRequirementURI = sourceGraphURI + '#' + getFragmentFromString(sR);
-                        var statement = DO.C.Resource[sourceGraphURI].spec['requirement'][sourceRequirementURI][DO.C.Vocab['specstatement']['@id']] || sR;
+                        var statement = DO.C.Resource[sourceGraphURI].spec['requirement'][sourceRequirementURI][ns.spec.statement.value] || sR;
                         td.innerHTML = '<a href="' + sR + '">' + statement + '</a>';
                       });
                     }
                   }
                 });
               }
-            },
-            function(reason){
-console.log(reason);
-            }
-          );
+            });
         }
       }
 
       if (id == 'list-of-concepts') {
-        document.getElementById(id).addEventListener('click', function(e) {
+        document.getElementById(id).addEventListener('click', (e) => {
           var button = e.target.closest('button.add');
           if (button) {
             button.disabled = true;
@@ -3063,17 +3093,18 @@ console.log(reason);
 
     diffRequirements: function(sourceGraph, targetGraph) {
       var documentURL = DO.C.DocumentURL;
-      var sourceGraphURI = sourceGraph.iri().toString();
-      var targetGraphURI = targetGraph.iri().toString();
+      var sourceGraphURI = sourceGraph.term.value;
+      var targetGraphURI = targetGraph.term.value;
+// console.log(sourceGraphURI, targetGraphURI)
       var sourceRequirements = getResourceInfoSpecRequirements(sourceGraph);
       var targetRequirements = getResourceInfoSpecRequirements(targetGraph);
-
-      var changes = Object.values(DO.C.Resource[sourceGraphURI].change);
-
+// console.log(sourceRequirements, targetRequirements)
+      var changes = Object.values(DO.C.Resource[sourceGraphURI].spec.change);
+// console.log(changes)
       Object.keys(sourceRequirements).forEach(sR => {
         DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'] = {};
 
-        var sRStatement = sourceRequirements[sR][DO.C.Vocab['specstatement']['@id']] || '';
+        var sRStatement = sourceRequirements[sR][ns.spec.statement.value] || '';
         var tR = targetGraphURI + '#' + getFragmentFromString(sR);
 
         DO.C.Resource[sourceGraphURI].spec['requirement'][sR]['diff'][tR] = {};
@@ -3081,14 +3112,14 @@ console.log(reason);
         var tRStatement = '';
 
         if (targetRequirements[tR]) {
-          tRStatement = targetRequirements[tR][DO.C.Vocab['specstatement']['@id']] || '';
+          tRStatement = targetRequirements[tR][ns.spec.statement.value] || '';
         }
 
-        var change = changes.filter(change => change[DO.C.Vocab['specchangeSubject']['@id']] == sR)[0];
+        var change = changes.filter(change => change[ns.spec.changeSubject.value] == sR)[0];
         var changeHTML = '';
         if (change) {
-          var changeClass = change[DO.C.Vocab['specchangeClass']['@id']];
-          var changeDescription = change[DO.C.Vocab['specstatement']['@id']];
+          var changeClass = change[ns.spec.changeClass.value];
+          var changeDescription = change[ns.spec.statement.value];
           if (changeClass) {
             var changeClassValue = DO.C.ChangeClasses[changeClass] || changeClass;
             if (changeDescription) {
@@ -3129,8 +3160,11 @@ console.log(reason);
       thead.querySelector('tr:nth-child(2)').insertAdjacentHTML('beforeend', '<th>Test Case (Review Status)</th>');
 
       var subjects = [];
-      testSuiteGraph.graph().toArray().forEach(function(t){
-        subjects.push(t.subject.nominalValue);
+      testSuiteGraph  = rdf.grapoi({ dataset: testSuiteGraph.dataset });
+// console.log(testSuiteGraph)
+      testSuiteGraph.out().quads().forEach(t => {
+// console.log(t)
+        subjects.push(t.subject.value);
       });
       subjects = uniqueArray(subjects);
 
@@ -3140,20 +3174,19 @@ console.log(reason);
       var specificationReferenceBase = document.querySelector('#document-latest-published-version [rel~="rel:latest-version"]').href;
 // console.log(specificationReferenceBase)
 
-      subjects.forEach(function(i){
-        var s = testSuiteGraph.child(i)
-        var testCaseIRI = s.iri().toString();
-// console.log(s)
-        var types = s.rdftype._array || [];
+      subjects.forEach(i => {
+        var s = testSuiteGraph.node(rdf.namedNode(i));
+        var testCaseIRI = s.term.value;
+        var types = getGraphTypes(s);
 
-        if (types.length > 0) {
-          var resourceTypes = types;
-          if (resourceTypes.indexOf('http://www.w3.org/2006/03/test-description#TestCase') > -1){
-            if (s.specrequirementReference && s.specrequirementReference.startsWith(specificationReferenceBase)) {
+        if (types.length) {
+          if (types.includes(ns['test-description'].TestCase.value)) {
+            var requirementReference = s.out(ns.spec.requirementReference).values[0];
+            if (requirementReference && requirementReference.startsWith(specificationReferenceBase)) {
               testCases[testCaseIRI] = {};
-              testCases[testCaseIRI][DO.C.Vocab['specrequirementReference']['@id']] = s.specrequirementReference;
-              testCases[testCaseIRI][DO.C.Vocab['testdescriptionreviewStatus']['@id']] = s.testdescriptionreviewStatus;
-              testCases[testCaseIRI][DO.C.Vocab['dctermstitle']] = s.dctermstitle;
+              testCases[testCaseIRI][ns.spec.requirementReference.value] = requirementReference;
+              testCases[testCaseIRI][ns['test-description'].reviewStatus.value] = s.out(ns['test-description'].reviewStatus).values[0];
+              testCases[testCaseIRI][ns.dcterms.title.value] = s.out(ns.dcterms.title).values[0];
             }
           }
         }
@@ -3161,17 +3194,17 @@ console.log(reason);
 
 // console.log(testCases);
 
-      table.querySelectorAll('tbody tr').forEach(function(tr){
+      table.querySelectorAll('tbody tr').forEach(tr => {
         var requirement = tr.querySelector('td:nth-child(3) a').href;
 
         Object.keys(testCases).forEach(testCaseIRI => {
-          if (testCases[testCaseIRI][DO.C.Vocab['specrequirementReference']['@id']] == requirement) {
-            var testCaseLabel = testCases[testCaseIRI][DO.C.Vocab['dctermstitle']] || testCaseIRI;
+          if (testCases[testCaseIRI][ns.spec.requirementReference.value] == requirement) {
+            var testCaseLabel = testCases[testCaseIRI][ns.dcterms.title.value] || testCaseIRI;
 
             var testCaseHTML = '<a href="'+ testCaseIRI + '">' + testCaseLabel + '</a>';
 
-            if (testCases[testCaseIRI][DO.C.Vocab['testdescriptionreviewStatus']['@id']]) {
-              var reviewStatusIRI = testCases[testCaseIRI][DO.C.Vocab['testdescriptionreviewStatus']['@id']];
+            if (testCases[testCaseIRI][ns['test-description'].reviewStatus.value]) {
+              var reviewStatusIRI = testCases[testCaseIRI][ns['test-description'].reviewStatus.value];
               var reviewStatusLabel = getFragmentFromString(reviewStatusIRI) || getURLLastPath(reviewStatusIRI) || reviewStatusIRI;
 
               var reviewStatusHTML = ' (<a href="'+ reviewStatusIRI + '">' + reviewStatusLabel + '</a>)';
@@ -3256,7 +3289,7 @@ console.log(reason);
       var ids = (selector) ? document.querySelectorAll(selector) : document.querySelectorAll('main *[id]:not(input):not(textarea):not(select):not(#content)');
 
       for(var i = 0; i < ids.length; i++){
-        ids[i].addEventListener('mouseenter', function(e){
+        ids[i].addEventListener('mouseenter', (e) => {
           var fragment = document.querySelector('*[id="' + e.target.id + '"] > .do.fragment');
           if (!fragment && e.target.parentNode.nodeName.toLowerCase() != 'aside'){
             const sign = DO.U.getSelectorSign(e.target);
@@ -3280,7 +3313,7 @@ console.log(reason);
           }
         });
 
-        ids[i].addEventListener('mouseleave', function(e){
+        ids[i].addEventListener('mouseleave', (e) => {
           var fragment = document.querySelector('[id="' + e.target.id + '"] > .do.fragment');
           if (fragment && fragment.parentNode) {
             fragment.parentNode.removeChild(fragment);
@@ -3301,9 +3334,9 @@ console.log(reason);
     initCopyToClipboard: function() {
       var elements = ['pre', 'table'];
 
-      elements.forEach(function(element){
+      elements.forEach(element => {
         var nodes = selectArticleNode(document).querySelectorAll(element);
-        nodes.forEach(function(node){
+        nodes.forEach(node => {
           node.insertAdjacentHTML('afterend', '<button class="do copy-to-clipboard" title="Copy to clipboard">' + Icon[".fas.fa-copy"] + '</button>');
           var button = node.nextElementSibling;
           setCopyToClipboard(node, button);
@@ -3350,7 +3383,7 @@ console.log(reason);
 
       //TODO: Move unique list of existing RL's to DO.C.Resource?
       var robustLinksUnique = {};
-      robustLinks.forEach(function(i){
+      robustLinks.forEach(i => {
         if (!robustLinksUnique[i.href]) {
           robustLinksUnique[i.href] = {
             "node": i,
@@ -3374,7 +3407,7 @@ console.log(reason);
       rlInput.insertAdjacentHTML('afterbegin', '<p class="count"><data>' + rlCandidates.length + '</data> candidates.</p>');
 
       var rlUL = document.querySelector('#robustify-links-list');
-      rlCandidates.forEach(function(i){
+      rlCandidates.forEach(i => {
         var html = '<li><input id="' + i.href + '" type="checkbox" value="' + i.href + '" /> <label for="' + i.href + '"><a href="' + i.href + '" target="_blank" title="' + i.textContent + '">' + i.href + '</a></label>';
 
           //TODO: addEventListener
@@ -3405,7 +3438,7 @@ console.log(reason);
 
           var promises = [];
 
-          rlChecked.forEach(function(i){
+          rlChecked.forEach(i => {
 // console.log('Robustifying: ' + i.value)
 // console.log(i);
 
@@ -3427,7 +3460,7 @@ console.log(reason);
 
             var robustifyLinksReuse = document.querySelector('#robustify-links-reuse');
             if (robustifyLinksReuse.checked) {
-              Object.keys(robustLinksUnique).forEach(function(url){
+              Object.keys(robustLinksUnique).forEach(url => {
                 if (i.value == url) {
 // console.log(robustLinksUnique[url])
                   progress.innerHTML = '<a href="' + robustLinksUnique[url]["data-versionurl"] + '" target="_blank">' + Icon[".fas.fa-archive"] + '</a>';
@@ -3460,7 +3493,7 @@ console.log(reason);
 
                   showRobustLinksDecoration(node.closest('cite'));
                 })
-                .catch(function(r){
+                .catch(r => {
                   progress.innerHTML = Icon[".fas.fa-times-circle"] + ' Unable to archive. Try later.';
                 });
             }
@@ -3474,13 +3507,13 @@ console.log(reason);
           // console.log(rlInput.value)
           // console.log(e.target.checked)
           if (e.target.checked) {
-            rlInput.forEach(function(i) {
+            rlInput.forEach(i => {
               i.setAttribute('checked', 'checked');
               i.checked = true;
             });
           }
           else {
-            rlInput.forEach(function(i) {
+            rlInput.forEach(i => {
               i.removeAttribute('checked');
               i.checked = false;
             });
@@ -3502,7 +3535,7 @@ console.log(reason);
 
     createRobustLink: function(uri, node, options){
       return DO.U.snapshotAtEndpoint(undefined, uri, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': false })
-        .then(function(r){
+        .then(r => {
 // console.log(r)
           //FIXME TODO: Doesn't handle relative URLs in Content-Location from w3.org or something. Getting Overview.html but base is lost.
           if (r) {
@@ -3547,8 +3580,8 @@ console.log(reason);
         });
     },
 
-    snapshotAtEndpoint: function snapshotAtEndpoint (e, iri, endpoint, noteData, options = {}) {
-      iri = iri || window.location.origin + window.location.pathname;
+    snapshotAtEndpoint: function(e, iri, endpoint, noteData, options = {}) {
+      iri = iri || currentLocation();
       endpoint = endpoint || 'https://pragma.archivelab.org/';
       options.noCredentials = true
 
@@ -3565,7 +3598,7 @@ console.log(reason);
         "504": svgFail + ' Archive timeout. Please try later.'
       }
 
-      // if(note.length > 0) {
+      // if(note.length) {
       //   noteData.annotation["message"] = note;
       // }
 
@@ -3622,7 +3655,7 @@ console.log(reason);
       var checkLinkHeader = function(response) {
         var link = response.headers.get('Link');
 
-        if (link && link.length > 0) {
+        if (link && link.length) {
           var rels = LinkHeader.parse(link);
           if (rels.has('rel', 'memento')) {
             var o = {
@@ -3658,7 +3691,7 @@ console.log(reason);
 
               let location = response.headers.get('Content-Location');
 // console.log(location)
-              if (location && location.length > 0) {
+              if (location && location.length) {
                 //XXX: Scrape Internet Archive's HTML
                 if (location.startsWith('/web/')) {
                   var o = {
@@ -3787,7 +3820,7 @@ console.log(reason);
       document.documentElement.appendChild(fragmentFromString('<aside id="generate-feed" class="do on">' + DO.C.Button.Close + '<h2>Generate Feed</h2></aside>'));
 
       var generateFeed = document.getElementById('generate-feed');
-      generateFeed.addEventListener('click', function(e) {
+      generateFeed.addEventListener('click', (e) => {
         if (e.target.closest('button.close')) {
           document.querySelector('#document-do .generate-feed').disabled = false;
         }
@@ -3831,7 +3864,7 @@ console.log(reason);
         var options = {};
         var feedFormat = DO.C.MediaTypes.Feed[0];
         var feedFormatSelectionChecked = generateFeed.querySelector('select[name="feed-format"]')
-        if (feedFormatSelectionChecked.length > 0) {
+        if (feedFormatSelectionChecked.length) {
           feedFormat = (DO.C.MediaTypes.Feed.indexOf(feedFormatSelectionChecked.value) > -1) ? feedFormatSelectionChecked.value : feedFormat;
 
           options['contentType'] = feedFormat;
@@ -3847,7 +3880,7 @@ console.log(reason);
 
         var checkedInput = generateFeed.querySelectorAll('#' + id + '-ul' + ' input[type="checkbox"]:checked')
         checkedInput = Array.from(checkedInput)
-        if (checkedInput.length > 0) {
+        if (checkedInput.length) {
           feedURLSelection = checkedInput.map((el) => el.value);
         }
 // console.log(feedURLSelection)
@@ -3860,7 +3893,7 @@ console.log(reason);
             // var pIRI = getProxyableIRI(u);
             promises.push(
               getResource(url)
-                .then(function (response) {
+                .then(response => {
                   var cT = response.headers.get('Content-Type');
                   var options = {};
                   options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
@@ -3981,7 +4014,7 @@ console.log(reason);
 
       mementoItems = document.getElementById('memento-items');
 
-      mementoItems.addEventListener('click', function(e) {
+      mementoItems.addEventListener('click', (e) => {
         if (e.target.closest('button.resource-save') ||
             e.target.closest('button.create-version') ||
             e.target.closest('button.create-immutable')) {
@@ -4160,7 +4193,7 @@ console.log(reason);
 
       var messageLog;
 
-      if (DO.C.MessageLog && DO.C.MessageLog.length > 0) {
+      if (DO.C.MessageLog && DO.C.MessageLog.length) {
         messageLog = '<table><caption>Messages</caption><thead><tr><th>Date/Time</th><th>Message</th><th>Type</th></tr></thead><tbody>';
         Object.keys(DO.C.MessageLog).forEach(i => {
           messageLog += '<tr><td><time>' + DO.C.MessageLog[i].dateTime + '</time></td><td>' + DO.C.MessageLog[i].content + '</td><td>' + DO.C.MessageLog[i].type + '</td></tr>';
@@ -4173,7 +4206,7 @@ console.log(reason);
 
       document.documentElement.appendChild(fragmentFromString('<aside id="message-log" class="do on">' + DO.C.Button.Close + '<h2>Message Log</h2><div>' + messageLog + '</div></aside>'));
 
-      document.querySelector('#message-log button.close').addEventListener('click', function(e) {
+      document.querySelector('#message-log button.close').addEventListener('click', (e) => {
         document.querySelector('button.message-log').removeAttribute('disabled');
       });
     },
@@ -4186,11 +4219,11 @@ console.log(reason);
 
       document.documentElement.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + '<h2>Delete Document</h2><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete">Cancel</button><button class="delete" title="Delete document">Delete</button></aside>'));
 
-      document.querySelector('#delete-document').addEventListener('click', function(e) {
+      document.querySelector('#delete-document').addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
 
-        var buttonCC = e.target.closest('button.close') ||  e.target.closest('button.cancel');
+        var buttonCC = e.target.closest('button.close') || e.target.closest('button.cancel');
         if (buttonCC) {
           var parent = buttonCC.parentNode;
           parent.parentNode.removeChild(parent);
@@ -4213,7 +4246,7 @@ console.log(reason);
 
                   //TODO: Reuse saveAsDocument's catch to request access by checking the Link header.
 
-                  var details = (data.trim().length > 0) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
+                  var details = (data.trim().length) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
                   var message = '';
                   if (error.status) {
                     switch(error.status) {
@@ -4256,7 +4289,7 @@ console.log(reason);
 // console.log(data);
                   data = DOMPurify.sanitize(data);
 
-                  var details = (data.trim().length > 0) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
+                  var details = (data.trim().length) ? '<details><summary>Details</summary><div>' + data + '</div></details>' : '';
                   var message = '';
                   switch(response.status) {
                     case 200: default:
@@ -4306,11 +4339,11 @@ console.log(reason);
     },
 
     resourceSave: function(e, options) {
-      var url = window.location.origin + window.location.pathname;
+      var url = currentLocation();
       var data = getDocument();
       options = options || {};
 
-      getResourceInfo(data, options).then(function(i) {
+      getResourceInfo(data, options).then(i => {
         if (e.target.closest('.create-version')) {
           createMutableResource(url);
         }
@@ -4420,13 +4453,13 @@ console.log(reason);
         }
 
         var language = document.querySelector('#reply-to-resource-language')
-        if (language && language.length > 0) {
+        if (language && language.length) {
           noteData["language"] = language.value.trim()
           noteData["body"]["language"] = noteData["language"];
         }
 
         var license = document.querySelector('#reply-to-resource-license')
-        if (license && license.length > 0) {
+        if (license && license.length) {
           noteData["license"] = license.value.trim()
           noteData["body"]["rights"] = noteData["body"]["license"] = noteData["rights"] = noteData["license"];
         }
@@ -4475,19 +4508,12 @@ console.log(reason);
               .querySelector('.response-message')
               .innerHTML = '<p class="success"><a target="_blank" href="' + response.url + '">Reply saved!</a></p>'
 
-            // Determine the inbox endpoint, to send the notification to
-            return getLinkRelation(DO.C.Vocab['ldpinbox']['@id'], null, getDocument())
-              .catch(error => {
-                console.error('Could not fetch inbox endpoint:', error)
-
-                // re-throw
-                throw new Error('Could not determine the author inbox endpoint')
-              })
+            return getLinkRelation(ns.ldp.inbox.value, null, getDocument());
           })
 
           .then(inboxes => {
             if (!inboxes) {
-              throw new Error('Author inbox endpoint is empty or missing')
+              throw new Error('Inbox is empty or missing')
             }
 
             var inboxURL = inboxes[0]
@@ -4495,7 +4521,7 @@ console.log(reason);
             let notificationStatements = '    <dl about="' + noteIRI +
               '">\n<dt>Object type</dt><dd><a about="' +
               noteIRI + '" typeof="oa:Annotation" href="' +
-              DO.C.Vocab['oaAnnotation']['@id'] +
+              ns.oa.Annotation.value +
               '">Annotation</a></dd>\n<dt>Motivation</dt><dd><a href="' +
               DO.C.Prefixes[motivatedBy.split(':')[0]] +
               motivatedBy.split(':')[1] + '" property="oa:motivation">' +
@@ -4555,13 +4581,13 @@ console.log(reason);
       }
 
       var addContactsButtonDisable = '', noContactsText = '';
-      if (!DO.C.User.IRI && !(DO.C.User.Graph && ((DO.C.User.Knows && DO.C.User.Knows.length > 0) || (DO.C.User.Graph.owlsameAs && DO.C.User.Graph.owlsameAs._array.length > 0)))) {
+      if (!DO.C.User.IRI && !(DO.C.User.Graph && ((DO.C.User.Knows && DO.C.User.Knows.length) || (DO.C.User.Graph.out(ns.owl.sameAs).values.length)))) {
         addContactsButtonDisable = ' disabled="disabled"';
         noContactsText = '<p>Sign in to select from your list of contacts, alternatively, enter contacts individually:</p>';
       }
 
       var shareResourceLinkedResearch = '';
-      if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(DO.C.Vocab['schemaScholarlyArticle']['@id']) || DO.C.OriginalResourceInfo.rdftype.includes(DO.C.Vocab['schemaThesis']['@id'])) {
+      if (DO.C.User.IRI && DO.C.OriginalResourceInfo['rdftype'] && DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.ScholarlyArticle.value) || DO.C.OriginalResourceInfo.rdftype.includes(ns.schema.Thesis.value)) {
         shareResourceLinkedResearch = `
           <div id="share-resource-external">
             <h3>Share with research community</h3>
@@ -4672,13 +4698,13 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             const input = document.getElementById('share-resource-search-contacts');
             const suggestions = document.querySelector('#share-resource-permissions .suggestions');
 
-            input.addEventListener('focus', function(e) {
+            input.addEventListener('focus', (e) => {
               if (!e.target.value.length) {
                 showSuggestions(getFilteredContacts());
               }
             });
 
-            input.addEventListener('input', function(e) {
+            input.addEventListener('input', (e) => {
               const query = e.target.value.trim().toLowerCase();
               showSuggestions(getFilteredContacts(query));
             });
@@ -4695,7 +4721,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                   DO.C.User.Contacts[contact].IRI?.toLowerCase().includes(query) ||
                   DO.C.User.Contacts[contact].URL?.toLowerCase().includes(query)
                 );
-
+// console.log(matchesQuery)
                 return !subjectsWithAccessKeys.has(contact) && matchesQuery;
               });
             }
@@ -4709,7 +4735,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
                 var name = DO.C.User.Contacts[contact].Name || contact;
                 var img = DO.C.User.Contacts[contact].Image;
-                if (!(img && img.length > 0)) {
+                if (!(img && img.length)) {
                   img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
                 }
                 img = '<img alt="" height="32" src="' + img + '" width="32" />';
@@ -4718,12 +4744,12 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
                 var ul = document.querySelector('#share-resource-permissions ul');
 
-                suggestion.addEventListener('click', function() {
+                suggestion.addEventListener('click', () => {
                   DO.U.addAccessSubjectItem(ul, DO.C.User.Contacts[contact].Graph, contact);
                   var li = document.getElementById('share-resource-access-subject-' + encodeURIComponent(contact));
                   var options = {};
                   options['accessContext'] = 'Share';
-                  options['selectedAccessMode'] = DO.C.Vocab['aclRead']['@id'];
+                  options['selectedAccessMode'] = ns.acl.Read.value;
                   DO.U.showAccessModeSelection(li, '', contact, 'agent', options);
 
                   var select = document.querySelector('[id="' + li.id + '"] select');
@@ -4762,6 +4788,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             var ul = document.querySelector('#share-resource-permissions ul');
 
             var showPermissions = function(s, accessSubject) {
+// console.log(accessSubject)
               if (accessSubject != DO.C.User.IRI) {
                 DO.U.addAccessSubjectItem(ul, s, accessSubject);
 
@@ -4783,9 +4810,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 // console.log(verifiedAccessModes)
 
                 const selectedAccessMode =
-                  (verifiedAccessModes.includes(DO.C.Vocab['aclControl']['@id']) && DO.C.Vocab['aclControl']['@id']) ||
-                  (verifiedAccessModes.includes(DO.C.Vocab['aclWrite']['@id']) && DO.C.Vocab['aclWrite']['@id']) ||
-                  (verifiedAccessModes.includes(DO.C.Vocab['aclRead']['@id']) && DO.C.Vocab['aclRead']['@id']) ||
+                  (verifiedAccessModes.includes(ns.acl.Control.value) && ns.acl.Control.value) ||
+                  (verifiedAccessModes.includes(ns.acl.Write.value) && ns.acl.Write.value) ||
+                  (verifiedAccessModes.includes(ns.acl.Read.value) && ns.acl.Read.value) ||
                   '';
 
                 var options = options || {};
@@ -4797,21 +4824,20 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             }
 
             Object.keys(subjectsWithAccess).forEach(accessSubject => {
-              if (accessSubject === DO.C.Vocab['foafAgent']['@id'] || accessSubject === DO.C.User.IRI) {
+              if (accessSubject === ns.foaf.Agent.value || accessSubject === DO.C.User.IRI) {
                 return;
               }
 
               //Gets some information about the accessSubject that can be displayed besides their URI.
               getResourceGraph(accessSubject)
                 .catch(e => {
-console.log(e);
                   showPermissions(null, accessSubject);
                 })
                 .then(g => {
-                  if (typeof g?._graph === 'undefined') {
-                    showPermissions(null, accessSubject);
+                  var s;
+                  if (g) {
+                    s = g.node(rdf.namedNode(accessSubject));
                   }
-                  var s = g.child(accessSubject);
                   showPermissions(s, accessSubject);
                 })
             })
@@ -4832,13 +4858,13 @@ console.log(e);
           var resourceTo = document.querySelector('#share-resource #share-resource-to');
           if (resourceTo) {
             resourceTo = resourceTo.value.trim();
-            tos = (resourceTo.length > 0) ? resourceTo.split(/\r\n|\r|\n/) : [];
+            tos = (resourceTo.length) ? resourceTo.split(/\r\n|\r|\n/) : [];
           }
 
           var note = document.querySelector('#share-resource #share-resource-note').value.trim();
 
           var ps = document.querySelectorAll('#share-resource-contacts .progress');
-          ps.forEach(function(p){
+          ps.forEach(p => {
             p.parentNode.removeChild(p);
           });
 
@@ -4848,7 +4874,7 @@ console.log(e);
           }
 
           var srci = document.querySelectorAll('#share-resource-contacts input:checked');
-          if (srci.length > 0) {
+          if (srci.length) {
             for(var i = 0; i < srci.length; i++) {
               tos.push(srci[i].value);
             }
@@ -4867,13 +4893,12 @@ console.log(e);
 
     //TODO: Revisit this function and addShareResourceContactInput to generalise.
     addAccessSubjectItem: function(node, s, url) {
-      var iri = s?.iri().toString() || url;
-// console.log(iri.toString());
+      var iri = s?.term.value || url;
 
       var id = encodeURIComponent(iri);
       var name = s ? getAgentName(s) || iri : iri;
       var img = s ? getGraphImage(s) : null;
-      if (!(img && img.length > 0)) {
+      if (!(img && img.length)) {
         img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
       }
       img = '<img alt="" height="32" src="' + img + '" width="32" />';
@@ -5024,14 +5049,14 @@ console.log(e);
             }
             else {
               switch (selectedMode) {
-                case DO.C.Vocab['aclRead']['@id']:
-                  updatedMode = [DO.C.Vocab['aclRead']['@id']];
+                case ns.acl.Read.value:
+                  updatedMode = [ns.acl.Read.value];
                   break;
-                case DO.C.Vocab['aclWrite']['@id']:
-                  updatedMode = [DO.C.Vocab['aclRead']['@id'], DO.C.Vocab['aclWrite']['@id']];
+                case ns.acl.Write.value:
+                  updatedMode = [ns.acl.Read.value, ns.acl.Write.value];
                   break;
-                case DO.C.Vocab['aclControl']['@id']:
-                  updatedMode = [DO.C.Vocab['aclRead']['@id'], DO.C.Vocab['aclWrite'], DO.C.Vocab['aclControl']['@id']];
+                case ns.acl.Control.value:
+                  updatedMode = [ns.acl.Read.value, ns.acl.Write.value, ns.acl.Control.value];
                   break;
               }
 
@@ -5082,8 +5107,8 @@ console.log(e);
       node.innerHTML = '<ul id="share-resource-contacts"></ul>';
       var shareResourceNode = document.getElementById('share-resource-contacts');
 
-      if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0){
-        Object.keys(DO.C.User.Contacts).forEach(function(iri){
+      if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length){
+        Object.keys(DO.C.User.Contacts).forEach(iri => {
           if (DO.C.User.Contacts[iri].Inbox && DO.C.User.IRI !== iri) {
             DO.U.addShareResourceContactInput(shareResourceNode, DO.C.User.Contacts[iri].Graph);
           }
@@ -5099,14 +5124,15 @@ console.log(e);
 
       return getUserContacts(url).then(
         function(contacts) {
-          if(contacts.length > 0) {
-            contacts.forEach(function(url) {
-              getSubjectInfo(url).then(subject => {
-                DO.C.User.Contacts[url] = subject;
-                if (subject.Graph) {
-                  DO.U.addShareResourceContactInput(node, subject.Graph);
-                }
-              });
+          if(contacts.length) {
+            contacts.forEach(url => {
+              getSubjectInfo(url)
+                .then(subject => {
+                  DO.C.User.Contacts[url] = subject;
+                  if (subject.Graph) {
+                    DO.U.addShareResourceContactInput(node, subject.Graph);
+                  }
+                });
             });
 
             // return Promise.all(promises)
@@ -5120,15 +5146,14 @@ console.log(e);
     },
 
     addShareResourceContactInput: function(node, s) {
-      var iri = s?.iri().toString();
-// console.log(iri.toString());
+      var iri = s.term.value;
       var inbox = DO.C.User.Contacts[iri]['Inbox'];
 
-      if (inbox && inbox.length > 0) {
+      if (inbox && inbox.length) {
         var id = encodeURIComponent(iri);
         var name = getAgentName(s) || iri;
         var img = getGraphImage(s);
-        if (!(img && img.length > 0)) {
+        if (!(img && img.length)) {
           img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
         }
         img = '<img alt="" height="32" src="' + img + '" width="32" />';
@@ -5147,13 +5172,13 @@ console.log(e);
           return Promise.resolve(aI);
         }
         else {
-          return getLinkRelationFromHead(DO.C.Vocab['ldpinbox']['@id'], iri);
+          return getLinkRelationFromHead(ns.ldp.inbox.value, iri);
         }
       }
 
       return checkInbox(s)
         .then(inboxes => {
-          if (inboxes && inboxes.length > 0) {
+          if (inboxes && inboxes.length) {
             DO.C.User.Contacts[iri]['Inbox'] = inboxes;
           }
         })
@@ -5164,11 +5189,11 @@ console.log(e);
       //TODO: Some refactoring needed because it is radio only. For now this function is not called for inputType=checkbox
       var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
 
-      button.addEventListener('click', function(){
+      button.addEventListener('click', () => {
         if(button.parentNode.classList.contains('container')){
           var headers;
           headers = {'Accept': 'text/turtle, application/ld+json'};
-          getResourceGraph(url, headers).then(function(g){
+          getResourceGraph(url, headers).then(g => {
               actionNode.textContent = (action == 'write') ? url + generateAttributeId() : url;
               return DO.U.generateBrowserList(g, url, id, action);
             },
@@ -5203,7 +5228,7 @@ console.log(e);
       //TODO: This should be part of refactoring.
       var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
 
-      return new Promise(function(resolve, reject){
+      return new Promise((resolve, reject) => {
         document.getElementById(id + '-input').value = url;
 
         var msgs = document.getElementById(id).querySelectorAll('.response-message');
@@ -5221,27 +5246,23 @@ console.log(e);
         list.innerHTML = '';
 
         var urlPath = url.split("/");
-        if(urlPath.length > 4){ // This means it's not the base URL
+        if (urlPath.length > 4){ // This means it's not the base URL
           urlPath.splice(-2,2);
           var prevUrl = forceTrailingSlash(urlPath.join("/"));
           var upBtn = '<li class="container"><input type="radio" name="containers" value="' + prevUrl + '" id="' + prevUrl + '" /><label for="' + prevUrl + '" id="browser-up">..</label></li>';
           list.insertAdjacentHTML('afterbegin', upBtn);
         }
 
-        var current = g.child(url);
-        var contains = current.ldpcontains;
+        var current = g.node(rdf.namedNode(url));
+        var contains = current.out(ns.ldp.contains).values;
         var containersLi = Array();
         var resourcesLi = Array();
-        contains.forEach(function(c){
-          var cg = g.child(c);
-          var types = cg.rdftype;
-          var resourceTypes = [];
-          types.forEach(function(type){
-            resourceTypes.push(type);
-          });
-
+        contains.forEach(c => {
+          var cg = g.node(rdf.namedNode(c));
+          var resourceTypes = getGraphTypes(cg);
+ 
           var path = c.split("/");
-          if(resourceTypes.indexOf('http://www.w3.org/ns/ldp#Container') > -1 || resourceTypes.indexOf('http://www.w3.org/ns/ldp#BasicContainer') > -1){
+          if (resourceTypes.includes(ns.ldp.Container.value) || resourceTypes.includes(ns.ldp.BasicContainer.value)){
             var slug = path[path.length-2];
             containersLi.push('<li class="container"><input type="radio" name="resources" value="' + c + '" id="' + slug + '"/><label for="' + slug + '">' + decodeURIComponent(slug) + '</label></li>');
           }
@@ -5282,8 +5303,8 @@ console.log(e);
 
     buttonSubscribeNotificationChannel: function(nodes, topicResource) {
       //TODO: Consider using typeof selector instead and make sure it is in the markup
-      nodes.forEach(function(subNode){
-        subNode.addEventListener('click', function(e) {
+      nodes.forEach(subNode => {
+        subNode.addEventListener('click', (e) => {
           var button = e.target.closest('button');
 
           if (button){
@@ -5299,24 +5320,24 @@ console.log(e);
 
               var features = DO.C.Resource[topicResource]['subscription'][subscription]['feature'];
 
-              if (features && features.length > 0) {
+              if (features && features.length) {
                 var d = new Date();
                 var startAt = new Date(d.getTime() + 1000);
                 var endAt = new Date(startAt.getTime() + 3600000);
 
-                if (features.indexOf(DO.C.Vocab['notifystartAt']) > -1) {
+                if (features.includes(ns.notify.startAt.value)) {
                   data['startAt'] = startAt.toISOString();
                 }
-                if (features.indexOf(DO.C.Vocab['notifyendAt']) > -1) {
+                if (features.includes(ns.notify.endAt.value)) {
                   data['endAt'] = endAt.toISOString();
                 }
-                if (features.indexOf(DO.C.Vocab['notifyrate']) > -1) {
+                if (features.includes(ns.notify.rate.value)) {
                   data['rate'] = "PT10S";
                 }
               }
 
               DO.U.subscribeToNotificationChannel(subscription, data)
-              .then(function(i){
+              .then(i => {
                 if (DO.C.Subscription[data.topic] && 'Connection' in DO.C.Subscription[data.topic]) {
                   button.textContent = 'Unsubscribe';
                   button.setAttribute('class', 'unsubscribe');
@@ -5341,18 +5362,18 @@ console.log(e);
       var sD = document.getElementById(id + '-storage-description');
 
       if (samp && !sD) {
-        var sDPromise = getLinkRelation(DO.C.Vocab['solidstorageDescription']['@id'], storageUrl);
+        var sDPromise = getLinkRelation(ns.solid.storageDescription.value, storageUrl);
 
         return sDPromise
           .then(sDURLs => {
             // TODO: resourceIRI for getLinkRelation should be the
             // closest IRI (not necessarily the document).
 
-            if (sDURLs.length > 0) {
+            if (sDURLs.length) {
               ///TODO: Handle multiple storage descriptions?
               var sDURL = sDURLs[0];
               DO.C.Storages = DO.C.Storages || {};
-              DO.C.Storages[s.iri().toString()] = {
+              DO.C.Storages[s.term.value] = {
                 "storageDescription": sDURL
               };
             }
@@ -5363,16 +5384,17 @@ console.log(e);
 
             sD = document.getElementById(id + '-storage-description-details');
 
-            sD.addEventListener('click', function(e){
+            sD.addEventListener('click', (e) => {
               if (!sD.open) {
                 var storageDescriptionNode = document.getElementById(id + '-storage-description');
 
                 if (!storageDescriptionNode) {
                   var storageLocation = '<dl id="storage-location"><dt>Storage location</dt><dd><a href="' + storageUrl +'" target="_blank">' + storageUrl + '</a></dd></dl>';
 
-                  getResourceGraph(sDURL).then(function(g){
+                  getResourceGraph(sDURL).then(g => {
                     if (g) {
-                      g = (g.foafprimaryTopic) ? g.child(g.foafprimaryTopic) : g.child(storageUrl);
+                      var primaryTopic = g.out(ns.foaf.primaryTopic).values;
+                      g = (primaryTopic.length) ? g.node(rdf.namedNode(primaryTopic[0])) : g.node(rdf.namedNode(storageUrl));
 
                       var selfDescription = DO.U.getStorageSelfDescription(g);
                       var contactInformation = DO.U.getContactInformation(g);
@@ -5383,7 +5405,7 @@ console.log(e);
                       sD.insertAdjacentHTML('beforeend', '<div id="' + id + '-storage-description">' + storageLocation + selfDescription + contactInformation + persistencePolicy + odrlPolicies + communicationOptions + '</div>');
 
                       var subscriptionsId = id + '-storage-description-details';
-                      var topicResource = s.iri().toString();
+                      var topicResource = s.term.value;
 
                       var nodes = document.querySelectorAll('[id="' + id + '-storage-description"] [id^="notification-subscriptions-"]');
                       DO.U.buttonSubscribeNotificationChannel(nodes, topicResource);
@@ -5410,16 +5432,17 @@ console.log(e);
       var s = '';
 
       var storageName = getGraphLabel(g);
-      var storageURL = g.iri().toString();
+      
+      var storageURL = g.term.value;
 
       storageName = (typeof storageName !== 'undefined') ? storageName : storageURL;
 
-      DO.C.Resource[g.iri().toString()] = DO.C.Resource[g.iri().toString()] || {};
-      DO.C.Resource[g.iri().toString()]['title'] = storageName;
-      DO.C.Resource[g.iri().toString()]['description'] = g.schemaabstract || g.dctermsdescription || g.rdfvalue || g.assummary || g.schemadescription || g.ascontent || undefined;
+      DO.C.Resource[storageURL] = DO.C.Resource[storageURL] || {};
+      DO.C.Resource[storageURL]['title'] = storageName;
+      DO.C.Resource[storageURL]['description'] = g.out(ns.schema.abstract).values[0] || g.out(ns.dcterms.description).values[0] || g.out(ns.rdf.value).values[0] || g.out(ns.as.summary).values[0] || g.out(ns.schema.description).values[0] || g.out(ns.as.content).values[0] || undefined;
 
       var storageTitle = '<dt>Storage name</dt><dd><a href="' + storageURL + '">' + storageName + '</a></dd>';
-      var storageDescription = (DO.C.Resource[g.iri().toString()]['description']) ? '<dt>Storage description</dt><dd>' + DO.C.Resource[g.iri().toString()]['description'] + '</dd>' : '';
+      var storageDescription = (DO.C.Resource[storageURL]['description']) ? '<dt>Storage description</dt><dd>' + DO.C.Resource[storageURL]['description'] + '</dd>' : '';
 
       s = '<dl id="storage-self-description">' + storageTitle + storageDescription + '</dl>';
 
@@ -5429,14 +5452,16 @@ console.log(e);
     getPersistencePolicy: function(g) {
       var s = '';
 
-      if (g.pimpersistencePolicy && g.pimpersistencePolicy._array.length > 0) {
+      var persistencePolicy = g.out(ns.pim.persistencePolicy).values;
+
+      if (persistencePolicy.length) {
         var pp = [];
 
-        DO.C.Resource[g.iri().toString()] = DO.C.Resource[g.iri().toString()] || {};
-        DO.C.Resource[g.iri().toString()]['persistencePolicy'] = [];
+        DO.C.Resource[g.term.value] = DO.C.Resource[g.term.value] || {};
+        DO.C.Resource[g.term.value]['persistencePolicy'] = [];
 
-        g.pimpersistencePolicy.forEach(function(iri){
-          DO.C.Resource[g.iri().toString()]['persistencePolicy'].push(iri);
+        persistencePolicy.forEach(iri => {
+          DO.C.Resource[g.term.value]['persistencePolicy'].push(iri);
 
           pp.push('<dd><a href="' + iri  + '" target="_blank">' + iri + '</a></dd>');
         });
@@ -5451,13 +5476,15 @@ console.log(e);
       var s = '';
       var odrlPolicies = [];
 
-      if (g.odrlhasPolicy && g.odrlhasPolicy._array.length > 0) {
-        g.odrlhasPolicy._array.forEach(function(iri){
-          var policy = g.child(iri);
+      var hasPolicy = g.out(ns.odrl.hasPolicy).values;
+
+      if (hasPolicy.length) {
+        hasPolicy.forEach(iri => {
+          var policy = g.node(rdf.namedNode(iri));
           var policyDetails = [];
 
-          var types = policy.rdftype._array;
-          var indexPolicy = types.indexOf(DO.C.Vocab['odrlOffer']["@id"]) || types.indexOf(DO.C.Vocab['odrlAgreement']["@id"]);
+          var types = getGraphTypes(policy);
+          var indexPolicy = types.indexOf(ns.odrl.Offer.value) || types.indexOf(ns.odrl.Agreement.value);
           if (indexPolicy >= 0) {
             var rule = types[indexPolicy];
             //XXX: Label derived from URI.
@@ -5468,24 +5495,27 @@ console.log(e);
 
           //TODO: odrl:Set
 
-          if (policy.odrluid && policy.odrluid.at(0)) {
-            policyDetails.push('<dt>Unique identifier<dt><dd><a href="' + policy.odrluid + '" target="_blank">' + policy.odrluid + '</a></dd>');
+          var uid = policy.out(ns.odrl.uid).values[0];
+          if (uid) {
+            policyDetails.push('<dt>Unique identifier<dt><dd><a href="' + uid + '" target="_blank">' + uid + '</a></dd>');
           }
 
-          if (policy.odrtarget && policy.odrltarget.at(0)) {
-            policyDetails.push('<dt>Target<dt><dd><a href="' + policy.odrltarget + '" target="_blank">' + policy.odrltarget + '</a></dd>');
+          var target = policy.out(ns.odrl.target).values[0];
+          if (target) {
+            policyDetails.push('<dt>Target<dt><dd><a href="' + target + '" target="_blank">' + target + '</a></dd>');
           }
 
-          if (policy.odrlpermission && policy.odrlpermission.at(0)) {
-            var ruleG = g.child(policy.odrlpermission.at(0));
+          var permission = policy.out(ns.odrl.permission).values[0];
+          if (permission) {
+            var ruleG = g.node(rdf.namedNode(permission));
 
             policyDetails.push(DO.U.getODRLRuleActions(ruleG));
             policyDetails.push(DO.U.getODRLRuleAssigners(ruleG));
             policyDetails.push(DO.U.getODRLRuleAssignees(ruleG));
           }
-
-          if (policy.odrlprohibition && policy.odrlprohibition.at(0)) {
-            ruleG = g.child(policy.odrlprohibition.at(0));
+          var prohibition = policy.out(ns.odrl.prohibition).values[0];
+          if (prohibition) {
+            ruleG = g.node(rdf.namedNode(prohibition));
 
             policyDetails.push(DO.U.getODRLRuleActions(ruleG));
             policyDetails.push(DO.U.getODRLRuleAssigners(ruleG));
@@ -5503,63 +5533,62 @@ console.log(e);
       return s;
     },
 
-    getODRLRuleActions: function(r) {
+    getODRLRuleActions: function(g) {
 // console.log(r.odrlaction)
       var actions = [];
 
-      if (r.odrlaction && r.odrlaction._array.length > 0) {
-        r.odrlaction._array.forEach(function(iri){
+      var actionsIRIs = g.out(ns.odrl.action).values;
 
-          //FIXME: Label derived from URI.
-          var label = iri;
-          var href = iri;
+      actionsIRIs.forEach(iri => {
+        //FIXME: Label derived from URI.
+        var label = iri;
+        var href = iri;
 
-          if (iri.startsWith('http://www.w3.org/ns/odrl/2/')) {
-            label = iri.substr(iri.lastIndexOf('/') + 1);
-            href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
-          }
-          else if (iri.startsWith('http://creativecommons.org/ns#')) {
-            label = iri.substr(iri.lastIndexOf('#') + 1);
-            href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
-          }
-          else if (iri.lastIndexOf('#')) {
-            label = iri.substr(iri.lastIndexOf('#') + 1);
-          }
-          else if (iri.lastIndexOf('/')) {
-            label = iri.substr(iri.lastIndexOf('/') + 1);
-          }
+        if (iri.startsWith('http://www.w3.org/ns/odrl/2/')) {
+          label = iri.substr(iri.lastIndexOf('/') + 1);
+          href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
+        }
+        else if (iri.startsWith('http://creativecommons.org/ns#')) {
+          label = iri.substr(iri.lastIndexOf('#') + 1);
+          href = 'https://www.w3.org/TR/odrl-vocab/#term-' + label;
+        }
+        else if (iri.lastIndexOf('#')) {
+          label = iri.substr(iri.lastIndexOf('#') + 1);
+        }
+        else if (iri.lastIndexOf('/')) {
+          label = iri.substr(iri.lastIndexOf('/') + 1);
+        }
 
-          var warning = '';
-          var attributeClass = '';
-          var attributeTitle = '';
+        var warning = '';
+        var attributeClass = '';
+        var attributeTitle = '';
 
-          //Get user's actions from preferred policy (prohibition) to check for conflicts with storage's policy (permission)
-          if (DO.C.User.PreferredPolicyRule && DO.C.User.PreferredPolicyRule.Prohibition && DO.C.User.PreferredPolicyRule.Prohibition.Actions.indexOf(iri) > -1) {
-            warning = Icon[".fas.fa-circle-exclamation"] + ' ';
-            attributeClass = ' class="warning"';
-            attributeTitle = ' title="The action (' + label + ') is prohibited by preferred policy."';
-          }
+        //Get user's actions from preferred policy (prohibition) to check for conflicts with storage's policy (permission)
+        if (DO.C.User.PreferredPolicyRule && DO.C.User.PreferredPolicyRule.Prohibition && DO.C.User.PreferredPolicyRule.Prohibition.Actions.includes(iri)) {
+          warning = Icon[".fas.fa-circle-exclamation"] + ' ';
+          attributeClass = ' class="warning"';
+          attributeTitle = ' title="The action (' + label + ') is prohibited by preferred policy."';
+        }
 
-          actions.push('<li' + attributeTitle + '>' + warning + '<a' + attributeClass + ' href="' + href + '" resource="' + iri + '">' + label + '</a></li>')
-        });
+        actions.push('<li' + attributeTitle + '>' + warning + '<a' + attributeClass + ' href="' + href + '" resource="' + iri + '">' + label + '</a></li>')
+      });
 
-        actions = '<dt>Actions</dt><dd><ul rel="odrl:action">' + actions.join('') + '</ul></dd>';
+      actions = '<dt>Actions</dt><dd><ul rel="odrl:action">' + actions.join('') + '</ul></dd>';
 
-        return actions;
-      }
+      return actions;
     },
 
     getODRLRuleAssigners: function(g) {
       var s = '';
       var a = [];
 
-      if (g.odrlassigner && g.odrlassigner._array.length > 0) {
-        g.odrlassigner._array.forEach(function(iri){
-          a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
-        });
+      var assigners = g.out(ns.odrl.assigner).values;
 
-        s = '<dt>Assigners</dt>' + a.join('');
-      }
+      assigners.forEach(iri => {
+        a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
+      });
+
+      s = '<dt>Assigners</dt>' + a.join('');
 
       return s;
     },
@@ -5568,13 +5597,13 @@ console.log(e);
       var s = '';
       var a = [];
 
-      if (g.odrlassignee && g.odrlassignee._array.length > 0) {
-        g.odrlassignee._array.forEach(function(iri){
-          a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
-        });
+      var assignees = g.out(ns.odrl.assignees).values;
 
-        s = '<dt>Assignees</dt>' + a.join('');
-      }
+      assignees.forEach(iri => {
+        a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
+      });
+
+      s = '<dt>Assignees</dt>' + a.join('');
 
       return s;
     },
@@ -5583,13 +5612,14 @@ console.log(e);
       var s = '';
       var resourceOwners = [];
 
+      var solidOwner = g.out(ns.solid.owner).values;
 
-      if (g.solidowner && g.solidowner._array.length > 0) {
-        DO.C.Resource[g.iri().toString()] = DO.C.Resource[g.iri().toString()] || {};
-        DO.C.Resource[g.iri().toString()]['owner'] = [];
+      if (solidOwner.length) {
+        DO.C.Resource[g.term.value] = DO.C.Resource[g.term.value] || {};
+        DO.C.Resource[g.term.value]['owner'] = [];
 
-        g.solidowner._array.forEach(function(iri){
-          DO.C.Resource[g.iri().toString()]['owner'].push(iri);
+        solidOwner.forEach(iri => {
+          DO.C.Resource[g.term.value]['owner'].push(iri);
 
           resourceOwners.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
         });
@@ -5601,8 +5631,8 @@ console.log(e);
     },
 
     getCommunicationOptions: function(g, options = {}) {
-      var subjectURI = options.subjectURI || g.iri().toString();
-      g = g.child(subjectURI);
+      var subjectURI = options.subjectURI || g.term.value;
+      g = g.node(rdf.namedNode(subjectURI));
 // console.log(subjectURI)
       var notificationSubscriptions = DO.U.getNotificationSubscriptions(g);
       var notificationChannels = DO.U.getNotificationChannels(g);
@@ -5622,12 +5652,8 @@ console.log(e);
       if (notificationSubscriptions) {
         nSHTML.push('<dl id="notification-subscriptions-' + subjectURI + '"><dt>Notification Subscriptions</dt>');
 
-        notificationSubscriptions.forEach(function(subscription){
-          var nSChannelType = '';
-          var nSSubscription = '';
-          var nSFeatures = '';
-
-          var nS = g.child(subscription);
+        notificationSubscriptions.forEach(subscription => {
+          var nS = g.node(rdf.namedNode(subscription));
           var channelType = DO.U.getNotificationChannelTypes(nS);
           var features = DO.U.getNotificationFeatures(nS);
 
@@ -5664,15 +5690,15 @@ console.log(e);
 
             var nF = [];
 
-            features.forEach(function(iri){
+            features.forEach(iri => {
               var label, href = iri;
 
               switch (iri) {
-                case DO.C.Vocab['notifystartAt']:
-                case DO.C.Vocab['notifyendAt']:
-                case DO.C.Vocab['notifystate']:
-                case DO.C.Vocab['notifyrate']:
-                case DO.C.Vocab['notifyaccept']:
+                case ns.notify.startAt.value:
+                case ns.notify.endAt.value:
+                case ns.notify.state.value:
+                case ns.notify.rate.value:
+                case ns.notify.accept.value:
                   label = getFragmentFromString(iri);
                   href = 'https://solidproject.org/TR/2022/notifications-protocol-20221231#notify-' + label;
                   break;
@@ -5697,27 +5723,31 @@ console.log(e);
     },
 
     //https://solidproject.org/TR/notifications-protocol#discovery
-    getNotificationSubscriptions: function(s) {
-      return (s.notifysubscription && s.notifysubscription._array.length > 0)
-        ? s.notifysubscription._array
+    getNotificationSubscriptions: function(g) {
+      var notifysubscription = g.out(ns.notify.subscription).values;
+      return (notifysubscription.length)
+        ? notifysubscription
         : undefined
     },
 
-    getNotificationChannels: function(s) {
-      return (s.notifychannel && s.notifychannel._array.length > 0)
-        ? s.notifychannel._array
+    getNotificationChannels: function(g) {
+      var notifychannel = g.out(ns.notify.channel).values;
+      return (notifychannel.length)
+        ? notifychannel
         : undefined
     },
 
-    getNotificationChannelTypes: function(s) {
-      return (s.notifychannelType)
-        ? s.notifychannelType
+    getNotificationChannelTypes: function(g) {
+      var notifychannelType = g.out(ns.notify.channelType).values;
+      return (notifychannelType)
+        ? notifychannelType
         : undefined
     },
 
-    getNotificationFeatures: function(s) {
-      return (s.notifyfeature && s.notifyfeature._array.length > 0)
-        ? s.notifyfeature._array
+    getNotificationFeatures: function(g) {
+      var notifyfeature = g.out(ns.notify.feature).values;
+      return (notifyfeature.length)
+        ? notifyfeature
         : undefined
     },
 
@@ -5725,7 +5755,7 @@ console.log(e);
     subscribeToNotificationChannel: function(url, data) {
       switch(data.type){
         //doap:implements <https://solidproject.org/TR/websocket-channel-2023>
-        case DO.C.Vocab['notifyWebSocketChannel2023']['@id']:
+        case ns.notify.WebSocketChannel2023.value:
           return DO.U.subscribeToWebSocketChannel(url, data);
       }
     },
@@ -5740,8 +5770,7 @@ console.log(e);
 
       switch (options.contentType) {
         case 'text/turtle':
-          var notifyChannelType = 'notify' + d.type;
-          data = '<> a <' + DO.C.Vocab[notifyChannelType]['@id']  + '> ;\n\
+          data = '<> a <' + ns.notify[d.type].value  + '> ;\n\
   <http://www.w3.org/ns/solid/notifications#topic> <' + d.topic + '> .';
           break;
 
@@ -5814,9 +5843,9 @@ console.log(e);
           DO.C.Subscription[data.topic]['Response'] = data;
 
           switch (data.type) {
-            case 'WebSocketChannel2023': case DO.C.Vocab['notifyWebSocketChannel2023']['@id']:
-              data.type = DO.C.Vocab['notifyWebSocketChannel2023']['@id'];
-              return DO.U.connectToWebSocket(data.receiveFrom, data).then(function(i){
+            case 'WebSocketChannel2023': case ns.notify.WebSocketChannel2023.value:
+              data.type = ns.notify.WebSocketChannel2023.value;
+              return DO.U.connectToWebSocket(data.receiveFrom, data).then(i => {
                 DO.C.Subscription[data.topic]['Connection'] = i;
                 // return Promise.resolve();
               });
@@ -5843,7 +5872,7 @@ console.log(e);
               }
 
               //TODO d.type == 'LDNChannel2023' && data.sender
-              if ((d.type == 'WebSocketChannel2023' || d.type == DO.C.Vocab['notifyWebSocketChannel2023']['@id']) && data.receiveFrom) {
+              if ((d.type == 'WebSocketChannel2023' || d.type == ns.notify.WebSocketChannel2023.value) && data.receiveFrom) {
                 return Promise.resolve(data);
               }
             }
@@ -5896,7 +5925,7 @@ console.log(e);
 
           var nTypes = (Array.isArray(data.type)) ? data.type : [data.type];
           var types = '';
-          nTypes.forEach(function(t){
+          nTypes.forEach(t => {
             types += types + '<dd><a href="' + t + '">' + t + '</a></dd>';
           })
 
@@ -5927,7 +5956,7 @@ console.log(e);
 
     connectToWebSocket: function(url, data) {
       function connect() {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
 // console.log(data)
           var protocols = [data.type];
 // protocols = ['solid-0.1'];
@@ -5948,7 +5977,7 @@ console.log(e);
           ws.onclose = function(e) {
             message = {'message': 'Socket to ' + url + ' is closed.'};
             //TODO: Separate reconnect on connection dropping from intentional close.
-            // setTimeout(function() { connect(); }, 1000);
+            // setTimeout(() => { connect(); }, 1000);
             // var timeout = 250;
             // setTimeout(connect, Math.min(10000,timeout+=timeout));
 
@@ -5970,7 +5999,7 @@ console.log(e);
         });
       }
 
-      return connect().then().catch(function(err) {
+      return connect().then().catch((err) => {
         console.log(err)
       });
     },
@@ -5980,20 +6009,23 @@ console.log(e);
       input.value = baseUrl;
       var headers;
       headers = {'Accept': 'text/turtle, application/ld+json'};
-      getResourceGraph(baseUrl, headers).then(function(g){
-        DO.U.generateBrowserList(g, baseUrl, id, action).then(function(i){
-          DO.U.showStorageDescription(g, id, baseUrl);
+      getResourceGraph(baseUrl, headers)
+        .then(g => {
+          DO.U.generateBrowserList(g, baseUrl, id, action)
+            .then(i => {
+              DO.U.showStorageDescription(g, id, baseUrl);
+            });
+        })
+        .then(i => {
+          document.getElementById(id + '-' + action).textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
         });
-      }).then(function(i){
-        document.getElementById(id + '-' + action).textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
-      });
 
-      browseButton.addEventListener('click', function(e){
+      browseButton.addEventListener('click', (e) => {
         DO.U.triggerBrowse(input.value, id, action);
       }, false);
 
       if (DO.C.User.OIDC) {
-        createButton.addEventListener('click', function(e){
+        createButton.addEventListener('click', (e) => {
           DO.U.showCreateContainer(input.value, id, action, e);
         }, false);
       }
@@ -6005,8 +6037,8 @@ console.log(e);
 // console.log(url)
         var headers;
         headers = {'Accept': 'text/turtle, application/ld+json'};
-        getResourceGraph(url, headers).then(function(g){
-          DO.U.generateBrowserList(g, url, id, action).then(function(l){
+        getResourceGraph(url, headers).then(g => {
+          DO.U.generateBrowserList(g, url, id, action).then(l => {
             DO.U.showStorageDescription(g, id, url);
             return l;
           },
@@ -6044,10 +6076,10 @@ console.log(e);
 
       var createButton = document.querySelector('#' + id + '-create-container button.insert');
 
-      input.addEventListener('keyup', function(e){
+      input.addEventListener('keyup', (e) => {
         var containerLabel = input.value.trim();
 
-        if (containerLabel.length > 0) {
+        if (containerLabel.length) {
           createButton.removeAttribute('disabled');
         }
         else {
@@ -6055,12 +6087,12 @@ console.log(e);
         }
       });
 
-      createButton.addEventListener('click', function(e){
+      createButton.addEventListener('click', (e) => {
         //FIXME: Escaping containerLabel and containerURL (request-target) can be better.
 
         var patch = {};
         var containerLabel = input.value.trim();
-        var insertG = '<> <' + DO.C.Vocab['dctermstitle'] +  '> """' + containerLabel.replace(/"/g, '\"') + '""" .';
+        var insertG = '<> <' + ns.dcterms.title.value +  '> """' + containerLabel.replace(/"/g, '\"') + '""" .';
         patch = { 'insert': insertG };
 
         containerLabel = containerLabel.endsWith('/') ? containerLabel.slice(0, -1) : containerLabel;
@@ -6172,7 +6204,7 @@ console.log(response)
       var input = document.getElementById(id + '-input');
       var browseButton = document.getElementById(id + '-update');
 
-      input.addEventListener('keyup', function(e){
+      input.addEventListener('keyup', (e) => {
         var msgs = document.getElementById(id).querySelectorAll('.response-message');
         for(var i = 0; i < msgs.length; i++){
           msgs[i].parentNode.removeChild(msgs[i]);
@@ -6213,7 +6245,7 @@ console.log(response)
 
       // TODO: Show and use storage, outbox, annotationService as opposed to first available.
 
-      if(DO.C.User.Storage && DO.C.User.Storage.length > 0) {
+      if(DO.C.User.Storage && DO.C.User.Storage.length) {
         baseUrl = forceTrailingSlash(DO.C.User.Storage[0]);
       }
       else if(DO.C.User.Outbox && DO.C.User.Outbox[0]) {
@@ -6225,7 +6257,7 @@ console.log(response)
         DO.U.initBrowse(baseUrl, input, browseButton, createButton, id, action);
       }
       else {
-        getLinkRelation(DO.C.Vocab['oaannotationService']['@id'], null, getDocument()).then(
+        getLinkRelation(ns.oa.annotationService.value, null, getDocument()).then(
           function(storageUrl) {
             DO.U.initBrowse(storageUrl[0], input, browseButton, createButton, id, action);
           },
@@ -6233,12 +6265,12 @@ console.log(response)
             var input = document.getElementById(id + '-input');
 
             if (DO.C.User.OIDC) {
-              browseButton.addEventListener('click', function(){
+              browseButton.addEventListener('click', () => {
                 createContainer.innerHTML = '';
                 DO.U.triggerBrowse(input.value, id, action);
               }, false);
 
-              createButton.addEventListener('click', function(e){
+              createButton.addEventListener('click', (e) => {
                 DO.U.showCreateContainer(input.value, id, action, e);
               }, false);
             }
@@ -6376,8 +6408,8 @@ console.log(response)
                 var spawnOptions = {};
 
                 var checkMarkdownInMediaTypes = ['text/markdown', 'text/plain'];
-                if  (checkMarkdownInMediaTypes.indexOf(options['contentType']) > -1) {
-                  data = DO.U.parseMarkdown(data, {createDocument: true});
+                if  (checkMarkdownInMediaTypes.includes(options['contentType'])) {
+                  data = parseMarkdown(data, {createDocument: true});
                   spawnOptions['defaultStylesheet'] = true;
                   //XXX: Perhaps okay for text/markdown but not text/plain?
                   options.contentType = 'text/html';
@@ -6416,46 +6448,28 @@ console.log(response)
       handleResource(iri, headers, options);
     },
 
-    parseMarkdown: function(data, options) {
-      options = options || {};
-// console.log(data)
-      var extensions = {
-        extensions: [gfm()],
-        allowDangerousHtml: true,
-        htmlExtensions: [gfmHtml(), gfmTagfilterHtml()]
-      };
-      var html = marked(data, extensions);
-// console.log(parsed)
-      if (options.createDocument) {
-        html = createHTML('', '<article>' + html+ '</article>');
-      }
-// console.log(html);
-      return html;
-    },
-
+    //XXX: Review grapoi
     buildResourceView: function(data, options) {
       if (!DO.C.MediaTypes.RDF.includes(options['contentType'])) {
         return Promise.resolve({"data": data, "options": options});
       }
 
       return getGraphFromData(data, options).then(
-        function(i){
-          var s = SimpleRDF(DO.C.Vocab, options['subjectURI'], i, ld.store).child(options['subjectURI']);
-// console.log(s)
-          var title = getGraphLabel(s) || options.subjectURI;
+        function(g){
+// console.log(g)
+          var title = getGraphLabel(g) || options.subjectURI;
           var h1 = '<a href="' +  options.subjectURI + '">' + title + '</a>';
 
-          var types = s.rdftype._array;
+          var types = getGraphTypes(g);
 // console.log(types)
-          if(types.indexOf(DO.C.Vocab['ldpContainer']["@id"]) >= 0 ||
-             types.indexOf(DO.C.Vocab['asCollection']["@id"]) >= 0 ||
-             types.indexOf(DO.C.Vocab['asOrderedCollection']["@id"]) >= 0) {
+          if(types.includes(ns.ldp.Container.value) ||
+             types.includes(ns.as.Collection.value) ||
+             types.includes(ns.as.OrderedCollection.value)) {
 
             return DO.U.processResources(options['subjectURI'], options).then(
               function(urls) {
-
                 var promises = [];
-                urls.forEach(function(url) {
+                urls.forEach(url => {
                   // console.log(u);
                   // window.setTimeout(function () {
 
@@ -6466,12 +6480,12 @@ console.log(response)
 
                 // return Promise.all(promises.map(p => p.catch(e => e)))
                 return Promise.allSettled(promises)
-                  .then(function(results) {
+                  .then(results => {
                     var items = [];
                     // graphs.filter(result => !(result instanceof Error));
 
                     //TODO: Refactor if/else based on getResourceGraph
-                    results.forEach(function(result){
+                    results.forEach(result => {
 // console.log(result.value)
 
                       //XXX: Not sure about htis.
@@ -6488,7 +6502,7 @@ console.log(response)
                       else {
                         var html = DO.U.generateIndexItemHTML(result.value);
                         if (typeof html === 'string' && html !== '') {
-                          items.push('<li rel="schema:hasPart" resource="' + result.value.iri().toString() + '">' + html + '</li>');
+                          items.push('<li rel="schema:hasPart" resource="' + result.value.term.value + '">' + html + '</li>');
                         }
                       }
                     })
@@ -6498,7 +6512,7 @@ console.log(response)
 
                     var listItems = '';
 
-                    if (items.length > 0) {
+                    if (items.length) {
                       listItems = "<ul>" + items.join('') + "</ul>";
                     }
 
@@ -6547,37 +6561,46 @@ console.log(response)
         image = getResourceImageHTML(image) + ' ';
       }
 
-      name = getGraphLabel(g) || g.iri().toString();
-      name = '<a href="' + g.iri().toString() + '" property="schema:name" rel="schema:url">' + name + '</a>';
+      name = getGraphLabel(g) || g.term.value;
+      name = '<a href="' + g.term.value + '" property="schema:name" rel="schema:url">' + name + '</a>';
 
-      var datePublished = g.schemadatePublished || g.dctermsissued || g.dctermsdate || g.aspublished || g.schemadateCreated || g.dctermscreated || g.provgeneratedAtTime || g.dctermsmodified || g.asupdated || '';
+      function getValues(g, properties) {
+        let result;
+        properties.forEach(p => {
+          result = g.out(p).values;
+        })
+        return result;
+      } 
+
+      var properties = [ns.schema.datePublished, ns.dcterms.issued, ns.dcterms.date, ns.as.published, ns.schema.dateCreated, ns.dcterms.created, ns.prov.generatedAtTime, ns.dcterms.modified, ns.as.updated];
+      var datePublished = getValues(g, properties)[0] || '';
 
       if (datePublished) {
         published = ', <time content="' + datePublished + '" datetime="' + datePublished + '" property="schema:dataPublished">' + datePublished.substr(0,10) + '</time>';
       }
 
-      if (g.oahasBody) {
-        summary = g.child(g.oahasBody).rdfvalue;
+      if (g.out(ns.oa.hasBody).values.length) {
+        summary = g.node(rdf.namedNode(summary)).out(ns.rdf.value).values[0];
       }
       else {
-        summary = g.schemaabstract || g.dctermsdescription || g.rdfvalue || g.assummary || g.schemadescription || g.ascontent || '';
+        summary = getValues(g, [ns.schema.abstract, ns.dcterms.description, ns.rdf.value, ns.as.summary, ns.schema.description, ns.as.content])[0] || '';
       }
 
       if (summary) {
         summary = '<div datatype="rdf:HTML" property="schema:description">' + summary + '</div>';
       }
 
-      if (g.astag && g.astag._array.length > 0) {
+      if (g.out(ns.as.tag).values.length) {
         tags = [];
-        g.astag.forEach(function(tagURL){
-          var t = g.child(tagURL);
+        g.out(ns.as.tag).values.forEach(tagURL => {
+          var t = g.node(g.namedNode(tagURL));
           var tagName = getFragmentOrLastPath(tagURL);
 
-          if (t.ashref && t.asname.length > 0) {
-            tagURL = t.ashref;
+          if (t.out(ns.as.href).values.length) {
+            tagURL = t.out(ns.as.href).values[0];
           }
-          if (t.asname && t.asname.length > 0) {
-            tagName = t.asname;
+          if (t.out(ns.as.name).values.length) {
+            tagName = t.out(ns.as.name).values[0];
           }
           tags.push('<li><a href="' + tagURL + '" rel="schema:about">' + tagName + '</a></li>');
         })
@@ -6590,7 +6613,6 @@ console.log(response)
     spawnDokieli: async function(documentNode, data, contentType, iri, options){
       options =  options || {};
 
-      // if (DO.C.MediaTypes.RDF.includes(contentType)) {
         var tmpl = document.implementation.createHTMLDocument('template');
 // console.log(tmpl);
 
@@ -6605,7 +6627,7 @@ console.log(response)
 // console.log(data)
             tmpl = await generateGeoView(data)
             // FIXME: Tested with generateGeoView returning a Promise but somehow
-            .then(function(i){
+            .then(i => {
               var id = 'geo';
               var metadataBounds = document.querySelector('#' + id + ' figcaption a');
               if (metadataBounds) {
@@ -6659,7 +6681,7 @@ console.log(response)
           }
           doFiles = doFiles.concat(['dokieli.css', 'dokieli.js']);
 
-          doFiles.forEach(function(i){
+          doFiles.forEach(i => {
 // console.log(i);
             var media = i.endsWith('.css') ? tmpl.querySelectorAll('head link[rel~="stylesheet"][href$="/' + i + '"]') : tmpl.querySelectorAll('head script[src$="/' + i + '"]');
 // console.log(media);
@@ -6687,7 +6709,7 @@ console.log(response)
           }
           else {
             var baseElements = tmpl.querySelectorAll('head base');
-            baseElements.forEach(function(baseElement) {
+            baseElements.forEach(baseElement => {
               baseElement.remove();
             });
           }
@@ -6774,7 +6796,7 @@ console.log(response)
 
         var newDocument = document.getElementById('create-new-document')
         var storageIRI = newDocument.querySelector('#' + id + '-' + action).innerText.trim()
-        var title = (storageIRI.length > 0) ? getURLLastPath(storageIRI) : ''
+        var title = (storageIRI.length) ? getURLLastPath(storageIRI) : ''
         title = DO.U.generateLabelFromString(title);
 
         var rm = newDocument.querySelector('.response-message')
@@ -6786,7 +6808,7 @@ console.log(response)
         var baseURLSelectionChecked = newDocument.querySelector('select[name="base-url"]')
         // console.log(baseURLSelectionChecked);
 
-        if (baseURLSelectionChecked.length > 0) {
+        if (baseURLSelectionChecked.length) {
           var baseURLType = baseURLSelectionChecked.value
           var nodes = html.querySelectorAll('head link, [src], object[data]')
           if (baseURLType == 'base-url-relative') {
@@ -6848,12 +6870,12 @@ console.log(response)
       })
     },
 
-    saveAsDocument: function saveAsDocument (e) {
+    saveAsDocument: async function saveAsDocument (e) {
       e.target.disabled = true;
       document.documentElement.appendChild(fragmentFromString('<aside id="save-as-document" class="do on">' + DO.C.Button.Close + '<h2>Save As Document</h2></aside>'));
 
       var saveAsDocument = document.getElementById('save-as-document');
-      saveAsDocument.addEventListener('click', function(e) {
+      saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('button.close')) {
           document.querySelector('#document-do .resource-save-as').disabled = false;
         }
@@ -6865,7 +6887,7 @@ console.log(response)
       var locationInboxAction = 'read';
       saveAsDocument.insertAdjacentHTML('beforeend', '<div><input id="' + locationInboxId + '-set" name="' + locationInboxId + '-set" type="checkbox" /> <label for="' + locationInboxId + '-set">Set Inbox</label></div>');
 
-      saveAsDocument.addEventListener('click', function(e) {
+      saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('input#' + locationInboxId + '-set')) {
           if (e.target.getAttribute('checked')) {
             e.target.removeAttribute('checked');
@@ -6891,7 +6913,7 @@ console.log(response)
       var locationAnnotationServiceAction = 'read';
       saveAsDocument.insertAdjacentHTML('beforeend', '<div><input id="' + locationAnnotationServiceId + '-set" name="' + locationAnnotationServiceId + '-set" type="checkbox" /> <label for="' + locationAnnotationServiceId + '-set">Set Annotation Service</label></div>');
 
-      saveAsDocument.addEventListener('click', function(e) {
+      saveAsDocument.addEventListener('click', (e) => {
         if (e.target.closest('input#' + locationAnnotationServiceId + '-set')) {
           if (e.target.getAttribute('checked')) {
             e.target.removeAttribute('checked');
@@ -6925,7 +6947,7 @@ console.log(response)
         imgTestResult = 'earl:inapplicable';
       }
       else {
-        img.forEach(function(i){
+        img.forEach(i => {
           if (i.hasAttribute('alt')) {
             if(i.alt.trim() === '') {
               imgCantTell.push(i);
@@ -6938,9 +6960,9 @@ console.log(response)
         });
       }
       var imgAccessibilityReport = '';
-      if (imgFailed.length > 0 || imgCantTell.length > 0) {
-        imgAccessibilityReport += (imgFailed.length > 0) ? '<li>Fail: Images (<code>img</code>) without alternative text (<code>alt</code>).</li>' : '';
-        imgAccessibilityReport += (imgCantTell.length > 0) ? '<li>Can\'t Tell: Images (<code>img</code>) without a non-empty alternative text (<code>alt</code>).</li>' : '';
+      if (imgFailed.length || imgCantTell.length) {
+        imgAccessibilityReport += (imgFailed.length) ? '<li>Fail: Images (<code>img</code>) without alternative text (<code>alt</code>).</li>' : '';
+        imgAccessibilityReport += (imgCantTell.length) ? '<li>Can\'t Tell: Images (<code>img</code>) without a non-empty alternative text (<code>alt</code>).</li>' : '';
       }
 
       var video = document.querySelectorAll('video');
@@ -6952,7 +6974,7 @@ console.log(response)
         videoTestResult = 'earl:inapplicable';
       }
       else {
-        video.forEach(function(i){
+        video.forEach(i => {
           if (i.querySelector('track') && i.hasAttribute('kind')) {
             videoPassed.push(i);
           }
@@ -6962,7 +6984,7 @@ console.log(response)
         });
       }
       var videoAccessibilityReport = '';
-      if (videoFailed.length > 0) {
+      if (videoFailed.length) {
         videoAccessibilityReport += '<li>Fail: Videos (<code>video</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)</li>';
       }
 
@@ -6976,7 +6998,7 @@ console.log(response)
         audioTestResult = 'earl:inapplicable';
       }
       else {
-        audio.forEach(function(i){
+        audio.forEach(i => {
           if (i.querySelector('track') && i.hasAttribute('kind')) {
             audioPassed.push(i);
           }
@@ -6986,14 +7008,14 @@ console.log(response)
         });
       }
       var audioAccessibilityReport = '';
-      if (audioFailed.length > 0) {
+      if (audioFailed.length) {
         audioAccessibilityReport += '<li>Fail: Audios (<code>audio</code>) without external timed text tracks (<code>track</code> or <code>track</code> with <code>kind</code> of text track.)</li>';
       }
 
       var aRWarning = '<p>This document contains some content, e.g., images, videos, audio, that is not accompanied with alternative text or an alternative text field without information. End users with disabilities will likely experience difficulty accessing the content. Please consider adding alternative text before continuing:</p>';
       var aRSuccess = '<p>All content in this document includes alternative text. End users with disabilities will likely have a good experience with this document.</p>';
       var accessibilityReport = '';
-      if (imgAccessibilityReport.length > 0 || audioAccessibilityReport.length > 0 || videoAccessibilityReport.length > 0) {
+      if (imgAccessibilityReport.length || audioAccessibilityReport.length || videoAccessibilityReport.length) {
         accessibilityReport += aRWarning + '<ul>' + imgAccessibilityReport + audioAccessibilityReport + videoAccessibilityReport + '</ul>';
       }
       else {
@@ -7015,8 +7037,7 @@ console.log(response)
       bli.focus();
       bli.placeholder = 'https://example.org/path/to/article';
 
-
-      saveAsDocument.addEventListener('click', e => {
+      saveAsDocument.addEventListener('click', async (e) => {
         if (!e.target.closest('button.create')) {
           return
         }
@@ -7029,7 +7050,7 @@ console.log(response)
           rm.parentNode.removeChild(rm)
         }
 
-        if(!storageIRI.length) {
+        if (!storageIRI.length) {
           saveAsDocument.insertAdjacentHTML('beforeend',
             '<div class="response-message"><p class="error">' +
             'Specify the location to save the article to, and optionally set its <em>inbox</em> or <em>annotation service</em>.</p></div>'
@@ -7044,9 +7065,7 @@ console.log(response)
         var dokielize = document.querySelector('#dokielize-resource')
         if (dokielize.checked) {
           html = getDocument(html)
-// console.log(html)
-          html = DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
-// console.log(html)
+          html = await DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
         }
 
         var wasDerived = document.querySelector('#derivation-data')
@@ -7079,7 +7098,7 @@ console.log(response)
         }
 
         var baseURLSelectionChecked = saveAsDocument.querySelector('select[name="base-url"]')
-        if (baseURLSelectionChecked.length > 0) {
+        if (baseURLSelectionChecked.length) {
           var baseURLType = baseURLSelectionChecked.value
           var nodes = html.querySelectorAll('head link, [src], object[data]')
           var base = html.querySelector('head base[href]');
@@ -7133,8 +7152,8 @@ console.log(response)
               linkHeaders = LinkHeader.parse(link);
             }
 
-            if (DO.C.User.IRI && linkHeaders && linkHeaders.has('rel', DO.C.Vocab['ldpinbox']['@id'])){
-              inboxURL = linkHeaders.rel(DO.C.Vocab['ldpinbox']['@id'])[0].uri;
+            if (DO.C.User.IRI && linkHeaders && linkHeaders.has('rel', ns.ldp.inbox.value)){
+              inboxURL = linkHeaders.rel(ns.ldp.inbox.value)[0].uri;
               requestAccess = '<p><button class="request-access" data-inbox="' + inboxURL +'" data-target="' + storageIRI + '" title="Send an access request to resource inbox.">Request Access</button></p>'
             }
 
@@ -7166,7 +7185,7 @@ console.log(response)
             )
 
             if (DO.C.User.IRI && requestAccess) {
-              document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', function(e) {
+              document.querySelector('#save-as-document .response-message .request-access').addEventListener('click', (e) => {
                 var objectId = '#' + generateUUID();
 
                 inboxURL = e.target.dataset.inbox;
@@ -7180,10 +7199,10 @@ console.log(response)
                   '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>')
 
                 var notificationStatements = `<dl about="` + objectId + `" prefix="acl: http://www.w3.org/ns/auth/acl#">
-  <dt>Object type</dt><dd><a about="` + objectId + `" href="` + DO.C.Vocab['aclAuthorization']['@id'] + `" typeof="acl:Authorization">Authorization</a></dd>
+  <dt>Object type</dt><dd><a about="` + objectId + `" href="` + ns.acl.Authorization.value + `" typeof="acl:Authorization">Authorization</a></dd>
   <dt>Agents</dt><dd><a href="` + agent + `" property="acl:agent">` + agent + `</a></dd>
   <dt>Access to</dt><dd><a href="` + accessTo + `" property="acl:accessTo">` + accessTo + `</a></dd>
-  <dt>Modes</dt><dd><a href="` + DO.C.Vocab['aclRead']['@id'] + `" property="acl:mode">Read</a></dd><dd><a href="` + DO.C.Vocab['aclWrite']['@id'] + `" property="acl:mode">Write</a></dd>
+  <dt>Modes</dt><dd><a href="` + ns.acl.Read.value + `" property="acl:mode">Read</a></dd><dd><a href="` + ns.acl.Write.value + `" property="acl:mode">Write</a></dd>
 </dl>
 `;
 
@@ -7227,19 +7246,21 @@ console.log(response)
     },
 
     viewSource: function(e) {
-      e.target.disabled = true;
+      if (e) {
+        e.target.closest('button').disabled = true;
+      }
 
       var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + '<h2>Source</h2><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="create"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
+      document.documentElement.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + '<h2>Source</h2><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument();
 
-      sourceBox.addEventListener('click', function(e) {
-        if (e.target.closest('button.create')) {
-          var url = window.location.origin + window.location.pathname;
+      sourceBox.addEventListener('click', (e) => {
+        if (e.target.closest('button.update')) {
           var data = document.getElementById('source-edit').value;
+          //FIXME: dokieli related stuff may be getting repainted / updated in the DOM
           document.documentElement.innerHTML = data;
           DO.U.showDocumentInfo();
           DO.U.showDocumentMenu(e);
@@ -7273,7 +7294,7 @@ console.log(response)
 
     rewriteBaseURL: function(nodes, options) {
       options = options || {};
-      if (typeof nodes === 'object' && nodes.length > 0) {
+      if (typeof nodes === 'object' && nodes.length) {
         for (var i = 0; i < nodes.length; i++) {
           var node = nodes[i];
           var url, ref;
@@ -7354,7 +7375,7 @@ console.log(response)
     },
 
     generateLabelFromString: function(s) {
-      if (typeof s === 'string' && s.length > 0) {
+      if (typeof s === 'string' && s.length) {
         s = s.replace(/-/g, ' ');
         s = (s !== '.html' && s.endsWith('.html')) ? s.substr(0, s.lastIndexOf('.html')) : s;
         s = (s !== '.' && s.endsWith('.')) ? s.substr(0, s.lastIndexOf('.')) : s;
@@ -7428,6 +7449,7 @@ console.log(response)
       return a;
     },
 
+    //TODO: Review grapoi
     getCitation: function(i, options) {
 // console.log(i)
 // console.log(options)
@@ -7440,10 +7462,10 @@ console.log(response)
         var headers = {'Accept': 'application/json'};
         var wikidataHeaders = {'Accept': 'application/ld+json'};
 
-        var isbnData = SimpleRDF(DO.C.Vocab, url);
+        var isbnData = rdf.grapoi({ dataset: rdf.dataset() }).node(rdf.namedNode(url));
 
         return getResource(url, headers, options)
-          .then(function(response) {
+          .then(response => {
 // console.log(response)
             return response.text();
           }).then(data => {
@@ -7456,7 +7478,7 @@ console.log(response)
 
             if (data.title) {
 // console.log(data.title)
-              isbnData.schemaname = data.title;
+              isbnData.addOut(ns.schema.name, data.title);
             }
 
           //Unused
@@ -7466,12 +7488,12 @@ console.log(response)
 
             if (data.publish_date) {
 // console.log(data.publish_date)
-              isbnData.schemadatePublished = getDateTimeISOFromMDY(data.publish_date)
+              isbnData.addOut(schemadatePublished, getDateTimeISOFromMDY(data.publish_date));
             }
 
             if (data.covers) {
 // console.log(data.covers)
-              isbnData.schemaimage = 'https://covers.openlibrary.org/b/id/' + data.covers[0] + '-S.jpg';
+              isbnData.addOut(ns.schema.image, rdf.namedNode('https://covers.openlibrary.org/b/id/' + data.covers[0] + '-S.jpg'));
               // document.body.insertAdjacentHTML('afterbegin', '<img src="' + img + '"/>');
 
               //   async function fetchImage(url) {
@@ -7487,43 +7509,42 @@ console.log(response)
               // const h = img.height;
             }
 
-            if (data.authors && Array.isArray(data.authors) && data.authors.length > 0 && data.authors[0].key) {
+            if (data.authors && Array.isArray(data.authors) && data.authors.length && data.authors[0].key) {
               var a = 'https://openlibrary.org' + data.authors[0].key;
 // console.log(a)
               promises.push(getResource(a, headers, options)
-                .then(function(response){
+                .then(response => {
 // console.log(response)
                   return response.text();
-                }).then(data => {
+                })
+                .then(data => {
                   //TODO: try/catch?
                   data = JSON.parse(data);
 // console.log(data)
 
                   var authorURL = 'http://example.com/.well-known/genid/' + generateUUID();
-                  if (data.links && Array.isArray(data.links) && data.links.length > 0) {
+                  if (data.links && Array.isArray(data.links) && data.links.length) {
 // console.log(data.links[0].url)
                     authorURL = data.links[0].url;
                   }
-                  isbnData.schemaauthor = [authorURL];
+                  isbnData.addOut(ns.schema.author, rdf.namedNode(authorURL), authorName => {
+                    if (data.name) {
+                      authorName.addOut(ns.schema.name, data.name);
+                    }
+                  });
 
-                  if (data.name) {
-// console.log(data.name)
-                    isbnData.child(authorURL).schemaname = data.name;
-                  }
-// console.log(isbnData)
+                  return isbnData;
 
-                  return isbnData.child(url);
-
-                //Unused:
+                //XXX: Working but unused:
 //                 if (data.remote_ids && data.remote_ids.wikidata) {
 //                   //wE has a few redirects to wW
 //                   var wE = 'https://www.wikidata.org/entity/' + data.remote_ids.wikidata;
 //                   var wW = 'https://www.wikidata.org/wiki/Special:EntityData/' + data.remote_ids.wikidata + '.jsonld';
 //                   promises.push(getResourceGraph(wW, wikidataHeaders, options)
-//                     .then(function(g){
+//                     .then(g => {
 // // console.log(g)
 // // console.log(g.iri().toString())
-//                       var s = g.graph().match(wE.replace(/^https:/, 'http:'))
+//                       var s = g.match(wE.replace(/^https:/, 'http:'))
 // // console.log(s.toString());
 
 //                       console.log(isbnData)
@@ -7536,19 +7557,19 @@ console.log(response)
                 }));
             }
 
-            // XXX Unused for now:
-            // if (data.identifiers?.wikidata && Array.isArray(data.identifiers.wikidata) && data.identifiers.wikidata.length > 0) {
+            // XXX: Working but unused:
+            // if (data.identifiers?.wikidata && Array.isArray(data.identifiers.wikidata) && data.identifiers.wikidata.length) {
               // var w = 'https://www.wikidata.org/entity/' + data.identifiers.wikidata[0];
-              // promises.push(getResourceGraph(w, wikidataHeaders, options).then(function(g){
+              // promises.push(getResourceGraph(w, wikidataHeaders, options).then(g => {
 // console.log(g);
 // console.log(g.toString());
               // }));
             // }
 
             return Promise.allSettled(promises)
-              .then(function(results) {
+              .then(results => {
                 var items = [];
-                results.forEach(function(result){
+                results.forEach(result => {
 // console.log(result)
                   items.push(result.value);
                 })
@@ -7575,7 +7596,7 @@ console.log(response)
       if (!citationGraph) { return; }
       options = options || {};
       // var citationId = ('citationId' in options) ? options.citationId : citationURI;
-      var subject = citationGraph.child(citationURI);
+      var subject = citationGraph.node(rdf.namedNode(citationURI));
 // console.log(citationGraph);
 // console.log('citationGraph.iri().toString(): ' + citationGraph.iri().toString());
 // console.log('citationGraph.toString(): ' + citationGraph.toString());
@@ -7584,16 +7605,16 @@ console.log(response)
 // console.log('subject.iri().toString(): ' + subject.iri().toString());
 
       var title = getGraphLabel(subject);
-      //FIXME: This is a stupid hack because RDFa parser is not setting the base properly.
+      //FIXME: This is a hack that was related to SimpleRDF's RDFa parser not setting the base properly. May no longer be needed.
       if(typeof title == 'undefined') {
-        subject = citationGraph.child(options.citationId);
+        subject = citationGraph.node(rdf.namedNode(options.citationId));
 
         title = getGraphLabel(subject) || '';
       }
       title = escapeCharacters(title);
-      title = (title.length > 0) ? '<cite>' + title + '</cite>, ' : '';
-      var datePublished = subject.schemadatePublished || subject.dctermsissued || subject.dctermsdate || subject.schemadateCreated || subject.dctermscreated || '';
-      var dateVersion = subject.schemadateModified || datePublished;
+      title = (title.length) ? '<cite>' + title + '</cite>, ' : '';
+      var datePublished = getGraphDate(subject) || '';
+      var dateVersion = subject.out(ns.schema.dateModified).values[0] || datePublished;
       datePublished = (datePublished) ? datePublished.substr(0,4) + ', ' : '';
       var dateAccessed = 'Accessed: ' + getDateTimeISO();
       var authors = [], authorList = [];
@@ -7603,37 +7624,46 @@ console.log(response)
 // console.log(subject.dctermscreator);
 
       //XXX: FIXME: Putting this off for now because SimpleRDF is not finding the bnode for some reason in citationGraph.child(item), or at least authorItem.rdffirst (undefined)
+      //TODO: Revisit using grapoi
 //       if (subject.biboauthorList) {
 //TODO: Just use/test something like: authorList = authorList.concat(traverseRDFList(citationGraph, subject.biboauthorList));
 //       }
 //       else
-      if (subject.schemaauthor && subject.schemaauthor._array.length > 0) {
-        subject.schemaauthor.forEach(function(a) {
+
+      var schemaAuthor = subject.out(ns.schema.author).values;
+      var dctermsCreator = subject.out(ns.dcterms.creator).values;
+      var asActor = subject.out(ns.as.actor).values;
+      if (schemaAuthor.length) {
+        schemaAuthor.forEach(a => {
           authorList.push(a);
         });
       }
-      else if (subject.dctermscreator && subject.dctermscreator._array.length > 0) {
-        subject.dctermscreator.forEach(function(a) {
+      else if (dctermsCreator.length) {
+        dctermsCreator.forEach(a => {
           authorList.push(a);
         });
       }
-      else if (subject.asactor && subject.asactor._array.length > 0) {
-        subject.asactor.forEach(function(a) {
+      else if (asActor.length) {
+        asActor.forEach(a => {
           authorList.push(a);
         });
       }
 // console.log(authorList);
 
-      if(authorList.length > 0) {
-        authorList.forEach(function(authorIRI) {
-          var s = subject.child(authorIRI);
+      if (authorList.length) {
+        authorList.forEach(authorIRI => {
+          var s = subject.node(rdf.namedNode(authorIRI));
           var author = getAgentName(s);
+          var schemafamilyName = s.out(ns.schema.familyName).values;
+          var schemagivenName = s.out(ns.schema.givenName).values;
+          var foaffamilyName = s.out(ns.foaf.familyName).values;
+          var foafgivenName = s.out(ns.foaf.givenName).values;
 
-          if (s.schemafamilyName && s.schemafamilyName.length > 0 && s.schemagivenName && s.schemagivenName.length > 0) {
-            author = DO.U.createRefName(s.schemafamilyName, s.schemagivenName);
+          if (schemafamilyName.length && schemagivenName.length) {
+            author = DO.U.createRefName(schemafamilyName[0], schemagivenName[0]);
           }
-          else if (s.foaffamilyName && s.foaffamilyName.length > 0 && s.foafgivenName && s.foafgivenName.length > 0) {
-            author = DO.U.createRefName(s.foaffamilyName, s.foafgivenName);
+          else if (foaffamilyName.length && foafgivenName.length) {
+            author = DO.U.createRefName(foaffamilyName[0], foafgivenName[0]);
           }
 
           if (author) {
@@ -7647,17 +7677,19 @@ console.log(response)
       }
 
       var dataVersionURL;
-      if (subject.memmemento) {
-        dataVersionURL = subject.memmemento;
+      var memento = subject.out(ns.mem.memento).values;
+      var latestVersion = subject.out(ns.rel['latest-version']).values;
+      if (memento.length) {
+        dataVersionURL = memento;
       }
-      else if (subject.rellatestversion) {
-        dataVersionURL = subject.rellatestversion;
+      else if (latestVersion.length) {
+        dataVersionURL = latestVersion;
       }
       dataVersionURL = (dataVersionURL) ? ' data-versionurl="' + dataVersionURL + '"' : '';
 
       var dataVersionDate = (dateVersion) ? ' data-versiondate="' + dateVersion + '"' : '';
 
-      var content = ('content' in options && options.content.length > 0) ? options.content + ', ' : '';
+      var content = ('content' in options && options.content.length) ? options.content + ', ' : '';
 
       var citationReason = 'Reason: ' + DO.C.Citation[options.citationRelation];
 
@@ -7697,19 +7729,19 @@ console.log(response)
     highlightItems: function() {
       var highlights = getDocumentContentNode(document).querySelectorAll('*[class*="highlight-"]');
       for (var i = 0; i < highlights.length; i++) {
-        highlights[i].addEventListener('mouseenter', function(e) {
+        highlights[i].addEventListener('mouseenter', (e) => {
           var c = e.target.getAttribute('class').split(' ')
-                    .filter(function(s) { return s.startsWith('highlight-'); });
+                    .filter(s => { return s.startsWith('highlight-'); });
           var highlightsX = getDocumentContentNode(document).querySelectorAll('*[class~="'+ c[0] +'"]');
           for (var j = 0; j < highlightsX.length; j++) {
             highlightsX[j].classList.add('do', 'highlight');
           }
         });
 
-        highlights[i].addEventListener('mouseleave', function(e) {
+        highlights[i].addEventListener('mouseleave', (e) => {
           var c = e.target.getAttribute('class');
           c = e.target.getAttribute('class').split(' ')
-                    .filter(function(s) { return s.startsWith('highlight-'); });
+                    .filter(s => { return s.startsWith('highlight-'); });
           var highlightsX = getDocumentContentNode(document).querySelectorAll('*[class~="'+ c[0] +'"]');
           for (var j = 0; j < highlightsX.length; j++) {
             highlightsX[j].classList.remove('do', 'highlight');
@@ -7756,7 +7788,7 @@ console.log(response)
             }
             else {
               labelsPattern += "  VALUES ?labelProperty {";
-              options.optional.prefLabels.forEach(function(property){
+              options.optional.prefLabels.forEach(property => {
                 labelsPattern += ' ' + property;
               });
               labelsPattern += " } ?resource ?labelProperty ?prefLabel .";
@@ -7836,7 +7868,7 @@ WHERE {\n\
       var observation = 'http://purl.org/linked-data/cube#Observation';
 
       var dotSize = 1;
-      var values = data.map(function(n) { return n[obsValue]; }),
+      var values = data.map(n => { return n[obsValue]; }),
         min = Math.min.apply(null, values),
         max = Math.max.apply(null, values);
 
@@ -7897,9 +7929,9 @@ WHERE {\n\
       var elementName = ('elementId' in options) ? ' name="' + options.elementId + '"' : '';
       var elementTitle = ('elementId' in options) ? options.elementId : '';
       var items = '';
-      triples.forEach(function(t){
-        var s = t.subject.nominalValue;
-        var o = t.object.nominalValue;
+      triples.forEach(t => {
+        var s = t.subject.value;
+        var o = t.object.value;
         switch(options.element) {
           case 'ol': case 'ul': default:
             items += '<li><a href="' + s + '">' + o + '</a></li>';
@@ -7929,7 +7961,7 @@ WHERE {\n\
       selector = selector || '.tabs';
       var nodes = document.querySelectorAll(selector);
 
-      nodes.forEach(function(node){
+      nodes.forEach(node => {
         var li = node.querySelectorAll('nav li.selected');
         var figure = node.querySelectorAll('figure.selected');
 
@@ -7938,7 +7970,7 @@ WHERE {\n\
           node.querySelector('figure').classList.add('selected');
         }
 
-        node.querySelector('nav').addEventListener('click', function(e) {
+        node.querySelector('nav').addEventListener('click', (e) => {
           var a = e.target;
           if (a.closest('a')) {
             e.preventDefault();
@@ -7966,7 +7998,7 @@ WHERE {\n\
     getReferenceLabel: function(motivatedBy) {
       motivatedBy = motivatedBy || '';
       //TODO: uriToPrefix
-      motivatedBy = (motivatedBy.length > 0 && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
+      motivatedBy = (motivatedBy.length && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
 
       return DO.C.MotivationSign[motivatedBy] || '#';
     },
@@ -8054,9 +8086,9 @@ WHERE {\n\
 
       var documentURL = DO.C.DocumentURL;
 
-      var note = g.child(noteIRI);
-      if (note.asobject && note.asobject.at(0)) {
-        note = g.child(note.asobject.at(0))
+      var note = g.node(rdf.namedNode(noteIRI));
+      if (note.out(ns.as.object).values.length) {
+        note = g.node(rdf.namedNode(note.out(ns.as.object).values[0]));
       }
 // console.log(noteIRI)
 // console.log(note.toString())
@@ -8066,8 +8098,8 @@ WHERE {\n\
       var refId = 'r-' + id;
       var refLabel = id;
 
-      var inboxIRI = (note.ldpinbox && note.ldpinbox.at(0)) ? note.ldpinbox.at(0) : undefined;
-      var asInboxIRI = (note.asinbox && note.asinbox.at(0)) ? note.asinbox.at(0) : undefined;
+      var inboxIRI = note.out(ns.ldp.inbox).values.length ? note.out(ns.ldp.inbox).values[0] : undefined;
+      var asInboxIRI = note.out(ns.as.inbox).values.length ? note.out(ns.as.inbox).values[0] : undefined;
       inboxIRI = inboxIRI || asInboxIRI;
       if (inboxIRI) {
         // console.log('inboxIRI:')
@@ -8079,11 +8111,11 @@ WHERE {\n\
         // console.log('DO.C.Activity:')
         // console.log(DO.C.Activity)
         if (DO.C.Inbox[inboxIRI]) {
-          DO.C.Inbox[inboxIRI]['Notifications'].forEach(function(notification) {
+          DO.C.Inbox[inboxIRI]['Notifications'].forEach(notification => {
 // console.log(notification)
             if (DO.C.Notification[notification]) {
               if (DO.C.Notification[notification]['Activities']) {
-                DO.C.Notification[notification]['Activities'].forEach(function(activity){
+                DO.C.Notification[notification]['Activities'].forEach(activity => {
   // console.log('   ' + activity)
                   if (!document.querySelector('[about="' + activity + '"]') && DO.C.Activity[activity] && DO.C.Activity[activity]['Graph']) {
                     DO.U.showAnnotation(activity, DO.C.Activity[activity]['Graph']);
@@ -8101,55 +8133,49 @@ WHERE {\n\
         }
       }
 
-      // var datetime = note.schemadatePublished || note.dctermscreated || note.aspublished;
       var datetime = getGraphDate(note);
 
 // console.log(datetime);
-      var annotatedBy = (note.schemacreator && note.schemacreator.at(0) !== undefined) ? note.schemacreator :
-      (note.dctermscreator && note.dctermscreator.at(0) !== undefined) ? note.dctermscreator :
-      (note.asactor && note.asactor.at(0) !== undefined) ? note.asactor :
-      undefined;
+      //TODO: Create a helper function to look for annotater, e.g., getGraphAnnotatedBy
+      var annotatedBy =
+        (note.out(ns.schema.creator).values.length) ? note.out(ns.schema.creator) :
+        (note.out(ns.dcterms.creator).values.length) ? note.out(ns.dcterms.creator) :
+        (note.out(ns.as.creator).values.length) ? note.out(ns.as.creator) :
+        undefined;
+
       var annotatedByIRI;
 // console.log(annotatedBy);
-      if (annotatedBy && annotatedBy.at(0)) {
-        annotatedByIRI = annotatedBy.at(0);
+      if (annotatedBy) {
+        annotatedByIRI = annotatedBy.values[0];
 // console.log(annotatedByIRI);
-        annotatedBy = g.child(annotatedByIRI);
+        annotatedBy = g.node(rdf.namedNode(annotatedByIRI));
 // console.log(annotatedBy);
-      }
-      var annotatedByName = getAgentName(annotatedBy);
+
+        var annotatedByName = getAgentName(annotatedBy);
 // console.log(annotatedByName);
-      var annotatedByImage = getGraphImage(annotatedBy);
+        var annotatedByImage = getGraphImage(annotatedBy);
 // console.log(annotatedByImage);
-      var annotatedByURL = annotatedBy.schemaurl || '';
-      annotatedByURL = (annotatedByURL) ? annotatedByURL : undefined;
+        var annotatedByURL = annotatedBy.out(ns.schema.url).values[0];
+      }
 
       var motivatedBy = 'oa:replying';
 
-
       //XXX: Is this used? Probably. Fix bodyValue
-      var bodyValue = note.schemadescription;
-      if(!bodyValue) {
-        bodyValue = note.dctermsdescription;
-        if(!bodyValue)  {
-          bodyValue = note.ascontent;
-        }
-      }
+      var bodyValue = note.out(ns.schema.description).values[0] || note.out(ns.dcterms.description).values[0] || note.out(ns.as.content).values[0];
 
-      var types = note.rdftype;
+      var types = getGraphTypes(note);
 // console.log(types);
       var resourceTypes = [];
-      types.forEach(function(type){
+      types.forEach(type => {
         resourceTypes.push(type);
 // console.log(type);
       });
 
-      if (resourceTypes.indexOf('http://www.w3.org/ns/oa#Annotation') > -1) {
-        if (note.oabodyValue) {
-          var bodyValue = note.oabodyValue;
-// console.log(bodyValue);
-        }
-        else if (note.oahasBody && note.oahasBody._array.length > 0) {
+      if (resourceTypes.includes(ns.oa.Annotation.value)) {
+        bodyValue = note.out(ns.oa.bodyValue).values[0] || bodyValue;
+        var hasBody = note.out(ns.oa.hasBody).values;
+
+        if (hasBody.length) {
           var noteLanguage = getGraphLanguage(note);
           var noteLicense = getGraphLicense(note);
           var noteRights = getGraphRights(note);
@@ -8157,33 +8183,36 @@ WHERE {\n\
           var bodyObjects = [];
 // console.log(note.oahasBody)
 // console.log(note.oahasBody._array)
-          note.oahasBody._array.forEach(bodyIRI => {
+          hasBody.forEach(bodyIRI => {
 // console.log(bodyIRI);
             var bodyObject = {
               "id": bodyIRI
             };
 
-            var body = g.child(bodyIRI);
+            var body = g.node(rdf.namedNode(bodyIRI));
 
             if (body) {
 // console.log(body.toString());
 
-              if (body.rdftype && body.rdftype._array.length > 0) {
-                bodyObject['type'] = body.rdftype._array;
+              var bodyTypes = getGraphTypes(body);
+              if (bodyTypes.length) {
+                bodyObject['type'] = bodyTypes;
               }
 
-              if (body.rdfvalue) {
-                bodyObject['value'] = body.rdfvalue;
+              var rdfValue = body.out(ns.rdf.value).values;
+              if (rdfValue.length) {
+                bodyObject['value'] = rdfValue[0];
               }
 
-              if (body.oahasPurpose) {
+              var hasPurpose = body.out(ns.oa.hasPurpose).values;
+              if (hasPurpose.length) {
 // console.log(body.oahasPurpose)
-                bodyObject['purpose'] = body.oahasPurpose;
+                bodyObject['purpose'] = hasPurpose[0];
               }
 
               //TODO: Revisit format and language when there is a hasPurpose (e.g., describing, tagging)
 
-              var bodyFormat = body.dcformat || body.dctermsformat;
+              var bodyFormat = body.out(ns.dcelements.format).values[0] || body.out(ns.dcterms.format).values[0];
               if (bodyFormat) {
                 bodyObject['format'] = bodyFormat;
               }
@@ -8212,53 +8241,51 @@ WHERE {\n\
         }
 
 // console.log(documentURL)
-        if (note.oahasTarget && !(note.oahasTarget.startsWith(documentURL) || 'targetInMemento' in options || 'targetInSameAs' in options)){
+        var hasTarget = note.out(ns.oa.hasTarget).values[0];
+        if (hasTarget && !(hasTarget.startsWith(documentURL) || 'targetInMemento' in options || 'targetInSameAs' in options)){
           // return Promise.reject();
           return;
         }
 
-        var target = g.child(note.oahasTarget);
-// console.log(target);
-        var targetIRI = target.iri().toString();
+        var target = g.node(rdf.namedNode(hasTarget));
+        var targetIRI = target.term.value;
 // console.log(targetIRI);
 
-        var source = target.oahasSource;
+        var source = target.out(ns.oa.hasSource).values[0];
 // console.log(source);
 // console.log(note.oamotivatedBy);
-
-        if(note.oamotivatedBy) {
-          motivatedBy = note.oamotivatedBy;
+        var motivatedBy = note.out(ns.oa.motivatedBy).values[0];
+        if (motivatedBy) {
           refLabel = DO.U.getReferenceLabel(motivatedBy);
         }
 
         var exact, prefix, suffix;
-        var selector = target.oahasSelector;
-        if(selector) {
-          selector = g.child(selector);
+        var selector = target.out(ns.oa.hasSelector).values[0];
+        if (selector) {
+          selector = g.node(rdf.namedNode(selector));
 // console.log(selector);
 
 // console.log(selector.rdftype);
-// console.log(selector.rdftype._array);
+// console.log(selector.out(ns.rdf.type).values);
           //FIXME: This is taking the first rdf:type. There could be multiple.
-          var selectorTypes;
-          if (selector.rdftype && selector.rdftype.at(0)) {
-            selectorTypes = selector.rdftype.at(0);
-          }
+          var selectorTypes = getGraphTypes(selector)[0];
+// console.log(selectorTypes)
 // console.log(selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector');
-          if(selectorTypes == 'http://www.w3.org/ns/oa#TextQuoteSelector') {
-            exact = selector.oaexact;
-            prefix = selector.oaprefix;
-            suffix = selector.oasuffix;
+          if (selectorTypes == ns.oa.TextQuoteSelector.value) {
+            exact = selector.out(ns.oa.exact).values[0];
+            prefix = selector.out(ns.oa.prefix).values[0];
+            suffix = selector.out(ns.oa.suffix).values[0];
           }
-          else if (selectorTypes == 'http://www.w3.org/ns/oa#FragmentSelector') {
-            var refinedBy = g.child(selector.oarefinedBy);
+          else if (selectorTypes == ns.oa.FragmentSelector.value) {
+            var refinedBy = selector.out(ns.oa.refinedBy).values[0];
+            refinedBy = refinedBy && selector.node(rdf.namedNode(refinedBy));
 // console.log(refinedBy)
-            exact = refinedBy.oaexact;
-            prefix = refinedBy.oaprefix;
-            suffix = refinedBy.oasuffix;
+            exact = refinedBy && refinedBy.out(ns.oa.exact).values[0];
+            prefix = refinedBy && refinedBy.out(ns.oa.prefix).values[0];
+            suffix = refinedBy && refinedBy.out(ns.oa.suffix).values[0];
 // console.log(selector.rdfvalue)
-            if (selector.rdfvalue && selector.rdfvalue !== '' && selector.dctermsconformsTo && selector.dctermsconformsTo.endsWith('://tools.ietf.org/html/rfc3987')) {
-              var fragment = selector.rdfvalue;
+            if (selector.out(ns.rdf.value).values[0] && selector.out(ns.dcterms.conformsTo).values[0] && selector.out(ns.dcterms.conformsTo).values[0].endsWith('://tools.ietf.org/html/rfc3987')) {
+              var fragment = selector.out(ns.rdf.value).values[0];
 // console.log(fragment)
               fragment = (fragment.indexOf('#') == 0) ? getFragmentFromString(fragment) : fragment;
 
@@ -8293,7 +8320,7 @@ WHERE {\n\
 
           var parentNodeWithId = selectedParentNode.closest('[id]');
           targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
-
+// console.log(parentNodeWithId, targetIRI)
           var noteData = {
             "type": 'article',
             "mode": "read",
@@ -8358,7 +8385,7 @@ WHERE {\n\
           if(DO.C.User.IRI) {
             var buttonDelete = document.querySelector('aside.do blockquote[cite="' + noteIRI + '"] article button.delete');
             if (buttonDelete) {
-              buttonDelete.addEventListener('click', function(e) {
+              buttonDelete.addEventListener('click', (e) => {
                 var button = e.target.closest('button.delete');
                 handleDeleteNote(button);
               });
@@ -8419,18 +8446,18 @@ WHERE {\n\
         }
       }
       //TODO: Refactor
-      else if ((note.asinReplyTo && note.asinReplyTo.at(0)) || (note.siocreplyof && note.siocreplyof.at(0))) {
+      else if (note.out(ns.as.inReplyTo).values[0] || note.out(ns.sioc.replyof).values[0]) {
         var inReplyTo, inReplyToRel;
-        if (note.asinReplyTo.at(0)) {
-          inReplyTo = note.asinReplyTo.at(0);
+        if (note.out(ns.as.inReplyTo).values[0]) {
+          inReplyTo = note.out(ns.as.inReplyTo).values[0];
           inReplyToRel = 'as:inReplyTo';
         }
-        else if(note.siocreplyof.at(0)) {
-          inReplyTo = note.siocreplyof.at(0);
+        else if (note.out(ns.sioc.reply_of).values[0]) {
+          inReplyTo = note.out(ns.sioc.reply_of).values[0];
           inReplyToRel = 'sioc:reply_of';
         }
 
-        if(inReplyTo && inReplyTo.indexOf(window.location.origin + window.location.pathname) >= 0) {
+        if (inReplyTo && inReplyTo.includes(currentLocation())) {
           noteData = {
             "type": 'article',
             "mode": "read",
@@ -8507,12 +8534,12 @@ WHERE {\n\
     processCitationClaim: function(citation) {
 // console.log('  processCitationClaim(' + citation.citingEntity + ')')
       // var pIRI = getProxyableIRI(citation.citingEntity);
-      return getResourceGraph(citation.citingEntity).then(
-        function(i) {
+      return getResourceGraph(citation.citingEntity)
+      .then(i => {
           var cEURL = stripFragmentFromString(citation.citingEntity);
           DO.C.Activity[cEURL] = {};
           DO.C.Activity[cEURL]['Graph'] = i;
-          var s = i.child(citation.citingEntity);
+          var s = i.node(rdf.namedNode(citation.citingEntity));
           DO.U.addCitation(citation, s);
         }
       );
@@ -8527,7 +8554,7 @@ WHERE {\n\
       var documentURL = DO.C.DocumentURL;
 
       //XXX: Important
-      s = s.child(citingEntity);
+      s = s.node(rdf.namedNode(citingEntity));
 
       //TODO: cito:Citation
       // if rdftypes.indexOf(citoCitation)
@@ -8544,14 +8571,14 @@ WHERE {\n\
       var cEURL = stripFragmentFromString(citingEntity);
       var citingEntityLabel = getGraphLabel(s);
       if (!citingEntityLabel) {
-        var cEL = getGraphLabel(s.child(cEURL));
+        var cEL = getGraphLabel(s.node(rdf.namedNode(cEURL)));
         citingEntityLabel = cEL ? cEL : citingEntity;
       }
       citation['citingEntityLabel'] = citingEntityLabel;
 
-      var citedEntityLabel = getGraphLabel(DO.C.Resource[documentURL].graph.child(citedEntity))
+      var citedEntityLabel = getGraphLabel(DO.C.Resource[documentURL].graph.node(rdf.namedNode(citedEntity)));
       if (!citedEntityLabel) {
-        cEL = DO.C.Resource[documentURL].graph(DO.C.Resource[documentURL].graph.child(stripFragmentFromString(citedEntity)))
+        cEL = DO.C.Resource[documentURL].graph(DO.C.Resource[documentURL].graph.node(rdf.namedNode(stripFragmentFromString(citedEntity))));
         citedEntityLabel = cEL ? cEL : citedEntity;
       }
       citation['citedEntityLabel'] = citedEntityLabel;
@@ -8885,10 +8912,10 @@ WHERE {\n\
                 // var bodyFormat = bodyItem.format ? bodyItem.format : 'rdf:HTML';
 
                 if (bodyItem.purpose) {
-                  if (bodyItem.purpose == "describing" || bodyItem.purpose == DO.C.Vocab["oadescribing"]["@id"]) {
+                  if (bodyItem.purpose == "describing" || bodyItem.purpose == ns.oa.describing.value) {
                     body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
                   }
-                  if (bodyItem.purpose == "tagging" || bodyItem.purpose == DO.C.Vocab["oatagging"]["@id"]) {
+                  if (bodyItem.purpose == "tagging" || bodyItem.purpose == ns.oa.tagging.value) {
                     tagsArray.push(bodyValue);
                   }
                 }
@@ -8900,8 +8927,8 @@ WHERE {\n\
               if (tagsArray.length) {
                 tagsArray = tagsArray
                   .map(tag => escapeCharacters(tag.trim()))
-                  .filter(tag => tag.length > 0);
-                  tagsArray = uniqueArray(tagsArray.sort());
+                  .filter(tag => tag.length);
+                tagsArray = uniqueArray(tagsArray.sort());
 
                 var tags = tagsArray.map(tag => '<li about="#tag-' + n.id + '-' + generateAttributeId(null, tag) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + tag + '</li>').join('');
 
@@ -9009,7 +9036,7 @@ WHERE {\n\
       let tagsArray = string
         .split(',')
         .map(tag => escapeCharacters(tag.trim()))
-        .filter(tag => tag.length > 0);
+        .filter(tag => tag.length);
 
       tagsArray = uniqueArray(tagsArray.sort());
 
@@ -9196,7 +9223,7 @@ WHERE {\n\
             var documentURL = DO.C.DocumentURL;
 
             //FIXME: This is a horrible way of hacking MediumEditorTable
-            document.querySelectorAll('i.fa-table, i.fa-link, i.fa-picture-o').forEach(function(i){
+            document.querySelectorAll('i.fa-table, i.fa-link, i.fa-picture-o').forEach(i => {
               var icon = Icon[".fas.fa-table.fa-2x"].replace(/ fa\-2x/, '');
 
               if (i.classList.contains('fa-link') > 0) {
@@ -9219,7 +9246,7 @@ WHERE {\n\
             //   authors = document.getElementById(documentAuthors);
             // }
 
-            var s = DO.C.Resource[documentURL].graph.child(documentURL);
+            var s = DO.C.Resource[documentURL].graph.node(rdf.namedNode(documentURL));
 
             DO.C.ContributorRoles.forEach(contributorRole => {
 // console.log(contributorRole)
@@ -9233,7 +9260,7 @@ WHERE {\n\
               }
 
               //User can add themselves as a contributor
-              if (DO.C.User.IRI && s['schema' + contributorRole].indexOf(DO.C.User.IRI) < 0){
+              if (DO.C.User.IRI && !s.out(ns.schema[contributorRole]).values.includes(DO.C.User.IRI)){
                 var contributorId;
                 var contributorName = DO.C.User.Name || DO.C.User.IRI;
                 if (DO.C.User.Name) {
@@ -9247,7 +9274,7 @@ WHERE {\n\
                 }
                 contributorId = ' id="' + contributorId + '"';
 
-                var contributorInList = (DO.C.Resource[documentURL].rdftype.indexOf(DO.C.Vocab['schemaScholarlyArticle']['@id']) > -1) ?
+                var contributorInList = (DO.C.Resource[documentURL].rdftype.includes(ns.schema.ScholarlyArticle.value)) ?
                   ' inlist="" rel="bibo:' + contributorRole + 'List" resource="' + DO.C.User.IRI + '"' : '';
 
                 var userHTML = '<dd class="do"' + contributorId + contributorInList + '><span about="" rel="schema:' + contributorRole + '">' + getAgentHTML({'avatarSize': 32}) + '</span><button class="add-' + contributorRole + '" contenteditable="false" title="Add ' + contributorName + ' as ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>';
@@ -9262,7 +9289,7 @@ WHERE {\n\
               contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="invite-' + contributorRole + '" contenteditable="false" title="Invite ' + contributorRole +'">' + Icon[".fas.fa-bullhorn"] + '</button></dd>');
 
               contributorNode = document.getElementById(contributorNodeId);
-              contributorNode.addEventListener('click', function(e){
+              contributorNode.addEventListener('click', (e) => {
                 var button = e.target.closest('button.add-' + contributorRole);
                 if (button){
                   var n = e.target.closest('.do');
@@ -9295,14 +9322,14 @@ WHERE {\n\
 
                     if (iri.startsWith('http')) {
                       //TODO: Refactor. There is overlap with addShareResourceContactInput and getAgentHTML
-                      getResourceGraph(iri).then(function(s){
+                      getResourceGraph(iri).then(s => {
                         // var iri = s.iri().toString();
                         // var id = encodeURIComponent(iri);
 
                         var name = getAgentName(s) || iri;
                         var img = getGraphImage(s);
 
-                        img = (img && img.length > 0) ? '<img alt="" height="32" rel="schema:image" src="' + img + '" width="32" /> ' : '';
+                        img = (img && img.length) ? '<img alt="" height="32" rel="schema:image" src="' + img + '" width="32" /> ' : '';
                         var userHTML = fragmentFromString('<span about="" rel="schema:' + contributorRole + '"><span about="' + iri + '" typeof="schema:Person">' + img + '<a href="' + iri + '" rel="schema:url">' + name + '</a></span></span>');
 
                         n.replaceChild(userHTML, input);
@@ -9341,8 +9368,8 @@ WHERE {\n\
               insertDocumentLevelHTML(document, dl, { 'id': documentLanguage });
 
               var dLangS = document.querySelector('#' + documentLanguage + ' select');
-              dLangS.addEventListener('change', function(e){
-                dLangS.querySelectorAll('option').forEach(function(o){
+              dLangS.addEventListener('change', (e) => {
+                dLangS.querySelectorAll('option').forEach(o => {
                   o.removeAttribute('selected');
                 });
                 dLangS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
@@ -9356,8 +9383,8 @@ WHERE {\n\
               insertDocumentLevelHTML(document, dl, { 'id': documentLicense });
 
               var dLS = document.querySelector('#' + documentLicense + ' select');
-              dLS.addEventListener('change', function(e){
-                dLS.querySelectorAll('option').forEach(function(o){
+              dLS.addEventListener('change', (e) => {
+                dLS.querySelectorAll('option').forEach(o => {
                   o.removeAttribute('selected');
                 });
                 dLS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
@@ -9371,8 +9398,8 @@ WHERE {\n\
               insertDocumentLevelHTML(document, dl, { 'id': documentType });
 
               var dTypeS = document.querySelector('#' + documentType + ' select');
-              dTypeS.addEventListener('change', function(e){
-                dTypeS.querySelectorAll('option').forEach(function(o){
+              dTypeS.addEventListener('change', (e) => {
+                dTypeS.querySelectorAll('option').forEach(o => {
                   o.removeAttribute('selected');
                 });
                 dTypeS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
@@ -9386,15 +9413,15 @@ WHERE {\n\
               insertDocumentLevelHTML(document, dl, { 'id': documentStatus });
 
               var dSS = document.querySelector('#' + documentStatus + ' select');
-              dSS.addEventListener('change', function(e){
-                dSS.querySelectorAll('option').forEach(function(o){
+              dSS.addEventListener('change', (e) => {
+                dSS.querySelectorAll('option').forEach(o => {
                   o.removeAttribute('selected');
                 });
                 dSS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
               });
             }
 
-            if (s.rdftype.indexOf(DO.C.Vocab["doapSpecification"]["@id"]) > -1) {
+            if (getGraphTypes(s).includes(ns.doap.Specification.value)) {
               var documentTestSuite = 'document-test-suite';
               var testSuite = document.getElementById(documentTestSuite);
               if (!testSuite) {
@@ -9404,13 +9431,14 @@ WHERE {\n\
 
                 //XXX: This is a workaround until we understand why the input value is not available in setEditSelections() where it is using `document.querySelector` to get the value fresh. The following catches the blur event and sets the input value back to itself, and that seems to be available setEditSelections().
                 var dTS = document.querySelector('#' + documentTestSuite + ' input');
-                dTS.addEventListener('blur', function(e){
+                dTS.addEventListener('blur', (e) => {
                   dTS.setAttribute('value', dTS.value)
                 });
               }
             }
 
-            if (!s.ldpinbox || s.ldpinbox._array.length === 0) {
+            var inbox = getGraphInbox(s);
+            if (!inbox?.length) {
               var documentInbox = 'document-inbox';
               var inbox = document.getElementById(documentInbox);
               if (!inbox) {
@@ -9420,13 +9448,13 @@ WHERE {\n\
 
                 //XXX: Same as above comment about workaround for setEditSelections
                 var dI = document.querySelector('#' + documentInbox + ' input');
-                dI.addEventListener('blur', function(e){
+                dI.addEventListener('blur', (e) => {
                   dI.setAttribute('value', dI.value);
                 });
               }
             }
 
-            if (!s.asinReplyTo || s.asinReplyTo._array.length === 0) {
+            if (!s.out(ns.as.inReplyTo).values.length) {
               var documentInReplyTo = 'document-in-reply-to';
               var inReplyTo = document.getElementById(documentInReplyTo);
               if (!inReplyTo) {
@@ -9436,7 +9464,7 @@ WHERE {\n\
 
                 //XXX: Same as above comment about workaround for setEditSelections
                 var dIRT = document.querySelector('#' + documentInReplyTo + ' input');
-                dIRT.addEventListener('blur', function(e){
+                dIRT.addEventListener('blur', (e) => {
                   dIRT.setAttribute('value', dI.value);
                 });
               }
@@ -9447,7 +9475,7 @@ WHERE {\n\
           }
 
           //XXX: This should be perhaps limited to certain nodes?
-          document.querySelectorAll('.do').forEach(function(node){
+          document.querySelectorAll('.do').forEach(node => {
             node.setAttribute('contenteditable', 'false');
           })
 
@@ -9968,7 +9996,7 @@ WHERE {\n\
 
               updateAnnotationInboxForm();
 
-              return getLinkRelation(DO.C.Vocab['oaannotationService']['@id'], null, getDocument()).then(
+              return getLinkRelation(ns.oa.annotationService.value, null, getDocument()).then(
                 function(url) {
                   DO.C.AnnotationService = url[0];
                   updateAnnotationServiceForm();
@@ -10214,7 +10242,7 @@ WHERE {\n\
                   }
 
                   var specref = document.querySelector('#specref-search-submit');
-                  specref.addEventListener('click', function(e) {
+                  specref.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
 // console.log(e);
@@ -10238,7 +10266,7 @@ WHERE {\n\
 
                       //TODO: Clean input data
 
-                      Object.keys(data).forEach(function(key) {
+                      Object.keys(data).forEach(key => {
 // console.log(data[key])
                         if ('href' in data[key] &&
                             !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
@@ -10277,7 +10305,7 @@ WHERE {\n\
                         }
 
                         //XXX: Assigning 'change' action to ul because it gets removed when there is a new search result / replaced. Perhaps it'd be nicer (but more expensive?) to destroy/create .specref-search-results node?
-                        specrefSearchResults.querySelector('ul').addEventListener('change', function(e){
+                        specrefSearchResults.querySelector('ul').addEventListener('change', (e) => {
                           var checkedCheckbox = e.target.closest('input');
                           if (checkedCheckbox) {
 // console.log(e.target);
@@ -10326,7 +10354,7 @@ WHERE {\n\
                   var textInputB = selection.substr(selection.indexOf(' of ') + 4);
 
                   if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
-                    Object.keys(DO.C.RefAreas).forEach(function(key) {
+                    Object.keys(DO.C.RefAreas).forEach(key => {
                       if(DO.C.RefAreas[key].toLowerCase() == textInputB.toLowerCase()) {
                         textInputB = key;
                       }
@@ -10340,12 +10368,12 @@ WHERE {\n\
 
                   if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
                     var refAreas;
-                    Object.keys(DO.C.RefAreas).forEach(function(key) {
+                    Object.keys(DO.C.RefAreas).forEach(key => {
                       refAreas += '<option value="' + key + '">' + key + ' - ' + DO.C.RefAreas[key] + '</option>';
                     });
                     form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
                     var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
-                    rA.addEventListener('change', function(e) {
+                    rA.addEventListener('change', (e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       textInputB = e.target.value;
@@ -10378,18 +10406,18 @@ WHERE {\n\
                   sG = document.getElementById(sparklineGraphId);
 
                   getResourceGraph(queryURL)
-                    .then(function(g){
+                    .then(g => {
                       sG.removeAttribute('class');
-                      var triples = sortGraphTriples(g.graph(), { sortBy: 'object' });
+                      var triples = sortGraphTriples(g, { sortBy: 'object' });
                       return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
                     })
-                    .then(function(listHTML){
+                    .then(listHTML => {
                       sG.innerHTML = listHTML;
                       form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
                     })
-                    .then(function(x){
+                    .then(x => {
                       var rC = document.getElementById(resultContainerId);
-                      rC.addEventListener('change', function(e) {
+                      rC.addEventListener('change', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         var sparkline = sG.querySelectorAll('.sparkline, .sparkline-info');
@@ -10416,29 +10444,27 @@ WHERE {\n\
                         queryURL = getProxyableIRI(queryURL);
 
                         getResourceGraph(queryURL)
-                          .then(function(g){
-                            var triples = sortGraphTriples(g.graph(), { sortBy: 'object' });
-                            
-                            g = g.graph().toArray();
+                          .then(g => {
+                            var triples = sortGraphTriples(g, { sortBy: 'object' });
 // console.log(triples);
-                            if(triples.length > 0) {
+                            if (triples.length) {
                               var observations = {};
-                              triples.forEach(function(t){
-                                var s = t.subject.nominalValue;
-                                var p = t.predicate.nominalValue;
-                                var o = t.object.nominalValue;
+                              triples.forEach(t => {
+                                var s = t.subject.value;
+                                var p = t.predicate.value;
+                                var o = t.object.value;
                                 observations[s] = observations[s] || {};
                                 observations[s][p] = o;
                               });
 // console.log(observations);
                               var list = [], item;
-                              Object.keys(observations).forEach(function(key) {
+                              Object.keys(observations).forEach(key => {
                                 item = {};
-                                observations[key]['http://purl.org/linked-data/cube#Observation'] = key;
+                                observations[key][ns.qb.Observation.value] = key;
                                 item[key] = observations[key];
                                 list.push(item[key]);
                               });
-                              var sortByKey = 'http://purl.org/linked-data/sdmx/2009/dimension#refPeriod';
+                              var sortByKey = ns['sdmx-dimension'].refPeriod;
                               list.sort(function (a, b) {
                                 return a[sortByKey].toLowerCase().localeCompare(b[sortByKey].toLowerCase());
                               });
@@ -10586,7 +10612,7 @@ WHERE {\n\
                 opts.buttonClass = this.customClassOption;
               }
 
-              Object.keys(opts).forEach(function(key) {
+              Object.keys(opts).forEach(key => {
                 if(typeof opts[key] === 'string') {
                   opts[key] = opts[key].trim();
                 }
@@ -10663,127 +10689,142 @@ WHERE {\n\
               var activityTypeMatched = false;
               var activityIndex = DO.C.ActionActivityIndex[_this.action];
 
-              //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
-              if((opts.annotationLocationPersonalStorage && DO.C.User.TypeIndex) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.TypeIndex)) {
+              function isDuplicateLocation(annotationDistribution, containerIRI) {
+                return Object.keys(annotationDistribution).some(
+                  item => annotationDistribution[item].containerIRI == containerIRI
+                );
+              }
 
-                //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
+              //Use if (activityIndex) when all _this.action values are taken into account e.g., `note` in author mode
+              if (_this.action !== 'selector') {
+                //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
+                if((opts.annotationLocationPersonalStorage && DO.C.User.TypeIndex) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.TypeIndex)) {
 
-                var publicTypeIndexes = DO.C.User.TypeIndex[DO.C.Vocab['solidpublicTypeIndex']['@id']];
-                var privateTypeIndexes = DO.C.User.TypeIndex[DO.C.Vocab['solidprivateTypeIndex']['@id']];
+                  //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
 
-                if (publicTypeIndexes) {
-                  var publicTIValues = Object.values(publicTypeIndexes);
-// console.log(publicTIValues)
-                  publicTIValues.forEach(ti => {
-                    //XXX: For now, we are only sending the annotation to one location that's already matched
-                    if (activityTypeMatched) return;
+                  var publicTypeIndexes = DO.C.User.TypeIndex[ns.solid.publicTypeIndex.value];
+                  var privateTypeIndexes = DO.C.User.TypeIndex[ns.solid.privateTypeIndex.value];
 
-                    var forClass = ti[DO.C.Vocab['solidforClass']['@id']];
-                    var instanceContainer = ti[DO.C.Vocab['solidinstanceContainer']['@id']];
-                    var instance = ti[DO.C.Vocab['solidinstance']['@id']];
+                  if (publicTypeIndexes) {
+                    var publicTIValues = Object.values(publicTypeIndexes);
+  // console.log(publicTIValues)
+                    publicTIValues.forEach(ti => {
+                      //XXX: For now, we are only sending the annotation to one location that's already matched
+                      if (activityTypeMatched) return;
 
-                    if (activityIndex.includes(forClass)) {
-                      if (instanceContainer) {
-                        activityTypeMatched = true;
+                      var forClass = ti[ns.solid.forClass.value];
+                      var instanceContainer = ti[ns.solid.instanceContainer.value];
+                      var instance = ti[ns.solid.instance.value];
 
-                        containerIRI = instanceContainer;
+                      if (activityIndex?.includes(forClass)) {
+                        if (instanceContainer) {
+                          activityTypeMatched = true;
 
-                        fromContentType = 'text/html';
-                        // contentType = 'text/html';
-                        contentType = fromContentType;
-        
-                        noteURL = noteIRI = containerIRI + id;
-                        contextProfile = {
-                          // 'subjectURI': noteIRI,
-                        };
-                        aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+                          containerIRI = instanceContainer;
 
-                        annotationDistribution.push(aLS);
+                          fromContentType = 'text/html';
+                          // contentType = 'text/html';
+                          contentType = fromContentType;
+          
+                          noteURL = noteIRI = containerIRI + id;
+                          contextProfile = {
+                            // 'subjectURI': noteIRI,
+                          };
+                          aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+
+                          annotationDistribution.push(aLS);
+                        }
+                        //TODO: Not handling instance yet.
                       }
-                      //TODO: Not handling instance yet.
-                    }
-                  })
+                    })
 
-                }
-                else if (privateTypeIndexes) {
+                  }
+                  else if (privateTypeIndexes) {
 
-                }
-              }
-
-              if((opts.annotationLocationPersonalStorage && DO.C.User.Outbox) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Outbox)) {
-                containerIRI = DO.C.User.Outbox[0];
-
-                var fromContentType = 'text/html';
-                // contentType = 'application/ld+json';
-                contentType = fromContentType;
-
-                noteURL = noteIRI = containerIRI + id;
-                var contextProfile = {
-                  '@context': [
-                    'https://www.w3.org/ns/activitystreams',
-                    { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
-                  ],
-                  // 'subjectURI': noteIRI,
-                  'profile': 'https://www.w3.org/ns/activitystreams'
-                };
-                aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
-                if (typeof DO.C.User.Storage === 'undefined' && !activityTypeMatched) {
-                  aLS['canonical'] = true;
+                  }
                 }
 
-                aLS = Object.assign(aLS, contextProfile)
+                if ((opts.annotationLocationPersonalStorage && DO.C.User.Outbox) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Outbox)) {
+                  containerIRI = DO.C.User.Outbox[0];
 
-                annotationDistribution.push(aLS);
-              }
+                  var fromContentType = 'text/html';
+                  // contentType = 'application/ld+json';
+                  contentType = fromContentType;
 
-              if (!activityTypeMatched && ((opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage))) {
-                containerIRI = DO.C.User.Storage[0];
-
-                fromContentType = 'text/html';
-                // contentType = 'text/html';
-                contentType = fromContentType;
-
-                noteURL = noteIRI = containerIRI + id;
-                contextProfile = {
-                  // 'subjectURI': noteIRI,
-                };
-                aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
-
-                annotationDistribution.push(aLS);
-              }
-
-              if(opts.annotationLocationService && typeof DO.C.AnnotationService !== 'undefined') {
-                containerIRI = DO.C.AnnotationService;
-                fromContentType = 'text/html';
-                // contentType = 'application/ld+json';
-                contentType = fromContentType;
-
-                contextProfile = {
-                  '@context': [
-                    'http://www.w3.org/ns/anno.jsonld',
-                    { 'as': 'https://www.w3.org/ns/activitystreams#', 'schema': 'http://schema.org/' }
-                  ],
-                  // 'subjectURI': noteIRI,
-                  'profile': 'http://www.w3.org/ns/anno.jsonld'
-                };
-
-                if(!opts.annotationLocationPersonalStorage && opts.annotationLocationService) {
                   noteURL = noteIRI = containerIRI + id;
-                  aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
-                }
-                else if(opts.annotationLocationPersonalStorage) {
-                  noteURL = containerIRI + id;
+                  var contextProfile = {
+                    '@context': [
+                      'https://www.w3.org/ns/activitystreams',
+                      { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
+                    ],
+                    // 'subjectURI': noteIRI,
+                    'profile': 'https://www.w3.org/ns/activitystreams'
+                  };
                   aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+                  if (typeof DO.C.User.Storage === 'undefined' && !activityTypeMatched) {
+                    aLS['canonical'] = true;
+                  }
+
+                  aLS = Object.assign(aLS, contextProfile)
+
+                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+                    annotationDistribution.push(aLS);
+                  }
                 }
-                else {
+
+                if (!activityTypeMatched && ((opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage))) {
+                  containerIRI = DO.C.User.Storage[0];
+
+                  fromContentType = 'text/html';
+                  // contentType = 'text/html';
+                  contentType = fromContentType;
+
                   noteURL = noteIRI = containerIRI + id;
+                  contextProfile = {
+                    // 'subjectURI': noteIRI,
+                  };
                   aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+
+                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+                    annotationDistribution.push(aLS);
+                  }
                 }
 
-                aLS = Object.assign(aLS, contextProfile)
+                if (opts.annotationLocationService && typeof DO.C.AnnotationService !== 'undefined') {
+                  containerIRI = DO.C.AnnotationService;
+                  fromContentType = 'text/html';
+                  // contentType = 'application/ld+json';
+                  contentType = fromContentType;
 
-                annotationDistribution.push(aLS);
-              }
+                  contextProfile = {
+                    '@context': [
+                      'http://www.w3.org/ns/anno.jsonld',
+                      { 'as': 'https://www.w3.org/ns/activitystreams#', 'schema': 'http://schema.org/' }
+                    ],
+                    // 'subjectURI': noteIRI,
+                    'profile': 'http://www.w3.org/ns/anno.jsonld'
+                  };
+
+                  if (!opts.annotationLocationPersonalStorage && opts.annotationLocationService) {
+                    noteURL = noteIRI = containerIRI + id;
+                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
+                  }
+                  else if (opts.annotationLocationPersonalStorage) {
+                    noteURL = containerIRI + id;
+                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+                  }
+                  else {
+                    noteURL = noteIRI = containerIRI + id;
+                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+                  }
+
+                  aLS = Object.assign(aLS, contextProfile)
+
+                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+                    annotationDistribution.push(aLS);
+                  }
+                }
+              }//if (_this.action !== 'selector') {
 
 // console.log(annotationDistribution);
 
@@ -10794,7 +10835,7 @@ WHERE {\n\
 
               var targetIRI = (parentNodeWithId) ? resourceIRI + '#' + parentNodeWithId.id : resourceIRI;
               var documentURL = resourceIRI;
-              var latestVersion = DO.C.Resource[documentURL].graph.rellatestversion;
+              var latestVersion = DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0];
               if (latestVersion) {
                 resourceIRI = latestVersion;
                 targetIRI = (parentNodeWithId) ? latestVersion + '#' + parentNodeWithId.id : latestVersion;
@@ -10910,8 +10951,8 @@ WHERE {\n\
                     if (DO.C.User.URL) {
                       noteData.creator["url"] = DO.C.User.URL;
                     }
-                    if (opts.annotationInboxLocation && DO.C.User.TypeIndex && DO.C.User.TypeIndex[DO.C.Vocab['asAnnounce']['@id']]) {
-                      noteData.inbox = DO.C.User.TypeIndex[DO.C.Vocab['asAnnounce']['@id']];
+                    if (opts.annotationInboxLocation && DO.C.User.TypeIndex && DO.C.User.TypeIndex[ns.as.Announce.value]) {
+                      noteData.inbox = DO.C.User.TypeIndex[ns.as.Announce.value];
                     }
 
                     // note = DO.U.createNoteDataHTML(noteData);
@@ -11119,7 +11160,7 @@ WHERE {\n\
                 var noteIRI = (options.relativeObject) ? '#' + id : annotation['noteIRI'];
 
                 var notificationStatements = '    <dl about="' + noteIRI + '">\n\
-  <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + DO.C.Vocab['oaAnnotation']['@id'] + '">Annotation</a></dd>\n\
+  <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + ns.oa.Annotation.value + '">Annotation</a></dd>\n\
   <dt>Motivation</dt><dd><a href="' + DO.C.Prefixes[annotation.motivatedByIRI.split(':')[0]] + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
 </dl>\n\
 ';
@@ -11172,14 +11213,16 @@ WHERE {\n\
 
                 if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
                   return DO.U.showActivities(annotation['noteIRI'])
-                    .catch(() => {
+                    .catch((error) => {
+                      console.log('Error showing activities:', error)
                       return Promise.resolve()
                     })
                 }
                 else {
 // console.log(options)
                   return DO.U.showActivities(annotation[ 'noteIRI' ], options)
-                    .catch(() => {
+                    .catch((error) => {
+                      console.log('Error showing activities:', error)
                       return Promise.resolve()
                     })
                 }
@@ -11196,14 +11239,14 @@ WHERE {\n\
                   inboxPromise = Promise.resolve([annotation.annotationInbox])
                 }
                 else {
-                  if ('inbox' in DO.C.Resource[documentURL] && DO.C.Resource[documentURL].inbox.length > 0) {
+                  if ('inbox' in DO.C.Resource[documentURL] && DO.C.Resource[documentURL].inbox.length) {
                     inboxPromise = Promise.resolve(DO.C.Resource[documentURL].inbox)
                   }
                   else {
                     inboxPromise =
-                      getLinkRelation(DO.C.Vocab['ldpinbox']['@id'], documentURL)
+                      getLinkRelation(ns.ldp.inbox.value, documentURL)
                         .catch(() => {
-                          return getLinkRelationFromRDF(DO.C.Vocab['asinbox']['@id'], documentURL);
+                          return getLinkRelationFromRDF(ns.as.inbox.value, documentURL);
                         });
                   }
                 }
@@ -11216,8 +11259,8 @@ WHERE {\n\
                   .then(inboxes => {
                     // TODO: resourceIRI for getLinkRelation should be the
                     // closest IRI (not necessarily the document).
-
-                    if (inboxes.length > 0) {
+// console.log(inboxes)
+                    if (inboxes.length) {
                       var notificationData = createActivityData(annotation, { 'announce': true });
 
                       notificationData['inbox'] = inboxes[0];
@@ -11232,7 +11275,7 @@ WHERE {\n\
                     }
                   })
               }
-
+// console.log(annotationDistribution)
               switch(this.action) {
                 case 'article': case 'approve': case 'disapprove': case 'specificity': case 'bookmark':
                   annotationDistribution.forEach(annotation => {
@@ -11270,11 +11313,11 @@ WHERE {\n\
                           annotation['noteIRI'] = annotation['noteURL'] = location
                         }
 
-// console.log(annotation)
+// console.log(annotation, options)
                         return positionActivity(annotation, options)
                        })
 
-                      .then(() => {
+                      .then(function() {
                         if (this.action != 'bookmark') {
                           return sendNotification(annotation, options)
                         }
@@ -11344,14 +11387,14 @@ WHERE {\n\
                       options['refId'] = refId;
 
                       //TODO: offline mode
-                      DO.U.getCitation(opts.url, options).then(function(citationGraph) {
+                      DO.U.getCitation(opts.url, options).then(citationGraph => {
                         var citationURI = opts.url;
 // console.log(citationGraph)
 // console.log(citationGraph.toString())
 // console.log(options.citationId)
 // console.log( getProxyableIRI(options.citationId))
                         if (isValidISBN(opts.url)) {
-                          citationURI = citationGraph.iri().toString();
+                          citationURI = citationGraph.term.value;
                           // options.citationId = citationURI;
                         }
                         else if(opts.url.match(/^10\.\d+\//)) {
@@ -11364,7 +11407,7 @@ WHERE {\n\
 
                         //XXX: I don't know what this is going on about...
                         // else if (stripFragmentFromString(options.citationId) !==  getProxyableIRI(options.citationId)) {
-                        //   citationURI = window.location.origin + window.location.pathname;
+                        //   citationURI = currentLocation();
                         // }
 
                         var citation = DO.U.getCitationHTML(citationGraph, citationURI, options);
@@ -11381,15 +11424,15 @@ WHERE {\n\
                         // var robustLink = DO.U.createRobustLink(citationURI, node, options);
 
 // console.log(citationURI, citation, options)
-                        var s = citationGraph.child(citationURI);
+                        var s = citationGraph.node(rdf.namedNode(citationURI));
                         var inboxes = getGraphInbox(s);
                         if (!inboxes) {
-                          s = citationGraph.child(stripFragmentFromString(citationURI));
+                          s = citationGraph.node(rdf.namedNode(stripFragmentFromString(citationURI)));
                         }
                         inboxes = getGraphInbox(s);
 
                         if (!inboxes) {
-                          s = citationGraph.child(options.citationId);
+                          s = citationGraph.node(rdf.namedNode(options.citationId));
                         }
                         else {
                           var inboxURL = inboxes[0];
@@ -11601,10 +11644,10 @@ WHERE {\n\
 }; //DO
 
 if (document.readyState === "loading") {
-  document.addEventListener('DOMContentLoaded', function(){ DO.C.init(); });
+  document.addEventListener('DOMContentLoaded', () => { DO.C.init(); });
 }
 else {
-  window.addEventListener("load", function(){ DO.C.init(); });
+  window.addEventListener("load", () => { DO.C.init(); });
 }
 
 }

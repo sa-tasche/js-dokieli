@@ -1,28 +1,36 @@
 'use strict'
 
-import * as ld from "./simplerdf.cjs";
-const SimpleRDF = ld.SimpleRDF
+import rdf from "rdf-ext";
+import { RdfaParser } from "rdfa-streaming-parser";
+import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath } from './uri.js'
 import { uniqueArray } from './util.js'
-import { setAcceptRDFTypes, getResource, getResourceHead } from './fetcher.js'
+import { parseMarkdown } from "./doc.js";
+import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
 
-const store = ld.store;
+const ns = Config.ns;
 
-function constructGraph (url) {
-  return SimpleRDF(Config.Vocab, url);
-}
-
-function getGraph (url) {
-  return SimpleRDF(Config.Vocab, url, null, store).get()
-}
+//https://github.com/rdfjs-base/io
+// https://github.com/rdfjs-base/formats/
 
 function getGraphFromData (data, options = {}) {
-  if (!('contentType' in options)) {
-    options['contentType'] = 'text/turtle'
+
+  options['contentType'] = options.contentType || 'text/turtle';
+  if (!('subjectURI' in options)) {
+    options['subjectURI'] = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d'
   }
+// console.log(options)
+  var baseIRI = options.subjectURI
+  //  || Config.DocumentURL;
+
+// console.log(data)
+// console.log(baseIRI)
+
+  baseIRI = stripFragmentFromString(baseIRI);
+// console.log(baseIRI)
 
   // FIXME: These are fugly but a temporary fix to get around the baseURI not being passed to the DOM parser. This injects the `base` element into the document so that the parsers fallsback to that. The actual fix should happen upstream. See related issues:
   // https://github.com/dokieli/dokieli/issues/132
@@ -30,15 +38,16 @@ function getGraphFromData (data, options = {}) {
   // https://github.com/rdf-ext/rdf-parser-rdfa/issues/3
   // https://github.com/simplerdf/simplerdf/issues/19
 
-  if (!('subjectURI' in options)) {
-    // console.log(options)
-    options['subjectURI'] = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d'
-  }
+  // // TODO: Revisit this as setting base will be now be taken care of by rdf-ext in getRDFParser, so this may not be needed
+  // const baseNeededMediaTypes = ['text/html', 'application/xhtml+xml', 'text/turtle', 'application/ld+json', 'application/activity+json'];
+  // if (baseNeededMediaTypes.includes(options.contentType)){
+  //   data = setDocumentBase(data, options.subjectURI, options.contentType)
+  // }
 
-  if (options.contentType == 'text/html' || options.contentType == 'application/xhtml+xml' || options.contentType == 'text/turtle' || options.contentType == 'application/ld+json' || options.contentType == 'application/activity+json') {
+  // if (options.contentType == 'text/html' || options.contentType == 'application/xhtml+xml' || options.contentType == 'text/turtle' || options.contentType == 'application/ld+json' || options.contentType == 'application/activity+json') {
 
-      data = setDocumentBase(data, options.subjectURI, options.contentType)
-  }
+  //     data = setDocumentBase(data, options.subjectURI, options.contentType)
+  // }
 
   switch (options.contentType) {
     case 'application/activity+json': case 'application/json':
@@ -46,41 +55,82 @@ function getGraphFromData (data, options = {}) {
       break;
     case 'text/plain':
     case 'text/markdown':
-    case 'image/svg+xml':
+    // case 'image/svg+xml':
       options.contentType = 'text/html';
       break;
     default:
       break;
   }
 
+  //TODO: Look into a wrapping function so that we don't have to pass baseURI twice; getRDFParser, parser.import
+  const parser = getRDFParser(baseIRI, options.contentType);
+  const nodeStream = Readable.from([data]);
+  const quadStream = parser.import(nodeStream, { baseIRI: baseIRI });
+  // const dataset = rdf.dataset().import(quadStream);
+// console.log(quadStream)
+  // return rdf.grapoi({ dataset });
+  return rdf.dataset().import(quadStream).then((dataset) => {
+// console.log(dataset.toCanonical())
+    return rdf.grapoi({ dataset });
+  });
+
+
 // console.log(data)
 // console.log(options)
-  return SimpleRDF.parse(data, options['contentType'], options['subjectURI'])
-    .then(function(g){
-      // var o = { 'contentType': 'application/n-triples' };
-      var o = { 'contentType': 'text/turtle' };
-      return serializeGraph(g, o).then(function(d){
-        d = skolem(d, o);
-        d = setDocumentBase(d, options.subjectURI, o.contentType);
-// console.log(d)
-        return SimpleRDF.parse(d, o['contentType'], options['subjectURI']);
-      })});
+//   return SimpleRDF.parse(data, options['contentType'], options['subjectURI'])
+//     .then(g => {
+//       // var o = { 'contentType': 'application/n-triples' };
+//       var o = { 'contentType': 'text/turtle' };
+//       return serializeGraph(g, o).then(d => {
+//         d = skolem(d, o);
+//         d = setDocumentBase(d, options.subjectURI, o.contentType);
+// // console.log(d)
+//         return SimpleRDF.parse(d, o['contentType'], options['subjectURI']);
+//       })});
+}
+
+function getRDFParser(baseIRI, contentType) {
+  var RDFaMediaTypes = ['text/html', 'application/xhtml+xml', 'image/svg+xml', 'application/xml', 'text/xml'];
+
+  var profile = '';
+  switch(contentType) {
+    case 'text/html':
+      profile = 'html';
+      break;
+    case 'application/xhtml+xml':
+      profile = 'xhtml';
+      break;
+    case 'image/svg+xml':
+    case 'application/xml':
+    case 'text/xml':
+      profile = 'xml';
+      break;
+  }
+
+  if (RDFaMediaTypes.includes(contentType)) {
+    return new RdfaParser({
+      baseIRI: baseIRI,
+      contentType: contentType,
+      profile: profile
+    });
+  }
+  else {
+    return rdf.formats.parsers.get(contentType);
+  }
 }
 
 function getMatchFromData (data, spo = {}, options = {}) {
   if (!data) { return Promise.resolve({}) }
 
-  spo['subject'] = spo.subject || window.location.origin + window.location.pathname
-  spo['predicate'] = spo.predicate || Config.Vocab['rdfslabel']
+  spo['subject'] = spo.subject || currentLocation();
+  spo['predicate'] = spo.predicate || ns.rdfs.label.value;
 
-  options['contentType'] = options.contentType || 'text/html'
-  options['subjectURI'] = options.subjectURI || spo.subject
+  options['contentType'] = options.contentType || 'text/html';
+  options['subjectURI'] = options.subjectURI || spo.subject;
 
   return getGraphFromData(data, options)
     .then(g => {
-      let s = SimpleRDF(Config.Vocab, spo.subject, g, store).child(spo.subject)
-
-      return s[spo.predicate]
+      return g.out(spo.predicate);
     })
     .catch(() => {
       return undefined
@@ -94,15 +144,37 @@ function serializeDataToPreferredContentType(data, options) {
       return Promise.resolve(data);
 
     case 'text/turtle':
-      return serializeData(data, options['contentType'], 'text/turtle', options);
+    case 'application/n-triples':
+    case 'application/n-quads':
+    case 'text/n3':
+      return serializeData(data, options['contentType'], options['preferredContentType'], options);
 
     case 'application/ld+json':
+    case 'application/activity+json':
     case 'application/json':
     case '*/*':
     default:
       return serializeData(data, options['contentType'], 'application/ld+json', options);
   }
 }
+
+function serializeData (data, fromContentType, toContentType, options = {}) {
+  // if (!rdf.formats.serializers.get(toContentType)) { return Promise.reject('XXX: Should not be here'); }
+  
+  if (fromContentType === toContentType) {
+    return Promise.resolve(data);
+  }
+
+  options['contentType'] = fromContentType;
+
+  return getGraphFromData(data, options)
+    .then(g => {
+      options['contentType'] = toContentType;
+
+      return serializeGraph(g, options);
+    });
+}
+
 
 /**
  * @param data
@@ -112,7 +184,7 @@ function serializeDataToPreferredContentType(data, options) {
  *
  * @returns {Promise}
  */
-function serializeData (data, fromContentType, toContentType, options) {
+function XXXOLDserializeData (data, fromContentType, toContentType, options) {
   if (fromContentType === toContentType) {
     return Promise.resolve(data)
   }
@@ -188,7 +260,7 @@ function serializeData (data, fromContentType, toContentType, options) {
 
         default:
           return serializeGraph(g, options)
-      }     
+      }
     })
     .then(data => {
       switch (toContentType) {
@@ -207,7 +279,7 @@ function serializeData (data, fromContentType, toContentType, options) {
             data = data.replace(new RegExp('"@id"', 'g'), '"id"')
             data = data.replace(new RegExp('"@type"', 'g'), '"type"')
 
-            context.forEach(function(c){
+            context.forEach(c => {
               var search = '';
               var replace = '';
 
@@ -289,22 +361,57 @@ function serializeData (data, fromContentType, toContentType, options) {
     })
 }
 
+function streamToString (stream) {
+  const chunks = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+    stream.on('error', (err) => reject(err));
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  })
+}
+
 function serializeGraph (g, options = {}) {
   if (!('contentType' in options)) {
     options['contentType'] = 'text/turtle'
   }
+// console.log(options)
 
-  return store.serializers[options.contentType].serialize(g._graph)
-    .then(data => {
-      data = applyParserSerializerFixes(data, options.contentType)
+  try {
+    var quads = g.out().quads();
+
+    // console.log(Array.from(quads))
+
+    // if (options?.subjectURI == 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d') {
+    //   for (let quad of Array.from(quads)) {
+    //     quad.subject.value = quad.subject.value.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
+    //     quad.subject.value = quad.object.value.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
+    //   }
+    // }
+
+    // console.log(Array.from(quads))
+
+    return streamToString(rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true }).import(Readable.from(quads), { compact: true, prettyPrint: true })).then((data) => {
+      // if (options?.subjectURI == 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d') {
+      return data.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
+      // }
+    });
+  }
+  catch(e) {
+    console.log(e)
+  }
+
+
+  // return store.serializers[options.contentType].serialize(g._graph)
+  //   .then(data => {
+  //     data = applyParserSerializerFixes(data, options.contentType)
 
       // XXX: .compact doesn't work as advertised
       // if (options.contentType === 'application/ld+json' && '@context' in options) {
       //   return jsonld.promises().compact(data, options['@context'], {'skipExpansion': true})
       // }
 
-      return data
-    })
+    //   return data
+    // })
 }
 
 function applyParserSerializerFixes(data, contentType) {
@@ -411,7 +518,7 @@ function setDocumentBase (data, baseURI, contentType) {
 
       if (Array.isArray(data['@context'])) {
         var found = false;
-        data['@context'].forEach(function(a){
+        data['@context'].forEach(a => {
           if (typeof a === 'object' && '@base' in a) {
             found = true;
           }
@@ -441,19 +548,20 @@ function setDocumentBase (data, baseURI, contentType) {
 }
 
 function traverseRDFList(g, resource) {
-  var b = g.child(resource);
+  var b = g.node(rdf.namedNode(resource));
   var result = [];
 
-  if (b.rdffirst) {
-    result.push(b.rdffirst);
+  if (b.out(ns.rdf.first).values.length) {
+    result.push(b.out(ns.rdf.first).values[0]);
   }
-  if (b.rdfrest && b.rdfrest !== 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
-    result = result.concat(traverseRDFList(g, b.rdfrest));
+  if (b.out(ns.rdf.rest).values.length && b.out(ns.rdf.rest).values[0] !== 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
+    result = result.concat(traverseRDFList(g, b.out(ns.rdf.rest).values[0]));
   }
 
   return result;
 }
 
+//TODO: Review grapoi
 function getResourceGraph (iri, headers, options = {}) {
   let wildCard = options.excludeMarkup ? '' : ',*/*;q=0.1';
   let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
@@ -464,26 +572,51 @@ function getResourceGraph (iri, headers, options = {}) {
 
   return getResource(iri, headers, options)
     .then(response => {
-
       let cT = response.headers.get('Content-Type')
       options['contentType'] = (cT) ? cT.split(';')[ 0 ].trim() : 'text/turtle'
+      // options['subjectURI'] = stripFragmentFromString(iri)
+      options['subjectURI'] = iri
 
-      if (!Config.MediaTypes.RDF.includes(options['contentType'])) {
+      //XXX: Perhaps okay for text/markdown but not text/plain?
+      if  (['text/markdown', 'text/plain'].includes(options['contentType'])) {
+        options.contentType = 'text/html';
+        return response.text().then(data => parseMarkdown(data, {createDocument: true}));
+      }
+      else if (options['contentType'] == 'application/json') {
+        return response.json().then(data => {
+          if (data['@context']) {
+            data = transformJsonldContextURLScheme(data);
+            return JSON.stringify(data);
+          }
+
+          return Promise.reject({ resource: iri, response: response, message: 'Unsupported media type for RDF parsing (without @context): ' + options['contentType'] })
+        });
+      }
+      else if (!Config.MediaTypes.RDF.includes(options['contentType'])) {
         return Promise.reject({ resource: iri, response: response, message: 'Unsupported media type for RDF parsing: ' + options['contentType'] })
       }
 
-      options['subjectURI'] = stripFragmentFromString(iri)
-
-      return response.text()
+      return response.text();
     })
     .then(data => {
+// console.log(data, options)
       return getGraphFromData(data, options)
     })
     .then(g => {
-      let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
+// console.log(g)
+//       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
+// console.log(iri, getProxyableIRI(iri), fragment)
+//       var r = 
+// console.log(r.term.value)
+//       // var r =  rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
 
-      return SimpleRDF(Config.Vocab, options['subjectURI'], g, ld.store).child(getProxyableIRI(iri) + fragment)
+//       console.log(Array.from(r.out().quads()))
+//       return r;
 
+// console.log(stripFragmentFromString(iri))
+
+//       return g.node(rdf.namedNode(iri));
+      return rdf.grapoi({ dataset: g.dataset, term: rdf.namedNode(stripFragmentFromString(iri))});
     })
     .catch(e => {
       if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
@@ -496,7 +629,7 @@ function getResourceGraph (iri, headers, options = {}) {
 
 function getResourceOnlyRDF(url) {
   return getResourceHead(url)
-    .then(function (response) {
+    .then(response => {
       var cT = response.headers.get('Content-Type');
       var options = {};
       options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : '';
@@ -504,6 +637,9 @@ function getResourceOnlyRDF(url) {
       if (DO.C.MediaTypes.RDF.includes(options['contentType'])) {
         var headers = { 'Accept': setAcceptRDFTypes() };
         return getResourceGraph(url, headers);
+      } 
+      else {
+        return Promise.reject({ resource: url, response: response, message: 'Unsupported media type for RDF parsing: ' + options['contentType'] });
       }
     });
 }
@@ -511,9 +647,15 @@ function getResourceOnlyRDF(url) {
 function getLinkRelation (property, url, data) {
   if (url) {
     return getLinkRelationFromHead(property, url)
-      .catch(() => getLinkRelationFromRDF(property, url))
-  } else {
-    var subjectURI = window.location.href.split(window.location.search || window.location.hash || /[?#]/)[0]
+      .catch(() => {
+        if (!data) {
+          return getLinkRelationFromRDF(property, url)
+        }
+      });
+  }
+  else if (data) {
+    var subjectURI = currentLocation();
+    // var subjectURI = window.location.href.split(window.location.search || window.location.hash || /[?#]/)[0]
 
     var options = {
       'contentType': 'text/html',
@@ -521,17 +663,20 @@ function getLinkRelation (property, url, data) {
     }
 
     return getGraphFromData(data, options)
-      .then(function (result) {
-          // TODO: Should this get all or a given subject's?
-          var endpoints = result.match(subjectURI, property).toArray()
-          if (endpoints.length > 0) {
-            return endpoints.map(function(t){ return t.object.nominalValue })
-          }
+      .then(g => {
+        g = g.node(rdf.namedNode(subjectURI));
+        // TODO: Should this get all or a given subject's?
+        var endpoints = g.out(rdf.namedNode(property)).values;
+
+        if (endpoints?.length) {
+          return endpoints;
+        }
 
 // console.log(property + ' endpoint was not found in message body')
-          return getLinkRelationFromHead(property, subjectURI)
-        })
-  }
+        return getLinkRelationFromHead(property, subjectURI)
+      })
+
+    }
 }
 
 function getLinkRelationFromHead (property, url) {
@@ -540,18 +685,18 @@ function getLinkRelationFromHead (property, url) {
   return getResourceHead(url).then(
     function (i) {
       var link = i.headers.get('Link')
-      if (link && link.length > 0) {
+      if (link && link.length) {
         var linkHeaders = LinkHeader.parse(link)
   // console.log(property)
   // console.log(linkHeaders)
         var uris = [];
-        properties.forEach(function(property){
+        properties.forEach(property => {
           if (linkHeaders.has('rel', property)) {
             uris.push(linkHeaders.rel(property)[0].uri);
           }
         });
 
-        if (uris.length > 0) {
+        if (uris.length) {
           return uris;
         }
 
@@ -565,33 +710,16 @@ function getLinkRelationFromHead (property, url) {
   );
 }
 
-function getLinkRelationFromRDF (property, url, subjectIRI) {
-  url = url || window.location.origin + window.location.pathname
-  subjectIRI = subjectIRI || url
+function getLinkRelationFromRDF (property, url) {
+  if (!url) { return Promise.reject({'message': 'Missing url paramater' })}
 
-  return getResourceGraph(subjectIRI)
-    .then(function (i) {
-        var s = i.child(subjectIRI)
+  return getResourceGraph(url)
+    .then(g => {
+        g = g.node(rdf.namedNode(url));
+        var values = g.out(rdf.namedNode(property)).values;
 
-//XXX: Why is this switch needed? Use default?
-        switch (property) {
-          case Config.Vocab['ldpinbox']['@id']:
-            if (s.ldpinbox._array.length > 0){
-// console.log(s.ldpinbox._array)
-              return [s.ldpinbox.at(0)]
-            }
-            break
-          case Config.Vocab['oaannotationService']['@id']:
-            if (s.oaannotationService._array.length > 0){
-// console.log(s.oaannotationService._array)
-              return [s.oaannotationService.at(0)]
-            }
-            break
-          default:
-            if (s[property]._array.length > 0) {
-              return [s[property].at(0)]
-            }
-            break
+        if (values.length) {
+          return values;
         }
 
         return Promise.reject({'message': property + " endpoint was not found in message body"})
@@ -612,56 +740,61 @@ function getAgentPreferencesInfo(g) {
 
   var preferencesFile = getAgentPreferencesFile(g) || Config.User.PreferencesFile;
 
-  if (preferencesFile) {
-    return getResourceGraph(preferencesFile);
+  if (preferencesFile?.length) {
+    return getResourceGraph(preferencesFile[0]);
   }
   else {
     return Promise.reject({});
   }
 }
 
-
+//TODO: Review grapoi
 function getAgentPreferredPolicyRule(s) {
   var preferredPolicyRule = {};
 
-  if (s && s.odrlprohibition && s.odrlprohibition.at(0)) {
-    var prohibitionG = s.child(s.odrlprohibition.at(0));
+  var prohibitions = s.out(ns.odrl.prohibition).values;
+  if (prohibitions.length) {
+    var prohibitionG = s.node(rdf.namedNode(prohibitions[0]));
 
-    if (prohibitionG.odrlaction && prohibitionG.odrlaction._array.length > 0) {
+    if (prohibitionG.out(ns.odrl.action).values.length) {
       preferredPolicyRule['Prohibition'] = {};
-      preferredPolicyRule['Prohibition']['Actions'] = prohibitionG.odrlaction._array;
+      preferredPolicyRule['Prohibition']['Actions'] = prohibitionG.out(ns.odrl.action).values;
     }
   }
 
-  if (s && s.odrlpermission && s.odrlpermission.at(0)) {
-    var permissionG = s.child(s.odrlpermission.at(0));
+  var permissions = s.out(ns.odrl.permissions).values;
+  if (permissions.length) {
+    var permissionG = s.node(rdf.namedNode(permissions[0]));
 
-    if (permissionG.odrlaction && permissionG.odrlaction._array.length > 0) {
+    if (permissionG.out(ns.odrl.action).values.length) {
       preferredPolicyRule['Permission'] = {};
-      preferredPolicyRule['Permission']['Actions'] = permissionG.odrlaction._array;
+      preferredPolicyRule['Permission']['Actions'] = permissionG.out(ns.odrl.action).values;
     }
   }
 
   return preferredPolicyRule;
 }
 
+//TODO: Review grapoi
 function setPreferredPolicyInfo(g) {
   Config.User['PreferredPolicy'] = getAgentPreferredPolicy(g);
-  var s = g.child(Config.User.PreferredPolicy);
+  var s = g.node(rdf.namedNode(Config.User.PreferredPolicy));
   Config.User['PreferredPolicyRule'] = getAgentPreferredPolicyRule(s);
 }
 
+//TODO: Review grapoi
 function getAgentSupplementalInfo(iri) {
   if (iri == Config.User.IRI) {
     return processSameAs(Config.User.Graph, getAgentSupplementalInfo);
   }
   else {
-    return getResourceGraph(iri).then(
-      function(g){
-        if(typeof g._graph == 'undefined') {
+    return getResourceGraph(iri)
+      .then(g => {
+        if (!Array.from(g.out().quads()).length) {
           return Promise.resolve([]);
         }
-        var s = g.child(iri);
+
+        var s = g.node(rdf.namedNode(iri));
 
         Config.User.Name = Config.User.Name || getAgentName(s);
 
@@ -719,7 +852,7 @@ function getAgentSupplementalInfo(iri) {
         }
 
         return processSameAs(s, getAgentSupplementalInfo)
-                .then(function(){
+                .then(() => {
                   return getAgentSeeAlso(s)
                 });
       },
@@ -729,40 +862,37 @@ function getAgentSupplementalInfo(iri) {
   }
 }
 
-function getAgentSeeAlso(g, baseURI, subjectURI) {
+function getAgentSeeAlso(g, subjectURI) {
   if (!g) { return Promise.resolve([]); }
 
-  subjectURI = baseURI = baseURI || g.iri().toString();
+  subjectURI = subjectURI || g.term.value;
+  var baseURI = stripFragmentFromString(subjectURI);
+  var seeAlso = g.out(ns.rdfs.seeAlso).values;
 
-  var seeAlso = g.child(baseURI).rdfsseeAlso;
-
-  if (seeAlso && seeAlso._array.length > 0) {
+  if (seeAlso.length) {
     var iris = [];
     var promises = [];
 
-    seeAlso._array.forEach(function(iri){
-      if (!Config.User.SeeAlso.includes(iri)) {
-        iris.push(iri)
+    seeAlso.forEach(iri => {
+      if (!Config.User.SeeAlso.includes(iri) && (stripFragmentFromString(iri) != baseURI)) {
+        iris.push(iri);
       }
     });
 
-    iris.forEach(function(iri){
+    iris.forEach(iri => {
       Config.User.SeeAlso = uniqueArray(Config.User.SeeAlso.concat(iri));
       promises.push(getResourceGraph(iri));
     });
 
     return Promise.allSettled(promises)
-      .then(function(results) {
+      .then(results => {
         var promisesGetAgentSeeAlso = [];
 
         results.forEach(result => {
-// console.log(result)
-
           var g = result.value;
-          var iri = g.iri().toString();
 
           if (g) {
-            var s = g.child(subjectURI)
+            var s = g.node(rdf.namedNode(subjectURI));
 
             var knows = getAgentKnows(s) || [];
             var liked = getAgentLiked(s) || [];
@@ -770,46 +900,46 @@ function getAgentSeeAlso(g, baseURI, subjectURI) {
             var publications = getAgentPublications(s) || [];
             var made = getAgentMade(s) || [];
 
-            if (knows.length > 0) {
+            if (knows.length) {
               Config.User.Knows = (Config.User.Knows)
                 ? uniqueArray(Config.User.Knows.concat(knows))
                 : knows;
             }
 
-            if (liked.length > 0) {
+            if (liked.length) {
               Config.User.Liked = (Config.User.Liked)
                 ? uniqueArray(Config.User.Liked.concat(liked))
                 : liked;
             }
 
-            if (occupations.length > 0) {
+            if (occupations.length) {
               Config.User.Occupations = (Config.User.Occupations)
                 ? uniqueArray(Config.User.Occupations.concat(occupations))
                 : occupations;
             }
 
-            if (publications.length > 0) {
+            if (publications.length) {
               Config.User.Publications = (Config.User.Publications)
                 ? uniqueArray(Config.User.Publications.concat(publications))
                 : publications;
             }
 
-            if (made.length > 0) {
+            if (made.length) {
               Config.User.Made = (Config.User.Made)
                 ? uniqueArray(Config.User.Made.concat(made))
                 : made;
             }
 
-            promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, iri, subjectURI))
+            promisesGetAgentSeeAlso.push(getAgentSeeAlso(g, subjectURI))
           }
         })
 
         return Promise.allSettled(promisesGetAgentSeeAlso)
-          .then(function(results) {
+          .then(results => {
             return Promise.resolve([]);
           })
       })
-      .catch(function(e) {
+      .catch(e => {
         return Promise.resolve([]);
       });
   }
@@ -824,14 +954,14 @@ function getUserContacts(iri) {
       return processSameAs(Config.User.Graph, getUserContacts);
     }
     else {
-      return getResourceGraph(iri).then(
-        function(g){
+      return getResourceGraph(iri)
+        .then(g => {
           // if(typeof g._graph == 'undefined' || g.resource || g.cause || g.status?.startsWith(5)) {
-          if(typeof g._graph == 'undefined') {
+          if(typeof g == 'undefined') {
             return Promise.resolve([]);
           }
 
-          var s = g.child(iri);
+          var s = g.node(rdf.namedNode(iri));
 
           var knows = getAgentKnows(s) || [];
 
@@ -842,53 +972,56 @@ function getUserContacts(iri) {
           }
 
           return processSameAs(s, getUserContacts);
-        }).catch(e => {
-           return Promise.resolve([]);
-          });
+        })
+        .catch(e => {
+          return Promise.resolve([]);
+        });
     }
   }
 
-  return fyn(iri).then(function(i){ return Config.User.Knows || []; });
+  return fyn(iri).then(i => { return Config.User.Knows || []; });
 }
 
 function getAgentTypeIndex(s) {
   //XXX: TypeRegistration forClasses of interest but for now lets store what we find without filtering.
-  // const TypeRegistrationClasses = [Config.Vocab['oaAnnotation']['@id'], Config.Vocab['asAnnounce']['@id']];
+  // const TypeRegistrationClasses = [ns.oa.Annotation, ns.as.Announce];
 
   var fetchTypeRegistration = function(iri, typeIndexType) {
     return getResourceGraph(iri)
-      .then(function(g){
+      .then(g => {
         //XXX: https://github.com/solid/type-indexes/issues/29 for potential property to discover TypeRegistrations.
-// console.log(iri, g);
-        if(!g) {
+// console.log(iri, g, g.term.value, typeIndexType);
+        if (!g) {
           return {};
         }
 
-        var triples = g.graph().toArray();
-// console.log(triples);
-        if(triples.length > 0) {
+        g = rdf.grapoi({ dataset: g.dataset });
+
+        var triples = Array.from(g.out().quads());
+
+        if (triples.length) {
           var typeIndexes = {};
           typeIndexes[typeIndexType] = {};
 
-          triples.forEach(function(t){
-            var s = t.subject.nominalValue;
-            var p = t.predicate.nominalValue;
-            var o = t.object.nominalValue;
+          triples.forEach(t => {
+            var s = t.subject.value;
+            var p = t.predicate.value;
+            var o = t.object.value;
 
-            if (p == Config.Vocab['solidforClass']['@id']) {
+            if (p == ns.solid.forClass.value) {
               typeIndexes[typeIndexType][s] = {};
               typeIndexes[typeIndexType][s][p] = o;
             }
           });
 
-          triples.forEach(function(t){
-            var s = t.subject.nominalValue;
-            var p = t.predicate.nominalValue;
-            var o = t.object.nominalValue;
+          triples.forEach(t => {
+            var s = t.subject.value;
+            var p = t.predicate.value;
+            var o = t.object.value;
 
-            if(typeIndexes[typeIndexType][s]) {
-              if (p == Config.Vocab['solidinstance']['@id'] ||
-                  p == Config.Vocab['solidinstanceContainer']['@id']) {
+            if (typeIndexes[typeIndexType][s]) {
+              if (p == ns.solid.instance.value ||
+                  p == ns.solid.instanceContainer.value) {
                 typeIndexes[typeIndexType][s][p] = o;
               }
             }
@@ -904,20 +1037,20 @@ function getAgentTypeIndex(s) {
   var publicTypeIndex = getAgentPublicTypeIndex(s);
   var privateTypeIndex = getAgentPrivateTypeIndex(s);
 
-  if (publicTypeIndex) {
-    promises.push(fetchTypeRegistration(publicTypeIndex, Config.Vocab['solidpublicTypeIndex']['@id']))
+  if (publicTypeIndex?.length) {
+    promises.push(fetchTypeRegistration(publicTypeIndex[0], ns.solid.publicTypeIndex.value))
   }
-  if (privateTypeIndex && Config.User.OIDC) {
-    promises.push(fetchTypeRegistration(privateTypeIndex, Config.Vocab['solidprivateTypeIndex']['@id']))
+  if (privateTypeIndex?.length && Config.User.OIDC) {
+    promises.push(fetchTypeRegistration(privateTypeIndex[0], ns.solid.privateTypeIndex.value))
   }
 
   return Promise.allSettled(promises)
-    .then(function(results) {
+    .then(results => {
       results.filter(result => !(result instanceof Error));
 
       var typeIndexes = {};
 
-      results.forEach(function(result) {
+      results.forEach(result => {
         Object.assign(typeIndexes, result.value);
       });
 
@@ -926,12 +1059,13 @@ function getAgentTypeIndex(s) {
 }
 
 function processSameAs(s, callback) {
-  if (s.owlsameAs && s.owlsameAs._array.length > 0){
-    var iris = s.owlsameAs._array;
+  var sameAs = s.out(ns.owl.sameAs).values;
+
+  if (sameAs.length){
     var promises = [];
-    iris.forEach(function(iri){
+    sameAs.forEach(iri => {
 // console.log(iri);
-      if(iri != Config.User.IRI && Config.User.SameAs.indexOf(iri) < 0) {
+      if(iri != Config.User.IRI && !Config.User.SameAs.includes(iri)) {
         Config.User.SameAs = uniqueArray(Config.User.SameAs.concat(iri));
 
         if (typeof callback !== 'undefined') {
@@ -944,10 +1078,10 @@ function processSameAs(s, callback) {
     });
 
     return Promise.all(promises)
-      .then(function(results) {
+      .then(results => {
         return Promise.resolve([]);
       })
-      .catch(function(e) {
+      .catch(e => {
         return Promise.resolve([]);
       });
   }
@@ -957,151 +1091,168 @@ function processSameAs(s, callback) {
 }
 
 function getAgentPreferredProxy (s) {
-  return s.solidpreferredProxy || undefined
+  return s.out(ns.solid.preferredProxy).values[0] || undefined
 }
 
 function getAgentPreferredPolicy (s) {
-  return s.solidpreferredPolicy || undefined
+  return s.out(ns.solid.preferredPolicy).values[0] || undefined
 }
 
 function getAgentName (s) {
-  var name = s.foafname || s.schemaname || s.vcardfn || s.asname || s.rdfslabel || undefined
+  var name = s.out(ns.foaf.name).values[0] || s.out(ns.schema.name).values[0] || s.out(ns.vcard.fn).values[0] || s.out(ns.as.name).values[0] || s.out(ns.rdfs.label).values[0] || undefined;
+  // var name = s.out([ns.foaf.name, ns.schema.name]).values[0]
   if (typeof name === 'undefined') {
-    if (s.schemafamilyName && s.schemafamilyName.length > 0 && s.schemagivenName && s.schemagivenName.length > 0) {
-      name = s.schemagivenName + ' ' + s.schemafamilyName
-    } else if (s.foaffamilyName && s.foaffamilyName.length > 0 && s.foafgivenName && s.foafgivenName.length > 0) {
-      name = s.foafgivenName + ' ' + s.foaffamilyName
-    } else if (s.vcardfamilyname && s.vcardfamilyname.length > 0 && s.vcardgivenname && s.vcardgivenname.length > 0) {
-      name = s.vcardgivenname + ' ' + s.vcardfamilyname
-    } else if (s.foafnick && s.foafnick.length > 0) {
-      name = s.foafnick
-    } else if (s.vcardnickname && s.vcardnickname.length > 0) {
-      name = s.vcardnickname
+    // s.hasOut(ns.schema.familyName).hasOut(ns.schema.givenName)
+    // .map(ptr => {
+    //   return ptr.out(ns.schema.familyName).values[0] + ' '
+    //   ptr.out(ns.schema.givenName).values[0]
+    // })
+    // .out([ns.schema.familyName, ns.schema.givenName]).join(' ')
+
+    if (s.out(ns.schema.familyName).values.length && s.out(ns.schema.givenName).values.length) {
+      name = s.out(ns.schema.givenName).values[0] + ' ' + s.out(ns.schema.familyName).values[0];
+    } else if (s.out(ns.foaf.familyName).values.length && s.out(ns.foaf.givenName).values.length) {
+      name = s.out(ns.foaf.givenName).values[0] + ' ' + s.out(ns.foaf.familyName).values[0];
+    } else if (s.out(ns.vcard['family-name']).values.length && s.out(ns.vcard['given-name']).values.length) {
+      name = s.out(ns.vcard['given-name']).values[0] + ' ' + s.out(ns.vcard['family-name']).values[0];
+    } else if (s.out(ns.foaf.nick).values.length) {
+      name = s.out(ns.foaf.nick).values;
+    } else if (s.out(ns.vcard.nickname).values.length){
+      name = s.out(ns.vcard.nickname).values;
     }
   }
   return name === undefined ? undefined : DOMPurify.sanitize(name)
 }
 
 function getAgentURL (s) {
-  return s.foafhomepage || s.foafweblog || s.schemaurl || s.vcardurl || undefined
+  return s.out(ns.foaf.homepage).values[0] || s.out(ns.foaf.weblog).values[0] || s.out(ns.schema.url).values[0] || s.out(ns.vcard.url).values[0] || undefined
 }
 
 function getAgentDelegates (s) {
-  return (s.acldelegates && s.acldelegates._array.length > 0)
-    ? s.acldelegates._array
-    : undefined
+  var d = s.out(ns.acl.delegates).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentStorage (s) {
-  return (s.pimstorage && s.pimstorage._array.length > 0)
-    ? s.pimstorage._array
-    : undefined
+  var d = s.out(ns.pim.storage).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentOutbox (s) {
-  return (s.asoutbox && s.asoutbox._array.length > 0)
-    ? s.asoutbox._array
-    : undefined
+  var d = s.out(ns.as.outbox).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentInbox (s) {
-  return (s.ldpinbox && s.ldpinbox._array.length > 0)
-    ? s.ldpinbox._array
-    : (s.asinbox && s.asinbox._array.length > 0)
-      ? s.asinbox._array
-      : undefined
+  return getGraphInbox(s);
+}
+
+function getGraphInbox(s) {
+  var ldpinbox = s.out(ns.ldp.inbox).values;
+  var asinbox = s.out(ns.as.inbox).values;
+  return (
+    ldpinbox.length > 0 ? ldpinbox :
+    asinbox.length > 0 ? asinbox :
+    undefined
+  );
 }
 
 function getAgentKnows (s) {
   var knows = [];
 
-  if(s.foafknows && s.foafknows._array.length > 0){
-    knows = knows.concat(s.foafknows._array);
+  var foafknows = s.out(ns.foaf.knows).values;
+  var schemaknows = s.out(ns.schema.knows).values;
+
+  if (foafknows.length){
+    knows = knows.concat(foafknows);
   }
-  if(s.schemaknows && s.schemaknows._array.length > 0){
-    knows = knows.concat(s.schemaknows._array);
+
+  if (schemaknows.length){
+    knows = knows.concat(schemaknows);
   }
 
   knows = uniqueArray(knows);
 
-  return (knows.length > 0) ? knows : undefined;
+  return (knows.length) ? knows : undefined;
 }
 
 function getAgentFollowing (s) {
-  var following = [];
-// console.log(s.asfollowing)
-  if (s.asfollowing) {
+  var following = s.out(ns.as.following).values;
+
+  if (following.length) {
     var options = {
       headers: {'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json, text/turtle'},
       noCredentials: true
     };
-    return DO.U.getItemsList(s.asfollowing, options).then(following => {
-      following = uniqueArray(following);
-// console.log(following);
-      return (following.length > 0) ? following : undefined;
-    });
+    return DO.U.getItemsList(following[0], options)
+      .then(items => {
+  // console.log(following);
+        return (items.length) ? items : undefined;
+      });
   }
 }
 
 function getAgentPublicTypeIndex (s) {
-  return (s.solidpublicTypeIndex && s.solidpublicTypeIndex.length > 0)
-    ? s.solidpublicTypeIndex
-    : undefined
+  var d = s.out(ns.solid.publicTypeIndex).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentPrivateTypeIndex (s) {
-  return (s.solidprivateTypeIndex && s.solidprivateTypeIndex.length > 0)
-    ? s.solidprivateTypeIndex
-    : undefined
+  var d = s.out(ns.solid.privateTypeIndex).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentPreferencesFile (s) {
-  return (s.pimpreferencesFile && s.pimpreferencesFile.length > 0)
-    ? s.pimpreferencesFile
-    : undefined
+  var d = s.out(ns.pim.preferencesFile).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentLiked (s) {
-  return (s.asliked && s.asliked._array.length > 0)
-    ? s.asliked._array
-    : undefined
+  var d = s.out(ns.as.liked).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentOccupations (s) {
-  return (s.schemahasOccupation && s.schemahasOccupation._array.length > 0)
-    ? s.schemahasOccupation._array
-    : undefined
+  var d = s.out(ns.schema.hasOccupation).values;
+  return d.length ? d : undefined;
 }
 
 function getGraphAudience (s) {
-  return (s.schemaaudience && s.schemaaudience._array.length > 0)
-    ? s.schemaaudience._array
-    : undefined
+  var d = s.out(ns.schema.audience).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentPublications (s) {
-  return (s.foafpublications && s.foafpublications._array.length > 0)
-    ? s.foafpublications._array
-    : undefined
+  var d = s.out(ns.foaf.publications).values;
+  return d.length ? d : undefined;
 }
 
 function getAgentMade (s) {
-  return (s.foafmade && s.foafmade._array.length > 0)
-    ? s.foafmade._array
-    : undefined
+  var d = s.out(ns.foaf.made).values;
+  return d.length ? d : undefined;
 }
 
+//TODO: Review grapoi
 function getGraphImage (s) {
-  if (s.asimage || s.asicon) {
-    var image = s.asimage || s.asicon;
-    s._graph.some(function(t){
-      if(t.predicate.nominalValue == Config.Vocab['asurl']['@id'] || t.predicate.nominalValue == Config.Vocab['ashref']['@id']) {
-        if (t.subject.nominalValue == s.asicon || "_:" + t.subject.nominalValue == s.asicon) {
-          image = t.object.nominalValue;
+  var image = s.out(ns.as.image).values;
+  var icon = s.out(ns.as.icon).values;
+  if (image.length || icon.length) {
+    var image = image[0] || icon[0];
+    Array.from(s.out().quads()).some(t => {
+      // var image = s.out([ns.as.icon, ns.as.image]).out([ns.as.url, ns.as.href]).values[0];
+      if (t.predicate.value == ns.as.url.value || t.predicate.value == ns.as.href.value) {
+        // https://github.com/rdfjs-base/to-ntriples
+        // toNT(t.subject)
+        // toNT(t)
+        // toNT(s.dataset)
+        //t.subject.term.equals(s.out(ns.as.icon).terms[0])
+
+        if (t.subject.value == s.out(ns.as.icon).values[0] || "_:" + t.subject.value == s.out(ns.as.icon).values[0]) {
+          image = t.object.value;
           return true;
         }
-        else if (t.subject.nominalValue == s.asimage || "_:" + t.subject.nominalValue == s.asimage) {
-          image = t.object.nominalValue;
+        else if (t.subject.value == s.out(ns.as.image).values[0] || "_:" + t.subject.value == s.out(ns.as.image).values[0]) {
+          image = t.object.value;
           return true;
         }
         return false;
@@ -1110,50 +1261,57 @@ function getGraphImage (s) {
     return image;
   }
   else {
-    return s.foafimg || s.schemaimage || s.vcardphoto || s.vcardhasPhoto || s.siocavatar || s.foafdepiction || undefined
+    return s.out(ns.foaf.img).values[0] || s.out(ns.schema.image).values[0] || s.out(ns.vcard.photo).values[0] || s.out(ns.vcard.hasPhoto).values[0] || s.out(ns.sioc.avatar).values[0] || s.out(ns.foaf.depiction).values[0] || undefined
   }
 }
 
 function getGraphEmail(s) {
-  var d = s.schemaemail || s.foafmbox || undefined ;
-  return DOMPurify.sanitize(d);
+  var email = s.out(ns.schema.email).values;
+  var mbox = s.out(ns.foaf.mbox).values;
+  var d =
+    email.length ? email[0] :
+    mbox.length ? mbox[0] :
+    undefined;
+
+  return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphContributors(s) {
-  return (
-    s.schemacontributor?._array?.length > 0 ? s.schemacontributor._array :
-    undefined
-  )
+  var d = s.out(ns.schema.contributor).values;
+  return d.length ? d : undefined;
 }
 
 function getGraphEditors(s) {
-  return (
-    s.schemaeditor?._array?.length > 0 ? s.schemaeditor._array :
-    undefined
-  )
+  var d = s.out(ns.schema.editor).values;
+  return d.length ? d : undefined;
 }
 
 function getGraphAuthors(s) {
+  var author = s.out(ns.schema.author).values;
+  var creator = s.out(ns.schema.creator).values;
+  var actor = s.out(ns.as.author).values;
+  var dcreator = s.out(ns.dcterms.creator).values;
+
   return (
-    s.schemaauthor?._array?.length > 0 ? s.schemaauthor._array :
-    s.schemacreator?._array?.length > 0 ? s.schemacreator._array :
-    s.asactor?._array?.length > 0 ? s.asactor._array :
-    s.dctermscreator?._array?.length > 0 ? s.dctermscreator._array :
+    author.length > 0 ? author :
+    creator.length > 0 ? creator :
+    actor.length > 0 ? actor :
+    dcreator.length > 0 ? dcreator :
     undefined
   );
 }
 
 function getGraphPerformers(s) {
-  return (
-    s.schemaperformer?._array?.length > 0 ? s.schemaperformer._array :
-    undefined
-  )
+  var d = s.out(ns.schema.performer).values;
+  return d.length ? d : undefined;
 }
 
 function getGraphPublishers(s) {
+  var publisher = s.out(ns.schema.publisher).values;
+  var dpublisher = s.out(ns.dcterms.publisher).values;
   return (
-    s.schemapublisher?._array?.length > 0 ? s.schemapublisher._array :
-    s.dctermspublisher?._array?.length > 0 ? s.dctermspublisher._array :
+    publisher.length > 0 ? publisher :
+    dpublisher.length > 0 ? dpublisher :
     undefined
   )
 }
@@ -1163,44 +1321,44 @@ function getGraphDate(s) {
 }
 
 function getGraphPublished(s) {
-  var d = s.schemadatePublished || s.aspublished || s.dctermsissued || s.dctermsdate || s.provgeneratedAtTime || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  var d = s.out(ns.schema.datePublished).values[0] || s.out(ns.as.published).values[0] || s.out(ns.dcterms.issued).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values [0] || undefined;
+  return d === undefined ? undefined : DOMPurify.sanitize(d);
 }
 
 function getGraphUpdated(s) {
-  var d = s.schemadateModified || s.asupdated || s.dctermsmodified || s.dctermsdate || s.provgeneratedAtTime || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  var d = s.out(ns.schema.dateModified).values[0] || s.out(ns.as.updated).values[0] || s.out(ns.dcterms.modified).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values[0] || undefined;
+  return d === undefined ? undefined : DOMPurify.sanitize(d);
 }
 
 function getGraphCreated(s) {
-  var d = s.schemadateCreated || s.dctermscreated || s.dctermsdate || s.provgeneratedAtTime || undefined;
-  return d === undefined ? undefined : DOMPurify.sanitize(d)
+  var d = s.out(ns.schema.dateCreated).values[0] || s.out(ns.dcterms.created).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values[0] || undefined;
+  return d === undefined ? undefined : DOMPurify.sanitize(d);
 }
 
 function getGraphLanguage(s) {
-  return s.dctermslanguage || s.dclanguage || s.schemainLanguage || undefined;
+  return s.out(ns.dcterms.language).values[0] || s.out(ns.dcelements.language).values[0] || s.out(ns.schema.inLanguage).values[0] || undefined;
 }
 
 function getGraphLicense(s) {
-  return s.dctermslicense || s.schemalicense || s.cclicense || s.xhvlicense || undefined;
+  return s.out(ns.dcterms.license).values[0] || s.out(ns.schema.license).values[0] || s.out(ns.cc.license).values[0] || s.out(ns.xhv.license).values[0] || undefined;
 }
 
 function getGraphRights(s) {
-  return s.dctermsrights || getGraphLicense(s) || undefined;
+  return s.out(ns.dcterms.rights).values[0] || getGraphLicense(s) || undefined;
 }
 
 function getGraphLabel(s) {
-  var d = s.schemaname || s.dctermstitle || s.dcelementstitle || getAgentName(s) || s.assummary || undefined;
+  var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || getAgentName(s) || s.out(ns.as.summary).values[0] || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphTitle(s) {
-  var d = s.schemaname || s.dctermstitle || s.dcelementstitle || s.asname || undefined;
+  var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || s.out(ns.as.name).values[0] || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
 
 function getGraphLabelOrIRI(s) {
-  return getGraphLabel(s) || s.iri().toString();
+  return getGraphLabel(s) || s.term.value;
 }
 
 function getUserLabelOrIRI(iri) {
@@ -1217,6 +1375,7 @@ function getUserLabelOrIRI(iri) {
   return name;
 }
 
+//XXX: RDFa issue retaining markup on non `datatype` nodes: https://github.com/rubensworks/rdfa-streaming-parser.js/issues/49
 function getGraphConceptLabel(g, options) {
   var labels = {
     prefLabel: [],
@@ -1226,49 +1385,53 @@ function getGraphConceptLabel(g, options) {
     notation: []
   };
   options = options || {};
-  options['subjectURI'] = options['subjectURI'] || g.iri().toString();
+  options['subjectURI'] = options['subjectURI'] || g.term.value;
   options['lang'] = options['lang'] || 'en';
+
+  var documentURL = Config.DocumentURL;
 
   //FIXME: Using this approach temporarily that is tied to SimpleRDF for convenience until it is replaced. It is fugly but it works. Make it better!
 
-  var triples = g._graph
+  var triples = Array.from(g.out().quads());
 
-  triples.forEach(function(t){
+  triples.forEach(t => {
 // console.log(t)
-    var s = t.subject.nominalValue;
-    var p = t.predicate.nominalValue;
-    var o = t.object.nominalValue;
+    var s = t.subject.value;
+    var p = t.predicate.value;
+    var o = t.object.value;
 
     if (s == options['subjectURI']){
-      if (p == Config.Vocab['skosprefLabel']['@id'] && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
+      if (p == ns.skos.prefLabel.value && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
         labels.prefLabel.push(o);
       }
-      else if (p == Config.Vocab['skosxlprefLabel']['@id']) {
-        g.child(o)._graph.forEach(function(oT){
-          var oS = oT.subject.nominalValue;
-          var oP = oT.predicate.nominalValue;
-          var oO = oT.object.nominalValue;
+      else if (p == ns.skosxl.prefLabel.value) {
+        var quads = Config.Resource[documentURL]['graph'].node(rdf.namedNode(o)).out().quads();
+        quads.forEach(oT => {
+          var oS = oT.subject.value;
+          var oP = oT.predicate.value;
+          var oO = oT.object.value;
 
-          if (oS == o && oP == Config.Vocab['skosxlliteralForm']['@id'] && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
+          if (oS == o && oP == ns.skosxl.literalForm.value && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
             labels.xlprefLabel.push(oO);
           }
         })
       }
-      else if (p == Config.Vocab['skosaltLabel']['@id'] && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
+      else if (p == ns.skos.altLabel.value && (t.object.language && (t.object.language == '' || t.object.language.toLowerCase().startsWith(options['lang'])))) {
         labels.altLabel.push(o);
       }
-      else if (p == Config.Vocab['skosxlaltLabel']['@id']) {
-        g.child(o)._graph.forEach(function(oT){
-          var oS = oT.subject.nominalValue;
-          var oP = oT.predicate.nominalValue;
-          var oO = oT.object.nominalValue;
+      else if (p == ns.skosxl.altLabel.value) {
+        var quads = Config.Resource[documentURL]['graph'].node(rdf.namedNode(o)).out().quads();
+        quads.forEach(oT => {
+          var oS = oT.subject.value;
+          var oP = oT.predicate.value;
+          var oO = oT.object.value;
 
-          if (oS == o && oP == Config.Vocab['skosxlliteralForm']['@id'] && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
+          if (oS == o && oP == ns.skosxl.literalForm.value && (oT.object.language && (oT.object.language == '' || oT.object.language.toLowerCase().startsWith(options['lang'])))) {
             labels.xlaltLabel.push(oO);
           }
         })
       }
-      else if (p == Config.Vocab['skosnotation']['@id']) {
+      else if (p == ns.skos.notation.value) {
         labels.notation.push(o);
       }
     }
@@ -1289,11 +1452,12 @@ function getGraphConceptLabel(g, options) {
 }
 
 function getGraphDescription(s) {
-  var d = s.schemadescription || s.dctermsdescription || s.dcelementsdescription || s.schemaname || s.asname || undefined;
+  var d = s.out(ns.schema.description).value || s.out(ns.dcterms.description).value || s.out(ns.dcelements.description).value || s.out(ns.schema.name).value || s.out(ns.as.name).value || undefined;
   return d === undefined ? undefined : DOMPurify.sanitize(d)
 }
+
 function getGraphTypes(s) {
-  return s.rdftype._array;
+  return s.out(ns.rdf.type).values;
 }
 
 function sortGraphTriples(g, options) {
@@ -1301,14 +1465,15 @@ function sortGraphTriples(g, options) {
   if (!("sortBy" in options)) {
     options["sortBy"] = "object";
   }
-
-  g.toArray().sort(function (a, b) {
-    return a[options.sortBy].nominalValue
+  g = rdf.grapoi({ dataset: g.dataset });
+  var quads = Array.from(g.out().quads());
+  quads.sort(function(a, b) {
+    return a[options.sortBy].value
       .toLowerCase()
-      .localeCompare(b[options.sortBy].nominalValue.toLowerCase());
+      .localeCompare(b[options.sortBy].value.toLowerCase());
   });
 
-  return g;
+  return quads;
 }
 
 // https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm
@@ -1324,9 +1489,9 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
 // console.log(pathURL)
 
   //TODO: Consider whether to skip this HEAD if we already determined the ACLResource previously. While possible the effectiveACLResource is unlikely to change.
-  return getLinkRelationFromHead('acl', iri).then(
-    function(i) {
-      if (i.length > 0) {
+  return getLinkRelationFromHead('acl', iri)
+    .then(i => {
+      if (i.length) {
         var aR = i[0];
 
         var aclResource = getAbsoluteIRI(baseURL, aR);
@@ -1335,7 +1500,7 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
         Config.Resource[iri]['acl']['defaultACLResource'] = Config.Resource[iri]['acl']['defaultACLResource'] || aclResource;
 
         return getResourceGraph(aclResource)
-          .then(function(g){
+          .then(g => {
 // console.log(i)
 // console.log(i.status)
 //404?
@@ -1351,7 +1516,6 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
                 return Promise.reject(new Error('effectiveACLResource not determined. https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm'));
               }
             }
-// console.log(g)
 
             Config.Resource[documentURL]['acl']['effectiveACLResource'] = aclResource;
             Config.Resource[aclResource] = {};
@@ -1408,23 +1572,27 @@ function getAccessSubjects (authorizations, options) {
 function getAuthorizationsMatching (g, matchers) {
   var authorizations = {};
 
-// console.log("getAuthorizationsMatching:", g, matchers);
+// console.log("getAuthorizationsMatching:", g.terms, g.out().values, matchers);
 
   var subjects = [];
-  g.graph().toArray().forEach(function(t){
-    subjects.push(t.subject.nominalValue);
+
+  g = rdf.grapoi({ dataset: g.dataset });
+
+  g.out().quads().forEach(t => {
+// console.log(t)
+    subjects.push(t.subject.value);
   });
   subjects = uniqueArray(subjects);
-
+// console.log(subjects)
   subjects.forEach(i => {
-    var s = g.child(i);
+    var s = g.node(rdf.namedNode(i));
 
-    if (s.rdftype._array.includes(Config.Vocab['aclAuthorization']['@id'])) {
-      var authorizationIRI = s.iri().toString();
+    if (s.out(ns.rdf.type).values.includes(ns.acl.Authorization.value)) {
+      var authorizationIRI = s.term.value;
       var candidateAuthorization = {};
 
       Object.keys(matchers).forEach(key => {
-        if (s['acl' + key]._array.includes(matchers[key])) {
+        if (s.out(ns.acl[key]).values.includes(matchers[key])) {
           candidateAuthorization[key] = matchers[key];
         }
       })
@@ -1435,7 +1603,7 @@ function getAuthorizationsMatching (g, matchers) {
         var properties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin'];
         var authorization = {};
         properties.forEach(p => {
-          authorization[p] = s['acl' + p]._array;
+          authorization[p] = s.out(ns.acl[p]).values;
         })
         authorizations[authorizationIRI] = authorization;
       }
@@ -1445,20 +1613,11 @@ function getAuthorizationsMatching (g, matchers) {
   return authorizations;
 }
 
-function getGraphInbox(s) {
-  return (
-    s.ldpinbox?._array?.length > 0 ? s.ldpinbox._array :
-    s.asinbox?._array?.length > 0 ? s.asinbox._array :
-    undefined
-  );
-}
-
 export {
-  constructGraph,
-  getGraph,
   getGraphFromData,
   getMatchFromData,
   serializeDataToPreferredContentType,
+  XXXOLDserializeData,
   serializeData,
   serializeGraph,
   applyParserSerializerFixes,
@@ -1524,5 +1683,6 @@ export {
   getACLResourceGraph,
   getAccessSubjects,
   getAuthorizationsMatching,
-  getUserLabelOrIRI
+  getUserLabelOrIRI,
+  getRDFParser
 }

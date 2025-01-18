@@ -113,24 +113,36 @@ function deleteResource (url, options = {}) {
 
 function getAcceptPostPreference (url) {
   const pIRI = getProxyableIRI(url)
-
+// console.trace()
   return getResourceOptions(pIRI, {'header': 'Accept-Post'})
     .catch(error => {
 //      console.log(error)
       return {'headers': 'application/ld+json'}
     })
     .then(result => {
-      let header = result.headers.trim().split(/\s*,\s*/)
+      let header = result.headers.trim().split(/\s*,\s*/);
 
-      if (header.indexOf('text/html') > -1 || header.indexOf('application/xhtml+xml') > -1) {
-        return 'text/html'
-      } else if (header.indexOf('text/turtle') > -1 || header.indexOf('*/*') > -1) {
-        return 'text/turtle'
-      } else if (header.indexOf('application/ld+json') > -1 || header.indexOf('application/json') > -1) {
-        return 'application/ld+json'
-      } else {
-        console.log('Accept-Post contains unrecognised media-range; ' + result.headers)
-        return result.headers
+      if (header.includes('text/html') || header.includes('application/xhtml+xml')) {
+        return 'text/html';
+      }
+      else if (header.includes('application/ld+json') || header.includes('application/json') || header.includes('application/activity+json') || header.includes('*/*')) {
+        return 'application/ld+json';
+      }
+      else if (header.includes('text/turtle')) {
+        return 'text/turtle';
+      }
+      else if (header.includes('application/n-triples')) {
+        return 'application/n-triples';
+      }
+      else if (header.includes('application/n-quads')) {
+        return 'application/n-quads';
+      }
+      else if (header.includes('text/n3')) {
+        return 'text/n3';
+      }
+      else {
+        console.log('Accept-Post contains unrecognised media-range; ' + result.headers);
+        return result.headers;
       }
     })
 }
@@ -200,6 +212,7 @@ function getResource (url, headers = {}, options = {}) {
   var _fetch = Config.User.OIDC? __fetch : fetch;
 
   url = url || currentLocation()
+// console.log(url)
   if (url.startsWith('file:')){
     return;
   }
@@ -220,6 +233,7 @@ function getResource (url, headers = {}, options = {}) {
     headers['Cache-Control'] = 'no-store'
   }
 
+  //XXX: Do we need this?
   if (!options.noCredentials) {
     options.credentials = 'include'
   }
@@ -232,9 +246,10 @@ function getResource (url, headers = {}, options = {}) {
 
 // console.log(options)
 // console.log(error)
+// console.error(error)
 
       if (error?.status == 405) {
-// console.log('status: 405')
+// console.log('status: 405', error)
         throw error
       }
       else if (error?.status == 401) {
@@ -262,6 +277,8 @@ function getResource (url, headers = {}, options = {}) {
 
         if (pIRI !== url) {
           options['proxyForced'] = true;
+          options.noCredentials = true;
+          options.credentials = 'omit';
           return getResource(pIRI, headers, options);
         }
         else {
@@ -351,10 +368,10 @@ function getResourceOptions (url, options = {}) {
 
 //TODO: Move these and doc.js:getRDFaPrefixHTML (rename) elsewhere.
 function getN3PrefixesString(prefixes){
-  return Object.keys(prefixes).map(function(i){ return '@prefix ' + i + ': ' + '<' + prefixes[i] + '> .' }).join('\n');
+  return Object.keys(prefixes).map(i => { return '@prefix ' + i + ': ' + '<' + prefixes[i] + '> .' }).join('\n');
 }
 function getSPARQLPrefixesString(prefixes){
-  return Object.keys(prefixes).map(function(i){ return 'PREFIX ' + i + ': ' + '<' + prefixes[i] + '>' }).join('\n');
+  return Object.keys(prefixes).map(i => { return 'PREFIX ' + i + ': ' + '<' + prefixes[i] + '>' }).join('\n');
 }
 //https://www.w3.org/TR/sparql11-query/#rVar
 function containsSPARQLVariable(str) {
@@ -415,7 +432,7 @@ function patchResourceGraph (url, patches, options = {}) {
       var patchId = '_:' + generateUUID();
       data += `${patchId} a solid:InsertDeletePatch .\n`;
       var deletes = '';
-      patches.forEach(function(patch){
+      patches.forEach(patch => {
         if (patch.delete) {
           if (!deletes.length) {
             deletes += `${patchId} solid:deletes {`
