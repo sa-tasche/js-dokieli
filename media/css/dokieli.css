@@ -1937,9 +1937,9 @@ max-width:48px;
 margin-right:0.5em;
 }
 
-*:has(span.ref[typeof~="http://purl.org/dc/dcmitype/Text"]) {
+/**:has(span.ref[typeof~="http://purl.org/dc/dcmitype/Text"]) {
 overflow: visible !important;
-}
+}*/
 
 span.ref[typeof~="http://purl.org/dc/dcmitype/Text"] {
 position:relative;
