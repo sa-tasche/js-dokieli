@@ -5,7 +5,7 @@
   "main": "./src/dokieli.js",
   "type": "module",
   "scripts": {
-    "build-dist": "webpack --progress --color",
+    "build-dist": "webpack --progress --color --env minimize",
     "build": "yarn build-dist",
     "test": "TZ=UTC node --experimental-vm-modules node_modules/jest/bin/jest.js --silent",
     "test:e2e": "playwright test",

@@ -3,6 +3,8 @@ const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = (env) => {
+  const minimize = !!(env && env.minimize);
+
   return {
     resolve: {
       modules: ["node_modules", "src/"],
@@ -52,7 +54,7 @@ module.exports = (env) => {
     },
     optimization: {
       usedExports: true,
-      minimize: true,
+      minimize,
       minimizer: [
         new TerserPlugin({
           terserOptions: {
