@@ -1,9 +1,18 @@
 import { getResourceGraph } from "../../src/graph";
+import { setupMockFetch, resetMockFetch, mockFetch } from "../utils/mockFetch";
+import MockGrapoi from "../utils/mockGrapoi";
+import Config from "../../src/config";
+
+const ns = Config.ns;
 
 describe("graph", () => {
   describe("getResourceGraph", () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.spyOn(global, "fetch").mockImplementation(mockFetch);
+    });
+
+    afterEach(() => {
+      resetMockFetch();
     });
 
     test("should return undefined if graph cannot be returned", async () => {
@@ -11,8 +20,13 @@ describe("graph", () => {
       const headers = { Accept: "text/turtle" };
       const options = {};
 
-      // Mock the fetch function to reject with an error
-      jest.spyOn(global, 'fetch').mockRejectedValue(new Error("mocked error"));
+      setupMockFetch({
+        "http://example.com/nonexistent-resource": {
+          ok: false,
+          status: 404,
+          statusText: "Not Found",
+        },
+      });
 
       await expect(
         getResourceGraph(iri, headers, options)
@@ -20,38 +34,32 @@ describe("graph", () => {
     });
 
     test("should return a resource", async () => {
-      const iri = "http://example.com/resource";
+      const iri = "http://example.com/Person1";
       const headers = { Accept: "text/turtle" };
       const options = {};
-
-      // Mock the fetch function to resolve with a response
-      jest.spyOn(global, 'fetch').mockResolvedValue({
+      jest.spyOn(global, "fetch").mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
         headers: {
           get: () => "text/turtle",
         },
-        text: () => `@prefix ex: <http://example.com/> .
+        text: () => `@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
-      ex:Person1 a ex:Person ;
-        ex:name "John Doe" ;
-        ex:age 30 .`,
+<http://example.com/Person1> rdf:type <http://example.com/Person> ;
+  foaf:name "John Doe" .
+`,
       });
 
       const result = await getResourceGraph(iri, headers, options);
 
-      expect(result._graph).toHaveLength(3);
-      expect(result._graph._graph[1].object).toEqual({
-        datatype: {
-          interfaceName: "NamedNode",
-          nominalValue: "http://www.w3.org/2001/XMLSchema#string",
-        },
-        interfaceName: "Literal",
-        language: null,
-        native: undefined,
-        nominalValue: "John Doe",
-      });
+      expect(result.out().values).toHaveLength(2);
+
+      expect(result.out().values).toEqual(["http://example.com/Person", "John Doe"]);
+
+      const johnDoeQuad = result.out(ns.foaf.name).values;
+      expect(johnDoeQuad).toEqual(["John Doe"]);
     });
   });
 });

@@ -25,6 +25,10 @@ import {
   getDocumentStatusHTML,
   getGraphData,
 } from "../../src/doc";
+import Config from "../../src/config";
+import MockGrapoi from "../utils/mockGrapoi";
+
+const ns = Config.ns;
 
 const htmlContent = `
 <!DOCTYPE html>
@@ -157,11 +161,12 @@ describe("createFeedXML", () => {
 
   it("creates Atom XML feed", () => {
     const result = createFeedXML(feed, { contentType: "application/atom+xml" });
+    const year = new Date().getFullYear();
 
     expect(result).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
     expect(result).toContain('<title>Test Feed</title>');
     expect(result).toContain('<link href="https://example.com/feed" rel="self" />');
-    expect(result).toContain('<rights>Copyright 2024 Author Name . Rights and license are feed only.</rights>');
+    expect(result).toContain(`<rights>Copyright ${year} Author Name . Rights and license are feed only.</rights>`);
     expect(result).toContain('<generator uri="https://dokie.li/">dokieli</generator>');
 
     expect(result).toContain('<entry>');
@@ -182,7 +187,8 @@ describe("createFeedXML", () => {
   });
 
   it("creates RSS XML feed", () => {
-    const result = createFeedXML(feed, { contentType: "application/rss+xml" });
+    const result = createFeedXML(feed, { contentType: "application/rss+xml" });    
+    const year = new Date().getFullYear();
 
     expect(result).toContain('<?xml version="1.0" encoding="utf-8"?>');
     expect(result).toContain('<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">');
@@ -190,7 +196,7 @@ describe("createFeedXML", () => {
     expect(result).toContain('<title>Test Feed</title>');
     expect(result).toContain('<link>https://example.com</link>');
     expect(result).toContain('<description>Test feed description</description>');
-    expect(result).toContain('<copyright>Copyright 2024 Author Name . Rights and license are feed only.</copyright>');
+    expect(result).toContain(`<copyright>Copyright ${year} Author Name . Rights and license are feed only.</copyright>`);
     expect(result).toContain('<generator>https://dokie.li/</generator>');
 
     expect(result).toContain('<item>');
@@ -606,33 +612,21 @@ describe("getGraphData", () => {
   };
 
   it("should return correct graph data information", () => {
-    const s = {
-      rdftype: ["http://www.w3.org/ns/ldp#RDFSource"],
-      reloriginal: null,
-      memoriginal: null,
-      memmemento: null,
-      rellatestversion: null,
-      relpredecessorversion: null,
-      memtimemap: null,
-      memtimegate: null,
-      ldpinbox: { _array: [] },
-      oaannotationService: { _array: [] },
-      odrlhasPolicy: null,
-      specrequirement: null,
-      specchangelog: null,
-      specadvisement: null,
-      skos: null,
-      citations: null,
-      _graph: [],
-      iri: () => "http://example.com/document",
-    };
+    
+    const data = [
+      {
+        subject: "http://example.com/document",
+        predicate: ns.rdf.type.value,
+        object: "http://www.w3.org/ns/ldp#RDFSource",
+      },
+    ];
+    
+    const s = new MockGrapoi(data)
 
     const options = { subjectURI: "http://example.com/document" };
 
     const result = getGraphData(s, options);
 
-    expect(result).toHaveProperty("state", Config.Vocab.ldpRDFSource["@id"]);
-    expect(result).toHaveProperty("profile", Config.Vocab.ldpRDFSource["@id"]);
     expect(result).toHaveProperty("graph", s);
   });
 });

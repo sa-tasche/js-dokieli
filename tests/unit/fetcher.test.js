@@ -4,10 +4,15 @@ import {
   getResourceHead,
   getResourceOptions,
 } from "../../src/fetcher";
+import { setupMockFetch, resetMockFetch, mockFetch } from "../utils/mockFetch";
 
 describe("fetcher", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.spyOn(global, "fetch").mockImplementation(mockFetch);
+  });
+
+  afterEach(() => {
+    resetMockFetch();
   });
 
   describe("getResource", () => {
@@ -16,11 +21,16 @@ describe("fetcher", () => {
       const headers = { Accept: "text/turtle" };
       const options = {};
 
-      // Mock the fetch function to reject with an error
-      jest.spyOn(global, "fetch").mockRejectedValue(new Error("mocked error"));
+      setupMockFetch({
+        "http://example.com/resource": {
+          ok: true,
+          status: 500,
+          json: async () => ({ message: "mocked error" }),
+        },
+      });
 
       await expect(getResource(iri, headers, options)).rejects.toThrow(
-        "mocked error"
+        "Error fetching resource"
       );
     });
 
@@ -29,16 +39,20 @@ describe("fetcher", () => {
       const headers = { Accept: "text/turtle" };
       const options = {};
 
-      // Mock the fetch function to resolve with a response
-      jest.spyOn(global, "fetch").mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: "OK",
+      setupMockFetch({
+        "http://example.com/resource": {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          json: async () => ({ data: "mocked data" }),
+        },
       });
 
-      const result = await getResource(iri, headers, options);
+      const response = await getResource(iri, headers, options);
 
-      expect(result).toEqual({ ok: true, status: 200, statusText: "OK" });
+      expect(response.ok).toBe(true);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ data: "mocked data" });
     });
   });
 
@@ -48,8 +62,9 @@ describe("fetcher", () => {
 
       const result = setAcceptRDFTypes(options);
 
+      // FIXME: removing markdown but needs to be restored somehow and update test
       expect(result).toEqual(
-        "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,text/markdown;q=0.9,application/rdf+xml"
+        "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,application/rdf+xml"
       );
     });
 
@@ -62,8 +77,9 @@ describe("fetcher", () => {
 
       const result = setAcceptRDFTypes(options);
 
+      // FIXME: removing markdown but needs to be restored somehow and update test
       expect(result).toEqual(
-        "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,text/markdown;q=0.9,application/rdf+xml"
+        "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,application/rdf+xml"
       );
     });
   });
@@ -73,11 +89,12 @@ describe("fetcher", () => {
       const url = "http://example.com/resource";
       const options = {};
 
-      // Mock the fetch function to resolve with a response that is not ok
-      jest.spyOn(global, "fetch").mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: "Not Found",
+      setupMockFetch({
+        "http://example.com/resource": {
+          ok: false,
+          status: 404,
+          statusText: "Not Found",
+        },
       });
 
       await expect(getResourceHead(url, options)).rejects.toThrow(
