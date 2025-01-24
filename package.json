@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build-dist": "webpack --progress --color --env minimize",
-    "build": "yarn build-dist",
+    "build": "webpack --progress --color",
     "test": "TZ=UTC node --experimental-vm-modules node_modules/jest/bin/jest.js --silent",
     "test:e2e": "playwright test",
     "watch": "webpack --progress --color --watch",
