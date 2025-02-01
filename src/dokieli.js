@@ -8992,7 +8992,8 @@ WHERE {\n\
 
         case 'ref-footnote':
           var citationURL = (typeof n.citationURL !== 'undefined' && n.citationURL != '') ? '<a href="' + n.citationURL + '" rel="rdfs:seeAlso">' + n.citationURL + '</a>' : '';
-          body = (typeof n.body !== 'undefined' && n.body != '') ? ((citationURL) ? ', ' + n.body : n.body) : '';
+          var bodyValue = n.body?.[0].value || '';
+          body = (bodyValue) ? ((citationURL) ? ', ' + bodyValue : bodyValue) : '';
 
           note = '\n\
   <dl about="#' + n.id +'" id="' + n.id +'" typeof="oa:Annotation">\n\
