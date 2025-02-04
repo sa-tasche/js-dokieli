@@ -73,7 +73,7 @@
           <section id="abstract">
             <h2>Abstract</h2>
             <div datatype="rdf:HTML" property="schema:abstract">
-              <p>This documentation is intended to help brave developers and authors. It explains dokieli's principles, architectural and design patterns.</p>
+              <p>This is dokieli's documentation, covering its principles, architecture, design patterns, setup instructions, and usage guidelines. Dokieli is a client-side editor and browser extension for decentralised article publishing, annotations, and social interactions, built as an open-source project using open web standards. Individuals can use their preferred identities, control and share their content securely.</p>
             </div>
           </section>
 
@@ -82,7 +82,7 @@
           <section id="principles" inlist="" rel="schema:hasPart" resource="#principles">
             <h2 property="schema:name">Principles</h2>
             <div datatype="rdf:HTML" property="schema:description">
-              <p>Towards improving the <em>write</em> dimension of the <em>read-write</em> Web, dokieli's design subscribes to the following principles: freedom of expression, interoperability, decentralisation, evolvability, universal access, separation of concerns, <code>█ + █ > = █ █</code>.</p>
+              <p>Dokieli's core design principles are autonomy and universal access. Dokieli promotes self-publishing by allowing individuals to publish and annotate articles using their preferred identities and personal storage, supporting both personal and social activities. It does not track users, collect statistics, or report user behavior without consent. As a client-side application, it operates independently of any specific server or service. In line with dokieli’s commitment to user freedom, content created with it can be used by other standards-compliant applications.</p>
             </div>
           </section>
 
