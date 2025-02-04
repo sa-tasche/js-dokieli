@@ -147,6 +147,10 @@ For the scholars among us, see the authoring guidelines below. View the [ACM SIG
 
 * [NLnet](https://nlnet.nl/) (2024-02–present)
 
+## Support the project
+
+Help the project grow by sponsoring it on [Open Collective](https://opencollective.com/dokieli/) or reach out to us.
+
 ## Contributors
 
 <a href="https://github.com/dokieli/dokieli/graphs/contributors">
