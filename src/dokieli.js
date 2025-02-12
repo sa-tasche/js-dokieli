@@ -8992,7 +8992,7 @@ WHERE {\n\
 
         case 'ref-footnote':
           var citationURL = (typeof n.citationURL !== 'undefined' && n.citationURL != '') ? '<a href="' + n.citationURL + '" rel="rdfs:seeAlso">' + n.citationURL + '</a>' : '';
-          var bodyValue = n.body?.[0].value || '';
+          var bodyValue = (n.body && n.body.length) ? n.body[0].value : '';
           body = (bodyValue) ? ((citationURL) ? ', ' + bodyValue : bodyValue) : '';
 
           note = '\n\
