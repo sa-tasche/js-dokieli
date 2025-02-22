@@ -1,6 +1,6 @@
 'use strict'
 
-import { Icon } from './template.js';
+import { Icon } from './ui/icons.js';
 import rdf from 'rdf-ext';
 
 /**

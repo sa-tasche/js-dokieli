@@ -1,7 +1,7 @@
 'use strict';
 
 import { getDocument, createActivityHTML, createHTML } from './doc.js';
-import { Icon } from './template.js'
+import { Icon } from './ui/icons.js'
 import { getAbsoluteIRI, getPathURL, getProxyableIRI } from './uri.js';
 import { getMatchFromData, getLinkRelation, serializeDataToPreferredContentType, getGraphLicense, getGraphTypes } from './graph.js';
 import { getAcceptPostPreference, postResource } from './fetcher.js';

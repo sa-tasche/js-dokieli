@@ -19,7 +19,8 @@ import MediumEditorTable from "medium-editor-tables/dist/js/medium-editor-tables
 // window.MediumEditorTable = MediumEditorTable;
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo } from './auth.js'
-import { Icon, createRDFaHTML } from './template.js'
+import { createRDFaHTML } from './template.js'
+import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };

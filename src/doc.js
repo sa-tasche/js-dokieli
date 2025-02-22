@@ -6,7 +6,7 @@ import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromStr
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
 import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox } from './graph.js'
-import { createRDFaHTML, Icon } from './template.js'
+import { createRDFaHTML } from './template.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
 import { micromark as marked } from 'micromark';
