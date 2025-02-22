@@ -119,22 +119,3 @@ function getTextQuoteSelector(view, options = {}) {
     suffix
   }
 }
-
-
-/*THINKING.. OD NO TUSE. DELETE
-function highlightTextMagic(selection) {
-  selection = selection || window.getSelection();
-
-  const highlightContainerNode = fragmentFromString('<span class="ref do"></span>');
-  const prefixNode = fragmentFromString('<span class="do-prefix"></span>');
-  const suffixNode = fragmentFromString('<sup class="ref-annotation"><a href="#a268d7c2-fbcc-4659-84fd-ddda1501dde8" rel="cito:hasReplyFrom" resource="https://csarven.solidcommunity.net/bfffac84-e174-49ad-98f2-0308367906d8.ttl">💬</a></sup>');
-  const exactNode = fragmentFromString('<mark datatype="rdf:HTML" id="r-a268d7c2-fbcc-4659-84fd-ddda1501dde8" property="rdf:value"></mark>');
-
-  highlighText(highlightContainerNode, prefixNode, exactNodeWrapper, suffixNode, selectionRange);
-}
-
-highlighText(highlightContainerNode, prefixNode, exactNodeWrapper, suffixNode, selectionRange)
-
-
-}
-*/
