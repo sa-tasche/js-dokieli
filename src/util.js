@@ -134,6 +134,17 @@ function generateAttributeId(prefix, string, suffix) {
   return id;
 }
 
+function getFormValues(form) {
+  const formData = new FormData(form);
+
+  const formValues = Object.fromEntries(
+    [...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+  );
+
+// console.log(formValues);
+  return formValues;
+}
+
 function getHash(message, algo = "SHA-256") {
   var buffer = new TextEncoder("utf-8").encode(message);
   return window.crypto.subtle.digest(algo, buffer).then(function (hash) {
@@ -241,5 +252,6 @@ export {
   sortToLower,
   matchAllIndex,
   isValidISBN,
-  findPreviousDateTime
+  findPreviousDateTime,
+  getFormValues
 };
