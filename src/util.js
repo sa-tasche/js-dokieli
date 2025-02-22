@@ -161,6 +161,13 @@ function getHash(message, algo = "SHA-256") {
   });
 }
 
+//TODO: Consolidate with generateUUID() and related.
+function getRandomUUID() {
+  const uuid = crypto.randomUUID();
+  const randomLetter = String.fromCharCode(97 + Math.floor(Math.random() * 6)) // random letter from a-f
+  return randomLetter + uuid.slice(1);
+}
+
 function hashCode(s) {
   var hash = 0;
   if (s.length == 0) return hash;
@@ -249,6 +256,7 @@ export {
   generateId,
   getHash,
   hashCode,
+  getRandomUUID,
   sortToLower,
   matchAllIndex,
   isValidISBN,
