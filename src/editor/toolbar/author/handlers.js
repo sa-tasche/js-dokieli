@@ -1,0 +1,257 @@
+import { schema } from "../../schema/base.js"
+import { highlightText as pmHighlightText, getTextQuoteHTML } from "../../utils/annotation.js";
+import { toggleBlockquote } from "../../utils/dom.js";
+import { restoreSelection } from "../../utils/selection.js"
+import { getRandomUUID, getFormValues } from "../../../util.js"
+import { fragmentFromString } from "../../../doc.js";
+
+export function formHandlerA(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+  const href = formValues['link-a-href'];
+  const title = formValues['link-a-title'];
+
+  const attrs = title ? { href, title } : { href };
+
+  this.updateMarkWithAttributes(schema, 'a', attrs)(this.editorView.state, this.editorView.dispatch);
+
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('a');
+}
+
+export function formHandlerBlockquote(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+console.log(formValues)
+  const cite = formValues['link-blockquote-cite'];
+
+  const attrs = { cite };
+console.log(attrs)
+  toggleBlockquote(schema, attrs)(this.editorView.state, this.editorView.dispatch);
+
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('blockquote');
+}
+
+export function formHandlerImg(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+
+  const p = fragmentFromString('<p>Drag an image here</p>');
+
+  const src = formValues['link-img-src'];
+  const alt = formValues['link-img-alt'];
+  const title = formValues['link-img-figcaption'];
+
+  let width, height;
+
+  const preview = e.target.querySelector('.link-img-preview');
+  const previewImageNode = preview.querySelector('img[src]');
+
+  if (previewImageNode) {
+    width = previewImageNode.width;
+    height = previewImageNode.height;
+  }
+
+  //TODO: Warn about missing alt / description
+  // if (alt.length) {
+  //  altInput.classList.toggle('.warning');
+  // }
+
+  //TODO: MOVE THIS? Consider using a separate form control to mark <figure><img /><figcaption>{$title}</figcaption</figure>. For now link-img-figcaption is used for `title` attribute.
+  // if (title.length) {
+  // }
+
+  const attrs = {
+    alt,
+    ...(height !== undefined && height !== null ? { height } : {}),
+    src,
+    ...(width !== undefined && width !== null ? { width } : {}),
+    title
+  };
+
+  this.insertImage(attrs)(this.editorView.state, this.editorView.dispatch);
+
+  preview.replaceChildren(p);
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('img');
+}
+
+
+//select text
+//open popup
+//click toolbar button
+//populate form
+//fill out form
+//submit form
+
+//validate form
+//post to external location(s)
+//copy to localStorage
+//mark the highlight text
+//add the note as an aside
+//update message log
+//do other things...
+
+// TODO: refactor to generalize listeners on form
+// addListeners([type, callback]) {
+// [listeners] => addlistener(type, callback)}
+// callback { updateUI, sendfetch}
+
+//actions = ['approve', 'disapprove', 'specificity', 'bookmark', 'comment', 'note']
+
+//actions = ['approve', 'disapprove', 'specificity'] //Review
+//actions = ['selector', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment'] //Social
+//actions = ['note'] //Author
+
+
+function getSelectionAsHTML(selection) {
+  selection = selection || window.getSelection();
+  if (!selection.rangeCount) return "";
+
+  const div = document.createElement("div");
+
+  for (let i = 0; i < selection.rangeCount; i++) {
+    const range = selection.getRangeAt(i);
+    const fragment = range.cloneContents();
+
+    // console.log("RANGE CONTENTS:");
+    // fragment.childNodes.forEach(node => {
+    //   console.log("Child:", node);
+    //   if (node.children) {
+    //     Array.from(node.children).forEach(child => console.log("Grandchild:", child));
+    //   }
+    // });
+
+    div.appendChild(fragment);
+  }
+
+  return div.innerHTML;
+}
+
+
+
+function replaceSelectionWithFragment(selection, fragment) {
+  if (!selection.rangeCount) return;
+  const ranges = [];
+
+  for (let i = 0; i < selection.rangeCount; i++) {
+    ranges.push(selection.getRangeAt(i));
+  }
+
+  const mergedRange = document.createRange();
+  mergedRange.setStart(ranges[0].startContainer, ranges[0].startOffset);
+  mergedRange.setEnd(ranges[ranges.length - 1].endContainer, ranges[ranges.length - 1].endOffset);
+
+  selection.removeAllRanges();
+
+  mergedRange.deleteContents();
+
+  mergedRange.collapse(true);
+
+  mergedRange.insertNode(fragment);
+
+  selection.removeAllRanges();
+}
+
+
+
+function wrapSelectionInMark(selection) {
+  selection = selection || window.getSelection();
+
+  const selectedContent = getSelectionAsHTML(selection);
+console.log(selectedContent)
+var id = getRandomUUID();
+
+  var refId = 'r-' + id;
+  var refLabel = id; 
+  var noteIRI = 'https://csarven.solidcommunity.net/bfffac84-e174-49ad-98f2-0308367906d8.ttl';
+  var motivatedBy = 'oa:replying';
+  if (motivatedBy) {
+    refLabel = '💬';
+    // refLabel = DO.U.getReferenceLabel(motivatedBy);
+  }
+
+  var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
+  var options = { do: true };
+
+  const htmlString = getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType, options);
+
+  replaceSelectionWithFragment(selection, fragmentFromString(htmlString))
+  // processHighlightNode.outerHTML = fragmentFromString(htmlString);
+}
+
+export function formHandlerAnnotate(e, action) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const highlightText = async () => {
+    if (this.editorView) {
+      return pmHighlightText(schema, this.editorView)(this.editorView.state, this.editorView.dispatch)
+    }
+    else {
+console.log(this.selection);
+      restoreSelection(this.selection);
+      // const options = {};
+      // const textQuoteSelectors = await getTextQuoteSelector(selection, options);
+      // return highlightSelectorTarget(textQuoteSelectors)
+
+      const selection = window.getSelection();
+console.log(selection);
+      return wrapSelectionInMark(selection);
+    }
+  }
+
+  const formValues = getFormValues(e.target);
+
+  const tagging = formValues[`${action}-tagging`];
+  const content = formValues[`${action}-content`];
+  const language = formValues[`${action}-language`];
+  const license = formValues[`${action}-license`];
+
+  console.log(tagging, content, language, license);
+
+  //TODO: Mark the selection after successful comment. Move out.
+  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+  //Mark the selected content in the document
+  highlightText();
+
+  // this.clearToolbarForm(e.target);
+  // this.clearToolbarButton(action);
+  this.cleanupToolbar()
+}
+
+export function formHandlerQ(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+  const cite = formValues['link-q-cite'];
+
+  const attrs = { cite };
+
+  this.updateMarkWithAttributes(schema, 'q', attrs)(this.editorView.state, this.editorView.dispatch);
+
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('q');
+}
+
+// addListenerBookmark(toolbarForm)
+// addListenerApprove(toolbarForm)
+// addListenerSpecificity(toolbarForm)
+// addListenerComment(toolbarForm)
+
+
+// addListenerNote(toolbarForm)
+
+// addListenerShare(toolbarForm)
+// addListenerSparkline(toolbarForm)
+// addListenerSemantics(toolbarForm)
+// addListenersCite(toolbarForm)
+// addListenersFootnote(toolbarForm)
