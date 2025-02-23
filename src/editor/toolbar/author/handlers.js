@@ -242,16 +242,98 @@ export function formHandlerQ(e) {
   this.clearToolbarButton('q');
 }
 
-// addListenerBookmark(toolbarForm)
-// addListenerApprove(toolbarForm)
-// addListenerSpecificity(toolbarForm)
-// addListenerComment(toolbarForm)
+
+//TODO: MOVE. Incorporate into Image handler?
+//For some buttons we'll have both a popup and a command (custom, not pm). If selection matches a pattern, we call replaceSelectionWithImg with the values from the selection
+/*
+export function inputRuleImage(selection) {
+  selection = selection || window.getSelection();
+  const selectedContent = selection.toString();
+
+  var imgOptions = selectedContent.split("|");
+
+  var src = imgOptions[0];
+  var alt = '';
+  var width = '';
+  var height = '';
+
+  //https://csarven.ca/media/images/sarven-capadisli.jpg|alt text|480x320|Hello world long description
+  switch (imgOptions.length) {
+    case 1: default:
+      src = imgOptions[0];
+      break;
+
+    case 2:
+      alt = imgOptions[1];
+      break;
+
+    case 3:
+      width = ' width="' + imgOptions[1] + '"';
+      var widthHeight = imgOptions[1].split('x');
+
+      if (widthHeight.length == 2) {
+        width = ' width="' + widthHeight[0] + '"';
+        height = ' height="' + widthHeight[1] + '"';
+      }
+
+      alt = imgOptions[2];
+      break;
+
+    case 4:
+      var figure = imgOptions[1];
+      //if imgOptions[1] == 'figure'
+
+      width = ' width="' + imgOptions[2] + '"';
+      widthHeight = imgOptions[2].split('x');
+
+      if (widthHeight.length == 2) {
+        width = ' width="' + widthHeight[0] + '"';
+        height = ' height="' + widthHeight[1] + '"';
+      }
+
+      alt = imgOptions[3];
+      break;
+  }
+
+  selectionUpdated = '<img alt="'+ alt +'"' + height + ' src="' + src + '"' + width + ' />';
+  if (imgOptions.length == 4) {
+    selectionUpdated = '<figure>' + selectionUpdated + '<figcaption>' + alt + '</figcaption></figure>';
+  }
+}
+  */
+
+/*
+TODO:
+
+case 'rdfa':
+  r.about = this.getForm().querySelector('#rdfa-about.medium-editor-toolbar-input');
+  r.rel = this.getForm().querySelector('#rdfa-rel.medium-editor-toolbar-input');
+  r.href = this.getForm().querySelector('#rdfa-href.medium-editor-toolbar-input');
+  r.typeOf = this.getForm().querySelector('#rdfa-typeof.medium-editor-toolbar-input');
+  r.resource = this.getForm().querySelector('#rdfa-resource.medium-editor-toolbar-input');
+  r.property = this.getForm().querySelector('#rdfa-property.medium-editor-toolbar-input');
+  r.content = this.getForm().querySelector('#rdfa-content.medium-editor-toolbar-input');
+  r.datatype = this.getForm().querySelector('#rdfa-datatype.medium-editor-toolbar-input');
+  r.language = this.getForm().querySelector('#rdfa-language.medium-editor-toolbar-input');
+  break;
+
+case 'cite':
+  r.search = this.getForm().querySelector('#specref-search.medium-editor-toolbar-input');
+  r.select = this.getForm().querySelector('input[name="specref-item"]:checked');
+  r.citationType = this.getForm().querySelector('input[name="citation-type"]:checked');
+  r.citationRelation = this.getForm().querySelector('#citation-relation.medium-editor-toolbar-select');
+  r.url = this.getForm().querySelector('#citation-url.medium-editor-toolbar-input');
+  r.content = this.getForm().querySelector('#citation-content.medium-editor-toolbar-textarea');
+  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
+  break;
+
+case 'sparkline':
+  r.search = this.getForm().querySelector('#sparkline-search.medium-editor-toolbar-input');
+  r.select = this.getForm().querySelector('#sparkline-select');
+  r.sparkline = this.getForm().querySelector('#sparkline-graph .sparkline');
+  r.selectionDataSet = this.getForm().querySelector('#sparkline-selection-dataset');
+  r.selectionRefArea = this.getForm().querySelector('#sparkline-selection-refarea');
+  break;
 
 
-// addListenerNote(toolbarForm)
-
-// addListenerShare(toolbarForm)
-// addListenerSparkline(toolbarForm)
-// addListenerSemantics(toolbarForm)
-// addListenersCite(toolbarForm)
-// addListenersFootnote(toolbarForm)
+  */
