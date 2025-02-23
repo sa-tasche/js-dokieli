@@ -6,123 +6,100 @@ import { keymapPlugin } from "./toolbar/author/keymap.js";
 import { AuthorToolbar } from "./toolbar/author.js";
 import { SocialToolbar } from "./toolbar/social.js";
 
-var editorNode = document.body;
-let editorMode = "social";
-let view = null;
-let socialToolbarView = null; // Initialize the toolbarView
+// import { selectArticleNode } from '../doc.js'
 
-const editorToolbarPlugin = new Plugin({
-  view(editorView) {
-    // Create new class to hold editor and internal state such as editorView, HTML Dom elements, commands
-
-    console.log(editorView);
-
-    let toolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'math', 'sparkline', 'semantics', 'cite', 'note'], editorView);
-
-    // Append DOM portion of toolbar to current editor.
-    // editorView.dom.parentNode.appendChild(toolbarView.dom);
-
-    // Return toolbar class. Caller will call its update method in every editor update.
-    return toolbarView;
+export class Editor {
+  constructor(mode, node) {
+    this.mode = mode;
+    //TODO: Look into replacing document.body with selectArticleNode(document) so that main > article, article, or body is used?
+    this.node = node || document.body;
+    this.editorView = null;
+    this.socialToolbarView = null;
   }
-});
 
-function createEditor() {
-  const state = EditorState.create({
-    doc: DOMParser.fromSchema(schema).parse(editorNode),
-    plugins: [keymapPlugin, editorToolbarPlugin]
-  });
-
-  editorNode.innerHTML = ""; // Clear the editor node
-
-  view = new EditorView(editorNode, { state, editable: () => true });
-  console.log("Editor created. Mode:", editorMode);
-}
-
-function destroyEditor() {
-  if (view) {
-    console.log(view.state.doc.content);
-    const content = DOMSerializer.fromSchema(schema).serializeFragment(view.state.doc.content);
-    // const serializer = DOMSerializer.fromSchema(schema);
-
-    // const fragment = serializer.serializeFragment(view.state.doc.content);
-
-    // const htmlString = new XMLSerializer().serializeToString(fragment);
-    // document.body.innerHTML = htmlString;
-
-    view.destroy();
-    view = null;
-    //FIXME: DO NOT USE innerHTML
-    document.body.innerHTML = new XMLSerializer().serializeToString(content);
-
-    console.log("Editor destroyed. Mode:", editorMode);
-  }
-}
-
-function createSocialToolbar() {
-  // Create and initialize the SocialToolbar only when in social mode
-  console.log("creating social toolbar")
-  socialToolbarView = new SocialToolbar('social', ['highlight', 'share', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment']);
-  document.body.appendChild(socialToolbarView.dom); // idk why this is needed? or is it not?
-  console.log("SocialToolbar created. Mode:", editorMode);
-}
-
-function destroySocialToolbar() {
-  if (socialToolbarView) {
-    socialToolbarView.destroy();
-    socialToolbarView = null;
-    console.log("SocialToolbar destroyed. Mode:", editorMode);
-  }
-}
-
-//XXX: Temp
-function XXXaddEditorModeToggle() {
-  const editorModeToggle = document.createElement("button");
-  editorModeToggle.textContent = "Edit";
-  editorModeToggle.style.padding = "1em";
-  editorModeToggle.style.fontWeight = "bold";
-  editorModeToggle.style.fontSize = "1em";
-  editorModeToggle.classList.add("do", "editor-mode-toggle");
-
-  const topContainer = document.createElement("div");
-  topContainer.style.position = "fixed";
-  topContainer.style.top = "10px";
-  topContainer.style.left = "50%";
-  topContainer.style.transform = "translateX(-50%)";
-  topContainer.style.zIndex = "1000"; 
-  topContainer.appendChild(editorModeToggle);
-
-  document.documentElement.prepend(topContainer);
-
-  editorModeToggle.addEventListener("click", () => {
-    console.log("Mode toggled");
-    editorMode = editorMode === "social" ? "author" : "social";
-    
-    if (editorMode === "author") {
-      // If in author mode, create the editor and remove toolbar
-      destroySocialToolbar(); // social
-      createEditor(); // pm
+  // Initialize editor and toolbar based on the default editor mode
+  init(mode, node) {
+    this.mode = mode || this.mode;
+    this.node = node || this.node;
+    switch (this.mode) {
+      case 'author':
+        this.destroySocialToolbar();
+        this.createEditor(this.node);
+        break;
+      case 'social':
+      default:
+        this.destroyEditor();
+        this.createSocialToolbar(this.node);
+        break;
     }
-    else {
-      // If in social mode, create the toolbar and remove editor
-      destroyEditor();
-      createSocialToolbar(); // social
-    }
-  });
-}
+  }
 
-// Initialize editor and toolbar based on the default editor mode
-function initializeEditor(mode) {
-  switch(mode) {
-    case 'author':
-      createEditor();
-      break;
-    case 'social':
-    default:
-      createSocialToolbar();
-      break;
+  //Creating a ProseMirror editor view at a specified this.node
+  createEditor() {
+    const editorToolbarPlugin = new Plugin({
+      // this editorView is passed onto the Plugin - not this.editorView
+      view(editorView) {
+        // Create new class to hold editor and internal state such as editorView, HTML DOM elements, commands
+
+        console.log(editorView);
+
+        let toolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'math', 'sparkline', 'semantics', 'cite', 'note'], editorView);
+
+        // Append DOM portion of toolbar to current editor.
+        // editorView.dom.parentNode.appendChild(toolbarView.dom);
+
+        // Return toolbar class. Caller will call its update method in every editor update.
+        return toolbarView;
+      }
+    });
+
+    const state = EditorState.create({
+      doc: DOMParser.fromSchema(schema).parse(this.node),
+      plugins: [keymapPlugin, editorToolbarPlugin]
+    });
+
+    this.node.replaceChildren();
+
+    this.editorView = new EditorView(this.node, { state, editable: () => true });
+
+    console.log("Editor created. Mode:", editorMode);
+  }
+
+  destroyEditor() {
+    if (this.editorView) {
+      console.log(this.editorView.state.doc.content);
+      const content = DOMSerializer.fromSchema(schema).serializeFragment(view.state.doc.content);
+      // const serializer = DOMSerializer.fromSchema(schema);
+
+      // const fragment = serializer.serializeFragment(view.state.doc.content);
+
+      // const htmlString = new XMLSerializer().serializeToString(fragment);
+      // document.body.innerHTML = htmlString;
+
+      this.editorView.destroy();
+      this.editorView = null;
+      //FIXME: DO NOT USE innerHTML
+      this.node.innerHTML = new XMLSerializer().serializeToString(content);
+      //TODO: Test below for above.
+      // document.body.replaceChildren(new DOMParser().parseFromString(content, "text/html").body);
+
+      console.log("Editor destroyed. Mode:", this.mode);
+    }
+  }
+
+  createSocialToolbar() {
+    // Create and initialize the SocialToolbar only when in social mode
+    console.log("creating social toolbar")
+    this.socialToolbarView = new SocialToolbar('social', ['highlight', 'share', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment']);
+    document.body.appendChild(this.socialToolbarView.dom); // idk why this is needed? or is it not?
+    console.log("SocialToolbar created. Mode:", this.mode);
+  }
+
+  destroySocialToolbar() {
+    if (this.socialToolbarView) {
+      this.socialToolbarView.destroy();
+      this.socialToolbarView = null;
+      console.log("SocialToolbar destroyed. Mode:", this.mode);
+    }
   }
 }
-
-XXXaddEditorModeToggle();
-initializeEditor(editorMode);
