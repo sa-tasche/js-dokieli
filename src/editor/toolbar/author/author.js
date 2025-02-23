@@ -349,6 +349,180 @@ function toggleHeading(schema, level) {
   };
 }
 
+/*
+TODO: Heading sectioning
+
+          switch(this.action) {
+              case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
+                //XXX: Which heading level are we at?
+                var parentSectionHeading = '';
+                for (var i = 0; i < parentSection.childNodes.length; i++) {
+                  parentSectionHeading = parentSection.childNodes[i].nodeName.toLowerCase();
+                  if(DO.C.Editor.headings.indexOf(parentSectionHeading) > 0) {
+// console.log(parentSectionHeading);
+                    break;
+                  }
+                }
+                var pSH = parseInt(parentSectionHeading.slice(-1));
+
+                //XXX: Which heading level is the action?
+                var cSH = parseInt(this.action.slice(-1));
+// console.log("parentH: " + pSH);
+// console.log("currentH: " + cSH);
+// console.log(cSH-pSH);
+
+                var closePreviousSections = '';
+                // if (cSH > pSH) {}
+                for (i = 0; i <= (pSH-cSH); i++) {
+                  console.log("i: " + i);
+                  closePreviousSections += '</div></section>';
+                }
+// console.log(closePreviousSections);
+// console.log(this.base.selection);
+
+                var selection = window.getSelection();
+// console.log(this.base.selection);
+// console.log(selection);
+
+                if (selection.rangeCount) {
+                  // FIXME: Seem ununsed. Remove later. 
+                  // range = selection.getRangeAt(0);
+                  // parent = selectedParentElement;
+
+// console.log(range);
+                  //Section
+                  var sectionId = generateAttributeId(null, this.base.selection);
+                  var section = document.createElement('section');
+                  section.id = sectionId;
+                  section.setAttribute('rel', 'schema:hasPart');
+                  section.setAttribute('resource', '#' + sectionId);
+// console.log(section);
+
+
+                  //Heading
+                  var heading = document.createElement(tagNames[0]);
+                  heading.setAttribute('property', 'schema:name');
+                  heading.innerHTML = this.base.selection;
+// console.log(heading);
+// console.log(selection);
+
+
+                  var divDescription = parentSection.getElementsByTagName('div')[0];
+// console.log(divDescription);
+// console.log(divDescription.innerHTML);
+// console.log(divDescription.childNodes);
+// console.log(divDescription.length);
+// console.log(selectedParentElement);
+// console.log(selectedParentElement.childNodes);
+// console.log(selectedParentElement.lastChild);
+// console.log(selectedParentElement.lastChild.length);
+
+                  r = selection.getRangeAt(0);
+// console.log(r);
+// console.log(r.startContainer);
+// console.log(r.startOffset);
+// console.log(r.endOffset);
+                  //Remaining nodes
+                  var r = document.createRange();
+                  r.setStart(selection.focusNode, selection.focusOffset);
+                  r.setEnd(selectedParentElement.lastChild, selectedParentElement.lastChild.length);
+// console.log(r.commonAncestorContainer.nodeType);
+
+// console.log(r.startContainer);
+// console.log(r.endContainer);
+// console.log(selection.anchorNode);
+// selection.removeAllRanges(); //XXX: is this doing anything?
+// selection.addRange(r);
+
+// console.log(selection.anchorNode);
+                  var fragment = r.extractContents();
+// console.log(fragment);
+// console.log(selection);
+// console.log(r);
+// console.log(r.startContainer);
+// console.log(r.startOffset);
+// console.log(r.endOffset);
+                  if (fragment.firstChild.nodeType === 3) {
+                    //TODO: trim only if there is one child which is a textnode:  // fragment.firstChild.nodeValue = fragment.firstChild.nodeValue.trim();
+
+// console.log(fragment);
+                    var sPE = selectedParentElement.nodeName.toLowerCase();
+                    switch(sPE) {
+                      case "p": default:
+                        var xSPE = document.createElement(sPE);
+                        xSPE.appendChild(fragment.cloneNode(true));
+                        fragment = fragmentFromString(xSPE.outerHTML);
+                        break;
+                      //TODO: Other cases?
+                    }
+                  }
+// console.log(fragment);
+// console.log(selection);
+
+                  r = selection.getRangeAt(0);
+// console.log(r);
+// console.log(r.startContainer);
+// console.log(r.startOffset);
+// console.log(r.endOffset);
+
+                  //Description
+                  var div = document.createElement('div');
+                  div.setAttribute('property', 'schema:description');
+                  div.appendChild(fragment.cloneNode(true));
+
+                  //Put it together
+                  section.appendChild(heading);
+                  section.appendChild(div);
+// console.log(range.startContainer);
+
+                  var selectionUpdated = document.createElement('div');
+                  selectionUpdated.appendChild(section);
+                  selectionUpdated = selectionUpdated.innerHTML;
+// console.log(selectionUpdated);
+
+
+                  //Sub-section
+                  if (cSH-pSH > 0) {
+                    MediumEditor.util.insertHTMLCommand(this.base.selectedDocument, selectionUpdated);
+                  }
+                  else {
+// console.log(selection);
+// console.log(parentSection);
+                    MediumEditor.selection.selectNode(parentSection, document);
+                    r = selection.getRangeAt(0);
+// console.log(r);
+// console.log(r.startOffset);
+// console.log(r.endOffset);
+
+
+                    //This selection is based off previous operations; handling remaining Nodes after the selection. So, this is not accurate per se.. the range might be accurate.
+                    selection = window.getSelection();
+// console.log(selection);
+                    r = selection.getRangeAt(0);
+// console.log(r);
+// console.log(r.startOffset);
+// console.log(r.endOffset);
+
+
+                    r = document.createRange();
+                    r.setStartAfter(parentSection);
+// console.log(r);
+                    r.setEndAfter(parentSection);
+// console.log(r);
+                    r.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(r);
+// console.log(selection);
+                    var foo = document.createElement('div');
+                    foo.appendChild(parentSection);
+                    parentSection = foo.innerHTML;
+// console.log(parentSection + selectionUpdated);
+                    MediumEditor.util.insertHTMLCommand(this.base.selectedDocument, parentSection + selectionUpdated);
+                  }
+                }
+
+*/
+
 
 function togglePreCodeWrap(schema) {
   return (state, dispatch) => {
