@@ -80,3 +80,40 @@ console.log('------here now-----')
 }
 
 
+
+/*
+TODO: Check the document to determine if annotationService or 
+
+          var updateAnnotationServiceForm = function() {
+            var annotationServices = document.querySelectorAll('.annotation-location-selection');
+            for (var i = 0; i < annotationServices.length; i++) {
+              annotationServices[i].innerHTML = getAnnotationLocationHTML();
+            }
+          };
+
+          var updateAnnotationInboxForm = function() {
+            var annotationInbox = document.querySelectorAll('.annotation-inbox');
+            for (var i = 0; i < annotationInbox.length; i++) {
+              annotationInbox[i].innerHTML = getAnnotationInboxLocationHTML();
+            }
+          };
+
+          updateAnnotationInboxForm();
+
+          return getLinkRelation(ns.oa.annotationService.value, null, getDocument()).then(
+            function(url) {
+              DO.C.AnnotationService = url[0];
+              updateAnnotationServiceForm();
+              showAction();
+            },
+            function(reason) {
+              if(_this.signInRequired && !DO.C.User.IRI) {
+                showUserIdentityInput();
+              }
+              else {
+                updateAnnotationServiceForm();
+                showAction();
+              }
+            }
+          );
+*/
