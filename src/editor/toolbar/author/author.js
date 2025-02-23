@@ -90,7 +90,51 @@ export class AuthorToolbar extends ToolbarView {
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
       `,
     note: (options) => annotateFormControls(options), // FIXME: this actually belongs in the other one
-    }
+
+/*
+TODO:
+    cite: (options) => `
+      '<input type="text" name="specref-search" value="" id="specref-search" class="editor-toolbar-input" placeholder="Enter terms to search for specifications" />',
+      '<input type="submit" name="specref-search-submit" value="Search" id="specref-search-submit" />',
+      '<div class="specref-search-results"></div>',
+      '<input type="radio" name="citation-type" value="ref-footnote" id="ref-footnote" /> <label for="ref-footnote">Footnote</label>',
+      '<input type="radio" name="citation-type" value="ref-reference" id="ref-reference" /> <label for="ref-reference">Reference</label>',
+      '<select id="citation-relation" name="citation-relation" class="editor-toolbar-select">',
+      getCitationOptionsHTML(),
+      '</select>',
+      '<input type="text" name="citation-url" value="" id="citation-url" class="editor-toolbar-input" placeholder="http://example.org/article#results" />',
+      '<textarea id="citation-content" cols="20" rows="1" class="editor-toolbar-textarea" placeholder="', this.placeholderText, '"></textarea>',
+      '<select id="article-language" name="language" class="editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
+      ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
+      ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      `;
+
+    semantics: (options) => `
+      '<label for="rdfa-about">about</label><input id="rdfa-about" class="editor-toolbar-input" placeholder="https://example.org/foo#bar" />',
+      '<label for="rdfa-resource">resource</label><input id="rdfa-resource" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
+      '<label for="rdfa-typeof">typeof</label><input id="rdfa-typeof" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
+      '<label for="rdfa-rel">rel</label><input id="rdfa-rel" class="editor-toolbar-input" placeholder="schema:url">',
+      '<label for="rdfa-property">property</label><input id="rdfa-property" class="editor-toolbar-input" placeholder="schema:name" />',
+      '<label for="rdfa-href">href</label><input id="rdfa-href" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
+      '<label for="rdfa-content">content</label><input id="rdfa-content" class="editor-toolbar-input" placeholder="Baz" />',
+      '<label for="rdfa-language">language</label><input id="rdfa-language" class="editor-toolbar-input" placeholder="en" />',
+      '<label for="rdfa-datatype">datatype</label><input id="rdfa-datatype" class="editor-toolbar-input" placeholder="https://example.net/baz" />
+      ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
+      ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      `;
+*/
+
+/*
+TODO:
+      sparkline: (optins) => `
+        '<input type="text" name="sparkline-search" value="" id="sparkline-search" class="editor-toolbar-input" placeholder="Enter search terms" />',
+        '<input type="hidden" name="sparkline-selection-dataset" value="" id="sparkline-selection-dataset" />',
+        '<input type="hidden" name="sparkline-selection-refarea" value="" id="sparkline-selection-refarea" />'
+        ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
+        ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        `;
+      */
+  }
 
 
   function annotateFormControls(options) {
