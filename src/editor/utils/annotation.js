@@ -120,6 +120,35 @@ function getTextQuoteSelector(view, options = {}) {
   }
 }
 
+//From https://github.com/yabwe/medium-editor/blob/master/src/js/selection.js
+export function getSelectedParentElement(range) {
+  if (!range) {
+      return null;
+  }
+
+  // Selection encompasses a single element
+  if (rangeSelectsSingleNode(range) && range.startContainer.childNodes[range.startOffset].nodeType !== 3) {
+      return range.startContainer.childNodes[range.startOffset];
+  }
+
+  // Selection range starts inside a text node, so get its parent
+  if (range.startContainer.nodeType === 3) {
+      return range.startContainer.parentNode;
+  }
+
+  // Selection starts inside an element
+  return range.startContainer;
+}
+
+//From https://github.com/yabwe/medium-editor/blob/master/src/js/selection.js
+//http://stackoverflow.com/questions/15867542/range-object-get-selection-parent-node-chrome-vs-firefox
+export function rangeSelectsSingleNode (range) {
+  var startNode = range.startContainer;
+  return startNode === range.endContainer &&
+      startNode.hasChildNodes() &&
+      range.endOffset === range.startOffset + 1;
+}
+
 export function getSelectionAsHTML(selection) {
   selection = selection || window.getSelection();
   if (!selection.rangeCount) return "";
