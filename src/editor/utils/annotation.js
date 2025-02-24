@@ -333,3 +333,32 @@ export function restoreSelection(clonedSelection) {
     selection.addRange(range);
   });
 }
+
+//FIXME: A bit hacky - should use RDF?
+//TODO: Move to inbox.js
+/**
+ * Finds the inbox URL (`ldp:inbox` or `as:inbox`) of the closest ancestor matching the given selector.
+ *
+ * @param {Element} node - The starting DOM node to search from.
+ * @param {string} selector - A CSS selector to identify the ancestor element, e.g., `.do[typeof="oa:Annotation"]`
+ * @returns {string|null} The decoded inbox URL if found, otherwise `null`.
+ */
+export function getInboxOfClosestNodeWithSelector(node, selector) {
+  if (!selector) { return; }
+
+  node = node || document.body;
+
+  let inbox = null;
+  const nodeWithSelector = node.closest(selector);
+
+  if (nodeWithSelector) {
+    inbox = nodeWithSelector.querySelector('[rel="ldp:inbox"], [rel="as:inbox"]');
+
+    if (inbox) {
+      inbox = inbox.href || inbox.getAttribute('resource');
+      inbox = decodeURIComponent(inbox);
+    }
+  }
+
+  return inbox;
+}
