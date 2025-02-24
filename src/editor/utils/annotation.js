@@ -87,6 +87,18 @@ export function getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options)
 //   suffix: ' dolor'
 // }
 //TODO: Lo
+function getTextQuoteSelector(editor, mode, view, options) {
+  if (!editor) return;
+
+  switch (mode) {
+    case "author":
+      return getTextQuoteSelectorAuthor(editor, view, options);
+      break;
+    case "social": default:
+      return getTextQuoteSelectorSocial(editor);
+      break;
+  }
+}
 
 /**
  * @param {Object} editor - The Editor instance
