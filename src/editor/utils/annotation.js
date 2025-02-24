@@ -110,7 +110,39 @@ function getTextQuoteSelector(view, options = {}) {
   // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + DO.C.ContextLength);
   // console.log('sE ' + suffixEnd);
   let suffix =  doc.textBetween(to, to + contextLength)  // consider \n
-  // console.log('-' + suffix + '-');
+
+/**
+ * @param {Object} editor - The Editor instance
+ * @param {Object} options
+ */
+function getTextQuoteSelectorSocial(editor, options = {}) {
+  if (!editor) return;
+
+  editor.restoreSelection();
+
+  const selection = window.getSelection();
+  const range = selection.getRangeAt(0);
+
+  var selectedParentElement = getSelectedParentElement(range);
+// console.log('getSelectedParentElement:', selectedParentElement);
+
+  const selectionHTML = getSelectionAsHTML(selection); //.replace(DO.C.Editor.regexEmptyHTMLTags, '');
+
+  var exact = selectionHTML;
+  // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, document);
+  const selectionState = exportSelection(selectedParentElement, selection);
+  var start = selectionState.start;
+  var end = selectionState.end;
+  var prefixStart = Math.max(0, start - DO.C.ContextLength);
+// console.log('pS ' + prefixStart);
+  var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
+// console.log('-' + prefix + '-');
+  prefix = escapeCharacters(prefix);
+
+  var suffixEnd = Math.min(selectedParentElement.textContent.length, end + DO.C.ContextLength);
+// console.log('sE ' + suffixEnd);
+  var suffix = selectedParentElement.textContent.substr(end, suffixEnd - end);
+// console.log('-' + suffix + '-');
   suffix = escapeCharacters(suffix);
 
   return {
