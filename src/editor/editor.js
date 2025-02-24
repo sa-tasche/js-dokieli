@@ -15,6 +15,7 @@ export class Editor {
     this.node = node || document.body;
     this.editorView = null;
     this.socialToolbarView = null;
+    this.authorToolbarView = null;
   }
 
   // Initialize editor and toolbar based on the default editor mode
@@ -43,13 +44,13 @@ export class Editor {
 
         console.log(editorView);
 
-        let toolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'math', 'sparkline', 'semantics', 'cite', 'note'], editorView);
+        this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'math', 'sparkline', 'semantics', 'cite', 'note'], editorView);
 
         // Append DOM portion of toolbar to current editor.
         // editorView.dom.parentNode.appendChild(toolbarView.dom);
 
         // Return toolbar class. Caller will call its update method in every editor update.
-        return toolbarView;
+        return this.authorToolbarView;
       }
     });
 
@@ -63,6 +64,11 @@ export class Editor {
     this.editorView = new EditorView(this.node, { state, editable: () => true });
 
     console.log("Editor created. Mode:", editorMode);
+  }
+
+  restoreSelection(mode) {
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView.restoreSelection()
   }
 
   destroyEditor() {

@@ -1,7 +1,7 @@
 import { schema } from "../schema/base.js"
 import { buttonIcons } from "../../ui/button-icons.js"
 import { fragmentFromString } from "../../doc.js";
-import { cloneSelection } from "./utils/selection"
+import { cloneSelection, restoreSelection } from "./utils/selection"
 
 
 export class ToolbarView {
@@ -58,6 +58,10 @@ export class ToolbarView {
 
     document.removeEventListener("mousedown", this.updateToolbarVisibilityHandler);
     document.addEventListener("mousedown", this.updateToolbarVisibilityHandler);
+  }
+
+  restoreSelection() {
+    return restoreSelection(this.selection)
   }
 
   getToolbarPopups() {
