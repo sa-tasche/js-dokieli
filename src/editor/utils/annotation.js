@@ -119,3 +119,102 @@ function getTextQuoteSelector(view, options = {}) {
     suffix
   }
 }
+
+export function getSelectionAsHTML(selection) {
+  selection = selection || window.getSelection();
+  if (!selection.rangeCount) return "";
+
+  const div = document.createElement("div");
+
+  for (let i = 0; i < selection.rangeCount; i++) {
+    const range = selection.getRangeAt(i);
+    const fragment = range.cloneContents();
+
+    // console.log("RANGE CONTENTS:");
+    // fragment.childNodes.forEach(node => {
+    //   console.log("Child:", node);
+    //   if (node.children) {
+    //     Array.from(node.children).forEach(child => console.log("Grandchild:", child));
+    //   }
+    // });
+
+    div.appendChild(fragment);
+  }
+
+  return div.innerHTML;
+}
+
+export function replaceSelectionWithFragment(selection, fragment) {
+  if (!selection.rangeCount) return;
+  const ranges = [];
+
+  for (let i = 0; i < selection.rangeCount; i++) {
+    ranges.push(selection.getRangeAt(i));
+  }
+
+  const mergedRange = document.createRange();
+  mergedRange.setStart(ranges[0].startContainer, ranges[0].startOffset);
+  mergedRange.setEnd(ranges[ranges.length - 1].endContainer, ranges[ranges.length - 1].endOffset);
+
+  selection.removeAllRanges();
+
+  mergedRange.deleteContents();
+
+  mergedRange.collapse(true);
+
+  mergedRange.insertNode(fragment);
+
+  selection.removeAllRanges();
+}
+
+
+
+export function wrapSelectionInMark(selection) {
+  selection = selection || window.getSelection();
+
+  const selectedContent = getSelectionAsHTML(selection);
+console.log(selectedContent)
+var id = getRandomUUID();
+
+  var refId = 'r-' + id;
+  var refLabel = id; 
+  var noteIRI = 'https://csarven.solidcommunity.net/bfffac84-e174-49ad-98f2-0308367906d8.ttl';
+  var motivatedBy = 'oa:replying';
+  if (motivatedBy) {
+    refLabel = '💬';
+    // refLabel = DO.U.getReferenceLabel(motivatedBy);
+  }
+
+  var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
+  var options = { do: true };
+
+  const htmlString = getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType, options);
+
+  replaceSelectionWithFragment(selection, fragmentFromString(htmlString))
+  // processHighlightNode.outerHTML = fragmentFromString(htmlString);
+}
+
+export function cloneSelection() {
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return null;
+
+  const clonedSelection = [];
+
+  for (let i = 0; i < selection.rangeCount; i++) {
+    const range = selection.getRangeAt(i).cloneRange(); 
+    const fragment = range.cloneContents();
+    clonedSelection.push({ range, fragment });
+  }
+
+  return clonedSelection;
+}
+
+//XXX: Note Firefox bug handling contenteditable true/false differently: https://bugzilla.mozilla.org/show_bug.cgi?id=818515
+export function restoreSelection(clonedSelection) {
+  const selection = window.getSelection();
+  selection.removeAllRanges(); // Clear existing selection
+
+  clonedSelection.forEach(({ range }) => {
+    selection.addRange(range);
+  });
+}

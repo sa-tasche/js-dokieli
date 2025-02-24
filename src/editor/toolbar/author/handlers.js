@@ -1,7 +1,6 @@
 import { schema } from "../../schema/base.js"
-import { highlightText as pmHighlightText, getTextQuoteHTML } from "../../utils/annotation.js";
+import { highlightText as pmHighlightText, getTextQuoteHTML, restoreSelection } from "../../utils/annotation.js";
 import { toggleBlockquote } from "../../utils/dom.js";
-import { restoreSelection } from "../../utils/selection.js"
 import { getRandomUUID, getFormValues } from "../../../util.js"
 import { fragmentFromString } from "../../../doc.js";
 
