@@ -642,48 +642,8 @@ export const Editor = {
         },
 
         completeFormSave: function (opts) {
-          var _this = this;
-// console.log(this.base)
-// console.log(opts);
-// console.log('completeFormSave() with this.action: ' + this.action);
-          this.base.restoreSelection();
-          var range = MediumEditor.selection.getSelectionRange(this.document);
-          var selectedParentElement = this.base.getSelectedParentElement();
-// console.log('getSelectedParentElement:');
-// console.log(selectedParentElement);
+ 
 
-          //Mark the text which the note was left for (with reference to the note?)
-          this.base.selectedDocument = this.document;
-          this.base.selection = MediumEditor.selection.getSelectionHtml(this.base.selectedDocument); //.replace(DO.C.Editor.regexEmptyHTMLTags, '');
-// console.log('this.base.selection:');
-// console.log(this.base.selection);
-
-          var exact = this.base.selection;
-          var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, this.document);
-          var start = selectionState.start;
-          var end = selectionState.end;
-          var prefixStart = Math.max(0, start - DO.C.ContextLength);
-// console.log('pS ' + prefixStart);
-          var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
-// console.log('-' + prefix + '-');
-          prefix = escapeCharacters(prefix);
-
-          var suffixEnd = Math.min(selectedParentElement.textContent.length, end + DO.C.ContextLength);
-// console.log('sE ' + suffixEnd);
-          var suffix = selectedParentElement.textContent.substr(end, suffixEnd - end);
-// console.log('-' + suffix + '-');
-          suffix = escapeCharacters(suffix);
-
-          //Annotating an annotation
-          //FIXME: A bit hacky - should use RDF
-          var annotationInbox = selectedParentElement.closest('.do[typeof="oa:Annotation"]');
-          if (annotationInbox) {
-            annotationInbox = annotationInbox.querySelector('[rel="ldp:inbox"]');
-            if (annotationInbox) {
-              annotationInbox = annotationInbox.href || annotationInbox.getAttribute('resource')
-              annotationInbox = decodeURIComponent(annotationInbox);
-            }
-          }
 
           var datetime = getDateTimeISO();
           var id = generateAttributeId();

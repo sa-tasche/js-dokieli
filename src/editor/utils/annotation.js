@@ -34,7 +34,7 @@ export function highlightText(schema, view) {
     const selectedContent = docSelectionToHtml(doc, from, to);
 
     // const htmlString = getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType, options);
-    const textQuoteSelector = getTextQuoteSelector(view)
+    const textQuoteSelector = getTextQuoteSelectorAuthor(view)(view);
     // now take prefix and suffix and calculate from and to
 
     console.log(textQuoteSelector)
@@ -92,7 +92,7 @@ function getTextQuoteSelector(editor, mode, view, options) {
 
   switch (mode) {
     case "author":
-      return getTextQuoteSelectorAuthor(editor, view, options);
+      return getTextQuoteSelectorAuthor(view, options);
       break;
     case "social": default:
       return getTextQuoteSelectorSocial(editor);
@@ -105,8 +105,7 @@ function getTextQuoteSelector(editor, mode, view, options) {
  * @param {Object} view - The ProseMirror Editor view
  * @param {Object} options
  */
-function getTextQuoteSelectorAuthor(editor, view, options = {}) {
-  if (!editor) return;
+function getTextQuoteSelectorAuthor(view, options = {}) {
 
   //ProseMirror state.selection
   const { selection , doc } = view.state;
