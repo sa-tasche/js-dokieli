@@ -141,7 +141,7 @@ export function getSelectionAsHTML(selection) {
     div.appendChild(fragment);
   }
 
-  return div.innerHTML;
+  return div.getHTML();
 }
 
 export function replaceSelectionWithFragment(selection, fragment) {
