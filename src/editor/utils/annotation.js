@@ -167,6 +167,32 @@ export function replaceSelectionWithFragment(selection, fragment) {
   selection.removeAllRanges();
 }
 
+export function exportSelection(selectedParentElement, selection) {
+  if (!selection.rangeCount) return;
+
+  const ranges = [];
+
+  for (let i = 0; i < selection.rangeCount; i++) {
+    ranges.push(selection.getRangeAt(i));
+  }
+
+  const mergedRange = document.createRange();
+  mergedRange.setStart(ranges[0].startContainer, ranges[0].startOffset);
+  mergedRange.setEnd(ranges[ranges.length - 1].endContainer, ranges[ranges.length - 1].endOffset);
+  
+  const preSelectionRange = mergedRange.cloneRange();
+  preSelectionRange.selectNodeContents(selectedParentElement);
+  preSelectionRange.setEnd(mergedRange.startContainer, mergedRange.startOffset);
+  const start = preSelectionRange.toString().length;
+
+  const selectionState = {
+    start: start,
+    end: start + mergedRange.toString().length
+  };
+
+  return selectionState;
+}
+
 
 
 export function wrapSelectionInMark(selection) {
