@@ -87,7 +87,15 @@ export function getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options)
 //   suffix: ' dolor'
 // }
 //TODO: Lo
-function getTextQuoteSelector(view, options = {}) {
+
+/**
+ * @param {Object} editor - The Editor instance
+ * @param {Object} view - The ProseMirror Editor view
+ * @param {Object} options
+ */
+function getTextQuoteSelectorAuthor(editor, view, options = {}) {
+  if (!editor) return;
+
   //ProseMirror state.selection
   const { selection , doc } = view.state;
   const { from, to } = selection;
@@ -110,6 +118,15 @@ function getTextQuoteSelector(view, options = {}) {
   // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + DO.C.ContextLength);
   // console.log('sE ' + suffixEnd);
   let suffix =  doc.textBetween(to, to + contextLength)  // consider \n
+  // console.log('-' + suffix + '-');
+  suffix = escapeCharacters(suffix);
+
+  return {
+    exact,
+    prefix,
+    suffix
+  }
+}
 
 /**
  * @param {Object} editor - The Editor instance
