@@ -154,3 +154,69 @@ export function processAction(action, selector, formValues, selectedParentElemen
 
 
 
+//TODO: MOVE
+
+export function getFormActionGeneralData(action, selector, options, selectedParentElement) {
+  const data = {
+    id: generateAttributeId(),
+    datetime: getDateTimeISO(),
+    resourceIRI: Config.DocumentURL,
+    containerIRI: window.location.href,
+    contentType: 'text/html',
+    noteIRI: null,
+    noteURL: null,
+    profile: null,
+    options: {},
+    annotationDistribution: [],
+
+    activityTypeMatched: false,
+    activityIndex: Config.ActionActivityIndex[action],
+
+    //XXX: Defaulting to id but overwritten by motivation symbol
+    refLabel: id,
+
+    parentNodeWithId: selectedParentElement.closest('[id]'),
+
+    //Role/Capability for Authors/Editors
+    ref: '',
+    refType: '', //TODO: reference types. UI needs input
+    //TODO: replace refId and noteIRI IRIs
+
+    //This class is added if it is only for display purposes e.g., loading an external annotation for view, but do not want to save it later on (as it will be stripped when 'do' is found)
+    doClass: '',
+
+    //TODO: oa:TimeState's datetime should equal to hasSource value. Same for oa:HttpRequestState's rdfs:value
+    // <span about="[this:#' + refId + ']" rel="oa:hasState">(timeState: <time typeof="oa:TimeState" datetime="' + datetime +'" datatype="xsd:dateTime"property="oa:sourceDate">' + datetime + '</time>)</span>\n\
+
+    noteData: {},
+    note: '',
+    language: formValues.language,
+    license: formValues.license,
+    rights: '',
+    motivatedBy: 'oa:replying'
+  };
+
+  data.refId = 'r-' + data.id;
+  data.selectorIRI = getAnnotationSelectorStateURI(data.resourceIRI, selector);
+
+  data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
+  
+  data.latestVersion = DO.C.Resource[data.resourceIRI].graph.out(ns.rel['latest-version']).values[0];
+
+  if (data.latestVersion) {
+    data.resourceIRI = data.latestVersion;
+    data.targetIRI = (data.parentNodeWithId) ? data.latestVersion + '#' + data.parentNodeWithId.id : data.latestVersion;
+    data.options.targetInMemento = true;
+  }
+
+  // console.log(latestVersion)
+  // console.log(resourceIRI)
+  // console.log(targetIRI)
+
+  data.targetLanguage = getNodeLanguage(data.parentNodeWithId);
+  data.selectionLanguage = getNodeLanguage(data.selectedParentElement);
+  // console.log(targetLanguage, selectionLanguage)
+
+  return data;
+}
+
