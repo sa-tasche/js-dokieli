@@ -80,25 +80,12 @@ console.log('------here now-----')
 }
 
 
-
-/*
-TODO: Check the document to determine if annotationService or 
-
-          var updateAnnotationServiceForm = function() {
-            var annotationServices = document.querySelectorAll('.annotation-location-selection');
-            for (var i = 0; i < annotationServices.length; i++) {
-              annotationServices[i].innerHTML = getAnnotationLocationHTML();
-            }
-          };
-
-          var updateAnnotationInboxForm = function() {
-            var annotationInbox = document.querySelectorAll('.annotation-inbox');
-            for (var i = 0; i < annotationInbox.length; i++) {
-              annotationInbox[i].innerHTML = getAnnotationInboxLocationHTML();
-            }
-          };
-
-          updateAnnotationInboxForm();
+export function updateAnnotationServiceForm() {
+  var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection');
+  for (var i = 0; i < annotationServices.length; i++) {
+    annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML()));
+  }
+};
 
 export function updateAnnotationInboxForm() {
   var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox');
