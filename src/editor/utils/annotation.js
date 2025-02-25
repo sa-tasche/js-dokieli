@@ -87,16 +87,15 @@ export function getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options)
 //   suffix: ' dolor'
 // }
 //TODO: Lo
-function getTextQuoteSelector(editor, mode, view, options) {
+// FIXME: refactor . do not pass around Editor instance, maybe pass the restoreSelection fn when needed 'onRestoreSelection' or similar; or put Editor in DO.C.Editor
+export function getTextQuoteSelector(editor, mode, view, options) {
   if (!editor) return;
 
   switch (mode) {
     case "author":
       return getTextQuoteSelectorAuthor(view, options);
-      break;
     case "social": default:
       return getTextQuoteSelectorSocial(editor);
-      break;
   }
 }
 
@@ -105,7 +104,7 @@ function getTextQuoteSelector(editor, mode, view, options) {
  * @param {Object} view - The ProseMirror Editor view
  * @param {Object} options
  */
-function getTextQuoteSelectorAuthor(view, options = {}) {
+export function getTextQuoteSelectorAuthor(view, options = {}) {
 
   //ProseMirror state.selection
   const { selection , doc } = view.state;
@@ -133,6 +132,7 @@ function getTextQuoteSelectorAuthor(view, options = {}) {
   suffix = escapeCharacters(suffix);
 
   return {
+    type: 'TextQuoteSelector',
     exact,
     prefix,
     suffix
@@ -143,9 +143,9 @@ function getTextQuoteSelectorAuthor(view, options = {}) {
  * @param {Object} editor - The Editor instance
  * @param {Object} options
  */
-function getTextQuoteSelectorSocial(editor, options = {}) {
+export function getTextQuoteSelectorSocial(editor, options = {}) {
   if (!editor) return;
-
+  // FIXME: refactor this
   editor.restoreSelection();
 
   const selection = window.getSelection();
@@ -174,6 +174,7 @@ function getTextQuoteSelectorSocial(editor, options = {}) {
   suffix = escapeCharacters(suffix);
 
   return {
+    type: 'TextQuoteSelector',
     exact,
     prefix,
     suffix
