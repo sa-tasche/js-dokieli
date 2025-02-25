@@ -233,6 +233,10 @@ export class ToolbarView {
     return {};
   }
 
+  signInRequired(button) {
+    return;
+  }
+
   // hides toolbar, updates state of all buttons, hides and resets all forms. 
   cleanupToolbar() {
     this.dom.classList.remove("editor-toolbar-active");

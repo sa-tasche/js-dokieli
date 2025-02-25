@@ -1,5 +1,11 @@
 import { formHandlerAnnotate } from "./handlers.js";
 import { ToolbarView } from "../toolbar.js";
+import { getAnnotationLocationHTML, getAnnotationInboxLocationHTML, getDocument } from "../../../doc.js";
+import Config from "../../../config.js";
+import { fragmentFromString } from "../../../util.js";
+import { showUserIdentityInput } from "../../../auth.js";
+
+const ns = Config.ns;
 
 export class SocialToolbar extends ToolbarView {
   constructor(mode, buttons, editorView) {
@@ -41,23 +47,6 @@ console.log('------here now-----')
       bookmark: (options) => annotateFormControls(options),
       comment: (options) => annotateFormControls(options),
       // note: (options) => annotateFormControls(options), // FIXME: this actually belongs in the other one
-    }
-
-    function annotateFormControls(options) {
-      return `
-        <label for="${options.button}-tagging">Tags</label> <input class="editor-toolbar-input" id="${options.button}-tagging" name="comment-tagging" placeholder="Separate tags with commas" />
-        <textarea class="editor-toolbar-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
-    <!-- getLanguageOptionsHTML() getLicenseOptionsHTML() -->
-        <select class="editor-toolbar-select" name="${options.button}-language"><option selected="selected" value="">Choose a language</option><option value="en">English</option></select>
-        <select class="editor-toolbar-select" name="${options.button}-license"><option selected="selected" value="">Choose a license</option><option value="https://creativecommons.org/licenses/by/4.0/">CC-BY</option></select>
-    
-        <span class="annotation-location-selection">{getAnnotationLocationHTML}</span>
-    
-        <span class="annotation-inbox">{getAnnotationInboxLocationHTML}</span>
-    
-        ${getButtonHTML('submit', 'editor-toolbar-submit', 'Post', 'Post', { type: 'submit' })}
-        ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-      `
     }
 
     return toolbarPopups;
@@ -113,6 +102,18 @@ console.log('------here now-----')
         }
       });
   }
+  
+  signInRequired(button) {
+    const buttons = {
+      approve: true,
+      disapprove: true,
+      specificity: true,
+      bookmark: true,
+      comment: true
+    }
+
+    return buttons[button];
+  }
 
   //TODO function getTransactionHistory()
   getPopulateForms() {
@@ -124,6 +125,8 @@ console.log('------here now-----')
       comment: this.populateFormAnnotate
     }
   }
+}
+
 
 export function annotateFormControls(options) {
   return `
