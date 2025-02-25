@@ -75,9 +75,40 @@ console.log('------here now-----')
   clearToolbarForm(toolbarForm) {
     toolbarForm.classList.remove('editor-toolbar-form-active');
     toolbarForm.removeAttribute('style');
-    toolbarForm.reset();
+
+  //Takes form node and editorView.state
+  populateFormAnnotate(node) {
+    updateAnnotationInboxForm();
+
+    getLinkRelation(ns.oa.annotationService.value, null, getDocument())
+      .then(url => {
+        Config.AnnotationService = url[0];
+        updateAnnotationServiceForm();
+        showAction();
+      })
+      .catch(reason => {
+        //TODO signinRequired
+        if(this.signInRequired() && !Config.User.IRI) {
+          showUserIdentityInput();
+        }
+        else {
+          updateAnnotationServiceForm();
+          // XXX: Revisit. Was used in MediumEditor. Probably no longer needed?
+          // showAction();
+        }
+      });
   }
-}
+
+  //TODO function getTransactionHistory()
+  getPopulateForms() {
+    return {
+      approve: this.populateFormAnnotate,
+      disapprove: this.populateFormAnnotate,
+      specificity: this.populateFormAnnotate,
+      bookmark: this.populateFormAnnotate,
+      comment: this.populateFormAnnotate
+    }
+  }
 
 export function annotateFormControls(options) {
   return `
