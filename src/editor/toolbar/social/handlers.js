@@ -231,3 +231,145 @@ export function getAnnotationSelectorStateURI(baseURL, selector) {
       return `${baseURL}#selector(type=${selector.type},prefix=${encodeURIComponent(selector.prefix)},exact=${encodeURIComponent(selector.exact)},suffix=${encodeURIComponent(selector.suffix)})`;
   }
 }
+
+export function isDuplicateLocation(annotationDistribution, containerIRI) {
+  return Object.keys(annotationDistribution).some(
+    item => annotationDistribution[item].containerIRI == containerIRI
+  );
+}
+
+
+export function getAnnotationDistribution(action, formValues) {
+  const { resourceIRI, containerIRI, activityIndex, activityTypeMatched, } = formValues;
+  //Use if (activityIndex) when all _this.action values are taken into account e.g., `note` in author mode
+
+  var aLS;
+
+  //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
+  if((formValues.annotationLocationPersonalStorage && Config.User.TypeIndex) || (!formValues.annotationLocationPersonalStorage && !formValues.annotationLocationService && Config.User.TypeIndex)) {
+
+    //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
+
+    var publicTypeIndexes = Config.User.TypeIndex[ns.solid.publicTypeIndex.value];
+    var privateTypeIndexes = Config.User.TypeIndex[ns.solid.privateTypeIndex.value];
+
+    if (publicTypeIndexes) {
+      var publicTIValues = Object.values(publicTypeIndexes);
+      // console.log(publicTIValues)
+      publicTIValues.forEach(ti => {
+        //XXX: For now, we are only sending the annotation to one location that's already matched
+        if (activityTypeMatched) return;
+
+        var forClass = ti[ns.solid.forClass.value];
+        var instanceContainer = ti[ns.solid.instanceContainer.value];
+        var instance = ti[ns.solid.instance.value];
+
+        if (activityIndex?.includes(forClass)) {
+          if (instanceContainer) {
+            activityTypeMatched = true;
+
+            containerIRI = instanceContainer;
+
+            fromContentType = 'text/html';
+            // contentType = 'text/html';
+            contentType = fromContentType;
+
+            noteURL = noteIRI = containerIRI + id;
+            contextProfile = {
+              // 'subjectURI': noteIRI,
+            };
+            aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+
+            annotationDistribution.push(aLS);
+          }
+          //TODO: Not handling instance yet.
+        }
+      })
+
+    }
+    else if (privateTypeIndexes) {
+
+    }
+  }
+
+  if ((formValues.annotationLocationPersonalStorage && Config.User.Outbox) || (!formValues.annotationLocationPersonalStorage && !formValues.annotationLocationService && Config.User.Outbox)) {
+    containerIRI = Config.User.Outbox[0];
+
+    var fromContentType = 'text/html';
+    // contentType = 'application/ld+json';
+    contentType = fromContentType;
+
+    noteURL = noteIRI = containerIRI + id;
+    var contextProfile = {
+      '@context': [
+        'https://www.w3.org/ns/activitystreams',
+        { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
+      ],
+      // 'subjectURI': noteIRI,
+      'profile': 'https://www.w3.org/ns/activitystreams'
+    };
+    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+    if (typeof Config.User.Storage === 'undefined' && !activityTypeMatched) {
+      aLS['canonical'] = true;
+    }
+
+    aLS = Object.assign(aLS, contextProfile)
+
+    if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+      annotationDistribution.push(aLS);
+    }
+  }
+
+  if (!activityTypeMatched && ((formValues.annotationLocationPersonalStorage && Config.User.Storage) || (!formValues.annotationLocationPersonalStorage && !formValues.annotationLocationService && Config.User.Storage))) {
+    containerIRI = Config.User.Storage[0];
+
+    fromContentType = 'text/html';
+    // contentType = 'text/html';
+    contentType = fromContentType;
+
+    noteURL = noteIRI = containerIRI + id;
+    contextProfile = {
+      // 'subjectURI': noteIRI,
+    };
+    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+
+    if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+      annotationDistribution.push(aLS);
+    }
+  }
+
+  if (formValues.annotationLocationService && typeof Config.AnnotationService !== 'undefined') {
+    containerIRI = Config.AnnotationService;
+    fromContentType = 'text/html';
+    // contentType = 'application/ld+json';
+    contentType = fromContentType;
+
+    contextProfile = {
+      '@context': [
+        'http://www.w3.org/ns/anno.jsonld',
+        { 'as': 'https://www.w3.org/ns/activitystreams#', 'schema': 'http://schema.org/' }
+      ],
+      // 'subjectURI': noteIRI,
+      'profile': 'http://www.w3.org/ns/anno.jsonld'
+    };
+
+    if (!formValues.annotationLocationPersonalStorage && formValues.annotationLocationService) {
+      noteURL = noteIRI = containerIRI + id;
+      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
+    }
+    else if (formValues.annotationLocationPersonalStorage) {
+      noteURL = containerIRI + id;
+      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
+    }
+    else {
+      noteURL = noteIRI = containerIRI + id;
+      aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+    }
+
+    aLS = Object.assign(aLS, contextProfile)
+
+    if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
+      annotationDistribution.push(aLS);
+    }
+  }
+}
