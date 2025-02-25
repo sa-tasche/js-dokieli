@@ -100,20 +100,10 @@ TODO: Check the document to determine if annotationService or
 
           updateAnnotationInboxForm();
 
-          return getLinkRelation(ns.oa.annotationService.value, null, getDocument()).then(
-            function(url) {
-              DO.C.AnnotationService = url[0];
-              updateAnnotationServiceForm();
-              showAction();
-            },
-            function(reason) {
-              if(_this.signInRequired && !DO.C.User.IRI) {
-                showUserIdentityInput();
-              }
-              else {
-                updateAnnotationServiceForm();
-                showAction();
-              }
-            }
-          );
-*/
+export function updateAnnotationInboxForm() {
+  var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox');
+  for (var i = 0; i < annotationInbox.length; i++) {
+    annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML()));
+  }
+};
+
