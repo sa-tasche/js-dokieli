@@ -72,9 +72,24 @@ console.log('------here now-----')
     }
   }
 
-  clearToolbarForm(toolbarForm) {
+  clearToolbarForm(toolbarForm, options = {}) {
     toolbarForm.classList.remove('editor-toolbar-form-active');
     toolbarForm.removeAttribute('style');
+    
+    //TODO
+    const values = {};
+    if (options.preserveFields) {
+      options.preserveFields.forEach((field) => {
+        // store fields values in values
+      })
+      // reset the form
+
+      // bring back the saved values
+    }
+    else {
+      toolbarForm.reset();
+    }
+  }
 
   //Takes form node and editorView.state
   populateFormAnnotate(node) {
