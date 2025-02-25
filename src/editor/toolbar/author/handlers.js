@@ -336,3 +336,142 @@ case 'sparkline':
 
 
   */
+
+export function processAction(action, options = {}) {
+//TODO: Need to get values for id, refId, opts, 
+
+  var noteData, note, asideNote, asideNode, parentSection;
+
+  switch(action) {
+    case 'note':
+      noteData = createNoteData({'id': id})
+      note = DO.U.createNoteDataHTML(noteData);
+      // var nES = selectedParentElement.nextElementSibling;
+      asideNote = '\n\
+      <aside class="note">\n\
+      '+ note + '\n\
+      </aside>';
+      asideNode = fragmentFromString(asideNote);
+      parentSection = getClosestSectionNode(selectedParentElement);
+      parentSection.appendChild(asideNode);
+
+      DO.U.positionNote(refId, id);
+      break;
+
+    case 'cite': //footnote reference
+      //TODO: Refactor this what's in positionInteraction
+
+      noteData = createNoteData({'id': id})
+      note = DO.U.createNoteDataHTML(noteData);
+
+      switch(opts.citationType) {
+        case 'ref-footnote': default:
+          // var nES = selectedParentElement.nextElementSibling;
+          asideNote = '\n\
+<aside class="note">\n\
+'+ note + '\n\
+</aside>';
+          asideNode = fragmentFromString(asideNote);
+          parentSection = getClosestSectionNode(selectedParentElement);
+          parentSection.appendChild(asideNode);
+
+          DO.U.positionNote(refId, id);
+          break;
+
+        case 'ref-reference':
+          options = opts;
+          opts.url = opts.url.trim(); //XXX: Perhaps use escapeCharacters()?
+          options['citationId'] = opts.url;
+          options['refId'] = refId;
+
+          //TODO: offline mode
+          DO.U.getCitation(opts.url, options)
+            .then(citationGraph => {
+              var citationURI = opts.url;
+              // console.log(citationGraph)
+              // console.log(citationGraph.toString())
+              // console.log(options.citationId)
+              // console.log( getProxyableIRI(options.citationId))
+              if (isValidISBN(opts.url)) {
+                citationURI = citationGraph.term.value;
+                // options.citationId = citationURI;
+              }
+              else if(opts.url.match(/^10\.\d+\//)) {
+                citationURI = 'http://dx.doi.org/' + opts.url;
+                // options.citationId = citationURI;
+              }
+              //FIXME: subjectIRI shouldn't be set here. Bug in RDFaProcessor (see also SimpleRDF ES5/6). See also: https://github.com/dokieli/dokieli/issues/132
+
+              citationURI = citationURI.replace(/(https?:\/\/(dx\.)?doi\.org\/)/i, 'http://dx.doi.org/');
+
+              //XXX: I don't know what this is going on about...
+              // else if (stripFragmentFromString(options.citationId) !==  getProxyableIRI(options.citationId)) {
+              //   citationURI = currentLocation();
+              // }
+
+              var citation = DO.U.getCitationHTML(citationGraph, citationURI, options);
+
+              //TODO: references nodes, e.g., references, normative-references, informative-references
+              var references = document.querySelector('#references');
+              var referencesList = references?.querySelector('dl, ol, ul') || references;
+
+              buildReferences(referencesList, id, citation);
+
+              options['showRobustLinksDecoration'] = true;
+
+              // var node = document.querySelector('[id="' + id + '"] a[about]');
+
+              // var robustLink = DO.U.createRobustLink(citationURI, node, options);
+
+              // console.log(citationURI, citation, options)
+              var s = citationGraph.node(rdf.namedNode(citationURI));
+              var inboxes = getGraphInbox(s);
+
+              if (!inboxes) {
+                s = citationGraph.node(rdf.namedNode(stripFragmentFromString(citationURI)));
+              }
+
+              inboxes = getGraphInbox(s);
+
+              if (!inboxes) {
+                s = citationGraph.node(rdf.namedNode(options.citationId));
+              }
+              else {
+                var inboxURL = inboxes[0];
+
+                var citedBy = location.href.split(location.search||location.hash||/[?#]/)[0] + '#' + options.refId;
+
+                var notificationStatements = '<dl about="' + citedBy + '">\n\
+  <dt>Action</dt><dd>Citation</dd>\n\
+  <dt>Cited by</dt><dd><a href="' + citedBy + '">' + citedBy + '</a></dd>\n\
+  <dt>Citation type</dt><dd><a href="' + options.url + '">' + DO.C.Citation[options.citationRelation] + '</a></dd>\n\
+  <dt>Cites</dt><dd><a href="' + options.url + '" property="' + options.citationRelation + '">' + options.url + '</a></dd>\n\
+</dl>\n\
+';
+
+                var notificationData = {
+                  "type": ['as:Announce'],
+                  "inbox": inboxURL,
+                  "object": citedBy,
+                  "target": options.url,
+                  "statements": notificationStatements
+                };
+
+                notifyInbox(notificationData);
+                //XXX: Inform the user that a notification was sent?
+              }
+            });
+          break;
+      }
+      break;
+
+    case 'rdfa':
+      //This only updates the DOM. Nothing further. The 'id' is not used.
+      noteData = createNoteData({'id': id});
+      break;
+
+  }
+
+
+
+}
