@@ -89,11 +89,11 @@ export function formHandlerImg(e) {
 //populate form
 //fill out form
 //submit form
-
 //validate form
-//post to external location(s)
-//copy to localStorage
-//mark the highlight text
+//gather initial data related to the form action
+//processAction
+  //copy to localStorage
+//mark the highlight text --> positionActivity (using highlightText)
 //add the note as an aside
 //update message log
 //do other things...
@@ -192,18 +192,7 @@ export function formHandlerAnnotate(e, action) {
 
   const highlightText = async () => {
     if (this.editorView) {
-      return pmHighlightText(schema, this.editorView)(this.editorView.state, this.editorView.dispatch)
-    }
-    else {
-console.log(this.selection);
-      restoreSelection(this.selection);
-      // const options = {};
-      // const textQuoteSelectors = await getTextQuoteSelector(selection, options);
-      // return highlightSelectorTarget(textQuoteSelectors)
-
-      const selection = window.getSelection();
-console.log(selection);
-      return wrapSelectionInMark(selection);
+      pmHighlightText(schema, this.editorView)(this.editorView.state, this.editorView.dispatch)
     }
   }
 
@@ -218,6 +207,9 @@ console.log(selection);
 
   //TODO: Mark the selection after successful comment. Move out.
   //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+  
+  // process actions
+  processAction()
   //Mark the selected content in the document
   highlightText();
 
