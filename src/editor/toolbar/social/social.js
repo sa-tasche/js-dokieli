@@ -79,6 +79,19 @@ console.log('------here now-----')
   }
 }
 
+export function annotateFormControls(options) {
+  return `
+    <label for="${options.button}-tagging">Tags</label> <input class="editor-toolbar-input" id="${options.button}-tagging" name="comment-tagging" placeholder="Separate tags with commas" />
+    <textarea class="editor-toolbar-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
+    <select class="editor-toolbar-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
+    <select class="editor-toolbar-select" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
+    <span class="annotation-location-selection">${getAnnotationLocationHTML()}</span>
+    <span class="annotation-inbox">${getAnnotationInboxLocationHTML()}</span>
+
+    ${getButtonHTML('submit', 'editor-toolbar-submit', 'Post', 'Post', { type: 'submit' })}
+    ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+  `
+}
 
 export function updateAnnotationServiceForm() {
   var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection');
