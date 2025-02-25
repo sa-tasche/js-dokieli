@@ -21,7 +21,7 @@ export class AuthorToolbar extends ToolbarView {
     }
   }
 
- getFormHandlers() {
+  getFormHandlers() {
     return [
       { name: 'formHandlerA', fn: formHandlerA },
       { name: 'formHandlerQ', fn: formHandlerQ },
@@ -281,7 +281,7 @@ TODO:
 
   getPopulateForms() {
     return {
-    img: this.populateFormImg,
+      img: this.populateFormImg,
     }
   }
 
