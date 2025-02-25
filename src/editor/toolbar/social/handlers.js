@@ -220,3 +220,14 @@ export function getFormActionGeneralData(action, selector, options, selectedPare
   return data;
 }
 
+//TODO: Overthinking now. Generalise this later to handle different selector and states, and parameters.
+export function getAnnotationSelectorStateURI(baseURL, selector) {
+  baseURL = baseURL || window.location.href;
+  baseURL = stripFragmentFromString(baseURL);
+  selector.type = selector.type || 'TextQuoteSelector';
+
+  switch(selector.type) {
+    case 'TextQuoteSelector': default:
+      return `${baseURL}#selector(type=${selector.type},prefix=${encodeURIComponent(selector.prefix)},exact=${encodeURIComponent(selector.exact)},suffix=${encodeURIComponent(selector.suffix)})`;
+  }
+}
