@@ -36,16 +36,11 @@ export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
 
-  const highlightText = async () => {
-console.log(this.selection);
-      restoreSelection(this.selection);
-      // const options = {};
-      // const textQuoteSelectors = await getTextQuoteSelector(selection, options);
-      // return highlightSelectorTarget(textQuoteSelectors)
+  restoreSelection(this.selection);
+  const selection = window.getSelection();
 
-      const selection = window.getSelection();
-      return wrapSelectionInMark(selection);
-  }
+  const range = selection.getRangeAt(0);
+  const selectedParentElement = getselectedParentElement(range)
 
   const formValues = getFormValues(e.target);
 
@@ -59,6 +54,17 @@ console.log(this.selection);
   //TODO: Mark the selection after successful comment. Move out.
   //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
   //Mark the selected content in the document
+  const selector = getTextQuoteSelector(editor, mode, view, options)
+  processAction(action, selector, formValues, selectedParentElement)
+
+  // highlightText();
+  wrapSelectionInMark(selection);
+
+  const annotationInbox = getInboxOfAnnotation(getSelectedParentElement);
+
+  this.cleanupToolbar();
+}
+
 
 export function processAction(action, selector, formValues, selectedParentElement) {
   //TODO:
