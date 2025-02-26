@@ -159,25 +159,25 @@ export function annotateFormControls(options) {
     <textarea class="editor-toolbar-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
     <select class="editor-toolbar-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
     <select class="editor-toolbar-select" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
-    <span class="annotation-location-selection">${getAnnotationLocationHTML()}</span>
-    <span class="annotation-inbox">${getAnnotationInboxLocationHTML()}</span>
+    <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>
+    <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
 
     ${getButtonHTML('submit', 'editor-toolbar-submit', 'Post', 'Post', { type: 'submit' })}
     ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
   `
 }
 
-export function updateAnnotationServiceForm() {
+export function updateAnnotationServiceForm(action) {
   var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection');
   for (var i = 0; i < annotationServices.length; i++) {
-    annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML()));
+    annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML(action)));
   }
 };
 
-export function updateAnnotationInboxForm() {
+export function updateAnnotationInboxForm(action) {
   var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox');
   for (var i = 0; i < annotationInbox.length; i++) {
-    annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML()));
+    annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(action)));
   }
 };
 
