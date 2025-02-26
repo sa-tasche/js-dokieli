@@ -6,6 +6,8 @@ import { stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { postActivity } from "../../../inbox.js"
 
+const ns = Config.ns;
+
 //select text
 //open popup
 //click toolbar button
@@ -44,43 +46,49 @@ export function formHandlerAnnotate(e, action) {
 
   const formValues = getFormValues(e.target);
 
-  const tagging = formValues[`${action}-tagging`];
-  const content = formValues[`${action}-content`];
-  const language = formValues[`${action}-language`];
-  const license = formValues[`${action}-license`];
+  // const tagging = formValues[`${action}-tagging`];
+  // const content = formValues[`${action}-content`];
+  // const language = formValues[`${action}-language`];
+  // const license = formValues[`${action}-license`];
 
-  console.log(tagging, content, language, license);
+  // console.log(tagging, content, language, license);
 
   //TODO: Mark the selection after successful comment. Move out.
   //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
   //Mark the selected content in the document
   const selector = getTextQuoteSelector(editor, mode, view, options)
-  processAction(action, selector, formValues, selectedParentElement)
+
+  const selectionData = {
+    selection,
+    selector,
+    selectedParentElement
+  };
+
+  processAction(action, formValues, selectionData);
 
   // highlightText();
   wrapSelectionInMark(selection);
 
-  const annotationInbox = getInboxOfAnnotation(getSelectedParentElement);
+  const annotationInbox = getInboxOfAnnotation(selectedParentElement);
 
   this.cleanupToolbar();
 }
 
 
-export function processAction(action, selector, formValues, selectedParentElement) {
+export function processAction(action, formValues, selectionData) {
   //TODO:
 
-  const generalData = getFormActionGeneralData(action, selector, formValues, selectedParentElement);
-  const annotationDistribution = getAnnotationDistribution(action, formValues);
+  const formData = getFormActionData(action, formValues, selectionData);
+  const { annotationDistribution } = formData;
 
-  //process the rest of the action (below)
-
+  //XXX: Sort of a placeholder switch but don't really need it now
   switch(action) {
-    case 'article': case 'approve': case 'disapprove': case 'specificity': case 'bookmark':
+    case 'approve': case 'disapprove': case 'specificity': case 'bookmark': case 'comment':
       annotationDistribution.forEach(annotation => {
         var data = '';
 
         var noteData = createNoteData(annotation);
-        annotation['motivatedByIRI'] = noteData['motivatedByIRI']
+        annotation['motivatedByIRI'] = noteData['motivatedByIRI'];
 
         if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
           var notificationData = createActivityData(annotation, { 'relativeObject': true });
@@ -106,21 +114,21 @@ export function processAction(action, selector, formValues, selectedParentElemen
           })
 
           .then(response => {
-            var location = response.headers.get('Location')
+            var location = response.headers.get('Location');
 
             if (location) {
-              location = getAbsoluteIRI(annotation['containerIRI'], location)
-              annotation['noteIRI'] = annotation['noteURL'] = location
+              location = getAbsoluteIRI(annotation['containerIRI'], location);
+              annotation['noteIRI'] = annotation['noteURL'] = location;
             }
 
             // console.log(annotation, options)
 
-            return positionActivity(annotation, options)
-           })
+            return positionActivity(annotation, options);
+          })
 
           .then(function() {
-            if (this.action != 'bookmark') {
-              return sendNotification(annotation, options)
+            if (action != 'bookmark') {
+              return sendNotification(annotation, options);
             }
           })
 
@@ -132,22 +140,19 @@ export function processAction(action, selector, formValues, selectedParentElemen
       });
       break;
 
-    case 'selector':
-      window.history.replaceState({}, null, selectorIRI);
+    // case 'selector':
+    //   window.history.replaceState({}, null, selectorIRI);
     
-      var message = 'Copy URL from address bar.';
-      message = {
-        'content': message,
-        'type': 'info',
-        'timer': 3000
-      }
-      addMessageToLog(message, Config.MessageLog);
-      showActionMessage(document.documentElement, message);
-      // TODO: Perhaps use something like setCopyToClipboard instead. Use as `encodeURI(selectorIRI)` as input.
-
-      //TODO: 
-
-      break;
+    //   var message = 'Copy URL from address bar.';
+    //   message = {
+    //     'content': message,
+    //     'type': 'info',
+    //     'timer': 3000
+    //   }
+    //   addMessageToLog(message, Config.MessageLog);
+    //   showActionMessage(document.documentElement, message);
+    //   // TODO: Perhaps use something like setCopyToClipboard instead. Use as `encodeURI(selectorIRI)` as input.
+    //   break;
   }
 }
 
@@ -156,8 +161,10 @@ export function processAction(action, selector, formValues, selectedParentElemen
 
 //TODO: MOVE
 
-export function getFormActionGeneralData(action, selector, options, selectedParentElement) {
+export function getFormActionData(action, formValues, selectionData) {
   const data = {
+    action: action,
+    selectionData: selectionData,
     id: generateAttributeId(),
     datetime: getDateTimeISO(),
     resourceIRI: Config.DocumentURL,
@@ -171,36 +178,50 @@ export function getFormActionGeneralData(action, selector, options, selectedPare
 
     activityTypeMatched: false,
     activityIndex: Config.ActionActivityIndex[action],
+    annotationLocationPersonalStorage:'',
+    annotationLocationService: '',
 
-    //XXX: Defaulting to id but overwritten by motivation symbol
-    refLabel: id,
-
-    parentNodeWithId: selectedParentElement.closest('[id]'),
+    parentNodeWithId: selectionData.selectedParentElement.closest('[id]'),
 
     //Role/Capability for Authors/Editors
-    ref: '',
-    refType: '', //TODO: reference types. UI needs input
+    // ref: '',
+    // refType: '', //TODO: reference types. UI needs input
     //TODO: replace refId and noteIRI IRIs
 
     //This class is added if it is only for display purposes e.g., loading an external annotation for view, but do not want to save it later on (as it will be stripped when 'do' is found)
-    doClass: '',
+    // doClass: '',
 
     //TODO: oa:TimeState's datetime should equal to hasSource value. Same for oa:HttpRequestState's rdfs:value
     // <span about="[this:#' + refId + ']" rel="oa:hasState">(timeState: <time typeof="oa:TimeState" datetime="' + datetime +'" datatype="xsd:dateTime"property="oa:sourceDate">' + datetime + '</time>)</span>\n\
 
-    noteData: {},
-    note: '',
-    language: formValues.language,
-    license: formValues.license,
-    rights: '',
+    // noteData: {},
+    // note: '',
+    // rights: '',
     motivatedBy: 'oa:replying'
   };
 
-  data.refId = 'r-' + data.id;
-  data.selectorIRI = getAnnotationSelectorStateURI(data.resourceIRI, selector);
+    //XXX: Defaulting to id but overwritten by motivation symbol
+  data.refLabel = data.id;
 
-  data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
+  const annotationFields = ['tagging', 'content', 'language', 'license', 'annotation-inbox', 'annotation-location-service', 'annotation-location-personal-storage'];
+
+  annotationFields.forEach(formField => {
+    const formValue = formValues[action + '-' + formField];
+    if (formValue) {
+      data[formField] = formValue;
+    }
+  })
   
+
+  // const tagging = formValues[`${action}-tagging`];
+  // const content = formValues[`${action}-content`];
+  // const language = formValues[`${act'',ion}-language`];
+  // const license = formValues[`${action}-license`];
+
+
+  data.refId = 'r-' + data.id;
+  data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
+
   data.latestVersion = DO.C.Resource[data.resourceIRI].graph.out(ns.rel['latest-version']).values[0];
 
   if (data.latestVersion) {
@@ -214,8 +235,13 @@ export function getFormActionGeneralData(action, selector, options, selectedPare
   // console.log(targetIRI)
 
   data.targetLanguage = getNodeLanguage(data.parentNodeWithId);
-  data.selectionLanguage = getNodeLanguage(data.selectedParentElement);
+  data.selectionLanguage = getNodeLanguage(data.selectionData.selectedParentElement);
   // console.log(targetLanguage, selectionLanguage)
+
+  //TODO: Revisit this to see whether resourceIRI should be the original or the one that gets updated after latestVersion check.
+  data.selectorIRI = getAnnotationSelectorStateURI(data.resourceIRI, selector);
+
+  data.annotationDistribution = getAnnotationDistribution(action, formValues);
 
   return data;
 }
@@ -240,13 +266,18 @@ export function isDuplicateLocation(annotationDistribution, containerIRI) {
 
 
 export function getAnnotationDistribution(action, formValues) {
-  const { resourceIRI, containerIRI, activityIndex, activityTypeMatched, } = formValues;
-  //Use if (activityIndex) when all _this.action values are taken into account e.g., `note` in author mode
+  const { id, containerIRI, activityIndex, activityTypeMatched } = formValues;
+  const annotationInbox = formValues['annotation-inbox'];
+  const annotationLocationPersonalStorage = formValues['annotation-location-personal-storage'];
+  const annotationLocationService = formValues['annotation-location-service'];
 
-  var aLS;
+  //Use if (activityIndex) when all action values are taken into account e.g., `note` in author mode
+
+  var aLS, noteURL, noteIRI, contextProfile, fromContentType, contentType;
+  var annotationDistribution = [];
 
   //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
-  if((formValues.annotationLocationPersonalStorage && Config.User.TypeIndex) || (!formValues.annotationLocationPersonalStorage && !formValues.annotationLocationService && Config.User.TypeIndex)) {
+  if ((annotationLocationPersonalStorage && Config.User.TypeIndex) || (!annotationLocationPersonalStorage && !annotationLocationService && Config.User.TypeIndex)) {
 
     //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
 
@@ -292,15 +323,15 @@ export function getAnnotationDistribution(action, formValues) {
     }
   }
 
-  if ((formValues.annotationLocationPersonalStorage && Config.User.Outbox) || (!formValues.annotationLocationPersonalStorage && !formValues.annotationLocationService && Config.User.Outbox)) {
+  if ((annotationLocationPersonalStorage && Config.User.Outbox) || (!annotationLocationPersonalStorage && !annotationLocationService && Config.User.Outbox)) {
     containerIRI = Config.User.Outbox[0];
 
-    var fromContentType = 'text/html';
+    fromContentType = 'text/html';
     // contentType = 'application/ld+json';
     contentType = fromContentType;
 
     noteURL = noteIRI = containerIRI + id;
-    var contextProfile = {
+    contextProfile = {
       '@context': [
         'https://www.w3.org/ns/activitystreams',
         { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
@@ -320,7 +351,7 @@ export function getAnnotationDistribution(action, formValues) {
     }
   }
 
-  if (!activityTypeMatched && ((formValues.annotationLocationPersonalStorage && Config.User.Storage) || (!formValues.annotationLocationPersonalStorage && !formValues.annotationLocationService && Config.User.Storage))) {
+  if (!activityTypeMatched && ((annotationLocationPersonalStorage && Config.User.Storage) || (!annotationLocationPersonalStorage && !annotationLocationService && Config.User.Storage))) {
     containerIRI = Config.User.Storage[0];
 
     fromContentType = 'text/html';
@@ -338,7 +369,7 @@ export function getAnnotationDistribution(action, formValues) {
     }
   }
 
-  if (formValues.annotationLocationService && typeof Config.AnnotationService !== 'undefined') {
+  if (annotationLocationService && typeof Config.AnnotationService !== 'undefined') {
     containerIRI = Config.AnnotationService;
     fromContentType = 'text/html';
     // contentType = 'application/ld+json';
@@ -353,11 +384,11 @@ export function getAnnotationDistribution(action, formValues) {
       'profile': 'http://www.w3.org/ns/anno.jsonld'
     };
 
-    if (!formValues.annotationLocationPersonalStorage && formValues.annotationLocationService) {
+    if (!annotationLocationPersonalStorage && annotationLocationService) {
       noteURL = noteIRI = containerIRI + id;
       aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
     }
-    else if (formValues.annotationLocationPersonalStorage) {
+    else if (annotationLocationPersonalStorage) {
       noteURL = containerIRI + id;
       aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
     }
@@ -372,4 +403,6 @@ export function getAnnotationDistribution(action, formValues) {
       annotationDistribution.push(aLS);
     }
   }
+
+  return annotationDistribution;
 }
