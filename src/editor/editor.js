@@ -34,6 +34,10 @@ export class Editor {
         break;
     }
   }
+  replaceSelectionWithFragment(){
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView.replaceSelectionWithFragment()
+  }
 
   //Creating a ProseMirror editor view at a specified this.node
   createEditor() {

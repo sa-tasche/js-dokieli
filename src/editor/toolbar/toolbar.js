@@ -64,6 +64,10 @@ export class ToolbarView {
     return restoreSelection(this.selection)
   }
 
+  replaceSelectionWithFragment() {
+
+  }
+  
   getToolbarPopups() {
     return {}
   }

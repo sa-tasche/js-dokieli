@@ -39,6 +39,31 @@ console.log('------here now-----')
     ];
   }
 
+  replaceSelectionWithFragment(fragment) {
+    const selection = this.selection;
+    if (!selection.rangeCount) return;
+    const ranges = [];
+  
+    for (let i = 0; i < selection.rangeCount; i++) {
+      ranges.push(selection.getRangeAt(i));
+    }
+  
+    const mergedRange = document.createRange();
+    mergedRange.setStart(ranges[0].startContainer, ranges[0].startOffset);
+    mergedRange.setEnd(ranges[ranges.length - 1].endContainer, ranges[ranges.length - 1].endOffset);
+  
+    selection.removeAllRanges();
+  
+    mergedRange.deleteContents();
+  
+    mergedRange.collapse(true);
+  
+    mergedRange.insertNode(fragment);
+  
+    selection.removeAllRanges();
+  }
+
+
   getToolbarPopups() {
     const toolbarPopups = {
       approve: (options) => annotateFormControls(options),

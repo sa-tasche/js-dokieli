@@ -19,19 +19,6 @@ console.log(nodeType)
   };
 }
 
-// this is one of the possibilities of highlight text (when creating a new annotation)
-export function replaceSelectionWithDOMFragment(view, domFragment, options = {}) {
-  const { state, dispatch } = view;
-  const { selection, schema } = state;
-  
-  // Convert DOM fragment to a ProseMirror node
-  let node = DOMParser.fromSchema(schema).parse(domFragment);
-
-  // Apply the transformation to insert the node at selection
-  let tr = state.tr.replaceSelectionWith(node);
-  dispatch(tr);
-}
-
 //Input ProseMirror doc and selection from and to positions, and return HTML string including all nodes.
 export function docSelectionToHtml(doc, from, to) {
   const selectedSlice = doc.slice(from, to);
