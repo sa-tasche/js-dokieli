@@ -136,7 +136,7 @@ export class ToolbarView {
 
         // Populate forms where applicable
         if (this.populateForms[button]) {
-          this.populateForms[button](toolbarForm, this.editorView.state);
+          this.populateForms[button](button, toolbarForm, this.editorView.state);
         }
 
         // Add event listeners where applicable

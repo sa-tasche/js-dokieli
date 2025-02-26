@@ -106,13 +106,13 @@ console.log('------here now-----')
   }
 
   //Takes form node and editorView.state
-  populateFormAnnotate(node) {
-    updateAnnotationInboxForm();
+  populateFormAnnotate(action, node) {
+    updateAnnotationInboxForm(action);
 
     getLinkRelation(ns.oa.annotationService.value, null, getDocument())
       .then(url => {
         Config.AnnotationService = url[0];
-        updateAnnotationServiceForm();
+        updateAnnotationServiceForm(action);
         showAction();
       })
       .catch(reason => {
@@ -121,7 +121,7 @@ console.log('------here now-----')
           showUserIdentityInput();
         }
         else {
-          updateAnnotationServiceForm();
+          updateAnnotationServiceForm(action);
           // XXX: Revisit. Was used in MediumEditor. Probably no longer needed?
           // showAction();
         }
