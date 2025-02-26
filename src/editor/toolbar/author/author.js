@@ -200,6 +200,18 @@ TODO:
       return true;
     };
   }
+
+  replaceSelectionWtihFragment(fragment) {
+    const { state, dispatch } = this.editorView;
+    const { selection, schema } = state;
+    
+    // Convert DOM fragment to a ProseMirror node
+    let node = DOMParser.fromSchema(schema).parse(fragment);
+  
+    // Apply the transformation to insert the node at selection
+    let tr = state.tr.replaceSelectionWith(node);
+    dispatch(tr);  
+  }
   
   updateMarkWithAttributes(schema, markType, attrs) {
     return (state, dispatch) => {
@@ -256,7 +268,7 @@ TODO:
   }
 
   // populateForms takes form node and editorView.state
-  populateFormImg(node, state) {
+  populateFormImg(button, node, state) {
     const fileInput = node.querySelector('[name="link-img-file"]');
     const altInput = node.querySelector('[name="link-img-alt"]');
 
