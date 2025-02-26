@@ -39,6 +39,7 @@ let Editor = new Editor("social");
 if (typeof window.DO === 'undefined'){
 
 DO = {
+  Editor: Editor,
   C: Config,
 
   U: {
