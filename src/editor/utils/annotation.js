@@ -87,7 +87,7 @@ export function getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options)
 //   suffix: ' dolor'
 // }
 //TODO: Lo
-// FIXME: refactor . do not pass around Editor instance, maybe pass the restoreSelection fn when needed 'onRestoreSelection' or similar; or put Editor in DO.C.Editor
+// FIXME: refactor . do not pass around Editor instance, maybe pass the restoreSelection fn when needed 'onRestoreSelection' or similar; or put Editor in Config.Editor
 export function getTextQuoteSelector(editor, mode, view, options) {
   if (!editor) return;
 
@@ -109,7 +109,7 @@ export function getTextQuoteSelectorAuthor(view, options = {}) {
   //ProseMirror state.selection
   const { selection , doc } = view.state;
   const { from, to } = selection;
-  //TODO: Use DO.C.ContextLength
+  //TODO: Use Config.ContextLength
   const contextLength = options.contextLength || 32;
 
   var exact = doc.textBetween(from, to); // consider \n
@@ -118,14 +118,14 @@ export function getTextQuoteSelectorAuthor(view, options = {}) {
   console.log(selectedParentElement)
 
   // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, this.document);
-  // var prefixStart = Math.max(0, start - DO.C.ContextLength);
+  // var prefixStart = Math.max(0, start - Config.ContextLength);
   // console.log('pS ' + prefixStart);
   // var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
   let prefix = doc.textBetween(from - contextLength, from)  // consider \n
   // console.log('-' + prefix + '-');
   prefix = escapeCharacters(prefix);
   
-  // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + DO.C.ContextLength);
+  // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
   // console.log('sE ' + suffixEnd);
   let suffix =  doc.textBetween(to, to + contextLength)  // consider \n
   // console.log('-' + suffix + '-');
@@ -154,20 +154,20 @@ export function getTextQuoteSelectorSocial(editor, options = {}) {
   var selectedParentElement = getSelectedParentElement(range);
 // console.log('getSelectedParentElement:', selectedParentElement);
 
-  const selectionHTML = getSelectionAsHTML(selection); //.replace(DO.C.Editor.regexEmptyHTMLTags, '');
+  const selectionHTML = getSelectionAsHTML(selection); //.replace(Config.Editor.regexEmptyHTMLTags, '');
 
   var exact = selectionHTML;
   // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, document);
   const selectionState = exportSelection(selectedParentElement, selection);
   var start = selectionState.start;
   var end = selectionState.end;
-  var prefixStart = Math.max(0, start - DO.C.ContextLength);
+  var prefixStart = Math.max(0, start - Config.ContextLength);
 // console.log('pS ' + prefixStart);
   var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
 // console.log('-' + prefix + '-');
   prefix = escapeCharacters(prefix);
 
-  var suffixEnd = Math.min(selectedParentElement.textContent.length, end + DO.C.ContextLength);
+  var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
 // console.log('sE ' + suffixEnd);
   var suffix = selectedParentElement.textContent.substr(end, suffixEnd - end);
 // console.log('-' + suffix + '-');
@@ -234,6 +234,7 @@ export function getSelectionAsHTML(selection) {
   return div.getHTML();
 }
 
+// moved to Edtior.replaceSelectionWithFragment
 export function replaceSelectionWithFragment(selection, fragment) {
   if (!selection.rangeCount) return;
   const ranges = [];
@@ -281,33 +282,6 @@ export function exportSelection(selectedParentElement, selection) {
   };
 
   return selectionState;
-}
-
-
-
-export function wrapSelectionInMark(selection) {
-  selection = selection || window.getSelection();
-
-  const selectedContent = getSelectionAsHTML(selection);
-console.log(selectedContent)
-var id = getRandomUUID();
-
-  var refId = 'r-' + id;
-  var refLabel = id; 
-  var noteIRI = 'https://csarven.solidcommunity.net/bfffac84-e174-49ad-98f2-0308367906d8.ttl';
-  var motivatedBy = 'oa:replying';
-  if (motivatedBy) {
-    refLabel = '💬';
-    // refLabel = DO.U.getReferenceLabel(motivatedBy);
-  }
-
-  var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
-  var options = { do: true };
-
-  const htmlString = getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType, options);
-
-  replaceSelectionWithFragment(selection, fragmentFromString(htmlString))
-  // processHighlightNode.outerHTML = fragmentFromString(htmlString);
 }
 
 export function cloneSelection() {
