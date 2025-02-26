@@ -34,6 +34,12 @@ export class Editor {
         break;
     }
   }
+
+  restoreSelection(mode) {
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView.restoreSelection()
+  }
+
   replaceSelectionWithFragment(){
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
     return toolbarView.replaceSelectionWithFragment()
