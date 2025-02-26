@@ -164,12 +164,6 @@ export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
 
-  const highlightText = async () => {
-    if (this.editorView) {
-      pmHighlightText(schema, this.editorView)(this.editorView.state, this.editorView.dispatch)
-    }
-  }
-
   const formValues = getFormValues(e.target);
 
   const tagging = formValues[`${action}-tagging`];
@@ -185,7 +179,7 @@ export function formHandlerAnnotate(e, action) {
   // process actions
   processAction()
   //Mark the selected content in the document
-  highlightText();
+  pmHighlightText(schema, this.editorView)(this.editorView.state, this.editorView.dispatch)
 
   // this.clearToolbarForm(e.target);
   // this.clearToolbarButton(action);
@@ -431,7 +425,7 @@ export function processAction(action, options = {}) {
       }
       break;
 
-    case 'rdfa':
+    case 'semantics':
       //This only updates the DOM. Nothing further. The 'id' is not used.
       noteData = createNoteData({'id': id});
       break;
