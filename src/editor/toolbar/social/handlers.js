@@ -46,13 +46,6 @@ export function formHandlerAnnotate(e, action) {
 
   const formValues = getFormValues(e.target);
 
-  // const tagging = formValues[`${action}-tagging`];
-  // const content = formValues[`${action}-content`];
-  // const language = formValues[`${action}-language`];
-  // const license = formValues[`${action}-license`];
-
-  // console.log(tagging, content, language, license);
-
   //TODO: Mark the selection after successful comment. Move out.
   //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
   //Mark the selected content in the document
@@ -211,13 +204,6 @@ export function getFormActionData(action, formValues, selectionData) {
       data[formField] = formValue;
     }
   })
-  
-
-  // const tagging = formValues[`${action}-tagging`];
-  // const content = formValues[`${action}-content`];
-  // const language = formValues[`${act'',ion}-language`];
-  // const license = formValues[`${action}-license`];
-
 
   data.refId = 'r-' + data.id;
   data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
