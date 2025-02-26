@@ -363,3 +363,302 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 
   return inbox;
 }
+
+//TODO: This function returns noteData and also replaces the selection with an HTML reference to the note. Make it so that the reference related stuff is done elsewehere.
+export function createNoteData(annotation) {
+  const { action, id, datetime, profile, selectionData, refId, refLabel, targetIRI, resourceIRI, selectionLanguage, targetLanguage } = annotation;
+
+  var note = '';
+  var mode = '';
+  var ref;
+
+  //TODO: This should be an object elsewhere?
+  switch(profile) {
+    case 'https://www.w3.org/ns/activitystreams':
+      mode = 'object';
+      break;
+    default:
+      mode = 'write';
+      break;
+  }
+
+  let motivatedBy;
+
+  switch(action) {
+    // case 'sparkline':
+    //   var figureIRI = generateAttributeId(null, opts.selectionDataSet);
+    //   ref = '<span rel="schema:hasPart" resource="#figure-' + figureIRI + '">\n\
+    //   <a href="' + opts.select + '" property="schema:name" rel="prov:wasDerivedFrom" resource="' + opts.select + '" typeof="qb:DataSet">' + opts.selectionDataSet + '</a> [' + escapeCharacters(Config.RefAreas[opts.selectionRefArea]) + ']\n\
+    //   <span class="sparkline" rel="schema:image" resource="#' + figureIRI + '">' + opts.sparkline + '</span></span>';
+    //   break;
+
+    //External Note
+    case 'approve': case 'disapprove': case 'specificity': case 'comment':
+      if (action === 'approve' || action === 'disapprove') {
+        motivatedBy = 'oa:assessing';
+      }
+      else if (action === 'specificity') {
+        motivatedBy = 'oa:questioning';
+      }
+      else if (action === 'comment') {
+        motivatedBy = 'oa:replying';
+      }
+
+      if (action !== 'article') {
+        refLabel = DO.U.getReferenceLabel(motivatedBy);
+      }
+
+      ref = selectionData.selection;
+
+      noteData = {
+        "type": action,
+        "mode": mode,
+        "motivatedByIRI": motivatedBy,
+        "id": id,
+        "canonical": 'urn:uuid:' + id,
+        "refId": refId,
+        "refLabel": refLabel,
+        // "iri": noteIRI, //e.g., https://example.org/path/to/article
+        "creator": {},
+        "datetime": datetime,
+        "target": {
+          "iri": targetIRI,
+          "source": resourceIRI,
+          "selector": {
+            "exact": selectionData.selector.exact,
+            "prefix": selectionData.selector.prefix,
+            "suffix": selectionData.selector.suffix,
+            "language": selectionLanguage
+          },
+          "language": targetLanguage
+          //TODO: state
+        }
+      };
+
+      var bodyObject = {
+        "value": opts.content
+      };
+
+      if (language) {
+        noteData["language"] = language;
+        bodyObject["language"] = language;
+      }
+      if (license) {
+        noteData["rights"] = noteData["license"] = license;
+        bodyObject["rights"] = bodyObject["license"] = license;
+      }
+
+      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
+
+      if (Config.User.IRI) {
+        noteData.creator["iri"] = Config.User.IRI;
+      }
+      if (Config.User.Name) {
+        noteData.creator["name"] = Config.User.Name;
+      }
+      noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+      if (Config.User.URL) {
+        noteData.creator["url"] = Config.User.URL;
+      }
+      if (opts.annotationInboxLocation && Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
+        noteData.inbox = Config.User.TypeIndex[ns.as.Announce.value];
+      }
+
+      // note = DO.U.createNoteDataHTML(noteData);
+      break;
+
+    //Internal Note
+    case 'note':
+      motivatedBy = "oa:commenting";
+      refLabel = DO.U.getReferenceLabel(motivatedBy);
+      var docRefType = '<sup class="ref-comment"><a href="#' + id + '"rel="cito:isCitedBy">' + refLabel + '</a></sup>';
+      var noteType = 'note';
+      noteData = {
+        "type": noteType,
+        "mode": "read",
+        "motivatedByIRI": motivatedBy,
+        "id": id,
+        "refId": refId,
+        "refLabel": refLabel,
+        // "iri": noteIRI, //e.g., https://example.org/path/to/article
+        "creator": {},
+        "datetime": datetime,
+        "target": {
+          "iri": targetIRI,
+          "source": resourceIRI,
+          "selector": {
+            "exact": exact,
+            "prefix": prefix,
+            "suffix": suffix,
+            "language": selectionLanguage
+          },
+          "language": targetLanguage
+          //TODO: state
+        }
+      };
+
+      var bodyObject = {
+        "purpose": "describing",
+        "value": opts.content
+      };
+
+      if (language) {
+        noteData["language"] = language;
+        bodyObject["language"] = language;
+      }
+      if (license) {
+        noteData["rights"] = noteData["license"] = license;
+        bodyObject["rights"] = bodyObject["license"] = license;
+      }
+
+      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
+
+      if (Config.User.IRI) {
+        noteData.creator["iri"] = Config.User.IRI;
+      }
+      if (Config.User.Name) {
+        noteData.creator["name"] = Config.User.Name;
+      }
+      noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+      if (Config.User.URL) {
+        noteData.creator["url"] = Config.User.URL;
+      }
+
+      // note = DO.U.createNoteDataHTML(noteData);
+
+      ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType);
+      break;
+
+    case 'cite': //footnote reference
+      switch(opts.citationType) {
+        case 'ref-footnote': default:
+          motivatedBy = "oa:describing";
+          refLabel = DO.U.getReferenceLabel(motivatedBy);
+          docRefType = '<sup class="' + opts.citationType + '"><a href="#' + id + '" rel="cito:isCitedBy">' + refLabel + '</a></sup>';
+          noteData = {
+            "type": opts.citationType,
+            "mode": mode,
+            "motivatedByIRI": motivatedBy,
+            "id": id,
+            "refId": refId,
+            "refLabel": refLabel,
+            // "iri": noteIRI,
+            "datetime": datetime,
+            "citationURL": opts.url
+          };
+
+          var bodyObject = {
+            "value": opts.content
+          };
+
+          if (language) {
+            noteData["language"] = language;
+            bodyObject["language"] = language;
+          }
+          if (license) {
+            noteData["rights"] = noteData["license"] = license;
+            bodyObject["rights"] = bodyObject["license"] = license;
+          }
+
+          noteData["body"] = [bodyObject];
+
+          // note = DO.U.createNoteDataHTML(noteData);
+          break;
+
+        case 'ref-reference':
+          motivatedBy = 'oa:linking';
+          refLabel = DO.U.getReferenceLabel('oa:linking');
+          docRefType = '<span class="' + opts.citationType + '">' + Config.RefType[Config.DocRefType].InlineOpen + '<a href="#' + id + '">' + refLabel + '</a>' + Config.RefType[Config.DocRefType].InlineClose + '</span>';
+          break;
+      }
+
+      ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType);
+      break;
+      // case 'reference':
+      //   ref = '<span class="ref" about="[this:#' + refId + ']" typeof="dctypes:Text"><span id="'+ refId +'" property="schema:description">' + this.base.selection + '</span> <span class="ref-reference">' + Config.RefType[Config.DocRefType].InlineOpen + '<a rel="cito:isCitedBy" href="#' + id + '">' + refLabel + '</a>' + Config.RefType[Config.DocRefType].InlineClose + '</span></span>';
+      // break;
+
+    case 'semantics':
+      //TODO: inlist, prefix
+      //TODO: lang/xmlllang
+      noteData = {
+        about: opts.about,
+        typeOf: opts.typeOf,
+        rel: opts.rel,
+        href: opts.href,
+        resource: opts.resource,
+        property: opts.property,
+        content: opts.content,
+        datatype: opts.datatype,
+        lang: opts.language,
+        textContent: _this.base.selection
+      };
+      ref = createRDFaHTML(noteData, 'expanded');
+      break;
+
+    case 'bookmark':
+      noteType = 'bookmark';
+      motivatedBy = "oa:bookmarking";
+      refLabel = DO.U.getReferenceLabel(motivatedBy);
+      docRefType = '';
+      noteData = {
+        "type": noteType,
+        "mode": mode,
+        "motivatedByIRI": motivatedBy,
+        "id": id,
+        "canonical": 'urn:uuid:' + id,
+        "refId": refId,
+        "refLabel": refLabel,
+        // "iri": noteIRI, //e.g., https://example.org/path/to/article
+        "creator": {},
+        "datetime": datetime,
+        "target": {
+          "iri": targetIRI,
+          "source": resourceIRI,
+          "selector": {
+            "exact": exact,
+            "prefix": prefix,
+            "suffix": suffix,
+            "language": selectionLanguage
+          },
+          "language": targetLanguage
+          //TODO: state
+        }
+      };
+
+      var bodyObject = {
+        "purpose": "describing",
+        "value": opts.content
+      };
+
+      if (language) {
+        noteData["language"] = language;
+        bodyObject["language"] = language;
+      }
+      if (license) {
+        noteData["rights"] = noteData["license"] = license;
+        bodyObject["rights"] = bodyObject["license"] = license;
+      }
+
+      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
+
+      if (Config.User.IRI) {
+        noteData.creator["iri"] = Config.User.IRI;
+      }
+      if (Config.User.Name) {
+        noteData.creator["name"] = Config.User.Name;
+      }
+      noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+      if (Config.User.URL) {
+        noteData.creator["url"] = Config.User.URL;
+      }
+
+      // note = DO.U.createNoteDataHTML(noteData);
+      ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType, { 'do': true });
+      break;
+  }
+
+  DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+
+  return noteData;
+}
