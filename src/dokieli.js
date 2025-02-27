@@ -8958,7 +8958,7 @@ WHERE {\n\
               hasTarget += ' (<a about="' + n.target.iri + '" href="' + n.target.source +'" rel="oa:hasSource" typeof="oa:SpecificResource">part of</a>)';
             }
 
-            var targetLanguage = (typeof n.target !== 'undefined' && 'language' in n.target) ? '<dl><dt>Language</dt><dd><span lang="" property="dcterms:language" xml:lang="">' + n.target.language + '</span></dd></dl>': '';
+            var targetLanguage = (typeof n.target !== 'undefined' && 'language' in n.target && n.target.language.length) ? '<dl><dt>Language</dt><dd><span lang="" property="dcterms:language" xml:lang="">' + n.target.language + '</span></dd></dl>': '';
 
             target ='<dl class="target"><dt>' + hasTarget + '</dt>';
             if (typeof n.target !== 'undefined' && typeof n.target.selector !== 'undefined') {
