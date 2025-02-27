@@ -548,17 +548,9 @@ function removeSelectorFromNode(node, selector) {
   return clone;
 }
 
-function getNodeLanguage(node) {
-  node = node || getDocumentContentNode(document);
-
-  var lang = '';
-  var closestLang = node.closest('[lang], [xml\\:lang]');
-
-  if (closestLang) {
-    lang = closestLang.getAttribute('lang') || closestLang.getAttributeNS('', 'xml:lang');
-  }
-
-  return lang;
+function getNodeLanguage(node = getDocumentContentNode(document)) {
+  const closestLangNode = node.closest('[lang], [xml\\:lang]');
+  return closestLangNode?.getAttribute('lang') || closestLangNode?.getAttributeNS('', 'xml:lang') || '';
 }
 
 function addMessageToLog(message, log, options = {}) {
