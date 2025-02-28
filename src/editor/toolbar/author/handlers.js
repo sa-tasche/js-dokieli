@@ -200,6 +200,97 @@ export function formHandlerQ(e) {
   this.clearToolbarForm(e.target);
   this.clearToolbarButton('q');
 }
+
+//TODO: 
+export function formHandlerCitation(e) {
+  input.search.focus();
+  input.search.value = selection;
+
+  var specrefSearchResults = document.querySelector('.specref-search-results');
+  if(specrefSearchResults) {
+    specrefSearchResults.innerHTML = '';
+  }
+
+  var specref = document.querySelector('#specref-search-submit');
+  specref.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+// console.log(e);
+
+    var keyword = input.search.value.trim();
+    var url = 'https://api.specref.org/search-refs?q=' + keyword;
+    var headers = {'Accept': 'application/json'};
+    var options = {'noCredentials': true};
+
+    getResource(url, headers, options).then(response => {
+      // console.log(response);
+      return response.text();
+    }).then(data => {
+      data = JSON.parse(data);
+// console.log(data);
+
+      var searchResultsHTML = '';
+      var searchResultsItems = [];
+
+      var href, title, publisher, date, status;
+
+      //TODO: Clean input data
+
+      Object.keys(data).forEach(key => {
+// console.log(data[key])
+        if ('href' in data[key] &&
+            !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
+
+          //fugly WG21
+            (!('publisher' in data[key]) || ((data[key].publisher.toLowerCase() != 'wg21') || ((data[key].href.startsWith('https://wg21.link/n') || data[key].href.startsWith('https://wg21.link/p') || data[key].href.startsWith('https://wg21.link/std')) && !data[key].href.endsWith('.yaml') && !data[key].href.endsWith('/issue') && !data[key].href.endsWith('/github') && !data[key].href.endsWith('/paper'))))
+
+            ) {
+
+          href = data[key].href;
+          title = data[key].title || href;
+          publisher = data[key].publisher || '';
+          date = data[key].date || '';
+          status = data[key].status || '';
+
+          if (publisher) {
+            publisher = '. ' + publisher;
+          }
+          if (date) {
+            date = '. ' + date;
+          }
+          if (status) {
+            status = '. ' + status;
+          }
+
+          searchResultsItems.push('<li><input type="radio" name="specref-item" value="' + key + '" id="ref-' + key + '" /> <label for="ref-' + key + '"><a href="' + href + '" target="_blank">' + title + '</a>' + publisher + date + status + '</label></li>');
+        }
+      });
+
+      searchResultsHTML = '<ul>' + searchResultsItems.join('') + '</ul>';
+
+      if (searchResultsItems) {
+        specrefSearchResults = document.querySelector('.specref-search-results');
+        if(specrefSearchResults) {
+          specrefSearchResults.innerHTML = searchResultsHTML;
+        }
+
+        //XXX: Assigning 'change' action to ul because it gets removed when there is a new search result / replaced. Perhaps it'd be nicer (but more expensive?) to destroy/create .specref-search-results node?
+        specrefSearchResults.querySelector('ul').addEventListener('change', (e) => {
+          var checkedCheckbox = e.target.closest('input');
+          if (checkedCheckbox) {
+// console.log(e.target);
+            document.querySelector('#citation-url').value = data[checkedCheckbox.value].href;
+          }
+        });
+      }
+    });
+
+  });
+
+  input.url.focus();
+  document.querySelector('.medium-editor-toolbar-form input[name="citation-type"]').checked = true;
+}
+
 //TODO
 export function formHandlerSparkline(e) {
   input.search.focus();
