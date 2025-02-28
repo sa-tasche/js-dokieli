@@ -17,6 +17,7 @@ export class AuthorToolbar extends ToolbarView {
       q: [ { event: 'submit', callback: this.formHandlerQ }, { event: 'click', callback: (e) => this.formClickHandler(e, 'q') } ],
       blockquote: [ { event: 'submit', callback: this.formHandlerBlockquote }, { event: 'click', callback: (e) => this.formClickHandler(e, 'blockquote') } ],
       img: [ { event: 'submit', callback: this.formHandlerImg }, { event: 'click', callback: (e) => this.formClickHandler(e, 'img') } ],
+      citation: [ { event: 'submit', callback: this.formHandlerCitation }, { event: 'click', callback: (e) => this.formClickHandler(e, 'citation') } ],
       note: [ { event: 'submit', callback: (e) => this.formHandlerAnnotate(e, 'note') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'note') } ],
     }
   }
@@ -27,6 +28,8 @@ export class AuthorToolbar extends ToolbarView {
       { name: 'formHandlerQ', fn: formHandlerQ },
       { name: 'formHandlerBlockquote', fn: formHandlerBlockquote },
       { name: 'formHandlerImg', fn: formHandlerImg },
+      { name: 'formHandlerCitation', fn: formHandlerCitation },
+      { name: 'formHandlerSparkline', fn: formHandlerSparkline },
       { name: 'formHandlerAnnotate', fn: formHandlerAnnotate },
     ];
   }
@@ -214,6 +217,22 @@ TODO:
   }
   
 
+  getSelectionAsHTML() {
+    const state = this.editorView.state;
+    const tr = state.tr;
+
+    const { selection, doc } = tr;
+    if (!(selection instanceof TextSelection) || selection.empty) return;
+
+    const { from, to } = selection;
+    const selectedSlice = doc.slice(from, to);
+    const serializer = DOMSerializer.fromSchema(doc.type.schema);
+    const fragment = serializer.serializeFragment(selectedSlice.content);
+    const selectedContent = new XMLSerializer().serializeToString(fragment);
+    return selectedContent;
+  }
+
+  replaceSelectionWithFragment(fragment) {
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
     
