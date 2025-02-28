@@ -109,69 +109,19 @@ export function formHandlerImg(e) {
 //actions = ['selector', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment'] //Social
 //actions = ['note'] //Author
 
-
-function getSelectionAsHTML(selection) {
-  selection = selection || window.getSelection();
-  if (!selection.rangeCount) return "";
-
-  const div = document.createElement("div");
-
-  for (let i = 0; i < selection.rangeCount; i++) {
-    const range = selection.getRangeAt(i);
-    const fragment = range.cloneContents();
-
-    // console.log("RANGE CONTENTS:");
-    // fragment.childNodes.forEach(node => {
-    //   console.log("Child:", node);
-    //   if (node.children) {
-    //     Array.from(node.children).forEach(child => console.log("Grandchild:", child));
-    //   }
-    // });
-
-    div.appendChild(fragment);
-  }
-
-  return div.innerHTML;
-}
-
-
-function wrapSelectionInMark(selection) {
-  selection = selection || window.getSelection();
-
-  const selectedContent = getSelectionAsHTML(selection);
-console.log(selectedContent)
-var id = getRandomUUID();
-
-  var refId = 'r-' + id;
-  var refLabel = id; 
-  var noteIRI = 'https://csarven.solidcommunity.net/bfffac84-e174-49ad-98f2-0308367906d8.ttl';
-  var motivatedBy = 'oa:replying';
-  if (motivatedBy) {
-    refLabel = '💬';
-    // refLabel = DO.U.getReferenceLabel(motivatedBy);
-  }
-
-  var docRefType = '<sup class="ref-annotation"><a href="#' + id + '" rel="cito:hasReplyFrom" resource="' + noteIRI + '">' + refLabel + '</a></sup>';
-  var options = { do: true };
-
-  const htmlString = getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType, options);
-
-  replaceSelectionWithFragment(selection, fragmentFromString(htmlString))
-  // processHighlightNode.outerHTML = fragmentFromString(htmlString);
-}
-
+// UPDATE this with what's in social/handlers.js; consider moving to one location and refer to processActions particular to each subclass
 export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
 
   const formValues = getFormValues(e.target);
 
-  const tagging = formValues[`${action}-tagging`];
-  const content = formValues[`${action}-content`];
-  const language = formValues[`${action}-language`];
-  const license = formValues[`${action}-license`];
+  // const tagging = formValues[`${action}-tagging`];
+  // const content = formValues[`${action}-content`];
+  // const language = formValues[`${action}-language`];
+  // const license = formValues[`${action}-license`];
 
-  console.log(tagging, content, language, license);
+  // console.log(tagging, content, language, license);
 
   //TODO: Mark the selection after successful comment. Move out.
   //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
@@ -179,8 +129,6 @@ export function formHandlerAnnotate(e, action) {
   // process actions
   processAction()
   //Mark the selected content in the document
-  pmHighlightText(schema, this.editorView)(this.editorView.state, this.editorView.dispatch)
-
   // this.clearToolbarForm(e.target);
   // this.clearToolbarButton(action);
   this.cleanupToolbar()
