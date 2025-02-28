@@ -496,3 +496,50 @@ export function positionActivity(annotation, options) {
 
 
 
+function sendNotification(annotation, options) {
+  if (!annotation['canonical']) {
+    return Promise.resolve();
+  }
+
+  var inboxPromise;
+
+  if (annotation.annotationInbox) {
+    inboxPromise = Promise.resolve([annotation.annotationInbox])
+  }
+  else {
+    if ('inbox' in DO.C.Resource[documentURL] && DO.C.Resource[documentURL].inbox.length) {
+      inboxPromise = Promise.resolve(DO.C.Resource[documentURL].inbox)
+    }
+    else {
+      inboxPromise =
+        getLinkRelation(ns.ldp.inbox.value, documentURL)
+          .catch(() => {
+            return getLinkRelationFromRDF(ns.as.inbox.value, documentURL);
+          });
+    }
+  }
+
+  return inboxPromise
+    .catch(error => {
+      // console.log('Error fetching ldp:inbox and as:inbox endpoint:', error)
+      throw error
+    })
+    .then(inboxes => {
+      // TODO: resourceIRI for getLinkRelation should be the
+      // closest IRI (not necessarily the document).
+// console.log(inboxes)
+      if (inboxes.length) {
+        var notificationData = createActivityData(annotation, { 'announce': true });
+
+        notificationData['inbox'] = inboxes[0];
+
+        // notificationData['type'] = ['as:Announce'];
+// console.log(annotation)
+// console.log(notificationData)
+        return notifyInbox(notificationData)
+          .catch(error => {
+            console.log('Error notifying the inbox:', error)
+          })
+      }
+    })
+}
