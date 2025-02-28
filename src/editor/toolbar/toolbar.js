@@ -465,20 +465,31 @@ const toolbarPopups = {
   note: (options) => annotateFormControls(options),
 }
 
-
-function annotateFormControls(options) {
+// Consider putting this elsewhere or making it part of the class
+export function annotateFormControls(options) {
   return `
     <label for="${options.button}-tagging">Tags</label> <input class="editor-toolbar-input" id="${options.button}-tagging" name="comment-tagging" placeholder="Separate tags with commas" />
     <textarea class="editor-toolbar-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
-<!-- getLanguageOptionsHTML() getLicenseOptionsHTML() -->
-    <select class="editor-toolbar-select" name="${options.button}-language"><option selected="selected" value="">Choose a language</option><option value="en">English</option></select>
-    <select class="editor-toolbar-select" name="${options.button}-license"><option selected="selected" value="">Choose a license</option><option value="https://creativecommons.org/licenses/by/4.0/">CC-BY</option></select>
-
-    <span class="annotation-location-selection">{getAnnotationLocationHTML}</span>
-
-    <span class="annotation-inbox">{getAnnotationInboxLocationHTML}</span>
+    <select class="editor-toolbar-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
+    <select class="editor-toolbar-select" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
+    <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>
+    <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
 
     ${getButtonHTML('submit', 'editor-toolbar-submit', 'Post', 'Post', { type: 'submit' })}
     ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
   `
 }
+
+export function updateAnnotationServiceForm(action) {
+  var annotationServices = document.querySelectorAll('.do.editor-toolbar .annotation-location-selection');
+  for (var i = 0; i < annotationServices.length; i++) {
+    annotationServices[i].replaceChildren(fragmentFromString(getAnnotationLocationHTML(action)));
+  }
+};
+
+export function updateAnnotationInboxForm(action) {
+  var annotationInbox = document.querySelectorAll('.do.editor-toolbar .annotation-inbox');
+  for (var i = 0; i < annotationInbox.length; i++) {
+    annotationInbox[i].replaceChildren(fragmentFromString(getAnnotationInboxLocationHTML(action)));
+  }
+};
