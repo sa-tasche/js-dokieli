@@ -54,7 +54,8 @@ export class Editor {
 
         console.log(editorView);
 
-        this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'math', 'sparkline', 'semantics', 'cite', 'note'], editorView);
+        //TODO: 'math', 'sparkline',
+        this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'note'], editorView);
 
         // Append DOM portion of toolbar to current editor.
         // editorView.dom.parentNode.appendChild(toolbarView.dom);
