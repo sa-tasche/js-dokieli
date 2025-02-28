@@ -415,3 +415,59 @@ export function getAnnotationDistribution(action, data) {
 
   return annotationDistribution;
 }
+
+
+export function createActivityData(annotation, options = {}) {
+  const { id, targetIRI, formData, action } = annotation;
+
+  // console.log(annotation, options)
+  var noteIRI = (options.relativeObject) ? '#' + id : annotation['noteIRI'];
+
+  var notificationStatements = '    <dl about="' + noteIRI + '">\n\
+<dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + ns.oa.Annotation.value + '">Annotation</a></dd>\n\
+<dt>Motivation</dt><dd><a href="' + DO.C.Prefixes[annotation.motivatedByIRI.split(':')[0]] + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
+</dl>\n\
+';
+
+  var notificationData = {
+    "slug": id,
+    "license": formData.license,
+    "statements": notificationStatements
+  };
+// console.log(_this.action)
+
+  if (options.announce) {
+    notificationData['type'] = ['as:Announce'];
+    notificationData['object'] = noteIRI;
+    notificationData['inReplyTo'] = targetIRI;
+  }
+  else {
+    switch(action) {
+      default: case 'article': case 'specificity':
+        notificationData['type'] = ['as:Create'];
+        notificationData['object'] = noteIRI;
+        notificationData['inReplyTo'] = targetIRI;
+        break;
+      case 'approve':
+        notificationData['type'] = ['as:Like'];
+        notificationData['object'] = targetIRI;
+        notificationData['context'] = noteIRI;
+        break;
+      case 'disapprove':
+        notificationData['type'] = ['as:Dislike'];
+        notificationData['object'] = targetIRI;
+        notificationData['context'] = noteIRI;
+        break;
+      case 'bookmark':
+        notificationData['type'] = ['as:Add'];
+        notificationData['object'] = noteIRI;
+        notificationData['target'] = annotation['containerIRI'];
+        break;
+    }
+  }
+
+// console.log(notificationData);
+  return notificationData;
+}
+
+
