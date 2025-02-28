@@ -2417,15 +2417,15 @@ max-width:none;
   content: "";
   display: table; }
 
-.editor-toolbar-form .link-img-preview {
+.editor-toolbar-form .img-preview {
 min-height:10em;
 border:3px dashed #aaa;
 border-radius:0.5em;
 }
-.editor-toolbar-form .link-img-preview p {
+.editor-toolbar-form .img-preview p {
 text-align: center;
 }
-.editor-toolbar-form .link-img-preview img {
+.editor-toolbar-form .img-preview img {
 max-width:100%;
 height:auto;
 }
