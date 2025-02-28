@@ -3,7 +3,7 @@ import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { buttonIcons } from "../../button-icons.js"
 import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ } from "./handlers.js"
-import { ToolbarView } from "../toolbar.js"
+import { ToolbarView, annotateFormControls } from "../toolbar.js"
 
 export class AuthorToolbar extends ToolbarView {
   constructor(mode, buttons, editorView) {
@@ -47,7 +47,7 @@ export class AuthorToolbar extends ToolbarView {
       pre: setBlockType(schema.nodes.pre),
       code: toggleMark(schema.marks.code),
       // math: toggleMark(schema.marks.math), //prosemirror-math
-      // cite: citeForm(),
+      // citation: citeForm(),
       // semantics: semanticsForm()
     }
 
@@ -57,21 +57,21 @@ export class AuthorToolbar extends ToolbarView {
   getToolbarPopups() {
     const toolbarPopups = {
       a: (options) => `<legend>Add a link</legend>
-        <label for="link-a-href">URL</label> <input class="editor-toolbar-input" id="link-a-href" name="link-a-href" required="" placeholder="Paste or type a link (URL)" type="url" />
-        <label for="link-a-title">Title</label> <input class="editor-toolbar-input" id="link-a-title" name="link-a-title" placeholder="Add advisory information for the tooltip." type="text" />
+        <label for="a-href">URL</label> <input class="editor-toolbar-input" id="a-href" name="a-href" required="" placeholder="Paste or type a link (URL)" type="url" />
+        <label for="a-title">Title</label> <input class="editor-toolbar-input" id="a-title" name="a-title" placeholder="Add advisory information for the tooltip." type="text" />
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
       `,
 
       blockquote: (options) => `<legend>Add the source of the blockquote</legend>
-        <label for="link-blockquote-cite">URL</label> <input class="editor-toolbar-input" id="link-blockquote-cite" name="link-blockquote-cite" placeholder="Paste or type a link (URL)" type="url"  pattern="https?://.+" oninvalid="setCustomValidity('Please enter a valid URL')" 
+        <label for="blockquote-cite">URL</label> <input class="editor-toolbar-input" id="blockquote-cite" name="blockquote-cite" placeholder="Paste or type a link (URL)" type="url"  pattern="https?://.+" oninvalid="setCustomValidity('Please enter a valid URL')" 
         oninput="setCustomValidity('')" />
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
       `,
 
       q: (options) => `<legend>Add the source of the quote</legend>
-        <label for="link-q-cite">URL</label> <input class="editor-toolbar-input" id="link-q-cite" name="link-q-cite" placeholder="Paste or type a link (URL)" type="url" pattern="https?://.+" oninvalid="setCustomValidity('Please enter a valid URL')" 
+        <label for="q-cite">URL</label> <input class="editor-toolbar-input" id="q-cite" name="q-cite" placeholder="Paste or type a link (URL)" type="url" pattern="https?://.+" oninvalid="setCustomValidity('Please enter a valid URL')" 
         oninput="setCustomValidity('')"  />
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
@@ -81,48 +81,44 @@ export class AuthorToolbar extends ToolbarView {
       // TODO: draggable area in this widget
       //TODO: browse storage
       img: (options) => `<legend>Add an image with a description</legend>
-        <figure class="link-img-preview"><p>Drag an image here</p></figure>
-        <label for="link-img-file">Upload</label> <input class="editor-toolbar-input" id="link-img-file" name="link-img-file" type="file" />
-        <label for="link-img-src">URL</label> <input class="editor-toolbar-input" id="link-img-src" name="link-img-src" placeholder="https://example.org/path/to/image.jpg" required="" type="text" />
-        <label for="link-img-alt">Description</label> <input class="editor-toolbar-input" id="link-img-alt" name="link-img-alt" placeholder="Describe the image for people who are blind or have low vision." />
-        <label for="link-img-figcaption">Caption</label> <input class="editor-toolbar-input" id="link-img-figcaption" name="link-img-figcaption" placeholder="A caption or legend for the figure." />
+        <figure class="img-preview"><p>Drag an image here</p></figure>
+        <label for="img-file">Upload</label> <input class="editor-toolbar-input" id="img-file" name="img-file" type="file" />
+        <label for="img-src">URL</label> <input class="editor-toolbar-input" id="img-src" name="img-src" placeholder="https://example.org/path/to/image.jpg" required="" type="text" />
+        <label for="img-alt">Description</label> <input class="editor-toolbar-input" id="img-alt" name="img-alt" placeholder="Describe the image for people who are blind or have low vision." />
+        <label for="img-figcaption">Caption</label> <input class="editor-toolbar-input" id="img-figcaption" name="img-figcaption" placeholder="A caption or legend for the figure." />
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
       `,
-    note: (options) => annotateFormControls(options), // FIXME: this actually belongs in the other one
 
-/*
-TODO:
-    cite: (options) => `
-      '<input type="text" name="specref-search" value="" id="specref-search" class="editor-toolbar-input" placeholder="Enter terms to search for specifications" />',
-      '<input type="submit" name="specref-search-submit" value="Search" id="specref-search-submit" />',
-      '<div class="specref-search-results"></div>',
-      '<input type="radio" name="citation-type" value="ref-footnote" id="ref-footnote" /> <label for="ref-footnote">Footnote</label>',
-      '<input type="radio" name="citation-type" value="ref-reference" id="ref-reference" /> <label for="ref-reference">Reference</label>',
-      '<select id="citation-relation" name="citation-relation" class="editor-toolbar-select">',
-      getCitationOptionsHTML(),
-      '</select>',
-      '<input type="text" name="citation-url" value="" id="citation-url" class="editor-toolbar-input" placeholder="http://example.org/article#results" />',
-      '<textarea id="citation-content" cols="20" rows="1" class="editor-toolbar-textarea" placeholder="', this.placeholderText, '"></textarea>',
-      '<select id="article-language" name="language" class="editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
-      ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
-      ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-      `;
+      note: (options) => annotateFormControls(options), // FIXME: this actually belongs in the other one
 
-    semantics: (options) => `
-      '<label for="rdfa-about">about</label><input id="rdfa-about" class="editor-toolbar-input" placeholder="https://example.org/foo#bar" />',
-      '<label for="rdfa-resource">resource</label><input id="rdfa-resource" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
-      '<label for="rdfa-typeof">typeof</label><input id="rdfa-typeof" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
-      '<label for="rdfa-rel">rel</label><input id="rdfa-rel" class="editor-toolbar-input" placeholder="schema:url">',
-      '<label for="rdfa-property">property</label><input id="rdfa-property" class="editor-toolbar-input" placeholder="schema:name" />',
-      '<label for="rdfa-href">href</label><input id="rdfa-href" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
-      '<label for="rdfa-content">content</label><input id="rdfa-content" class="editor-toolbar-input" placeholder="Baz" />',
-      '<label for="rdfa-language">language</label><input id="rdfa-language" class="editor-toolbar-input" placeholder="en" />',
-      '<label for="rdfa-datatype">datatype</label><input id="rdfa-datatype" class="editor-toolbar-input" placeholder="https://example.net/baz" />
-      ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
-      ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-      `;
-*/
+      citation: (options) => `
+        <label for="citation-specref-search">Search</label><input class="editor-toolbar-input" id="citation-specref-search" name="citation-specref-search" placeholder="Enter terms to search for specifications" type="text" value="" />
+        <input id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="Search" />
+        <div class="specref-search-results"></div>
+        <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label for="ref-footnote">Footnote</label>
+        <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label for="ref-reference">Reference</label>
+        <select class="editor-toolbar-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML()}</select>
+        <input class="editor-toolbar-input" id="citation-url" name="citation-url" placeholder="https://example.org/article#results" type="text" value="" />
+        <textarea class="editor-toolbar-textarea" cols="20" id="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
+        <select class="editor-toolbar-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
+        ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
+        ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      `,
+
+      // semantics: (options) => `
+      // '<label for="rdfa-about">about</label><input id="rdfa-about" class="editor-toolbar-input" placeholder="https://example.org/foo#bar" />',
+      // '<label for="rdfa-resource">resource</label><input id="rdfa-resource" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
+      // '<label for="rdfa-typeof">typeof</label><input id="rdfa-typeof" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
+      // '<label for="rdfa-rel">rel</label><input id="rdfa-rel" class="editor-toolbar-input" placeholder="schema:url">',
+      // '<label for="rdfa-property">property</label><input id="rdfa-property" class="editor-toolbar-input" placeholder="schema:name" />',
+      // '<label for="rdfa-href">href</label><input id="rdfa-href" class="editor-toolbar-input" placeholder="https://example.net/baz" />',
+      // '<label for="rdfa-content">content</label><input id="rdfa-content" class="editor-toolbar-input" placeholder="Baz" />',
+      // '<label for="rdfa-language">language</label><input id="rdfa-language" class="editor-toolbar-input" placeholder="en" />',
+      // '<label for="rdfa-datatype">datatype</label><input id="rdfa-datatype" class="editor-toolbar-input" placeholder="https://example.net/baz" />
+      // ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
+      // ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      // `
 
 /*
 TODO:
@@ -134,26 +130,7 @@ TODO:
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
         `;
       */
-  }
-
-
-  function annotateFormControls(options) {
-    return `
-      <label for="${options.button}-tagging">Tags</label> <input class="editor-toolbar-input" id="${options.button}-tagging" name="comment-tagging" placeholder="Separate tags with commas" />
-      <textarea class="editor-toolbar-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
-  <!-- getLanguageOptionsHTML() getLicenseOptionsHTML() -->
-      <select class="editor-toolbar-select" name="${options.button}-language"><option selected="selected" value="">Choose a language</option><option value="en">English</option></select>
-      <select class="editor-toolbar-select" name="${options.button}-license"><option selected="selected" value="">Choose a license</option><option value="https://creativecommons.org/licenses/by/4.0/">CC-BY</option></select>
-  
-      <span class="annotation-location-selection">{getAnnotationLocationHTML}</span>
-  
-      <span class="annotation-inbox">{getAnnotationInboxLocationHTML}</span>
-  
-      ${getButtonHTML('submit', 'editor-toolbar-submit', 'Post', 'Post', { type: 'submit' })}
-      ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-    `
-  }
-
+    }
 
     return toolbarPopups;
   }
@@ -304,21 +281,21 @@ TODO:
 
   // populateForms takes form node and editorView.state
   populateFormImg(button, node, state) {
-    const fileInput = node.querySelector('[name="link-img-file"]');
-    const altInput = node.querySelector('[name="link-img-alt"]');
+    const fileInput = node.querySelector('[name="img-file"]');
+    const altInput = node.querySelector('[name="img-alt"]');
 
     // TODO: prepopulate alt from selection
     altInput.value = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
 
     fileInput.addEventListener("change", async (e) => {
-      const preview = node.querySelector('.link-img-preview');
+      const preview = node.querySelector('.img-preview');
 
       await updateImagePreview(e, fileInput, preview);
 
       const previewImageNode = preview.querySelector('img[src]');
 
       if (previewImageNode) {
-        const srcInput = node.querySelector('[name="link-img-src"]');
+        const srcInput = node.querySelector('[name="img-src"]');
         srcInput.value = previewImageNode.src;
       }
     });

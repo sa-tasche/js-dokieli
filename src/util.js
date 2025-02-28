@@ -189,6 +189,11 @@ function sortToLower(array, key) {
   });
 }
 
+function kebabToCamel(str) {
+  return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+}
+
+
 function matchAllIndex(string, regexp) {
   // const matches = Array.from(string.matchAll(regexp));
   // return matches.map(match => ({ match: match[0], index: match.index }));
@@ -261,5 +266,6 @@ export {
   matchAllIndex,
   isValidISBN,
   findPreviousDateTime,
-  getFormValues
+  getFormValues,
+  kebabToCamel
 };

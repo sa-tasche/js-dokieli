@@ -1,6 +1,6 @@
 import { schema } from "../../schema/base.js"
 import { highlightText as pmHighlightText, getTextQuoteHTML, wrapSelectionInMark, restoreSelection, getSelectedParentElement } from "../../utils/annotation.js";
-import { getRandomUUID, getFormValues } from "../../../util.js"
+import { getRandomUUID, getFormValues, kebabToCamel } from "../../../util.js"
 import { fragmentFromString } from "../../../doc.js"
 import { stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
@@ -42,7 +42,7 @@ export function formHandlerAnnotate(e, action) {
   const selection = window.getSelection();
 
   const range = selection.getRangeAt(0);
-  const selectedParentElement = getselectedParentElement(range)
+  const selectedParentElement = getSelectedParentElement(range);
 
   const formValues = getFormValues(e.target);
 
@@ -54,17 +54,34 @@ export function formHandlerAnnotate(e, action) {
   const selectionData = {
     selection,
     selector,
-    selectedParentElement
+    selectedParentElement,
+    selectedContent: DO.Editor.getSelectionAsHTML()
   };
+
+  const annotationInboxLocation = formValues['annotation-inbox'];
+  const annotationLocationPersonalStorage = formValues['annotation-location-personal-storage'];
+  const annotationLocationService = formValues['annotation-location-service'];
+
+  updateUserUI({ annotationInboxLocation, annotationLocationPersonalStorage, annotationLocationService })
 
   processAction(action, formValues, selectionData);
 
   // highlightText();
   wrapSelectionInMark(selection);
 
-  const annotationInbox = getInboxOfAnnotation(selectedParentElement);
-
   this.cleanupToolbar();
+}
+
+
+function updateUserUI(fields) {
+  Object.entries(fields).forEach(([key, value]) => {
+    const input = formValues[key];
+    Config.User.UI[key] = { checked: false };
+  
+    if (input) {
+      Config.User.UI[key].checked = input.checked;
+    }
+  });
 }
 
 
@@ -72,12 +89,13 @@ export function processAction(action, formValues, selectionData) {
   //TODO:
 
   const formData = getFormActionData(action, formValues, selectionData);
-  const { annotationDistribution } = formData;
+  const { annotationDistribution, ...otherFormData } = formData;
 
   //XXX: Sort of a placeholder switch but don't really need it now
   switch(action) {
     case 'approve': case 'disapprove': case 'specificity': case 'bookmark': case 'comment':
       annotationDistribution.forEach(annotation => {
+        Object.assign(annotation, otherFormData);
         var data = '';
 
         var noteData = createNoteData(annotation);
@@ -119,7 +137,7 @@ export function processAction(action, formValues, selectionData) {
             return positionActivity(annotation, options);
           })
 
-          .then(function() {
+          .then(() => {
             if (action != 'bookmark') {
               return sendNotification(annotation, options);
             }
@@ -163,16 +181,9 @@ export function getFormActionData(action, formValues, selectionData) {
     resourceIRI: Config.DocumentURL,
     containerIRI: window.location.href,
     contentType: 'text/html',
-    noteIRI: null,
-    noteURL: null,
-    profile: null,
     options: {},
     annotationDistribution: [],
-
-    activityTypeMatched: false,
-    activityIndex: Config.ActionActivityIndex[action],
-    annotationLocationPersonalStorage:'',
-    annotationLocationService: '',
+    formData: {}, // keep the forms with modified keys in this object
 
     parentNodeWithId: selectionData.selectedParentElement.closest('[id]'),
 
@@ -190,20 +201,25 @@ export function getFormActionData(action, formValues, selectionData) {
     // noteData: {},
     // note: '',
     // rights: '',
-    motivatedBy: 'oa:replying'
+    motivatedBy: Config.ActionToMotivation[action] || 'oa:replying'
   };
 
-    //XXX: Defaulting to id but overwritten by motivation symbol
-  data.refLabel = data.id;
-
-  const annotationFields = ['tagging', 'content', 'language', 'license', 'annotation-inbox', 'annotation-location-service', 'annotation-location-personal-storage'];
-
-  annotationFields.forEach(formField => {
-    const formValue = formValues[action + '-' + formField];
-    if (formValue) {
-      data[formField] = formValue;
+  //TODO: Revisit for security or other concerns since this stores any field with pattern `{action}-`
+  Object.entries(formValues).forEach(([key, value]) => {
+    if (key.startsWith(`${action}-`)) {
+      data.formData[key.substring(action.length + 1)] = value;
     }
-  })
+  });
+
+  //TODO: If the citation-type is separated into their own actions, we don't need this.
+  if (data['type'] == 'ref-footnote') {
+    data.motivatedBy = 'oa:describing';
+  }
+  else if (data['type'] == 'ref-reference') {
+    data.motivatedBy = 'oa:linking';
+  }
+
+  data.refLabel = DO.U.getReferenceLabel(data.motivatedBy);
 
   data.refId = 'r-' + data.id;
   data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
@@ -227,12 +243,13 @@ export function getFormActionData(action, formValues, selectionData) {
   //TODO: Revisit this to see whether resourceIRI should be the original or the one that gets updated after latestVersion check.
   data.selectorIRI = getAnnotationSelectorStateURI(data.resourceIRI, selector);
 
-  data.annotationDistribution = getAnnotationDistribution(action, formValues);
+  data.annotationDistribution = getAnnotationDistribution(action, data);
 
   return data;
 }
 
-//TODO: Overthinking now. Generalise this later to handle different selector and states, and parameters.
+//TODO: Generalise this later to handle different selector and states, and parameters ( https://www.w3.org/TR/selectors-states/ )
+//Also consider if in extension mode (and current document doesn't have dokieli, https://wicg.github.io/scroll-to-text-fragment/ )
 export function getAnnotationSelectorStateURI(baseURL, selector) {
   baseURL = baseURL || window.location.href;
   baseURL = stripFragmentFromString(baseURL);
@@ -251,16 +268,22 @@ export function isDuplicateLocation(annotationDistribution, containerIRI) {
 }
 
 
-export function getAnnotationDistribution(action, formValues) {
-  const { id, containerIRI, activityIndex, activityTypeMatched } = formValues;
-  const annotationInbox = formValues['annotation-inbox'];
-  const annotationLocationPersonalStorage = formValues['annotation-location-personal-storage'];
-  const annotationLocationService = formValues['annotation-location-service'];
+export function getAnnotationDistribution(action, data) {
+  const { id, containerIRI, selectionData, formData } = data;
+  const { selectedParentElement } = selectionData;
+  //This annotationInbox is about when the selected text is part of an existing Annotation, it gets that Annotation's own inbox which is used towards announcing the annotation that's about to be created. (This is not related to whether an inbox should be assigned to an annotation that's about to be created.)
+  const annotationInbox =  getInboxOfClosestNodeWithSelector(selectedParentElement, '.do[typeof="oa:Annotation"]');
+  //These are whether the user wants to send a copy of their annotation to a personal storage and/or to an annotation service.
+  const annotationLocationPersonalStorage = formData['annotation-location-personal-storage'];
+  const annotationLocationService = formData['annotation-location-service'];
 
   //Use if (activityIndex) when all action values are taken into account e.g., `note` in author mode
 
   var aLS, noteURL, noteIRI, contextProfile, fromContentType, contentType;
   var annotationDistribution = [];
+
+  const activityTypeMatched = false;
+  const activityIndex = Config.ActionActivityIndex[action];
 
   //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
   if ((annotationLocationPersonalStorage && Config.User.TypeIndex) || (!annotationLocationPersonalStorage && !annotationLocationService && Config.User.TypeIndex)) {
@@ -299,7 +322,7 @@ export function getAnnotationDistribution(action, formValues) {
 
             annotationDistribution.push(aLS);
           }
-          //TODO: Not handling instance yet.
+          //TODO: Not handling `instance` yet.
         }
       })
 
