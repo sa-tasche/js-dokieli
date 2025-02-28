@@ -471,3 +471,28 @@ export function createActivityData(annotation, options = {}) {
 }
 
 
+
+export function positionActivity(annotation, options) {
+  if (!annotation['canonical']) {
+    return Promise.resolve();
+  }
+
+  if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
+    return DO.U.showActivities(annotation['noteIRI'])
+      .catch((error) => {
+        console.log('Error showing activities:', error)
+        return Promise.resolve()
+      })
+  }
+  else {
+// console.log(options)
+    return DO.U.showActivities(annotation[ 'noteIRI' ], options)
+      .catch((error) => {
+        console.log('Error showing activities:', error)
+        return Promise.resolve()
+      })
+  }
+}
+
+
+
