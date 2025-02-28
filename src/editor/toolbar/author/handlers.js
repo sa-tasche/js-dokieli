@@ -200,6 +200,173 @@ export function formHandlerQ(e) {
   this.clearToolbarForm(e.target);
   this.clearToolbarButton('q');
 }
+//TODO
+export function formHandlerSparkline(e) {
+  input.search.focus();
+  input.search.value = selection;
+
+  var inputSearch = function(e){
+    if(e.which == 13) {
+      e.preventDefault();
+      e.stopPropagation();
+      _this.base.restoreSelection();
+      MediumEditor.util.insertHTMLCommand(document, e.target.value);
+      var selection = { start: initialSelectionState.start, end: (initialSelectionState.start + e.target.value.length) };
+      MediumEditor.selection.importSelection(selection, initialSelectedParentElement, document);
+      _this.base.checkSelection();
+      e.target.setAttribute('data-event-keyup-enter', true);
+      _this.showForm();
+      return;
+    }
+  }
+  if(!input.search.getAttribute('data-event-keyup-enter')) {
+    input.search.addEventListener('keyup', inputSearch, false);
+  }
+
+  var sparqlEndpoint = 'http://worldbank.270a.info/';
+  var resourceType = '<http://purl.org/linked-data/cube#DataSet>';
+  var sparklineGraphId = 'sparkline-graph';
+  var resultContainerId = 'sparkline-select';
+  //TODO: This should be from user's preference?
+  var lang = 'en';
+
+  //TODO: What's the best way for user input? ' of '
+  var textInputA = selection.split(' of ')[0];
+  var textInputB = selection.substr(selection.indexOf(' of ') + 4);
+
+  if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
+    Object.keys(DO.C.RefAreas).forEach(key => {
+      if(DO.C.RefAreas[key].toLowerCase() == textInputB.toLowerCase()) {
+        textInputB = key;
+      }
+    });
+  }
+
+  var sG = document.getElementById(sparklineGraphId);
+  if(sG) {
+    sG.parentNode.removeChild(sG);
+  }
+
+  if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
+    var refAreas;
+    Object.keys(DO.C.RefAreas).forEach(key => {
+      refAreas += '<option value="' + key + '">' + key + ' - ' + DO.C.RefAreas[key] + '</option>';
+    });
+    form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
+    var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
+    rA.addEventListener('change', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      textInputB = e.target.value;
+      input.search.value = textInputA + ' of ' + textInputB;
+      form.querySelector('#sparkline-selection-dataset').value = textInputA;
+      form.querySelector('#sparkline-selection-refarea').value = textInputB;
+
+      _this.base.restoreSelection();
+      MediumEditor.util.insertHTMLCommand(document, input.search.value);
+      var selection = { start: initialSelectionState.start, end: (initialSelectionState.start + input.search.value.length) };
+      MediumEditor.selection.importSelection(selection, initialSelectedParentElement, document);
+      _this.base.checkSelection();
+      _this.showForm();
+    });
+    return;
+  }
+
+  var options = {};
+  options.filter = {
+    dimensionProperty: 'sdmx-dimension:refArea',
+    dimensionRefAreaNotation: textInputB
+  };
+  options.optional = { prefLabels: ["dcterms:title"] };
+
+  var queryURL = DO.U.SPARQLQueryURL.getResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInputA.toLowerCase(), options);
+
+  queryURL = getProxyableIRI(queryURL);
+
+  form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '"></div>' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+  sG = document.getElementById(sparklineGraphId);
+
+  getResourceGraph(queryURL)
+    .then(g => {
+      sG.removeAttribute('class');
+      var triples = sortGraphTriples(g, { sortBy: 'object' });
+      return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
+    })
+    .then(listHTML => {
+      sG.innerHTML = listHTML;
+      form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
+    })
+    .then(x => {
+      var rC = document.getElementById(resultContainerId);
+      rC.addEventListener('change', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        var sparkline = sG.querySelectorAll('.sparkline, .sparkline-info');
+        for (var i = 0; i < sparkline.length; i++) {
+          sparkline[i].parentNode.removeChild(sparkline[i]);
+        }
+        form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+
+        var dataset = e.target.value;
+        var title = e.target.querySelector('*[value="' + e.target.value + '"]').textContent.trim();
+        //XXX: Should this replace the initial search term?
+        form.querySelector('#sparkline-selection-dataset').value = title;
+        form.querySelector('#sparkline-selection-refarea').value = textInputB.toUpperCase();
+
+        var refArea = textInputB.toUpperCase();
+        var paramDimension = "\n\
+?propertyRefArea rdfs:subPropertyOf* sdmx-dimension:refArea .\n\
+?observation ?propertyRefArea [ skos:notation '" + refArea + "' ] .";
+
+// console.log(dataset);
+// console.log(refArea);
+        var queryURL = DO.U.SPARQLQueryURL.getObservationsWithDimension(sparqlEndpoint, dataset, paramDimension);
+// console.log(queryURL);
+        queryURL = getProxyableIRI(queryURL);
+
+        getResourceGraph(queryURL)
+          .then(g => {
+            var triples = sortGraphTriples(g, { sortBy: 'object' });
+// console.log(triples);
+            if (triples.length) {
+              var observations = {};
+              triples.forEach(t => {
+                var s = t.subject.value;
+                var p = t.predicate.value;
+                var o = t.object.value;
+                observations[s] = observations[s] || {};
+                observations[s][p] = o;
+              });
+// console.log(observations);
+              var list = [], item;
+              Object.keys(observations).forEach(key => {
+                item = {};
+                observations[key][ns.qb.Observation.value] = key;
+                item[key] = observations[key];
+                list.push(item[key]);
+              });
+              var sortByKey = ns['sdmx-dimension'].refPeriod;
+              list.sort(function (a, b) {
+                return a[sortByKey].toLowerCase().localeCompare(b[sortByKey].toLowerCase());
+              });
+// console.log(list);
+              var options = {
+                url: dataset,
+                title: title
+              };
+              var sparkline = DO.U.getSparkline(list, options);
+              sG.insertAdjacentHTML('beforeend', '<span class="sparkline">' + sparkline + '</span> <span class="sparkline-info">' + triples.length + ' observations</span>');
+                form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
+            }
+            else {
+              //This shouldn't happen.
+              sG.insertAdjacentHTML('beforeend', '<span class="sparkline-info">0 observations. Select another.</span>');
+            }
+          });
+      });
+    });
+}
+
 
 
 //TODO: MOVE. Incorporate into Image handler?
