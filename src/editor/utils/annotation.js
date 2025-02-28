@@ -2,6 +2,7 @@ import { Plugin, TextSelection, NodeSelection, EditorState } from "prosemirror-s
 import { replaceSelectionWithDOMFragment, docSelectionToHtml } from "./dom.js";
 import { getRandomUUID, fragmentFromString } from "./../../util.js";
 import { escapeCharacters } from "./../../doc.js";
+import { Icon } from "../../ui/icons.js"
 
 // 1. new annotation
   // replace the selection with fragment 
@@ -17,48 +18,10 @@ import { escapeCharacters } from "./../../doc.js";
 
 //update DOM ()
 
-
-// this function should take from and to and just insert fragment wherever OR replace a selection
-export function highlightText(schema, view) {
-  return (state, dispatch) => {
-    const tr = state.tr;
-
-    const { selection, doc } = tr;
-    if (!(selection instanceof TextSelection) || selection.empty) return;
-
-    const { from, to } = selection;
-
-    //TODO: When highlighting within the same text node, just the selected string is simple.
-    //When selected content starts and ends at different nodes, there are two cases, e.g., in the same paragraph but crossing over a mark, e.g., "foo <em>bar</em> baz", and the other is like the selection is crossing over two paragraphs.
-
-    const selectedContent = docSelectionToHtml(doc, from, to);
-
-    // const htmlString = getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType, options);
-    const textQuoteSelector = getTextQuoteSelectorAuthor(view)(view);
-    // now take prefix and suffix and calculate from and to
-
-    console.log(textQuoteSelector)
-
-    const htmlString = `<span class="do ref" rel="schema:hasPart" resource="#r-a268d7c2-fbcc-4659-84fd-ddda1501dde8" typeof="http://purl.org/dc/dcmitype/Text"><mark datatype="rdf:HTML" id="r-a268d7c2-fbcc-4659-84fd-ddda1501dde8" property="rdf:value">${selectedContent}</mark><sup class="ref-annotation"><a href="#a268d7c2-fbcc-4659-84fd-ddda1501dde8" rel="cito:hasReplyFrom" resource="https://csarven.solidcommunity.net/bfffac84-e174-49ad-98f2-0308367906d8.ttl">💬</a></sup></span>`;
-
-    // <span class="ref do" rel="schema:hasPart" resource="#h-selector(type=TextQuoteSelector,prefix=engaging%20content%2C%20such%20as%20maps%2C%20,exact=expert%20insights,suffix=%20for%20your%20reviews%2C%20nutritional%20i)" typeof="oa:Annotation" contenteditable="false"><span rel="oa:motivatedBy" resource="oa:highlighting"></span><span rel="oa:hasTarget" resource="#selector(type=TextQuoteSelector,prefix=engaging%20content%2C%20such%20as%20maps%2C%20,exact=expert%20insights,suffix=%20for%20your%20reviews%2C%20nutritional%20i)" typeof="http://purl.org/dc/dcmitype/Text"><mark datatype="rdf:HTML" id="selector(type=TextQuoteSelector,prefix=engaging%20content%2C%20such%20as%20maps%2C%20,exact=expert%20insights,suffix=%20for%20your%20reviews%2C%20nutritional%20i)" property="rdf:value">expert insights</mark><sup class="ref-highlighting"><a rel="oa:hasTarget" href="#selector(type=TextQuoteSelector,prefix=engaging%20content%2C%20such%20as%20maps%2C%20,exact=expert%20insights,suffix=%20for%20your%20reviews%2C%20nutritional%20i)">#</a></sup></span></span>
-
-
-    var node = fragmentFromString(htmlString);
-
-    // // const options = { inheritMarks: true }
-
-    // either use existing sselection (if new annotation) or create a new selection object (somehow) from from and to
-    replaceSelectionWithDOMFragment(view, node);
-
-    return true;
-  };
-}
-
 //getTextQuoteHTML modified from dokieli.js
-export function getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options) {
-  if (typeof exact !== "string") { throw new Error(`getTextQuoteHTML: exact is of type ${typeof exact}`) }
-  if (!exact.length) { throw new Error(`getTextQuoteHTML: exact is empty`) }
+export function getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType, options) {
+  if (typeof selectedContent !== "string") { throw new Error(`getTextQuoteHTML: selectedContent is of type ${typeof selectedContent}`) }
+  if (!selectedContent.length) { throw new Error(`getTextQuoteHTML: selectedContent is empty`) }
 
   refId = refId || getRandomUUID();
   motivatedBy = motivatedBy || 'oa:replying';
@@ -73,7 +36,7 @@ export function getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options)
     refOpen = '<span class="ref' + doMode + '" rel="schema:hasPart" resource="#h-' + refId + '" typeof="oa:Annotation"><span rel="oa:motivatedBy" resource="oa:highlighting"></span><span rel="oa:hasTarget" resource="#' + refId + '" typeof="http://purl.org/dc/dcmitype/Text">';
     refClose = '</span></span>';
   }
-  var mark = '<mark datatype="rdf:HTML" id="'+ refId +'" property="rdf:value">' + exact + '</mark>';
+  var mark = '<mark datatype="rdf:HTML" id="'+ refId +'" property="rdf:value">' + selectedContent + '</mark>';
 
   return refOpen + mark + docRefType + refClose;
 }
@@ -86,100 +49,6 @@ export function getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options)
 //   prefix: 'Lorem ',
 //   suffix: ' dolor'
 // }
-//TODO: Lo
-// FIXME: refactor . do not pass around Editor instance, maybe pass the restoreSelection fn when needed 'onRestoreSelection' or similar; or put Editor in Config.Editor
-export function getTextQuoteSelector(editor, mode, view, options) {
-  if (!editor) return;
-
-  switch (mode) {
-    case "author":
-      return getTextQuoteSelectorAuthor(view, options);
-    case "social": default:
-      return getTextQuoteSelectorSocial(editor);
-  }
-}
-
-/**
- * @param {Object} editor - The Editor instance
- * @param {Object} view - The ProseMirror Editor view
- * @param {Object} options
- */
-export function getTextQuoteSelectorAuthor(view, options = {}) {
-
-  //ProseMirror state.selection
-  const { selection , doc } = view.state;
-  const { from, to } = selection;
-  //TODO: Use Config.ContextLength
-  const contextLength = options.contextLength || 32;
-
-  var exact = doc.textBetween(from, to); // consider \n
-  const textNode = view.domAtPos(from).node;
-  const selectedParentElement = textNode.parentNode;
-  console.log(selectedParentElement)
-
-  // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, this.document);
-  // var prefixStart = Math.max(0, start - Config.ContextLength);
-  // console.log('pS ' + prefixStart);
-  // var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
-  let prefix = doc.textBetween(from - contextLength, from)  // consider \n
-  // console.log('-' + prefix + '-');
-  prefix = escapeCharacters(prefix);
-  
-  // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
-  // console.log('sE ' + suffixEnd);
-  let suffix =  doc.textBetween(to, to + contextLength)  // consider \n
-  // console.log('-' + suffix + '-');
-  suffix = escapeCharacters(suffix);
-
-  return {
-    type: 'TextQuoteSelector',
-    exact,
-    prefix,
-    suffix
-  }
-}
-
-/**
- * @param {Object} editor - The Editor instance
- * @param {Object} options
- */
-export function getTextQuoteSelectorSocial(editor, options = {}) {
-  if (!editor) return;
-  // FIXME: refactor this
-  editor.restoreSelection();
-
-  const selection = window.getSelection();
-  const range = selection.getRangeAt(0);
-
-  var selectedParentElement = getSelectedParentElement(range);
-// console.log('getSelectedParentElement:', selectedParentElement);
-
-  const selectionHTML = getSelectionAsHTML(selection); //.replace(Config.Editor.regexEmptyHTMLTags, '');
-
-  var exact = selectionHTML;
-  // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, document);
-  const selectionState = exportSelection(selectedParentElement, selection);
-  var start = selectionState.start;
-  var end = selectionState.end;
-  var prefixStart = Math.max(0, start - Config.ContextLength);
-// console.log('pS ' + prefixStart);
-  var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
-// console.log('-' + prefix + '-');
-  prefix = escapeCharacters(prefix);
-
-  var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
-// console.log('sE ' + suffixEnd);
-  var suffix = selectedParentElement.textContent.substr(end, suffixEnd - end);
-// console.log('-' + suffix + '-');
-  suffix = escapeCharacters(suffix);
-
-  return {
-    type: 'TextQuoteSelector',
-    exact,
-    prefix,
-    suffix
-  }
-}
 
 //From https://github.com/yabwe/medium-editor/blob/master/src/js/selection.js
 export function getSelectedParentElement(range) {
@@ -339,11 +208,14 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 }
 
 //TODO: This function returns noteData and also replaces the selection with an HTML reference to the note. Make it so that the reference related stuff is done elsewehere.
-export function createNoteData(annotation) {
-  const { action, id, datetime, profile, selectionData, refId, refLabel, targetIRI, resourceIRI, selectionLanguage, targetLanguage } = annotation;
+export function createNoteData(data, annotation) {
+  const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
 
-  var note = '';
-  var mode = '';
+  const { tagging, content, language, license, ['ref-type']: refType, url } = formData;
+
+  // aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
+
+  var mode;
   var ref;
 
   //TODO: This should be an object elsewhere?
@@ -356,8 +228,6 @@ export function createNoteData(annotation) {
       break;
   }
 
-  let motivatedBy;
-
   switch(action) {
     // case 'sparkline':
     //   var figureIRI = generateAttributeId(null, opts.selectionDataSet);
@@ -368,21 +238,8 @@ export function createNoteData(annotation) {
 
     //External Note
     case 'approve': case 'disapprove': case 'specificity': case 'comment':
-      if (action === 'approve' || action === 'disapprove') {
-        motivatedBy = 'oa:assessing';
-      }
-      else if (action === 'specificity') {
-        motivatedBy = 'oa:questioning';
-      }
-      else if (action === 'comment') {
-        motivatedBy = 'oa:replying';
-      }
-
-      if (action !== 'article') {
-        refLabel = DO.U.getReferenceLabel(motivatedBy);
-      }
-
-      ref = selectionData.selection;
+      //XXX: No need to replace the nodes with itself.
+      // ref = selectionData.selectedContent;
 
       noteData = {
         "type": action,
@@ -410,7 +267,7 @@ export function createNoteData(annotation) {
       };
 
       var bodyObject = {
-        "value": opts.content
+        "value": content
       };
 
       if (language) {
@@ -422,7 +279,7 @@ export function createNoteData(annotation) {
         bodyObject["rights"] = bodyObject["license"] = license;
       }
 
-      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
+      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(tagging));
 
       if (Config.User.IRI) {
         noteData.creator["iri"] = Config.User.IRI;
@@ -434,149 +291,16 @@ export function createNoteData(annotation) {
       if (Config.User.URL) {
         noteData.creator["url"] = Config.User.URL;
       }
-      if (opts.annotationInboxLocation && Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
+      if (annotationInboxLocation && Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
         noteData.inbox = Config.User.TypeIndex[ns.as.Announce.value];
       }
 
-      // note = DO.U.createNoteDataHTML(noteData);
-      break;
-
-    //Internal Note
-    case 'note':
-      motivatedBy = "oa:commenting";
-      refLabel = DO.U.getReferenceLabel(motivatedBy);
-      var docRefType = '<sup class="ref-comment"><a href="#' + id + '"rel="cito:isCitedBy">' + refLabel + '</a></sup>';
-      var noteType = 'note';
-      noteData = {
-        "type": noteType,
-        "mode": "read",
-        "motivatedByIRI": motivatedBy,
-        "id": id,
-        "refId": refId,
-        "refLabel": refLabel,
-        // "iri": noteIRI, //e.g., https://example.org/path/to/article
-        "creator": {},
-        "datetime": datetime,
-        "target": {
-          "iri": targetIRI,
-          "source": resourceIRI,
-          "selector": {
-            "exact": exact,
-            "prefix": prefix,
-            "suffix": suffix,
-            "language": selectionLanguage
-          },
-          "language": targetLanguage
-          //TODO: state
-        }
-      };
-
-      var bodyObject = {
-        "purpose": "describing",
-        "value": opts.content
-      };
-
-      if (language) {
-        noteData["language"] = language;
-        bodyObject["language"] = language;
-      }
-      if (license) {
-        noteData["rights"] = noteData["license"] = license;
-        bodyObject["rights"] = bodyObject["license"] = license;
-      }
-
-      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
-
-      if (Config.User.IRI) {
-        noteData.creator["iri"] = Config.User.IRI;
-      }
-      if (Config.User.Name) {
-        noteData.creator["name"] = Config.User.Name;
-      }
-      noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
-      if (Config.User.URL) {
-        noteData.creator["url"] = Config.User.URL;
-      }
-
-      // note = DO.U.createNoteDataHTML(noteData);
-
-      ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType);
-      break;
-
-    case 'cite': //footnote reference
-      switch(opts.citationType) {
-        case 'ref-footnote': default:
-          motivatedBy = "oa:describing";
-          refLabel = DO.U.getReferenceLabel(motivatedBy);
-          docRefType = '<sup class="' + opts.citationType + '"><a href="#' + id + '" rel="cito:isCitedBy">' + refLabel + '</a></sup>';
-          noteData = {
-            "type": opts.citationType,
-            "mode": mode,
-            "motivatedByIRI": motivatedBy,
-            "id": id,
-            "refId": refId,
-            "refLabel": refLabel,
-            // "iri": noteIRI,
-            "datetime": datetime,
-            "citationURL": opts.url
-          };
-
-          var bodyObject = {
-            "value": opts.content
-          };
-
-          if (language) {
-            noteData["language"] = language;
-            bodyObject["language"] = language;
-          }
-          if (license) {
-            noteData["rights"] = noteData["license"] = license;
-            bodyObject["rights"] = bodyObject["license"] = license;
-          }
-
-          noteData["body"] = [bodyObject];
-
-          // note = DO.U.createNoteDataHTML(noteData);
-          break;
-
-        case 'ref-reference':
-          motivatedBy = 'oa:linking';
-          refLabel = DO.U.getReferenceLabel('oa:linking');
-          docRefType = '<span class="' + opts.citationType + '">' + Config.RefType[Config.DocRefType].InlineOpen + '<a href="#' + id + '">' + refLabel + '</a>' + Config.RefType[Config.DocRefType].InlineClose + '</span>';
-          break;
-      }
-
-      ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType);
-      break;
-      // case 'reference':
-      //   ref = '<span class="ref" about="[this:#' + refId + ']" typeof="dctypes:Text"><span id="'+ refId +'" property="schema:description">' + this.base.selection + '</span> <span class="ref-reference">' + Config.RefType[Config.DocRefType].InlineOpen + '<a rel="cito:isCitedBy" href="#' + id + '">' + refLabel + '</a>' + Config.RefType[Config.DocRefType].InlineClose + '</span></span>';
-      // break;
-
-    case 'semantics':
-      //TODO: inlist, prefix
-      //TODO: lang/xmlllang
-      noteData = {
-        about: opts.about,
-        typeOf: opts.typeOf,
-        rel: opts.rel,
-        href: opts.href,
-        resource: opts.resource,
-        property: opts.property,
-        content: opts.content,
-        datatype: opts.datatype,
-        lang: opts.language,
-        textContent: _this.base.selection
-      };
-      ref = createRDFaHTML(noteData, 'expanded');
       break;
 
     case 'bookmark':
-      noteType = 'bookmark';
-      motivatedBy = "oa:bookmarking";
-      refLabel = DO.U.getReferenceLabel(motivatedBy);
       docRefType = '';
       noteData = {
-        "type": noteType,
+        "type": action,
         "mode": mode,
         "motivatedByIRI": motivatedBy,
         "id": id,
@@ -590,9 +314,9 @@ export function createNoteData(annotation) {
           "iri": targetIRI,
           "source": resourceIRI,
           "selector": {
-            "exact": exact,
-            "prefix": prefix,
-            "suffix": suffix,
+            "exact": selectionData.selector.exact,
+            "prefix": selectionData.selector.prefix,
+            "suffix": selectionData.selector.suffix,
             "language": selectionLanguage
           },
           "language": targetLanguage
@@ -602,7 +326,7 @@ export function createNoteData(annotation) {
 
       var bodyObject = {
         "purpose": "describing",
-        "value": opts.content
+        "value": content
       };
 
       if (language) {
@@ -614,7 +338,7 @@ export function createNoteData(annotation) {
         bodyObject["rights"] = bodyObject["license"] = license;
       }
 
-      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
+      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(tagging));
 
       if (Config.User.IRI) {
         noteData.creator["iri"] = Config.User.IRI;
@@ -628,11 +352,132 @@ export function createNoteData(annotation) {
       }
 
       // note = DO.U.createNoteDataHTML(noteData);
-      ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType, { 'do': true });
+      ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType, { 'do': true });
       break;
+
+    //Internal Note
+    case 'note':
+      var docRefType = '<sup class="ref-comment"><a href="#' + id + '"rel="cito:isCitedBy">' + refLabel + '</a></sup>';
+
+      noteData = {
+        "type": action,
+        "mode": "read",
+        "motivatedByIRI": motivatedBy,
+        "id": id,
+        "canonical": 'urn:uuid:' + id,
+        "refId": refId,
+        "refLabel": refLabel,
+        // "iri": noteIRI, //e.g., https://example.org/path/to/article
+        "creator": {},
+        "datetime": datetime,
+        "target": {
+          "iri": targetIRI,
+          "source": resourceIRI,
+          "selector": {
+            "exact": selectionData.selector.exact,
+            "prefix": selectionData.selector.prefix,
+            "suffix": selectionData.selector.suffix,
+            "language": selectionLanguage
+          },
+          "language": targetLanguage
+          //TODO: state
+        }
+      };
+
+      var bodyObject = {
+        "purpose": "describing",
+        "value": content
+      };
+
+      if (language) {
+        noteData["language"] = language;
+        bodyObject["language"] = language;
+      }
+      if (license) {
+        noteData["rights"] = noteData["license"] = license;
+        bodyObject["rights"] = bodyObject["license"] = license;
+      }
+
+      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(tagging));
+
+      if (Config.User.IRI) {
+        noteData.creator["iri"] = Config.User.IRI;
+      }
+      if (Config.User.Name) {
+        noteData.creator["name"] = Config.User.Name;
+      }
+      noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+      if (Config.User.URL) {
+        noteData.creator["url"] = Config.User.URL;
+      }
+
+      ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
+      break;
+
+    case 'citation': //footnote reference
+      switch(refType) {
+        case 'ref-footnote': default:
+          docRefType = '<sup class="' + refType + '"><a href="#' + id + '" rel="cito:isCitedBy">' + refLabel + '</a></sup>';
+          noteData = {
+            "type": refType,
+            "mode": mode,
+            "motivatedByIRI": motivatedBy,
+            "id": id,
+            "refId": refId,
+            "refLabel": refLabel,
+            // "iri": noteIRI,
+            "datetime": datetime,
+            "citationURL": url
+          };
+
+          var bodyObject = {
+            "value": content
+          };
+
+          if (language) {
+            noteData["language"] = language;
+            bodyObject["language"] = language;
+          }
+          if (license) {
+            noteData["rights"] = noteData["license"] = license;
+            bodyObject["rights"] = bodyObject["license"] = license;
+          }
+
+          noteData["body"] = [bodyObject];
+
+          break;
+
+        case 'ref-reference':
+          docRefType = '<span class="' + refType + '">' + Config.RefType[Config.DocRefType].InlineOpen + '<a href="#' + id + '">' + refLabel + '</a>' + Config.RefType[Config.DocRefType].InlineClose + '</span>';
+          break;
+      }
+
+      ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
+      break;
+
+    // case 'semantics':
+    //   //TODO: inlist, prefix
+    //   //TODO: lang/xmlllang
+    //   noteData = {
+    //     about: opts.about,
+    //     typeOf: opts.typeOf,
+    //     rel: opts.rel,
+    //     href: opts.href,
+    //     resource: opts.resource,
+    //     property: opts.property,
+    //     content: opts.content,
+    //     datatype: opts.datatype,
+    //     lang: opts.language,
+    //     textContent: _this.base.selection
+    //   };
+    //   ref = createRDFaHTML(noteData, 'expanded');
+    //   break;
   }
 
-  DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+  if (ref) {
+    DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+  }
 
   return noteData;
 }
+
