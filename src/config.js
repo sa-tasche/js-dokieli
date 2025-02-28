@@ -195,6 +195,19 @@ export default {
     "bookmark:Bookmark": "🔖"
   },
 
+  ActionToMotivation: {
+    'approve': 'oa:assessing',
+    'disapprove': 'oa:assessing',
+    'specificity': 'oa:questioning',
+    'bookmark': 'oa:bookmarking',
+    'comment': 'oa:replying',
+    'note': 'oa:commenting',
+    'citation': 'oa:linking',
+    'footnote': 'oa:describing',
+    'reference': 'oa:linking',
+    'semantics': 'oa:classifying'
+  },
+
   DocumentDoItems: [
     'create-new-document',
     'document-items',
