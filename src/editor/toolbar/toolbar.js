@@ -60,6 +60,7 @@ export class ToolbarView {
     document.addEventListener("mousedown", this.updateToolbarVisibilityHandler);
   }
 
+  // TODO: define default behavior for all of these methods
   restoreSelection() {
     return restoreSelection(this.selection)
   }
@@ -67,6 +68,16 @@ export class ToolbarView {
   replaceSelectionWithFragment() {
 
   }
+
+  getSelectionAsHTML() {
+
+  }
+
+
+  getTextQuoteSelector() {
+
+  }
+  
   
   getToolbarPopups() {
     return {}

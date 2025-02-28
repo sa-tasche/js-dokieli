@@ -201,7 +201,42 @@ TODO:
     };
   }
 
-  replaceSelectionWtihFragment(fragment) {
+  getTextQuoteSelector() {
+    const view = this.editorView;
+    //ProseMirror state.selection
+    const { selection , doc } = view.state;
+    const { from, to } = selection;
+    //TODO: Use Config.ContextLength
+    const contextLength = options.contextLength || 32;
+
+    var exact = doc.textBetween(from, to); // consider \n
+    const textNode = view.domAtPos(from).node;
+    const selectedParentElement = textNode.parentNode;
+    console.log(selectedParentElement)
+
+    // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, this.document);
+    // var prefixStart = Math.max(0, start - Config.ContextLength);
+    // console.log('pS ' + prefixStart);
+    // var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
+    let prefix = doc.textBetween(from - contextLength, from)  // consider \n
+    // console.log('-' + prefix + '-');
+    prefix = escapeCharacters(prefix);
+    
+    // var suffixEnd = Math.min(selectedParentElement.textContent.length, end + Config.ContextLength);
+    // console.log('sE ' + suffixEnd);
+    let suffix =  doc.textBetween(to, to + contextLength)  // consider \n
+    // console.log('-' + suffix + '-');
+    suffix = escapeCharacters(suffix);
+
+    return {
+      type: 'TextQuoteSelector',
+      exact,
+      prefix,
+      suffix
+    }
+  }
+  
+
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
     
