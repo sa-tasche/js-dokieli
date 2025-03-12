@@ -11,6 +11,21 @@ export const Editor = {
     }
   },
 
+  toggleEditor: function(mode, e, selector) {
+    DO.C.User.Role = mode;
+    updateLocalStorageProfile(DO.C.User);
+    DO.Editor.init(mode);
+    DO.U.showEditorModeActionMessage(e, mode);
+    DO.C.EditorEnabled = (mode === 'author');
+
+    setEditorDataItems(e);
+
+    //XXX: This should be perhaps limited to certain nodes?
+    document.querySelectorAll('.do').forEach(node => {
+      node.setAttribute('contenteditable', 'false');
+    });
+  },
+
   setEditorDataItems(e) {
     if (e && e.target.closest('button.editor-enable')) {
       DO.C.ContentEditable = true;
@@ -261,21 +276,6 @@ export const Editor = {
     else if (e && e.target.closest('button.editor-disable')) {
       setEditSelections();
     }
-  },
-
-  toggleEditor: function(mode, e, selector) {
-    DO.C.User.Role = mode;
-    updateLocalStorageProfile(DO.C.User);
-    Editor.init(mode);
-    DO.U.showEditorModeActionMessage(e, mode);
-    DO.C.EditorEnabled = (mode === 'author');
-
-    setEditorDataItems(e);
-
-    //XXX: This should be perhaps limited to certain nodes?
-    document.querySelectorAll('.do').forEach(node => {
-      node.setAttribute('contenteditable', 'false');
-    });
   },
 
 } //DO.U.Editor
