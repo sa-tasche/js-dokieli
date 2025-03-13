@@ -1,4 +1,4 @@
-import { Icon} from "./icons";
+import { Icon} from "./icons.js";
 
 export const buttonIcons = {
   p: {
@@ -33,7 +33,7 @@ export const buttonIcons = {
     title: 'link',
     icon: Icon['.fas.fa-link']
   },
-  cite: {
+  citation: {
     title: 'cite',
     icon: Icon['.fas.fa-hashtag']
   },
