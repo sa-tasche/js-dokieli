@@ -1,16 +1,18 @@
 import { formHandlerAnnotate } from "./handlers.js"
-import { ToolbarView, annotateFormControls } from "../toolbar.js"
+import { ToolbarView, annotateFormControls, updateAnnotationInboxForm, updateAnnotationServiceForm } from "../toolbar.js"
 import { getAnnotationLocationHTML, getAnnotationInboxLocationHTML, getDocument } from "../../../doc.js";
 import Config from "../../../config.js";
 import { fragmentFromString } from "../../../util.js";
 import { showUserIdentityInput } from "../../../auth.js";
+import { getLinkRelation } from "../../../graph.js";
+import { getSelectedParentElement } from "../../utils/annotation.js";
 
 const ns = Config.ns;
 
 export class SocialToolbar extends ToolbarView {
   constructor(mode, buttons, editorView) {
     super(mode, buttons, editorView)
-    console.log(mode)
+    console.log('mode:', mode);
 
     this.editorView = editorView;
   }
@@ -18,7 +20,7 @@ export class SocialToolbar extends ToolbarView {
   // FIXME: this doesn't work properly 
   updateToolbarVisibility(e) {
     if (this.dom.classList.contains('editor-toolbar-active') && !e.target.closest('.do') && e.target.closest('input[type]')?.type !== 'file') { 
-console.log('------here now-----')
+      console.log('------HERE NOW: cleanupToolbar');
       this.cleanupToolbar();
     }
   }
@@ -145,28 +147,6 @@ console.log('------here now-----')
     }
   }
 
-  populateFormAnnotate(action, node) {
-    updateAnnotationInboxForm(action);
-
-    getLinkRelation(ns.oa.annotationService.value, null, getDocument())
-      .then(url => {
-        Config.AnnotationService = url[0];
-        updateAnnotationServiceForm(action);
-        showAction();
-      })
-      .catch(reason => {
-        //TODO signinRequired
-        if(this.signInRequired() && !Config.User.IRI) {
-          showUserIdentityInput();
-        }
-        else {
-          updateAnnotationServiceForm(action);
-          // XXX: Revisit. Was used in MediumEditor. Probably no longer needed?
-          // showAction();
-        }
-      });
-  }
-  
   signInRequired(button) {
     const buttons = {
       approve: true,
@@ -179,14 +159,33 @@ console.log('------here now-----')
     return buttons[button];
   }
 
+  populateFormAnnotate(action, node) {
+    updateAnnotationInboxForm(action);
+
+    getLinkRelation(ns.oa.annotationService.value, null, getDocument())
+      .then(url => {
+        Config.AnnotationService = url[0];
+        updateAnnotationServiceForm(action);
+      })
+      .catch(reason => {
+        //TODO signinRequired
+        if(this.signInRequired(action) && !Config.User.IRI) {
+          showUserIdentityInput();
+        }
+        else {
+          updateAnnotationServiceForm(action);
+        }
+      });
+  }
+
   //TODO function getTransactionHistory()
   getPopulateForms() {
     return {
-      approve: this.populateFormAnnotate,
-      disapprove: this.populateFormAnnotate,
-      specificity: this.populateFormAnnotate,
-      bookmark: this.populateFormAnnotate,
-      comment: this.populateFormAnnotate
+    approve: this.populateFormAnnotate.bind(this),
+    disapprove: this.populateFormAnnotate.bind(this),
+    specificity: this.populateFormAnnotate.bind(this),
+    bookmark: this.populateFormAnnotate.bind(this),
+    comment: this.populateFormAnnotate.bind(this)
     }
   }
 }
