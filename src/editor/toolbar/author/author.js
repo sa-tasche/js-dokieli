@@ -1,9 +1,10 @@
 import { toggleMark, setBlockType } from "prosemirror-commands"
 import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
-import { buttonIcons } from "../../button-icons.js"
-import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ } from "./handlers.js"
+import { buttonIcons } from "./../../../ui/button-icons.js"
+import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
+import { getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
 
 export class AuthorToolbar extends ToolbarView {
   constructor(mode, buttons, editorView) {
@@ -29,7 +30,7 @@ export class AuthorToolbar extends ToolbarView {
       { name: 'formHandlerBlockquote', fn: formHandlerBlockquote },
       { name: 'formHandlerImg', fn: formHandlerImg },
       { name: 'formHandlerCitation', fn: formHandlerCitation },
-      { name: 'formHandlerSparkline', fn: formHandlerSparkline },
+      // { name: 'formHandlerSparkline', fn: formHandlerSparkline },
       { name: 'formHandlerAnnotate', fn: formHandlerAnnotate },
     ];
   }
@@ -171,8 +172,7 @@ TODO:
 
       // TODO: find a way to pass all the attributes in the attributes object without the need for a property with a copy
       const imageNode = schema.nodes.img.create({ originalAttributes: attrs });
-  console.log(attrs)
-  console.log(imageNode)
+      // console.log(attrs, imageNode)
   
       tr.replaceSelectionWith(imageNode);
   
