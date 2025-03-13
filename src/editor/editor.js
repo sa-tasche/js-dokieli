@@ -69,6 +69,11 @@ export class Editor {
     return toolbarView.restoreSelection()
   }
 
+  importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
+  }
+
   replaceSelectionWithFragment(){
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
     return toolbarView.replaceSelectionWithFragment()
@@ -149,10 +154,16 @@ export class Editor {
     }
   }
 
+  updateDocumentTitle() {
+    var h1 = document.querySelector('h1');
+    if (h1) {
+      document.title = h1.textContent.trim();
+    }
+  }
+
   setEditorDataItems(e) {
     if (e && e.target.closest('button.editor-enable')) {
-      // document.addEventListener('click', DO.U.updateDocumentTitle);
-      DO.U.updateDocumentTitle();
+      this.updateDocumentTitle();
       var documentURL = Config.DocumentURL;
 
       //XXX: THIS MAY NO LONGER BE NEEDED
