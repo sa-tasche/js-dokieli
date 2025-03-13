@@ -8015,22 +8015,6 @@ WHERE {\n\
       }
     },
 
-    getTextQuoteHTML: function(refId, motivatedBy, exact, docRefType, options){
-      options = options || {};
-
-      var doMode = (options.do) ? ' do' : '';
-
-      var refOpen = '<span class="ref' + doMode + '" rel="schema:hasPart" resource="#' + refId + '" typeof="http://purl.org/dc/dcmitype/Text">';
-      var refClose = '</span>';
-      if (motivatedBy == 'oa:highlighting') {
-        refOpen = '<span class="ref' + doMode + '" rel="schema:hasPart" resource="#h-' + refId + '" typeof="oa:Annotation"><span rel="oa:motivatedBy" resource="oa:highlighting"></span><span rel="oa:hasTarget" resource="#' + refId + '" typeof="http://purl.org/dc/dcmitype/Text">';
-        refClose = '</span></span>';
-      }
-      var mark = '<mark datatype="rdf:HTML" id="'+ refId +'" property="rdf:value">' + exact + '</mark>';
-
-      return refOpen + mark + docRefType + refClose;
-    },
-
     positionNote: function(refId, noteId, refLabel) {
       var ref =  document.querySelector('[id="' + refId + '"]');
       var note = document.querySelector('[id="' + noteId + '"]');
