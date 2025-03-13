@@ -580,3 +580,27 @@ export function getTextQuoteSelectorFromLocation(location) {
   }
 }
 
+
+export function showTextQuoteSelector(containerNode) {
+  var motivatedBy = 'oa:highlighting';
+  var selector = getTextQuoteSelectorFromLocation(document.location);
+  if (selector && selector.exact && selector.exact.length) {
+    //XXX: TODO: Copied from showAnnotation
+
+    var refId = document.location.hash.substring(1);
+    var refLabel = getReferenceLabel(motivatedBy);
+
+    containerNode = containerNode || getDocumentContentNode(document);
+
+    var docRefType = '<sup class="ref-highlighting"><a rel="oa:hasTarget" href="#' + refId + '">' + refLabel + '</a></sup>';
+
+    var options = {
+      'do': true,
+      'mode': '#selector'
+    };
+// console.log(selector)
+// console.log(refId)
+    importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
+  }
+}
+
