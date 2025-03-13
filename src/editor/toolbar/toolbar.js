@@ -1,7 +1,8 @@
 import { schema } from "../schema/base.js"
 import { buttonIcons } from "../../ui/button-icons.js"
-import { fragmentFromString } from "../../doc.js";
-import { cloneSelection, restoreSelection } from "./utils/selection"
+import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
+import { getTextQuoteHTML, cloneSelection } from "../utils/annotation.js";
+import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";
 
 
 export class ToolbarView {
@@ -62,7 +63,7 @@ export class ToolbarView {
 
   // TODO: define default behavior for all of these methods
   restoreSelection() {
-    return restoreSelection(this.selection)
+    // return restoreSelection(this.selection)
   }
 
   replaceSelectionWithFragment() {
@@ -135,7 +136,7 @@ export class ToolbarView {
     //   // if (pm) {
       this.updateButtonState(schema, buttonNode, button,this.editorView);
     // // }
-      const formControlsHTML = toolbarPopups[button];
+      const formControlsHTML = this.toolbarPopups[button];
 
       if (formControlsHTML) {
         const toolbarForm = document.createElement('form');
@@ -147,7 +148,8 @@ export class ToolbarView {
 
         // Populate forms where applicable
         if (this.populateForms[button]) {
-          this.populateForms[button](button, toolbarForm, this.editorView.state);
+          const state = this.editorView ? this.editorView.state : null;
+          this.populateForms[button](button, toolbarForm, state);
         }
 
         // Add event listeners where applicable
@@ -178,7 +180,7 @@ export class ToolbarView {
           this.buttons.forEach(({button: btn}) => {
             const btnNode = this.dom.querySelector(`#${'editor-button-' + btn}`);
 
-            if (toolbarPopups[btn]) {
+            if (this.toolbarPopups[btn]) {
               //Except the one that we've just clicked.
               if (btn === button) return;
               //Clean up all or any that's active.
@@ -192,7 +194,7 @@ export class ToolbarView {
           })
 
           //If there is a popup (toolbarForm) associated with this button.
-          if (toolbarPopups[button]) {
+          if (this.toolbarPopups[button]) {
             const toolbarForm = this.dom.querySelector(`#editor-toolbar-form-${button}`);
             // Loop over popups to hide non-active ones.
             this.buttons.forEach(({ button: b}) => {
@@ -200,7 +202,7 @@ export class ToolbarView {
               if (b === button) return;
 
               // Hide all other popups.
-              else if (toolbarPopups[b]) {
+              else if (this.toolbarPopups[b]) {
                 this.dom.querySelector(`#editor-toolbar-form-${b}`).classList.remove('editor-toolbar-form-active');
               }
             })
@@ -370,7 +372,7 @@ export class ToolbarView {
   clearToolbarButton(button) {
     const btnNode = this.dom.querySelector(`#${'editor-button-' + button}`);
 
-    if (toolbarPopups[button]) {
+    if (this.toolbarPopups[button]) {
       //Clean up all or any that's active.
       btnNode.classList.remove('editor-button-active');
     }
@@ -513,50 +515,6 @@ function getButtonHTML(button, buttonClass, buttonTitle, buttonTextContent, opti
   const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
 
   return `<button${buttonClass ? ` class="${buttonClass}"` : ''} title="${title}"${options.type ? ` type="${options.type}"` : ''}>${buttonContent}</button>`;
-}
-
-
-const toolbarPopups = {
-  a: (options) => `<legend>Add a link</legend>
-    <label for="link-a-href">URL</label> <input class="editor-toolbar-input" id="link-a-href" name="link-a-href" required="" placeholder="Paste or type a link (URL)" type="url" />
-    <label for="link-a-title">Title</label> <input class="editor-toolbar-input" id="link-a-title" name="link-a-title" placeholder="Add advisory information for the tooltip." type="text" />
-    ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
-    ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-  `,
-
-  blockquote: (options) => `<legend>Add the source of the blockquote</legend>
-    <label for="link-blockquote-cite">URL</label> <input class="editor-toolbar-input" id="link-blockquote-cite" name="link-blockquote-cite" placeholder="Paste or type a link (URL)" type="url"  pattern="https?://.+" oninvalid="setCustomValidity('Please enter a valid URL')" 
-   oninput="setCustomValidity('')" />
-    ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
-    ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-  `,
-
-  q: (options) => `<legend>Add the source of the quote</legend>
-    <label for="link-q-cite">URL</label> <input class="editor-toolbar-input" id="link-q-cite" name="link-q-cite" placeholder="Paste or type a link (URL)" type="url" pattern="https?://.+" oninvalid="setCustomValidity('Please enter a valid URL')" 
-   oninput="setCustomValidity('')"  />
-    ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
-    ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-  `,
-
-  // TODO: captions
-// TODO: draggable area in this widget
-//TODO: browse storage
-  img: (options) => `<legend>Add an image with a description</legend>
-    <figure class="link-img-preview"><p>Drag an image here</p></figure>
-    <label for="link-img-file">Upload</label> <input class="editor-toolbar-input" id="link-img-file" name="link-img-file" type="file" />
-    <label for="link-img-src">URL</label> <input class="editor-toolbar-input" id="link-img-src" name="link-img-src" placeholder="https://example.org/path/to/image.jpg" required="" type="text" />
-    <label for="link-img-alt">Description</label> <input class="editor-toolbar-input" id="link-img-alt" name="link-img-alt" placeholder="Describe the image for people who are blind or have low vision." />
-    <label for="link-img-figcaption">Caption</label> <input class="editor-toolbar-input" id="link-img-figcaption" name="link-img-figcaption" placeholder="A caption or legend for the figure." />
-    ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
-    ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-  `,
-
-  bookmark: (options) => annotateFormControls(options),
-  approve: (options) => annotateFormControls(options),
-  disapprove: (options) => annotateFormControls(options),
-  specificity: (options) => annotateFormControls(options),
-  comment: (options) => annotateFormControls(options),
-  note: (options) => annotateFormControls(options),
 }
 
 // Consider putting this elsewhere or making it part of the class

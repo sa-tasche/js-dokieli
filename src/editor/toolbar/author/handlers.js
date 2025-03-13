@@ -1,16 +1,17 @@
 import { schema } from "../../schema/base.js"
-import { highlightText as pmHighlightText, getTextQuoteHTML, restoreSelection } from "../../utils/annotation.js";
+import { getTextQuoteHTML } from "../../utils/annotation.js";
 import { toggleBlockquote } from "../../utils/dom.js";
 import { getRandomUUID, getFormValues } from "../../../util.js"
-import { fragmentFromString } from "../../../doc.js";
+import { fragmentFromString } from "../../../util.js"
+import { getResource } from "../../../fetcher.js";
 
 export function formHandlerA(e) {
   e.preventDefault();
   e.stopPropagation();
 
   const formValues = getFormValues(e.target);
-  const href = formValues['link-a-href'];
-  const title = formValues['link-a-title'];
+  const href = formValues['a-href'];
+  const title = formValues['a-title'];
 
   const attrs = title ? { href, title } : { href };
 
@@ -26,7 +27,7 @@ export function formHandlerBlockquote(e) {
 
   const formValues = getFormValues(e.target);
 console.log(formValues)
-  const cite = formValues['link-blockquote-cite'];
+  const cite = formValues['blockquote-cite'];
 
   const attrs = { cite };
 console.log(attrs)
@@ -44,13 +45,13 @@ export function formHandlerImg(e) {
 
   const p = fragmentFromString('<p>Drag an image here</p>');
 
-  const src = formValues['link-img-src'];
-  const alt = formValues['link-img-alt'];
-  const title = formValues['link-img-figcaption'];
+  const src = formValues['img-src'];
+  const alt = formValues['img-alt'];
+  const title = formValues['img-figcaption'];
 
   let width, height;
 
-  const preview = e.target.querySelector('.link-img-preview');
+  const preview = e.target.querySelector('.img-preview');
   const previewImageNode = preview.querySelector('img[src]');
 
   if (previewImageNode) {
@@ -63,7 +64,7 @@ export function formHandlerImg(e) {
   //  altInput.classList.toggle('.warning');
   // }
 
-  //TODO: MOVE THIS? Consider using a separate form control to mark <figure><img /><figcaption>{$title}</figcaption</figure>. For now link-img-figcaption is used for `title` attribute.
+  //TODO: MOVE THIS? Consider using a separate form control to mark <figure><img /><figcaption>{$title}</figcaption</figure>. For now img-figcaption is used for `title` attribute.
   // if (title.length) {
   // }
 
@@ -139,7 +140,7 @@ export function formHandlerQ(e) {
   e.stopPropagation();
 
   const formValues = getFormValues(e.target);
-  const cite = formValues['link-q-cite'];
+  const cite = formValues['q-cite'];
 
   const attrs = { cite };
 
@@ -151,21 +152,25 @@ export function formHandlerQ(e) {
 
 //TODO: 
 export function formHandlerCitation(e) {
-  input.search.focus();
-  input.search.value = selection;
+  const citationSpecRefSearch = document.querySelector('#citation-specref-search');
+  const citationUrl = document.querySelector('#citation-url');
+
+  citationSpecRefSearch.focus();
+  citationSpecRefSearch.value = this.selection;
 
   var specrefSearchResults = document.querySelector('.specref-search-results');
   if(specrefSearchResults) {
+    //FIXME: innerHTML
     specrefSearchResults.innerHTML = '';
   }
 
-  var specref = document.querySelector('#specref-search-submit');
+  var specref = document.querySelector('#citation-specref-search-submit');
   specref.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
 // console.log(e);
 
-    var keyword = input.search.value.trim();
+    var keyword = citationSpecRefSearch.value.trim();
     var url = 'https://api.specref.org/search-refs?q=' + keyword;
     var headers = {'Accept': 'application/json'};
     var options = {'noCredentials': true};
@@ -185,7 +190,7 @@ export function formHandlerCitation(e) {
       //TODO: Clean input data
 
       Object.keys(data).forEach(key => {
-// console.log(data[key])
+        // console.log(data[key])
         if ('href' in data[key] &&
             !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
 
@@ -219,6 +224,7 @@ export function formHandlerCitation(e) {
       if (searchResultsItems) {
         specrefSearchResults = document.querySelector('.specref-search-results');
         if(specrefSearchResults) {
+          //FIXME: innerHTML
           specrefSearchResults.innerHTML = searchResultsHTML;
         }
 
@@ -235,176 +241,177 @@ export function formHandlerCitation(e) {
 
   });
 
-  input.url.focus();
-  document.querySelector('.medium-editor-toolbar-form input[name="citation-type"]').checked = true;
+  citationUrl.focus();
+
+  document.querySelector('.editor-toolbar-form input[name="citation-ref-type"]').checked = true;
 }
 
 //TODO
-export function formHandlerSparkline(e) {
-  input.search.focus();
-  input.search.value = selection;
+// export function formHandlerSparkline(e) {
+//   input.search.focus();
+//   input.search.value = selection;
 
-  var inputSearch = function(e){
-    if(e.which == 13) {
-      e.preventDefault();
-      e.stopPropagation();
-      _this.base.restoreSelection();
-      MediumEditor.util.insertHTMLCommand(document, e.target.value);
-      var selection = { start: initialSelectionState.start, end: (initialSelectionState.start + e.target.value.length) };
-      MediumEditor.selection.importSelection(selection, initialSelectedParentElement, document);
-      _this.base.checkSelection();
-      e.target.setAttribute('data-event-keyup-enter', true);
-      _this.showForm();
-      return;
-    }
-  }
-  if(!input.search.getAttribute('data-event-keyup-enter')) {
-    input.search.addEventListener('keyup', inputSearch, false);
-  }
+//   var inputSearch = function(e){
+//     if(e.which == 13) {
+//       e.preventDefault();
+//       e.stopPropagation();
+//       _this.base.restoreSelection();
+//       MediumEditor.util.insertHTMLCommand(document, e.target.value);
+//       var selection = { start: initialSelectionState.start, end: (initialSelectionState.start + e.target.value.length) };
+//       MediumEditor.selection.importSelection(selection, initialSelectedParentElement, document);
+//       _this.base.checkSelection();
+//       e.target.setAttribute('data-event-keyup-enter', true);
+//       _this.showForm();
+//       return;
+//     }
+//   }
+//   if(!input.search.getAttribute('data-event-keyup-enter')) {
+//     input.search.addEventListener('keyup', inputSearch, false);
+//   }
 
-  var sparqlEndpoint = 'http://worldbank.270a.info/';
-  var resourceType = '<http://purl.org/linked-data/cube#DataSet>';
-  var sparklineGraphId = 'sparkline-graph';
-  var resultContainerId = 'sparkline-select';
-  //TODO: This should be from user's preference?
-  var lang = 'en';
+//   var sparqlEndpoint = 'http://worldbank.270a.info/';
+//   var resourceType = '<http://purl.org/linked-data/cube#DataSet>';
+//   var sparklineGraphId = 'sparkline-graph';
+//   var resultContainerId = 'sparkline-select';
+//   //TODO: This should be from user's preference?
+//   var lang = 'en';
 
-  //TODO: What's the best way for user input? ' of '
-  var textInputA = selection.split(' of ')[0];
-  var textInputB = selection.substr(selection.indexOf(' of ') + 4);
+//   //TODO: What's the best way for user input? ' of '
+//   var textInputA = selection.split(' of ')[0];
+//   var textInputB = selection.substr(selection.indexOf(' of ') + 4);
 
-  if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
-    Object.keys(DO.C.RefAreas).forEach(key => {
-      if(DO.C.RefAreas[key].toLowerCase() == textInputB.toLowerCase()) {
-        textInputB = key;
-      }
-    });
-  }
+//   if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
+//     Object.keys(DO.C.RefAreas).forEach(key => {
+//       if(DO.C.RefAreas[key].toLowerCase() == textInputB.toLowerCase()) {
+//         textInputB = key;
+//       }
+//     });
+//   }
 
-  var sG = document.getElementById(sparklineGraphId);
-  if(sG) {
-    sG.parentNode.removeChild(sG);
-  }
+//   var sG = document.getElementById(sparklineGraphId);
+//   if(sG) {
+//     sG.parentNode.removeChild(sG);
+//   }
 
-  if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
-    var refAreas;
-    Object.keys(DO.C.RefAreas).forEach(key => {
-      refAreas += '<option value="' + key + '">' + key + ' - ' + DO.C.RefAreas[key] + '</option>';
-    });
-    form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
-    var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
-    rA.addEventListener('change', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      textInputB = e.target.value;
-      input.search.value = textInputA + ' of ' + textInputB;
-      form.querySelector('#sparkline-selection-dataset').value = textInputA;
-      form.querySelector('#sparkline-selection-refarea').value = textInputB;
+//   if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
+//     var refAreas;
+//     Object.keys(DO.C.RefAreas).forEach(key => {
+//       refAreas += '<option value="' + key + '">' + key + ' - ' + DO.C.RefAreas[key] + '</option>';
+//     });
+//     form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
+//     var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
+//     rA.addEventListener('change', (e) => {
+//       e.preventDefault();
+//       e.stopPropagation();
+//       textInputB = e.target.value;
+//       input.search.value = textInputA + ' of ' + textInputB;
+//       form.querySelector('#sparkline-selection-dataset').value = textInputA;
+//       form.querySelector('#sparkline-selection-refarea').value = textInputB;
 
-      _this.base.restoreSelection();
-      MediumEditor.util.insertHTMLCommand(document, input.search.value);
-      var selection = { start: initialSelectionState.start, end: (initialSelectionState.start + input.search.value.length) };
-      MediumEditor.selection.importSelection(selection, initialSelectedParentElement, document);
-      _this.base.checkSelection();
-      _this.showForm();
-    });
-    return;
-  }
+//       _this.base.restoreSelection();
+//       MediumEditor.util.insertHTMLCommand(document, input.search.value);
+//       var selection = { start: initialSelectionState.start, end: (initialSelectionState.start + input.search.value.length) };
+//       MediumEditor.selection.importSelection(selection, initialSelectedParentElement, document);
+//       _this.base.checkSelection();
+//       _this.showForm();
+//     });
+//     return;
+//   }
 
-  var options = {};
-  options.filter = {
-    dimensionProperty: 'sdmx-dimension:refArea',
-    dimensionRefAreaNotation: textInputB
-  };
-  options.optional = { prefLabels: ["dcterms:title"] };
+//   var options = {};
+//   options.filter = {
+//     dimensionProperty: 'sdmx-dimension:refArea',
+//     dimensionRefAreaNotation: textInputB
+//   };
+//   options.optional = { prefLabels: ["dcterms:title"] };
 
-  var queryURL = DO.U.SPARQLQueryURL.getResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInputA.toLowerCase(), options);
+//   var queryURL = DO.U.SPARQLQueryURL.getResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInputA.toLowerCase(), options);
 
-  queryURL = getProxyableIRI(queryURL);
+//   queryURL = getProxyableIRI(queryURL);
 
-  form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '"></div>' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
-  sG = document.getElementById(sparklineGraphId);
+//   form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '"></div>' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+//   sG = document.getElementById(sparklineGraphId);
 
-  getResourceGraph(queryURL)
-    .then(g => {
-      sG.removeAttribute('class');
-      var triples = sortGraphTriples(g, { sortBy: 'object' });
-      return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
-    })
-    .then(listHTML => {
-      sG.innerHTML = listHTML;
-      form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
-    })
-    .then(x => {
-      var rC = document.getElementById(resultContainerId);
-      rC.addEventListener('change', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        var sparkline = sG.querySelectorAll('.sparkline, .sparkline-info');
-        for (var i = 0; i < sparkline.length; i++) {
-          sparkline[i].parentNode.removeChild(sparkline[i]);
-        }
-        form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+//   getResourceGraph(queryURL)
+//     .then(g => {
+//       sG.removeAttribute('class');
+//       var triples = sortGraphTriples(g, { sortBy: 'object' });
+//       return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
+//     })
+//     .then(listHTML => {
+//       sG.innerHTML = listHTML;
+//       form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
+//     })
+//     .then(x => {
+//       var rC = document.getElementById(resultContainerId);
+//       rC.addEventListener('change', (e) => {
+//         e.preventDefault();
+//         e.stopPropagation();
+//         var sparkline = sG.querySelectorAll('.sparkline, .sparkline-info');
+//         for (var i = 0; i < sparkline.length; i++) {
+//           sparkline[i].parentNode.removeChild(sparkline[i]);
+//         }
+//         form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 
-        var dataset = e.target.value;
-        var title = e.target.querySelector('*[value="' + e.target.value + '"]').textContent.trim();
-        //XXX: Should this replace the initial search term?
-        form.querySelector('#sparkline-selection-dataset').value = title;
-        form.querySelector('#sparkline-selection-refarea').value = textInputB.toUpperCase();
+//         var dataset = e.target.value;
+//         var title = e.target.querySelector('*[value="' + e.target.value + '"]').textContent.trim();
+//         //XXX: Should this replace the initial search term?
+//         form.querySelector('#sparkline-selection-dataset').value = title;
+//         form.querySelector('#sparkline-selection-refarea').value = textInputB.toUpperCase();
 
-        var refArea = textInputB.toUpperCase();
-        var paramDimension = "\n\
-?propertyRefArea rdfs:subPropertyOf* sdmx-dimension:refArea .\n\
-?observation ?propertyRefArea [ skos:notation '" + refArea + "' ] .";
+//         var refArea = textInputB.toUpperCase();
+//         var paramDimension = "\n\
+// ?propertyRefArea rdfs:subPropertyOf* sdmx-dimension:refArea .\n\
+// ?observation ?propertyRefArea [ skos:notation '" + refArea + "' ] .";
 
-// console.log(dataset);
-// console.log(refArea);
-        var queryURL = DO.U.SPARQLQueryURL.getObservationsWithDimension(sparqlEndpoint, dataset, paramDimension);
-// console.log(queryURL);
-        queryURL = getProxyableIRI(queryURL);
+// // console.log(dataset);
+// // console.log(refArea);
+//         var queryURL = DO.U.SPARQLQueryURL.getObservationsWithDimension(sparqlEndpoint, dataset, paramDimension);
+// // console.log(queryURL);
+//         queryURL = getProxyableIRI(queryURL);
 
-        getResourceGraph(queryURL)
-          .then(g => {
-            var triples = sortGraphTriples(g, { sortBy: 'object' });
-// console.log(triples);
-            if (triples.length) {
-              var observations = {};
-              triples.forEach(t => {
-                var s = t.subject.value;
-                var p = t.predicate.value;
-                var o = t.object.value;
-                observations[s] = observations[s] || {};
-                observations[s][p] = o;
-              });
-// console.log(observations);
-              var list = [], item;
-              Object.keys(observations).forEach(key => {
-                item = {};
-                observations[key][ns.qb.Observation.value] = key;
-                item[key] = observations[key];
-                list.push(item[key]);
-              });
-              var sortByKey = ns['sdmx-dimension'].refPeriod;
-              list.sort(function (a, b) {
-                return a[sortByKey].toLowerCase().localeCompare(b[sortByKey].toLowerCase());
-              });
-// console.log(list);
-              var options = {
-                url: dataset,
-                title: title
-              };
-              var sparkline = DO.U.getSparkline(list, options);
-              sG.insertAdjacentHTML('beforeend', '<span class="sparkline">' + sparkline + '</span> <span class="sparkline-info">' + triples.length + ' observations</span>');
-                form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
-            }
-            else {
-              //This shouldn't happen.
-              sG.insertAdjacentHTML('beforeend', '<span class="sparkline-info">0 observations. Select another.</span>');
-            }
-          });
-      });
-    });
-}
+//         getResourceGraph(queryURL)
+//           .then(g => {
+//             var triples = sortGraphTriples(g, { sortBy: 'object' });
+// // console.log(triples);
+//             if (triples.length) {
+//               var observations = {};
+//               triples.forEach(t => {
+//                 var s = t.subject.value;
+//                 var p = t.predicate.value;
+//                 var o = t.object.value;
+//                 observations[s] = observations[s] || {};
+//                 observations[s][p] = o;
+//               });
+// // console.log(observations);
+//               var list = [], item;
+//               Object.keys(observations).forEach(key => {
+//                 item = {};
+//                 observations[key][ns.qb.Observation.value] = key;
+//                 item[key] = observations[key];
+//                 list.push(item[key]);
+//               });
+//               var sortByKey = ns['sdmx-dimension'].refPeriod;
+//               list.sort(function (a, b) {
+//                 return a[sortByKey].toLowerCase().localeCompare(b[sortByKey].toLowerCase());
+//               });
+// // console.log(list);
+//               var options = {
+//                 url: dataset,
+//                 title: title
+//               };
+//               var sparkline = DO.U.getSparkline(list, options);
+//               sG.insertAdjacentHTML('beforeend', '<span class="sparkline">' + sparkline + '</span> <span class="sparkline-info">' + triples.length + ' observations</span>');
+//                 form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
+//             }
+//             else {
+//               //This shouldn't happen.
+//               sG.insertAdjacentHTML('beforeend', '<span class="sparkline-info">0 observations. Select another.</span>');
+//             }
+//           });
+//       });
+//     });
+// }
 
 
 

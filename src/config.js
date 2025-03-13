@@ -21,7 +21,7 @@ export default {
       DO.U.highlightItems();
       DO.U.showAsTabs();
       DO.U.initDocumentActions();
-      DO.U.showTextQuoteSelector();
+      // DO.U.showTextQuoteSelector();
       DO.U.showDocumentInfo();
       DO.U.showFragment();
       DO.U.initCopyToClipboard();

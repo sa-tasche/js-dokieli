@@ -1,5 +1,5 @@
 import { schema } from "../../schema/base.js"
-import { highlightText as pmHighlightText, getTextQuoteHTML, wrapSelectionInMark, restoreSelection, getSelectedParentElement } from "../../utils/annotation.js";
+import { getTextQuoteHTML, getSelectedParentElement } from "../../utils/annotation.js";
 import { getRandomUUID, getFormValues, kebabToCamel } from "../../../util.js"
 import { fragmentFromString } from "../../../doc.js"
 import { stripFragmentFromString } from "../../../uri.js"
@@ -38,7 +38,7 @@ export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
 
-  restoreSelection(this.selection);
+  this.restoreSelection(this.selection);
   const selection = window.getSelection();
 
   const range = selection.getRangeAt(0);

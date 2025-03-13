@@ -3,14 +3,17 @@ import { DOMParser, DOMSerializer } from "prosemirror-model";
 import { Plugin, EditorState } from "prosemirror-state"
 import { schema } from "./schema/base.js"
 import { keymapPlugin } from "./toolbar/author/keymap.js";
-import { AuthorToolbar } from "./toolbar/author.js";
-import { SocialToolbar } from "./toolbar/social.js";
-
-// import { selectArticleNode } from '../doc.js'
+import { AuthorToolbar } from "./toolbar/author/author.js";
+import { SocialToolbar } from "./toolbar/social/social.js";
+import Config from "./../config.js";
+import { addMessageToLog, getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML, insertDocumentLevelHTML, selectArticleNode, setDate, setEditSelections, showActionMessage } from "../doc.js";
+import { getAgentName, getGraphImage, getGraphInbox, getGraphTypes, getResourceGraph } from "../graph.js";
+import { fragmentFromString } from "../util.js";
+import { updateLocalStorageProfile } from "../storage.js";
 
 export class Editor {
   constructor(mode, node) {
-    this.mode = mode;
+    this.mode = mode || Config.mode;
     //TODO: Look into replacing document.body with selectArticleNode(document) so that main > article, article, or body is used?
     // if body is used, take care to filter out do elements at this point
     // TODO: When choosing the editor node, we need to filter out these items from the content of the editor node. we also need to restore the body to its original form WITH the do elements.
@@ -27,6 +30,7 @@ export class Editor {
     switch (this.mode) {
       case 'author':
         this.destroySocialToolbar();
+        console.log(this.node)
         this.createEditor(this.node);
         break;
       case 'social':
@@ -49,10 +53,11 @@ export class Editor {
     }
   }
 
-  toggleEditor(mode, e, selector) {
+  toggleEditor(mode, e) {
     Config.User.Role = mode;
     updateLocalStorageProfile(Config.User);
-    this.init(mode);
+    const node = document.body;
+    this.init(mode, node);
     this.showEditorModeActionMessage(e, mode);
     Config.EditorEnabled = (mode === 'author');
 
@@ -98,7 +103,7 @@ export class Editor {
 
     this.editorView = new EditorView(this.node, { state, editable: () => true });
 
-    console.log("Editor created. Mode:", editorMode);
+    console.log("Editor created. Mode:", this.mode);
   }
 
   restoreSelection(mode) {
@@ -263,7 +268,9 @@ export class Editor {
           }
 
           if (e.target.closest('button.invite-' + contributorRole)) {
-            DO.U.shareResource(e);
+            //TODO: Temporarily disabled. Below is the intended place. Bring it back when shareResource (and related stuff) is moved from DO.U. to editor.js or related file.
+            // DO.U.shareResource(e);
+            console.log("TODO: Temporarily disabled. Check 'button.invite-' + contributorRole")
             e.target.removeAttribute('disabled');
           }
         });
