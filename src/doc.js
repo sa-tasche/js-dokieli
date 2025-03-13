@@ -580,7 +580,7 @@ function showActionMessage(node, message, options = {}) {
 
   var aside = node.querySelector('#document-action-message');
   if (!aside) {
-    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on">' + DO.C.Button.Close + '<h2>Messages</h2><ul></ul></aside>'));
+    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on">' + Config.Button.Close + '<h2>Messages</h2><ul></ul></aside>'));
   }
   node.querySelector('#document-action-message > h2 + ul').insertAdjacentHTML('afterbegin', messageItem);
 
@@ -1477,7 +1477,7 @@ function getResourceSupplementalInfo (documentURL, options) {
     const previousResponseDateHeaderValue = previousResponse?.get('date');
     const previousResponseDate = previousResponseDateHeaderValue ? new Date(previousResponseDateHeaderValue) : null;
 
-    if(!previousResponse || !previousResponseDateHeaderValue || (previousResponseDate && (currentDate.getTime() - previousResponseDate.getTime() > DO.C.RequestCheck.Timer))) {
+    if(!previousResponse || !previousResponseDateHeaderValue || (previousResponseDate && (currentDate.getTime() - previousResponseDate.getTime() > Config.RequestCheck.Timer))) {
       options.reuse = false;
     }
   }
@@ -1831,16 +1831,16 @@ function updateFeatureStatesOfResourceInfo(info) {
     })
   }
   // else {
-  //   if ((Config.User.Storage && DO.C.User.Storage.length > 0) ||
-  //       (Config.User.Outbox && DO.C.User.Outbox.length > 0) ||
-  //       (Config.User.Knows && DO.C.User.Knows.length > 0) ||
-  //       (Config.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0)) {
+  //   if ((Config.User.Storage && Config.User.Storage.length > 0) ||
+  //       (Config.User.Outbox && Config.User.Outbox.length > 0) ||
+  //       (Config.User.Knows && Config.User.Knows.length > 0) ||
+  //       (Config.User.Contacts && Object.keys(Config.User.Contacts).length > 0)) {
   //         Config.ButtonStates['resource-notifications'] = true;
   //   }
   // }
 
   //XXX: This relies on `wac-allow` HTTP header. What to do if no `wac-allow`?
-  var writeAccessMode = accessModeAllowed(DO.C.DocumentURL, 'write');
+  var writeAccessMode = accessModeAllowed(Config.DocumentURL, 'write');
   writeRequiredFeatures.forEach(feature => {
     Config.ButtonStates[feature] = writeAccessMode;
   })
@@ -1881,13 +1881,13 @@ function updateFeatureStatesOfResourceInfo(info) {
 }
 
 function accessModeAllowed (documentURL, mode) {
-  documentURL = documentURL || DO.C.DocumentURL;
+  documentURL = documentURL || Config.DocumentURL;
 
   var allowedMode = false;
 
-  if ('headers' in DO.C.Resource[documentURL] && 'wac-allow' in DO.C.Resource[documentURL]['headers'] && 'permissionGroup' in DO.C.Resource[documentURL]['headers']['wac-allow']) {
-    if (('user' in DO.C.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && DO.C.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['user'].includes(mode))
-      || ('public' in DO.C.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && DO.C.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['public'].includes(mode))) {
+  if ('headers' in Config.Resource[documentURL] && 'wac-allow' in Config.Resource[documentURL]['headers'] && 'permissionGroup' in Config.Resource[documentURL]['headers']['wac-allow']) {
+    if (('user' in Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['user'].includes(mode))
+      || ('public' in Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['public'].includes(mode))) {
       allowedMode = true;
     }
   }
@@ -2811,6 +2811,14 @@ function parseMarkdown(data, options) {
   return html;
 }
 
+function getReferenceLabel(motivatedBy) {
+  motivatedBy = motivatedBy || '';
+  //TODO: uriToPrefix
+  motivatedBy = (motivatedBy.length && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
+
+  return Config.MotivationSign[motivatedBy] || '#';
+}
+
 export {
   escapeCharacters,
   cleanEscapeCharacters,
@@ -2889,5 +2897,6 @@ export {
   serializeTableToText,
   serializeTableSectionToText,
   focusNote,
-  parseMarkdown
+  parseMarkdown,
+  getReferenceLabel
 }

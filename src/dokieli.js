@@ -7990,14 +7990,6 @@ WHERE {\n\
       })
     },
 
-    getReferenceLabel: function(motivatedBy) {
-      motivatedBy = motivatedBy || '';
-      //TODO: uriToPrefix
-      motivatedBy = (motivatedBy.length && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
-
-      return DO.C.MotivationSign[motivatedBy] || '#';
-    },
-
     showRefs: function() {
       var refs = document.querySelectorAll('span.ref');
       for (var i = 0; i < refs.length; i++) {
