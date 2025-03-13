@@ -84,6 +84,7 @@ export default {
   Editor: {
     headings: ["h1", "h2", "h3", "h4", "h5", "h6"],
     regexEmptyHTMLTags: /<[^\/>][^>]*><\/[^>]+>/gim,
+    mode: 'social',
     ButtonLabelType: 'fontawesome',
     DisableEditorButton: '<button class="editor-disable" title="Disable editor">' + Icon[".fas.fa-i-cursor.fa-2x"] + 'Edit</button>',
     EnableEditorButton: '<button class="editor-enable" title="Enable editor">' + Icon[".fas.fa-i-cursor.fa-2x"] + 'Edit</button>'
