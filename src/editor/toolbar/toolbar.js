@@ -409,6 +409,89 @@ export class ToolbarView {
     }
   }
 
+  importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
+    // console.log(containerNode)
+    // console.log(selector)
+    // console.log(refId)
+    // console.log(motivatedBy)
+    // console.log(docRefType)
+    // console.log(options)
+    var containerNodeTextContent = containerNode.textContent;
+      //XXX: Seems better?
+      // var containerNodeTextContent = fragmentFromString(getDocument(containerNode)).textContent.trim();
+    // console.log(containerNodeTextContent);
+    options = options || {};
+
+    // console.log(selector)
+    var prefix = selector.prefix || '';
+    var exact = selector.exact || '';
+    var suffix = selector.suffix || '';
+
+    var phrase = escapeRegExp(prefix.toString() + exact.toString() + suffix.toString());
+    // console.log(phrase);
+
+    var selectedParentNode;
+
+    var textMatches = matchAllIndex(containerNodeTextContent, new RegExp(phrase, 'g'));
+    // console.log(textMatches)
+
+    textMatches.forEach(item => {
+      // console.log('phrase:')
+      // console.log(phrase)
+      // console.log(item)
+      var selectorIndex = item.index;
+      // console.log('selectorIndex:')
+      // console.log(selectorIndex)
+      // var selectorIndex = containerNodeTextContent.indexOf(prefix + exact + suffix);
+      // console.log(selectorIndex);
+
+      // if (selectorIndex >= 0) {
+      var exactStart = selectorIndex + prefix.length
+      var exactEnd = selectorIndex + prefix.length + exact.length;
+      var selection = { start: exactStart, end: exactEnd };
+      // console.log('selection:')
+      // console.log(selection)
+      var ref = getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options);
+      // console.log('containerNode:')
+      // console.log(containerNode)
+
+      // TODO: we think this is equivalent to restoreSelection
+      // MediumEditor.selection.importSelection(selection, containerNode, document);
+      this.restoreSelection();
+  
+      //XXX: Review
+      selection = window.getSelection();
+      // console.log(selection)
+      var r = selection.getRangeAt(0);
+      selection.removeAllRanges();
+      selection.addRange(r);
+      r.collapse(true);
+      // console.log(r)
+      // console.log('r.commonAncestorContainer: r.commonAncestorContainer);
+
+      selectedParentNode = r.commonAncestorContainer.parentNode;
+      // console.log('selectedParentNode:')
+      // console.log(selectedParentNode)
+      var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
+      // console.log(selectedParentNodeValue)
+  
+      var selectionUpdated = fragmentFromString(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length));
+      // console.log(selectionUpdated)
+  
+      //XXX: Review. This feels a bit dirty
+      for(var i = 0; i < selectedParentNode.childNodes.length; i++) {
+        var n = selectedParentNode.childNodes[i];
+        if (n.nodeType === 3 && n.nodeValue === selectedParentNodeValue) {
+          selectedParentNode.replaceChild(selectionUpdated, n);
+        }
+      }
+
+      // console.log('---')
+    })
+
+    return selectedParentNode;
+  }
+
   destroy() {
     //this.dom is #document-toolbar
     //TODO: Also remove itself

@@ -8227,7 +8227,7 @@ WHERE {\n\
 // console.log(note.oamotivatedBy);
         var motivatedBy = note.out(ns.oa.motivatedBy).values[0];
         if (motivatedBy) {
-          refLabel = DO.U.getReferenceLabel(motivatedBy);
+          refLabel = getReferenceLabel(motivatedBy);
         }
 
         var exact, prefix, suffix;
@@ -8287,7 +8287,7 @@ WHERE {\n\
             "suffix": suffix
           };
 
-          var selectedParentNode = DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
+          var selectedParentNode = DO.Editor.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
 
           var parentNodeWithId = selectedParentNode.closest('[id]');
           targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
