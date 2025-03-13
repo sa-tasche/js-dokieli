@@ -7,16 +7,12 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
-// import MediumEditor from "medium-editor/dist/js/medium-editor.js";
-// window.MediumEditor = MediumEditor;
-// import MediumEditorTable from "medium-editor-tables/dist/js/medium-editor-tables.js";
-// window.MediumEditorTable = MediumEditorTable;
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo } from './auth.js'
 import { createRDFaHTML } from './template.js'
@@ -30,17 +26,17 @@ import LinkHeader from 'http-link-header';
 import DOMPurify from 'dompurify';
 import rdf from 'rdf-ext';
 import Config from './config.js';
+import { Editor } from './editor/editor.js';
 
 const ns = Config.ns;
 let DO;
 
-let Editor = new Editor("social");
-
 if (typeof window.DO === 'undefined'){
 
 DO = {
-  Editor: Editor,
   C: Config,
+
+  Editor: new Editor("social"),
 
   U: {
     getItemsList: function(url, options) {
@@ -1527,6 +1523,8 @@ DO = {
     },
 
     setDocumentMode: function(mode) {
+      Config.Editor.mode = mode || Config.Editor.mode;
+
       var style = DO.U.urlParam('style');
 
       if (style) {
@@ -1580,14 +1578,14 @@ DO = {
 
           return stripFragmentFromString(url);
         });
-// console.log(urls);
+        // console.log(urls);
 
         if (urls.length) {
           // var options = {'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'filter': { 'subjects': [docURI, iri] }, 'title': iri };
           var options = {'subjectURI': urls[0], 'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'title': urls[0] };
 
           // DO.U.showGraphResources([docURI], '#graph-view', options);
-// console.log(options);
+          // console.log(options);
 
           var anchors = urls.map(url => `<a href="${url}">${url}</a>`);
 
@@ -1607,19 +1605,17 @@ DO = {
         }
       }
 
-        if (DO.U.urlParam('author') == 'true' || DO.U.urlParam('social') == 'true') {
-          if (DO.U.urlParam('social') == 'true') {
-            mode = 'social';
-          }
-          else if (DO.U.urlParam('author') == 'true') {
-            mode = 'author';
-          }
-          var url = document.location.href;
-          window.history.replaceState({}, null, url.substr(0, url.lastIndexOf('?')));
+      if (DO.U.urlParam('author') == 'true' || DO.U.urlParam('social') == 'true') {
+        if (DO.U.urlParam('social') == 'true') {
+          Config.Editor.mode = 'social';
         }
-
-        Editor.init(mode);
-      },
+        else if (DO.U.urlParam('author') == 'true') {
+          Config.Editor.mode = 'author';
+        }
+        var url = document.location.href;
+        window.history.replaceState({}, null, url.substr(0, url.lastIndexOf('?')));
+      }
+    },
 
     initDocumentActions: function() {
       buttonClose();
@@ -3109,13 +3105,6 @@ console.log(reason);
       }
     },
 
-    updateDocumentTitle: function(e) {
-      var h1 = document.querySelector('h1');
-      if (h1) {
-        document.title = h1.textContent.trim();
-      }
-    },
-
     utf8Tob64: function(s) {
       return window.btoa(encodeURIComponent(s));
     },
@@ -3985,23 +3974,23 @@ console.log(reason);
 
         var b;
 
-          b = e.target.closest('button.editor-disable');
-          var documentURL = DO.C.DocumentURL;
+        b = e.target.closest('button.editor-disable');
+        var documentURL = DO.C.DocumentURL;
+        if (b) {
+          var node = b.closest('li');
+          b.outerHTML = DO.C.Editor.EnableEditorButton;
+          DO.Editor.toggleEditor('social', e);
+          hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
+        }
+        else {
+          b = e.target.closest('button.editor-enable');
           if (b) {
-            var node = b.closest('li');
-            b.outerHTML = DO.C.Editor.EnableEditorButton;
-            DO.Editor.toggleEditor('social', e);
-            hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
+            node = b.closest('li');
+            b.outerHTML = DO.C.Editor.DisableEditorButton;
+            DO.Editor.toggleEditor('author');
+            showAutoSaveStorage(node, documentURL);
           }
-          else {
-            b = e.target.closest('button.editor-enable');
-            if (b) {
-              node = b.closest('li');
-              b.outerHTML = DO.C.Editor.DisableEditorButton;
-              DO.Editor.toggleEditor('author');
-              showAutoSaveStorage(node, documentURL);
-            }
-          }
+        }
 
 
         if (e.target.closest('.resource-notifications')) {
