@@ -457,3 +457,33 @@ export function createNoteData(data, annotation) {
   return noteData;
 }
 
+export function setSelection(start, end, containerNode) {
+  const range = document.createRange();
+  const selection = window.getSelection();
+
+  let currentNode = containerNode;
+  let charIndex = 0;
+
+  function traverseNodes(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      let nextCharIndex = charIndex + node.textContent.length;
+      if (charIndex <= start && nextCharIndex >= start) {
+        range.setStart(node, start - charIndex);
+      }
+      if (charIndex <= end && nextCharIndex >= end) {
+        range.setEnd(node, end - charIndex);
+      }
+      charIndex = nextCharIndex;
+    }
+    else {
+      for (let i = 0; i < node.childNodes.length; i++) {
+        traverseNodes(node.childNodes[i]);
+      }
+    }
+  }
+
+  traverseNodes(currentNode);
+
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
