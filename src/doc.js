@@ -3225,5 +3225,7 @@ export {
   serializeTableSectionToText,
   focusNote,
   parseMarkdown,
-  getReferenceLabel
+  getReferenceLabel,
+  createNoteDataHTML,
+  tagsToBodyObjects
 }

@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
@@ -4279,7 +4279,7 @@ console.log(reason);
 
         var motivatedBy = "oa:replying"
         var noteData = {
-          "type": 'article',
+          "type": 'comment',
           "mode": "write",
           "motivatedByIRI": motivatedBy,
           "id": attributeId,
@@ -4316,7 +4316,7 @@ console.log(reason);
           noteData["body"]["rights"] = noteData["body"]["license"] = noteData["rights"] = noteData["license"];
         }
 
-        note = DO.U.createNoteDataHTML(noteData)
+        note = createNoteDataHTML(noteData)
 
         var data = createHTML('', note)
 
@@ -8150,7 +8150,7 @@ WHERE {\n\
           targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
 // console.log(parentNodeWithId, targetIRI)
           var noteData = {
-            "type": 'article',
+            "type": 'comment',
             "mode": "read",
             "motivatedByIRI": motivatedBy,
             "id": id,
@@ -8227,7 +8227,7 @@ WHERE {\n\
         //XXX: Annotation without a selection
         else {
           noteData = {
-            "type": 'article',
+            "type": 'comment',
             "mode": "read",
             "motivatedByIRI": motivatedBy,
             "id": id,
@@ -8287,7 +8287,7 @@ WHERE {\n\
 
         if (inReplyTo && inReplyTo.includes(currentLocation())) {
           noteData = {
-            "type": 'article',
+            "type": 'comment',
             "mode": "read",
             "motivatedByIRI": motivatedBy,
             "id": id,
@@ -8420,7 +8420,7 @@ WHERE {\n\
       }
 
 // console.log(noteData)
-      var noteDataHTML = DO.U.createNoteDataHTML(noteData);
+      var noteDataHTML = createNoteDataHTML(noteData);
 
       var asideNote = '\n\
 <aside class="note do">\n\
@@ -8509,7 +8509,7 @@ WHERE {\n\
       var noteDataIRI = noteData.iri;
       
 // console.log(noteData)
-      var note = DO.U.createNoteDataHTML(noteData);
+      var note = createNoteDataHTML(noteData);
 
       var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
 
@@ -8552,331 +8552,6 @@ WHERE {\n\
       aside.classList.add('on');
 
       DO.U.showContactsActivities();
-    },
-
-    createNoteDataHTML: function(n) {
-// console.log(n);
-      var created = '';
-      var lang = '', xmlLang = '', language = '';
-      var license = '';
-      var rights = '';
-      var creator = '', authors = '', creatorImage = '', creatorNameIRI = '', creatorURLNameIRI = '';
-      var hasTarget = '', annotationTextSelector = '', target = '';
-      var inbox = '';
-      var heading, hX;
-      var aAbout = '', aPrefix = '';
-      var noteType = '';
-      var body = '';
-      var buttonDelete = '';
-      var note = '';
-      var targetLabel = '';
-      var bodyAltLabel = '';
-      var articleClass = '';
-      var prefixes = ' prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# schema: http://schema.org/ dcterms: http://purl.org/dc/terms/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp#"';
-
-      var canonicalId = n.canonical || 'urn:uuid:' + generateUUID();
-
-      var motivatedByIRI = n.motivatedByIRI || '';
-      var motivatedByLabel = '';
-
-      motivatedByIRI = getPrefixedNameFromIRI(motivatedByIRI);
-
-      switch(motivatedByIRI) {
-        case 'oa:replying': default:
-          motivatedByIRI = 'oa:replying';
-          motivatedByLabel = 'replies';
-          targetLabel = 'In reply to';
-          bodyAltLabel = 'Replied';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'oa:assessing':
-          motivatedByLabel = 'reviews';
-          targetLabel = 'Review of';
-          bodyAltLabel = 'Reviewed';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'oa:questioning':
-          motivatedByLabel = 'questions';
-          targetLabel = 'Questions';
-          bodyAltLabel = 'Questioned';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'oa:describing':
-          motivatedByLabel = 'describes';
-          targetLabel = 'Describes';
-          bodyAltLabel = 'Described'
-          aAbout = '#' + n.id;
-          break;
-        case 'oa:commenting':
-          motivatedByLabel = 'comments';
-          targetLabel = 'Comments on';
-          bodyAltLabel = 'Commented';
-          aAbout = '#' + n.id;
-          break;
-        case 'oa:bookmarking': case 'bookmark:Bookmark':
-          motivatedByLabel = 'bookmarks';
-          targetLabel = 'Bookmarked';
-          bodyAltLabel = 'Bookmarked';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'as:Like':
-          motivatedByLabel = 'Liked';
-          targetLabel = 'Like of';
-          bodyAltLabel = 'Liked';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'as:Dislike':
-          motivatedByLabel = 'Disliked';
-          targetLabel = 'Dislike of';
-          bodyAltLabel = 'Disliked';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-      }
-
-      switch(n.mode) {
-        default: case 'read':
-          hX = 3;
-          if ('creator' in n && 'iri' in n.creator && n.creator.iri == DO.C.User.IRI) {
-            buttonDelete = '<button class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>' ;
-          }
-          articleClass = (motivatedByIRI == 'oa:commenting') ? '': ' class="do"';
-          aAbout = ('iri' in n) ? n.iri : '';
-          break;
-        case 'write':
-          hX = 1;
-          break;
-        case 'object':
-          hX = 2;
-          break;
-      }
-
-      var creatorName = '';
-      var creatorIRI = '#' + generateAttributeId();
-      // creatorNameIRI = DO.C.SecretAgentNames[Math.floor(Math.random() * DO.C.SecretAgentNames.length)];
-
-      if ('creator' in n) {
-        if('iri' in n.creator) {
-          creatorIRI = n.creator.iri;
-        }
-
-        creatorName = creatorIRI;
-
-        if('name' in n.creator) {
-          creatorName = n.creator.name;
-          creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
-        }
-        else {
-          creatorName = getUserLabelOrIRI(creatorIRI);
-          creatorNameIRI = (creatorName == creatorIRI) ? creatorName : '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
-        }
-
-        var img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
-        if ('image' in n.creator) {
-          img = (n.mode == 'read') ? getProxyableIRI(n.creator.image) : n.creator.image;
-        }
-        else if (DO.C.User.Image && (creatorIRI == DO.C.User.IRI || DO.C.User.SameAs.includes(creatorIRI))) {
-          img = (n.mode == 'read') ? getProxyableIRI(DO.C.User.Image) : DO.C.User.Image;
-        }
-        else {
-          img = (DO.C.User.Contacts && DO.C.User.Contacts[creatorIRI] && DO.C.User.Contacts[creatorIRI].Image) ? DO.C.User.Contacts[creatorIRI].Image : img;
-        }
-        creatorImage = '<img alt="" height="48" rel="schema:image" src="' + img + '" width="48" /> ';
-
-        creatorURLNameIRI = ('url' in n.creator) ? '<a href="' + n.creator.url + '" rel="schema:url">' + creatorNameIRI + '</a>' : '<a href="' + creatorIRI + '">' + creatorNameIRI + '</a>';
-
-        creator = '<span about="' + creatorIRI + '" typeof="schema:Person">' + creatorImage + creatorURLNameIRI + '</span>';
-
-        authors = '<dl class="author-name"><dt>Authors</dt><dd><span rel="dcterms:creator">' + creator + '</span></dd></dl>';
-      }
-
-      heading = '<h' + hX + ' property="schema:name">' + creatorName + ' <span rel="oa:motivatedBy" resource="' + motivatedByIRI + '">' + motivatedByLabel + '</span></h' + hX + '>';
-
-      if ('inbox' in n && typeof n.inbox !== 'undefined') {
-        inbox = '<dl class="inbox"><dt>Notifications Inbox</dt><dd><a href="' + n.inbox + '" rel="ldp:inbox">' + n.inbox + '</a></dd></dl>';
-      }
-
-      if ('datetime' in n && typeof n.datetime !== 'undefined'){
-        var time = '<time datetime="' + n.datetime + '" datatype="xsd:dateTime" property="dcterms:created" content="' + n.datetime + '">' + n.datetime.substr(0,19).replace('T', ' ') + '</time>';
-        var timeLinked = ('iri' in n) ? '<a href="' + n.iri + '">' + time + '</a>' : time;
-        created = '<dl class="created"><dt>Created</dt><dd>' + timeLinked + '</dd></dl>';
-      }
-
-      if (n.language) {
-        language = createLanguageHTML(n.language, {property:'dcterms:language', label:'Language'});
-        lang = ' lang="' +  n.language + '"';
-        xmlLang = ' xml:lang="' +  n.language + '"';
-      }
-      if (n.license) {
-        license = createLicenseHTML(n.license, {rel:'schema:license', label:'License'});
-      }
-      if (n.rights) {
-        rights = createRightsHTML(n.rights, {rel:'dcterms:rights', label:'Rights'});
-      }
-
-      //TODO: Differentiate language, license, rights on Annotation from Body
-
-      switch(n.type) {
-        case 'article': case 'note': case 'bookmark': case 'approve': case 'disapprove': case 'specificity':
-          if (typeof n.target !== 'undefined' || typeof n.inReplyTo !== 'undefined') { //note, annotation, reply
-            //FIXME: Could resourceIRI be a fragment URI or *make sure* it is the document URL without the fragment?
-            //TODO: Use n.target.iri?
-// console.log(n)
-            if (typeof n.body !== 'undefined') {
-              var tagsArray = [];
-
-              n.body = Array.isArray(n.body) ? n.body : [n.body];
-              n.body.forEach(bodyItem => {
-                var bodyLanguage = createLanguageHTML(bodyItem.language, {property:'dcterms:language', label:'Language'}) || language;
-                var bodyLicense = createLicenseHTML(bodyItem.license, {rel:'schema:license', label:'License'}) || license;
-                var bodyRights = createRightsHTML(bodyItem.rights, {rel:'dcterms:rights', label:'Rights'}) || rights;
-                var bodyValue = bodyItem.value || bodyAltLabel;
-                // var bodyValue = bodyItem.value || '';
-                // var bodyFormat = bodyItem.format ? bodyItem.format : 'rdf:HTML';
-
-                if (bodyItem.purpose) {
-                  if (bodyItem.purpose == "describing" || bodyItem.purpose == ns.oa.describing.value) {
-                    body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
-                  }
-                  if (bodyItem.purpose == "tagging" || bodyItem.purpose == ns.oa.tagging.value) {
-                    tagsArray.push(bodyValue);
-                  }
-                }
-                else {
-                  body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
-                }
-              });
-
-              if (tagsArray.length) {
-                tagsArray = tagsArray
-                  .map(tag => escapeCharacters(tag.trim()))
-                  .filter(tag => tag.length);
-                tagsArray = uniqueArray(tagsArray.sort());
-
-                var tags = tagsArray.map(tag => '<li about="#tag-' + n.id + '-' + generateAttributeId(null, tag) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + tag + '</li>').join('');
-
-                body += '<dl id="tags-' + n.id + '" class="tags"><dt>Tags</dt><dd><ul rel="oa:hasBody">' + tags + '</ul></dd></dl>';
-              }
-            }
-            else if (n.bodyValue !== 'undefined') {
-              body += '<p property="oa:bodyValue">' + n.bodyValue + '</p>';
-            }
-// console.log(body)
-            var targetIRI = '';
-            var targetRelation = 'oa:hasTarget';
-            if (typeof n.target !== 'undefined' && 'iri' in n.target) {
-              targetIRI = n.target.iri;
-              var targetIRIFragment = getFragmentFromString(n.target.iri);
-              //TODO: Handle when there is no fragment
-              //TODO: Languages should be whatever is target's (not necessarily 'en')
-              if (typeof n.target.selector !== 'undefined') {
-                var selectionLanguage = ('language' in n.target.selector && n.target.selector.language) ? n.target.selector.language : '';
-
-                annotationTextSelector = '<div rel="oa:hasSelector" resource="#fragment-selector" typeof="oa:FragmentSelector"><dl class="conformsto"><dt>Fragment selector conforms to</dt><dd><a content="' + targetIRIFragment + '" lang="" property="rdf:value" rel="dcterms:conformsTo" href="https://tools.ietf.org/html/rfc3987" xml:lang="">RFC 3987</a></dd></dl><dl rel="oa:refinedBy" resource="#text-quote-selector" typeof="oa:TextQuoteSelector"><dt>Refined by</dt><dd><span lang="' + selectionLanguage + '" property="oa:prefix" xml:lang="' + selectionLanguage + '">' + n.target.selector.prefix + '</span><mark lang="' + selectionLanguage + '" property="oa:exact" xml:lang="' + selectionLanguage + '">' + n.target.selector.exact + '</mark><span lang="' + selectionLanguage + '" property="oa:suffix" xml:lang="' + selectionLanguage + '">' + n.target.selector.suffix + '</span></dd></dl></div>';
-              }
-            }
-            else if(typeof n.inReplyTo !== 'undefined' && 'iri' in n.inReplyTo) {
-              targetIRI = n.inReplyTo.iri;
-              targetRelation = ('rel' in n.inReplyTo) ? n.inReplyTo.rel : 'as:inReplyTo';
-              // TODO: pass document title and maybe author so they can be displayed on the reply too.
-            }
-
-            hasTarget = '<a href="' + targetIRI + '" rel="' + targetRelation + '">' + targetLabel + '</a>';
-            if (typeof n.target !== 'undefined' && typeof n.target.source !== 'undefined') {
-              hasTarget += ' (<a about="' + n.target.iri + '" href="' + n.target.source +'" rel="oa:hasSource" typeof="oa:SpecificResource">part of</a>)';
-            }
-
-            var targetLanguage = (typeof n.target !== 'undefined' && 'language' in n.target && n.target.language.length) ? '<dl><dt>Language</dt><dd><span lang="" property="dcterms:language" xml:lang="">' + n.target.language + '</span></dd></dl>': '';
-
-            target ='<dl class="target"><dt>' + hasTarget + '</dt>';
-            if (typeof n.target !== 'undefined' && typeof n.target.selector !== 'undefined') {
-              target += '<dd><blockquote about="' + targetIRI + '" cite="' + targetIRI + '">' + targetLanguage + annotationTextSelector + '</blockquote></dd>';
-            }
-            target += '</dl>';
-
-            target += '<dl class="renderedvia"><dt>Rendered via</dt><dd><a about="' + targetIRI + '" href="https://dokie.li/" rel="oa:renderedVia">dokieli</a></dd></dl>';
-
-            var canonical = '<dl class="canonical"><dt>Canonical</dt><dd rel="oa:canonical" resource="' + canonicalId + '">' + canonicalId + '</dd></dl>';
-
-            note = '<article about="' + aAbout + '" id="' + n.id + '" typeof="oa:Annotation' + noteType + '"' + aPrefix + articleClass + '>'+buttonDelete+'\n\
-  ' + heading + '\n\
-  ' + authors + '\n\
-  ' + created + '\n\
-  ' + language + '\n\
-  ' + license + '\n\
-  ' + rights + '\n\
-  ' + inbox + '\n\
-  ' + canonical + '\n\
-  ' + target + '\n\
-  ' + body + '\n\
-</article>';
-          }
-          break;
-
-        case 'ref-footnote':
-          var citationURL = (typeof n.citationURL !== 'undefined' && n.citationURL != '') ? '<a href="' + n.citationURL + '" rel="rdfs:seeAlso">' + n.citationURL + '</a>' : '';
-          var bodyValue = (n.body && n.body.length) ? n.body[0].value : '';
-          body = (bodyValue) ? ((citationURL) ? ', ' + bodyValue : bodyValue) : '';
-
-          note = '\n\
-  <dl about="#' + n.id +'" id="' + n.id +'" typeof="oa:Annotation">\n\
-    <dt><a href="#' + n.refId + '" rel="oa:hasTarget">' + n.refLabel + '</a><meta rel="oa:motivation" resource="' + motivatedByIRI + '" /></dt>\n\
-    <dd rel="oa:hasBody" resource="#n-' + n.id + '"><div datatype="rdf:HTML" property="rdf:value" resource="#n-' + n.id + '" typeof="oa:TextualBody">' + citationURL + body + '</div></dd>\n\
-  </dl>\n\
-';
-          break;
-
-        case 'ref-citation':
-          heading = '<h' + hX + '>Citation</h' + hX + '>';
-
-          var citingEntityLabel = ('citingEntityLabel' in n.citation) ? n.citation.citingEntityLabel : n.citation.citingEntity;
-          var citationCharacterizationLabel = DO.C.Citation[n.citation.citationCharacterization] || n.citation.citationCharacterization;
-          var citedEntityLabel = ('citedEntityLabel' in n.citation) ? n.citation.citedEntityLabel : n.citation.citedEntity;
-
-          var citation = '\n\
-  <dl about="' + n.citation.citingEntity + '">\n\
-    <dt>Cited by</dt><dd><a href="' + n.citation.citingEntity + '">' + citingEntityLabel + '</a></dd>\n\
-    <dt>Citation type</dt><dd><a href="' + n.citation.citationCharacterization + '">' + citationCharacterizationLabel+ '</a></dd>\n\
-    <dt>Cites</dt><dd><a href="' + n.citation.citedEntity + '" property="' + n.citation.citationCharacterization + '">' + citedEntityLabel + '</a></dd>\n\
-  </dl>\n\
-';
-
-          note = '<article about="' + aAbout + '" id="' + n.id + '" prefixes="cito: http://purl.org/spart/cito/"' + articleClass + '>\n\
-  ' + heading + '\n\
-  ' + citation + '\n\
-</article>';
-          break;
-
-        default:
-          break;
-      }
-
-      return note;
-    },
-
-    tagsToBodyObjects: function(string) {
-      var bodyObjects = [];
-
-      let tagsArray = string
-        .split(',')
-        .map(tag => escapeCharacters(tag.trim()))
-        .filter(tag => tag.length);
-
-      tagsArray = uniqueArray(tagsArray.sort());
-
-      tagsArray.forEach(tag => {
-        bodyObjects.push({
-          "purpose": "tagging",
-          "value": tag
-        })
-      })
-
-      return bodyObjects;
     },
 
     initMath: function(config) {

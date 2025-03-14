@@ -27,10 +27,10 @@ export class Editor {
   init(mode, node) {
     this.mode = mode || this.mode;
     this.node = node || this.node;
+
     switch (this.mode) {
       case 'author':
         this.destroySocialToolbar();
-        console.log(this.node)
         this.createEditor(this.node);
         break;
       case 'social':
@@ -39,6 +39,8 @@ export class Editor {
         this.createSocialToolbar(this.node);
         break;
     }
+
+    this.showTextQuoteSelectorFromLocation();
   }
 
   showEditorModeActionMessage(e, mode) {

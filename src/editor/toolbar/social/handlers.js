@@ -1,8 +1,8 @@
 import { schema } from "../../schema/base.js"
 import { getTextQuoteHTML, getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
 import { getRandomUUID, getFormValues, kebabToCamel, generateAttributeId, getDateTimeISO } from "../../../util.js"
-import { createActivityHTML, fragmentFromString, getNodeLanguage, getReferenceLabel } from "../../../doc.js"
-import { stripFragmentFromString } from "../../../uri.js"
+import { createActivityHTML, createHTML, createNoteDataHTML, fragmentFromString, getNodeLanguage, getReferenceLabel } from "../../../doc.js"
+import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { postActivity } from "../../../inbox.js"
 
@@ -66,9 +66,6 @@ export function formHandlerAnnotate(e, action) {
 
   processAction(action, formValues, selectionData);
 
-  // highlightText();
-  wrapSelectionInMark(selection);
-
   this.cleanupToolbar();
 }
 
@@ -90,6 +87,8 @@ export function processAction(action, formValues, selectionData) {
 
   const formData = getFormActionData(action, formValues, selectionData);
   const { annotationDistribution, ...otherFormData } = formData;
+
+  let data, note;
 
   //XXX: Sort of a placeholder switch but don't really need it now
   switch(action) {
@@ -113,7 +112,6 @@ export function processAction(action, formValues, selectionData) {
         data = createHTML('', note);
 
         // console.log(noteData)
-        // console.log(note)
         // console.log(data)
         // console.log(annotation)
 
@@ -132,7 +130,7 @@ export function processAction(action, formValues, selectionData) {
               annotation['noteIRI'] = annotation['noteURL'] = location;
             }
 
-            // console.log(annotation, options)
+            // console.log(annotation, formData.options)
 
             return positionActivity(annotation, options);
           })
@@ -283,12 +281,11 @@ export function getAnnotationDistribution(action, data) {
   var aLS, noteURL, noteIRI, contextProfile, fromContentType, contentType;
   var annotationDistribution = [];
 
-  const activityTypeMatched = false;
+  let activityTypeMatched = false;
   const activityIndex = Config.ActionActivityIndex[action];
 
   //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
   if ((annotationLocationPersonalStorage && Config.User.TypeIndex) || (!annotationLocationPersonalStorage && !annotationLocationService && Config.User.TypeIndex)) {
-
     //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
 
     var publicTypeIndexes = Config.User.TypeIndex[ns.solid.publicTypeIndex.value];
@@ -444,7 +441,7 @@ export function createActivityData(annotation, options = {}) {
   }
   else {
     switch(action) {
-      default: case 'article': case 'specificity':
+      default: case 'comment': case 'specificity':
         notificationData['type'] = ['as:Create'];
         notificationData['object'] = noteIRI;
         notificationData['inReplyTo'] = targetIRI;

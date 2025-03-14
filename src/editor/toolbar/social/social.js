@@ -20,7 +20,7 @@ export class SocialToolbar extends ToolbarView {
   // FIXME: this doesn't work properly 
   updateToolbarVisibility(e) {
     if (this.dom.classList.contains('editor-toolbar-active') && !e.target.closest('.do') && e.target.closest('input[type]')?.type !== 'file') { 
-      console.log('------HERE NOW: cleanupToolbar');
+      // console.log('------HERE NOW: cleanupToolbar');
       this.cleanupToolbar();
     }
   }

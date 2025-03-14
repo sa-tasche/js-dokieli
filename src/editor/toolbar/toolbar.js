@@ -321,8 +321,9 @@ export class ToolbarView {
       const margin = 10;
 
       // Display the toolbar
+      // TODO: do not change visibility if the selection is within a .do element (except the annotation maybe?)
       this.dom.classList.add("editor-toolbar-active");
-
+      
       this.dom.style.left = `${selectedPosition.left + (selectedPosition.width / 2 ) - (toolbarWidth / 2)}px`;
 
       // Cleanup the arrow from previous toolbar poisitioning
@@ -400,6 +401,30 @@ export class ToolbarView {
         this.clearToolbarForm(toolbarForm);
         this.clearToolbarButton(button);
       }
+    }
+  }
+
+  showTextQuoteSelectorFromLocation(containerNode) {
+    var motivatedBy = 'oa:highlighting';
+    var selector = getTextQuoteSelectorFromLocation(document.location);
+
+    if (selector && selector.exact && selector.exact.length) {
+      //XXX: TODO: Copied from showAnnotation
+  
+      var refId = document.location.hash.substring(1);
+      var refLabel = getReferenceLabel(motivatedBy);
+  
+      containerNode = containerNode || getDocumentContentNode(document);
+  
+      var docRefType = '<sup class="ref-highlighting"><a rel="oa:hasTarget" href="#' + refId + '">' + refLabel + '</a></sup>';
+  
+      var options = {
+        'do': true,
+        'mode': '#selector'
+      };
+  // console.log(selector)
+  // console.log(refId)
+      this.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options);
     }
   }
 
@@ -571,28 +596,3 @@ export function getTextQuoteSelectorFromLocation(location) {
     return selector;
   }
 }
-
-
-export function showTextQuoteSelector(containerNode) {
-  var motivatedBy = 'oa:highlighting';
-  var selector = getTextQuoteSelectorFromLocation(document.location);
-  if (selector && selector.exact && selector.exact.length) {
-    //XXX: TODO: Copied from showAnnotation
-
-    var refId = document.location.hash.substring(1);
-    var refLabel = getReferenceLabel(motivatedBy);
-
-    containerNode = containerNode || getDocumentContentNode(document);
-
-    var docRefType = '<sup class="ref-highlighting"><a rel="oa:hasTarget" href="#' + refId + '">' + refLabel + '</a></sup>';
-
-    var options = {
-      'do': true,
-      'mode': '#selector'
-    };
-// console.log(selector)
-// console.log(refId)
-    importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
-  }
-}
-

@@ -21,7 +21,6 @@ export default {
       DO.U.highlightItems();
       DO.U.showAsTabs();
       DO.U.initDocumentActions();
-      // DO.U.showTextQuoteSelector();
       DO.U.showDocumentInfo();
       DO.U.showFragment();
       DO.U.initCopyToClipboard();
@@ -446,7 +445,7 @@ export default {
   ],
 
   ActionActivityIndex: {
-    'article': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Note', 'https://www.w3.org/ns/activitystreams#Article', 'https://www.w3.org/ns/activitystreams#Document', 'http://schema.org/CreativeWork' ],
+    'comment': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Note', 'https://www.w3.org/ns/activitystreams#Article', 'https://www.w3.org/ns/activitystreams#Document', 'http://schema.org/CreativeWork' ],
     'approve': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Like', 'https://www.w3.org/ns/activitystreams#Activity', 'http://schema.org/CreativeWork' ],
     'disapprove': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Dislike', 'https://www.w3.org/ns/activitystreams#Activity', 'http://schema.org/CreativeWork' ],
     'specificity': [ 'http://www.w3.org/ns/oa#Annotation','https://www.w3.org/ns/activitystreams#Note', 'https://www.w3.org/ns/activitystreams#Article', 'https://www.w3.org/ns/activitystreams#Document', 'http://schema.org/CreativeWork' ],

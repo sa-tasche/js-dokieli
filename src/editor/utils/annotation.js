@@ -150,6 +150,8 @@ export function restoreSelection(clonedSelection) {
   const selection = window.getSelection();
   selection.removeAllRanges(); // Clear existing selection
 
+  if (!clonedSelection) return;
+
   clonedSelection.forEach(({ range }) => {
     selection.addRange(range);
   });
