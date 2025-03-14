@@ -2,16 +2,17 @@
 
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex } from './util.js'
-import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath } from './uri.js'
+import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
-import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox } from './graph.js'
+import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI } from './graph.js'
 import { createRDFaHTML } from './template.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
+import { Icon } from './ui/icons.js';
 
 const ns = Config.ns;
 
@@ -531,6 +532,312 @@ function createActivityHTML(o) {
 </article>'
 
   return data
+}
+
+
+function createNoteDataHTML(n) {
+// console.log(n);
+  var created = '';
+  var lang = '', xmlLang = '', language = '';
+  var license = '';
+  var rights = '';
+  var creator = '', authors = '', creatorImage = '', creatorNameIRI = '', creatorURLNameIRI = '';
+  var hasTarget = '', annotationTextSelector = '', target = '';
+  var inbox = '';
+  var heading, hX;
+  var aAbout = '', aPrefix = '';
+  var noteType = '';
+  var body = '';
+  var buttonDelete = '';
+  var note = '';
+  var targetLabel = '';
+  var bodyAltLabel = '';
+  var articleClass = '';
+  var prefixes = ' prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# schema: http://schema.org/ dcterms: http://purl.org/dc/terms/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp#"';
+
+  var canonicalId = n.canonical || 'urn:uuid:' + generateUUID();
+
+  var motivatedByIRI = n.motivatedByIRI || '';
+  var motivatedByLabel = '';
+
+  motivatedByIRI = getPrefixedNameFromIRI(motivatedByIRI);
+
+  switch(motivatedByIRI) {
+    case 'oa:replying': default:
+      motivatedByIRI = 'oa:replying';
+      motivatedByLabel = 'replies';
+      targetLabel = 'In reply to';
+      bodyAltLabel = 'Replied';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'oa:assessing':
+      motivatedByLabel = 'reviews';
+      targetLabel = 'Review of';
+      bodyAltLabel = 'Reviewed';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'oa:questioning':
+      motivatedByLabel = 'questions';
+      targetLabel = 'Questions';
+      bodyAltLabel = 'Questioned';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'oa:describing':
+      motivatedByLabel = 'describes';
+      targetLabel = 'Describes';
+      bodyAltLabel = 'Described'
+      aAbout = '#' + n.id;
+      break;
+    case 'oa:commenting':
+      motivatedByLabel = 'comments';
+      targetLabel = 'Comments on';
+      bodyAltLabel = 'Commented';
+      aAbout = '#' + n.id;
+      break;
+    case 'oa:bookmarking': case 'bookmark:Bookmark':
+      motivatedByLabel = 'bookmarks';
+      targetLabel = 'Bookmarked';
+      bodyAltLabel = 'Bookmarked';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'as:Like':
+      motivatedByLabel = 'Liked';
+      targetLabel = 'Like of';
+      bodyAltLabel = 'Liked';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'as:Dislike':
+      motivatedByLabel = 'Disliked';
+      targetLabel = 'Dislike of';
+      bodyAltLabel = 'Disliked';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+  }
+
+  switch(n.mode) {
+    default: case 'read':
+      hX = 3;
+      if ('creator' in n && 'iri' in n.creator && n.creator.iri == Config.User.IRI) {
+        buttonDelete = '<button class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>' ;
+      }
+      articleClass = (motivatedByIRI == 'oa:commenting') ? '': ' class="do"';
+      aAbout = ('iri' in n) ? n.iri : '';
+      break;
+    case 'write':
+      hX = 1;
+      break;
+    case 'object':
+      hX = 2;
+      break;
+  }
+
+  var creatorName = '';
+  var creatorIRI = '#' + generateAttributeId();
+  // creatorNameIRI = Config.SecretAgentNames[Math.floor(Math.random() * Config.SecretAgentNames.length)];
+
+  if ('creator' in n) {
+    if('iri' in n.creator) {
+      creatorIRI = n.creator.iri;
+    }
+
+    creatorName = creatorIRI;
+
+    if('name' in n.creator) {
+      creatorName = n.creator.name;
+      creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
+    }
+    else {
+      creatorName = getUserLabelOrIRI(creatorIRI);
+      creatorNameIRI = (creatorName == creatorIRI) ? creatorName : '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
+    }
+
+    var img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+    if ('image' in n.creator) {
+      img = (n.mode == 'read') ? getProxyableIRI(n.creator.image) : n.creator.image;
+    }
+    else if (Config.User.Image && (creatorIRI == Config.User.IRI || Config.User.SameAs.includes(creatorIRI))) {
+      img = (n.mode == 'read') ? getProxyableIRI(Config.User.Image) : Config.User.Image;
+    }
+    else {
+      img = (Config.User.Contacts && Config.User.Contacts[creatorIRI] && Config.User.Contacts[creatorIRI].Image) ? Config.User.Contacts[creatorIRI].Image : img;
+    }
+    creatorImage = '<img alt="" height="48" rel="schema:image" src="' + img + '" width="48" /> ';
+
+    creatorURLNameIRI = ('url' in n.creator) ? '<a href="' + n.creator.url + '" rel="schema:url">' + creatorNameIRI + '</a>' : '<a href="' + creatorIRI + '">' + creatorNameIRI + '</a>';
+
+    creator = '<span about="' + creatorIRI + '" typeof="schema:Person">' + creatorImage + creatorURLNameIRI + '</span>';
+
+    authors = '<dl class="author-name"><dt>Authors</dt><dd><span rel="dcterms:creator">' + creator + '</span></dd></dl>';
+  }
+
+  heading = '<h' + hX + ' property="schema:name">' + creatorName + ' <span rel="oa:motivatedBy" resource="' + motivatedByIRI + '">' + motivatedByLabel + '</span></h' + hX + '>';
+
+  if ('inbox' in n && typeof n.inbox !== 'undefined') {
+    inbox = '<dl class="inbox"><dt>Notifications Inbox</dt><dd><a href="' + n.inbox + '" rel="ldp:inbox">' + n.inbox + '</a></dd></dl>';
+  }
+
+  if ('datetime' in n && typeof n.datetime !== 'undefined'){
+    var time = '<time datetime="' + n.datetime + '" datatype="xsd:dateTime" property="dcterms:created" content="' + n.datetime + '">' + n.datetime.substr(0,19).replace('T', ' ') + '</time>';
+    var timeLinked = ('iri' in n) ? '<a href="' + n.iri + '">' + time + '</a>' : time;
+    created = '<dl class="created"><dt>Created</dt><dd>' + timeLinked + '</dd></dl>';
+  }
+
+  if (n.language) {
+    language = createLanguageHTML(n.language, {property:'dcterms:language', label:'Language'});
+    lang = ' lang="' +  n.language + '"';
+    xmlLang = ' xml:lang="' +  n.language + '"';
+  }
+  if (n.license) {
+    license = createLicenseHTML(n.license, {rel:'schema:license', label:'License'});
+  }
+  if (n.rights) {
+    rights = createRightsHTML(n.rights, {rel:'dcterms:rights', label:'Rights'});
+  }
+
+  //TODO: Differentiate language, license, rights on Annotation from Body
+  switch(n.type) {
+    case 'comment': case 'note': case 'bookmark': case 'approve': case 'disapprove': case 'specificity':
+      if (typeof n.target !== 'undefined' || typeof n.inReplyTo !== 'undefined') { //note, annotation, reply
+        //FIXME: Could resourceIRI be a fragment URI or *make sure* it is the document URL without the fragment?
+        //TODO: Use n.target.iri?
+// console.log(n)
+        if (typeof n.body !== 'undefined') {
+          var tagsArray = [];
+
+          n.body = Array.isArray(n.body) ? n.body : [n.body];
+          n.body.forEach(bodyItem => {
+            var bodyLanguage = createLanguageHTML(bodyItem.language, {property:'dcterms:language', label:'Language'}) || language;
+            var bodyLicense = createLicenseHTML(bodyItem.license, {rel:'schema:license', label:'License'}) || license;
+            var bodyRights = createRightsHTML(bodyItem.rights, {rel:'dcterms:rights', label:'Rights'}) || rights;
+            var bodyValue = bodyItem.value || bodyAltLabel;
+            // var bodyValue = bodyItem.value || '';
+            // var bodyFormat = bodyItem.format ? bodyItem.format : 'rdf:HTML';
+
+            if (bodyItem.purpose) {
+              if (bodyItem.purpose == "describing" || bodyItem.purpose == ns.oa.describing.value) {
+                body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
+              }
+              if (bodyItem.purpose == "tagging" || bodyItem.purpose == ns.oa.tagging.value) {
+                tagsArray.push(bodyValue);
+              }
+            }
+            else {
+              body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
+            }
+          });
+
+          if (tagsArray.length) {
+            tagsArray = tagsArray
+              .map(tag => escapeCharacters(tag.trim()))
+              .filter(tag => tag.length);
+            tagsArray = uniqueArray(tagsArray.sort());
+
+            var tags = tagsArray.map(tag => '<li about="#tag-' + n.id + '-' + generateAttributeId(null, tag) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + tag + '</li>').join('');
+
+            body += '<dl id="tags-' + n.id + '" class="tags"><dt>Tags</dt><dd><ul rel="oa:hasBody">' + tags + '</ul></dd></dl>';
+          }
+        }
+        else if (n.bodyValue !== 'undefined') {
+          body += '<p property="oa:bodyValue">' + n.bodyValue + '</p>';
+        }
+// console.log(body)
+        var targetIRI = '';
+        var targetRelation = 'oa:hasTarget';
+        if (typeof n.target !== 'undefined' && 'iri' in n.target) {
+          targetIRI = n.target.iri;
+          var targetIRIFragment = getFragmentFromString(n.target.iri);
+          //TODO: Handle when there is no fragment
+          //TODO: Languages should be whatever is target's (not necessarily 'en')
+          if (typeof n.target.selector !== 'undefined') {
+            var selectionLanguage = ('language' in n.target.selector && n.target.selector.language) ? n.target.selector.language : '';
+
+            annotationTextSelector = '<div rel="oa:hasSelector" resource="#fragment-selector" typeof="oa:FragmentSelector"><dl class="conformsto"><dt>Fragment selector conforms to</dt><dd><a content="' + targetIRIFragment + '" lang="" property="rdf:value" rel="dcterms:conformsTo" href="https://tools.ietf.org/html/rfc3987" xml:lang="">RFC 3987</a></dd></dl><dl rel="oa:refinedBy" resource="#text-quote-selector" typeof="oa:TextQuoteSelector"><dt>Refined by</dt><dd><span lang="' + selectionLanguage + '" property="oa:prefix" xml:lang="' + selectionLanguage + '">' + n.target.selector.prefix + '</span><mark lang="' + selectionLanguage + '" property="oa:exact" xml:lang="' + selectionLanguage + '">' + n.target.selector.exact + '</mark><span lang="' + selectionLanguage + '" property="oa:suffix" xml:lang="' + selectionLanguage + '">' + n.target.selector.suffix + '</span></dd></dl></div>';
+          }
+        }
+        else if(typeof n.inReplyTo !== 'undefined' && 'iri' in n.inReplyTo) {
+          targetIRI = n.inReplyTo.iri;
+          targetRelation = ('rel' in n.inReplyTo) ? n.inReplyTo.rel : 'as:inReplyTo';
+          // TODO: pass document title and maybe author so they can be displayed on the reply too.
+        }
+
+        hasTarget = '<a href="' + targetIRI + '" rel="' + targetRelation + '">' + targetLabel + '</a>';
+        if (typeof n.target !== 'undefined' && typeof n.target.source !== 'undefined') {
+          hasTarget += ' (<a about="' + n.target.iri + '" href="' + n.target.source +'" rel="oa:hasSource" typeof="oa:SpecificResource">part of</a>)';
+        }
+
+        var targetLanguage = (typeof n.target !== 'undefined' && 'language' in n.target && n.target.language.length) ? '<dl><dt>Language</dt><dd><span lang="" property="dcterms:language" xml:lang="">' + n.target.language + '</span></dd></dl>': '';
+
+        target ='<dl class="target"><dt>' + hasTarget + '</dt>';
+        if (typeof n.target !== 'undefined' && typeof n.target.selector !== 'undefined') {
+          target += '<dd><blockquote about="' + targetIRI + '" cite="' + targetIRI + '">' + targetLanguage + annotationTextSelector + '</blockquote></dd>';
+        }
+        target += '</dl>';
+
+        target += '<dl class="renderedvia"><dt>Rendered via</dt><dd><a about="' + targetIRI + '" href="https://dokie.li/" rel="oa:renderedVia">dokieli</a></dd></dl>';
+
+        var canonical = '<dl class="canonical"><dt>Canonical</dt><dd rel="oa:canonical" resource="' + canonicalId + '">' + canonicalId + '</dd></dl>';
+
+        note = '<article about="' + aAbout + '" id="' + n.id + '" typeof="oa:Annotation' + noteType + '"' + aPrefix + articleClass + '>'+buttonDelete+'\n\
+' + heading + '\n\
+' + authors + '\n\
+' + created + '\n\
+' + language + '\n\
+' + license + '\n\
+' + rights + '\n\
+' + inbox + '\n\
+' + canonical + '\n\
+' + target + '\n\
+' + body + '\n\
+</article>';
+      }
+      break;
+
+    case 'ref-footnote':
+      var citationURL = (typeof n.citationURL !== 'undefined' && n.citationURL != '') ? '<a href="' + n.citationURL + '" rel="rdfs:seeAlso">' + n.citationURL + '</a>' : '';
+      var bodyValue = (n.body && n.body.length) ? n.body[0].value : '';
+      body = (bodyValue) ? ((citationURL) ? ', ' + bodyValue : bodyValue) : '';
+
+      note = '\n\
+<dl about="#' + n.id +'" id="' + n.id +'" typeof="oa:Annotation">\n\
+<dt><a href="#' + n.refId + '" rel="oa:hasTarget">' + n.refLabel + '</a><meta rel="oa:motivation" resource="' + motivatedByIRI + '" /></dt>\n\
+<dd rel="oa:hasBody" resource="#n-' + n.id + '"><div datatype="rdf:HTML" property="rdf:value" resource="#n-' + n.id + '" typeof="oa:TextualBody">' + citationURL + body + '</div></dd>\n\
+</dl>\n\
+';
+      break;
+
+    case 'ref-citation':
+      heading = '<h' + hX + '>Citation</h' + hX + '>';
+
+      var citingEntityLabel = ('citingEntityLabel' in n.citation) ? n.citation.citingEntityLabel : n.citation.citingEntity;
+      var citationCharacterizationLabel = Config.Citation[n.citation.citationCharacterization] || n.citation.citationCharacterization;
+      var citedEntityLabel = ('citedEntityLabel' in n.citation) ? n.citation.citedEntityLabel : n.citation.citedEntity;
+
+      var citation = '\n\
+<dl about="' + n.citation.citingEntity + '">\n\
+<dt>Cited by</dt><dd><a href="' + n.citation.citingEntity + '">' + citingEntityLabel + '</a></dd>\n\
+<dt>Citation type</dt><dd><a href="' + n.citation.citationCharacterization + '">' + citationCharacterizationLabel+ '</a></dd>\n\
+<dt>Cites</dt><dd><a href="' + n.citation.citedEntity + '" property="' + n.citation.citationCharacterization + '">' + citedEntityLabel + '</a></dd>\n\
+</dl>\n\
+';
+
+      note = '<article about="' + aAbout + '" id="' + n.id + '" prefixes="cito: http://purl.org/spart/cito/"' + articleClass + '>\n\
+' + heading + '\n\
+' + citation + '\n\
+</article>';
+      break;
+
+    default:
+      console.log(`XXX: noteData with "${n.type}" type not implemented yet`);
+      break;
+  }
+
+  return note;
 }
 
 function tagsToBodyObjects(string) {
