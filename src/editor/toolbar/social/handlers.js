@@ -1,7 +1,7 @@
 import { schema } from "../../schema/base.js"
-import { getTextQuoteHTML, getSelectedParentElement } from "../../utils/annotation.js";
-import { getRandomUUID, getFormValues, kebabToCamel } from "../../../util.js"
-import { fragmentFromString } from "../../../doc.js"
+import { getTextQuoteHTML, getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
+import { getRandomUUID, getFormValues, kebabToCamel, generateAttributeId, getDateTimeISO } from "../../../util.js"
+import { createActivityHTML, fragmentFromString, getNodeLanguage, getReferenceLabel } from "../../../doc.js"
 import { stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
 import { postActivity } from "../../../inbox.js"
@@ -38,7 +38,7 @@ export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
 
-  this.restoreSelection(this.selection);
+  restoreSelection(this.selection);
   const selection = window.getSelection();
 
   const range = selection.getRangeAt(0);
@@ -49,20 +49,20 @@ export function formHandlerAnnotate(e, action) {
   //TODO: Mark the selection after successful comment. Move out.
   //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
   //Mark the selected content in the document
-  const selector = getTextQuoteSelector(editor, mode, view, options)
+  const selector = this.getTextQuoteSelector();
 
   const selectionData = {
     selection,
     selector,
     selectedParentElement,
-    selectedContent: DO.Editor.getSelectionAsHTML()
+    selectedContent: this.getSelectionAsHTML()
   };
 
   const annotationInboxLocation = formValues['annotation-inbox'];
   const annotationLocationPersonalStorage = formValues['annotation-location-personal-storage'];
   const annotationLocationService = formValues['annotation-location-service'];
 
-  updateUserUI({ annotationInboxLocation, annotationLocationPersonalStorage, annotationLocationService })
+  updateUserUI({ annotationInboxLocation, annotationLocationPersonalStorage, annotationLocationService }, formValues)
 
   processAction(action, formValues, selectionData);
 
@@ -73,7 +73,7 @@ export function formHandlerAnnotate(e, action) {
 }
 
 
-function updateUserUI(fields) {
+function updateUserUI(fields, formValues) {
   Object.entries(fields).forEach(([key, value]) => {
     const input = formValues[key];
     Config.User.UI[key] = { checked: false };
@@ -219,7 +219,7 @@ export function getFormActionData(action, formValues, selectionData) {
     data.motivatedBy = 'oa:linking';
   }
 
-  data.refLabel = DO.U.getReferenceLabel(data.motivatedBy);
+  data.refLabel = getReferenceLabel(data.motivatedBy);
 
   data.refId = 'r-' + data.id;
   data.targetIRI = (data.parentNodeWithId) ? data.resourceIRI + '#' + data.parentNodeWithId.id : data.resourceIRI;
@@ -241,7 +241,7 @@ export function getFormActionData(action, formValues, selectionData) {
   // console.log(targetLanguage, selectionLanguage)
 
   //TODO: Revisit this to see whether resourceIRI should be the original or the one that gets updated after latestVersion check.
-  data.selectorIRI = getAnnotationSelectorStateURI(data.resourceIRI, selector);
+  data.selectorIRI = getAnnotationSelectorStateURI(data.resourceIRI, data.selectionData.selector);
 
   data.annotationDistribution = getAnnotationDistribution(action, data);
 
@@ -269,7 +269,8 @@ export function isDuplicateLocation(annotationDistribution, containerIRI) {
 
 
 export function getAnnotationDistribution(action, data) {
-  const { id, containerIRI, selectionData, formData } = data;
+  const { id, selectionData, formData } = data;
+  let { containerIRI } = data;
   const { selectedParentElement } = selectionData;
   //This annotationInbox is about when the selected text is part of an existing Annotation, it gets that Annotation's own inbox which is used towards announcing the annotation that's about to be created. (This is not related to whether an inbox should be assigned to an annotation that's about to be created.)
   const annotationInbox =  getInboxOfClosestNodeWithSelector(selectedParentElement, '.do[typeof="oa:Annotation"]');

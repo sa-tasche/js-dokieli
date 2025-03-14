@@ -1,7 +1,7 @@
 import { schema } from "../schema/base.js"
 import { buttonIcons } from "../../ui/button-icons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
-import { getTextQuoteHTML, cloneSelection } from "../utils/annotation.js";
+import { getTextQuoteHTML, cloneSelection, restoreSelection } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";
 
 
@@ -62,9 +62,6 @@ export class ToolbarView {
   }
 
   // TODO: define default behavior for all of these methods
-  restoreSelection() {
-    // return restoreSelection(this.selection)
-  }
 
   replaceSelectionWithFragment() {
 
@@ -74,11 +71,6 @@ export class ToolbarView {
 
   }
 
-
-  getTextQuoteSelector() {
-
-  }
-  
   
   getToolbarPopups() {
     return {}
@@ -459,7 +451,7 @@ export class ToolbarView {
 
       // TODO: we think this is equivalent to restoreSelection
       // MediumEditor.selection.importSelection(selection, containerNode, document);
-      this.restoreSelection();
+      restoreSelection(this.selection);
   
       //XXX: Review
       selection = window.getSelection();

@@ -64,11 +64,6 @@ export class Editor {
     this.setEditorDataItems(e);
   }
 
-  restoreSelection(mode) {
-    const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView.restoreSelection()
-  }
-
   importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
     return toolbarView.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
@@ -111,15 +106,10 @@ export class Editor {
     console.log("Editor created. Mode:", this.mode);
   }
 
-  restoreSelection(mode) {
-    const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView.restoreSelection()
-  }
-
   destroyEditor() {
     if (this.editorView) {
       console.log(this.editorView.state.doc.content);
-      const content = DOMSerializer.fromSchema(schema).serializeFragment(view.state.doc.content);
+      const content = DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
       // const serializer = DOMSerializer.fromSchema(schema);
 
       // const fragment = serializer.serializeFragment(view.state.doc.content);
@@ -130,6 +120,7 @@ export class Editor {
       this.editorView.destroy();
       this.editorView = null;
       //FIXME: DO NOT USE innerHTML
+      // TODO: is there HTML serializer? 
       this.node.innerHTML = new XMLSerializer().serializeToString(content);
       //TODO: Test below for above.
       // document.body.replaceChildren(new DOMParser().parseFromString(content, "text/html").body);

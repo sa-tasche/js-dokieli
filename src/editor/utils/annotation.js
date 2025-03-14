@@ -79,30 +79,6 @@ export function rangeSelectsSingleNode (range) {
       range.endOffset === range.startOffset + 1;
 }
 
-export function getSelectionAsHTML(selection) {
-  selection = selection || window.getSelection();
-  if (!selection.rangeCount) return "";
-
-  const div = document.createElement("div");
-
-  for (let i = 0; i < selection.rangeCount; i++) {
-    const range = selection.getRangeAt(i);
-    const fragment = range.cloneContents();
-
-    // console.log("RANGE CONTENTS:");
-    // fragment.childNodes.forEach(node => {
-    //   console.log("Child:", node);
-    //   if (node.children) {
-    //     Array.from(node.children).forEach(child => console.log("Grandchild:", child));
-    //   }
-    // });
-
-    div.appendChild(fragment);
-  }
-
-  return div.getHTML();
-}
-
 // moved to Edtior.replaceSelectionWithFragment
 export function replaceSelectionWithFragment(selection, fragment) {
   if (!selection.rangeCount) return;

@@ -1,11 +1,11 @@
 import { formHandlerAnnotate } from "./handlers.js"
 import { ToolbarView, annotateFormControls, updateAnnotationInboxForm, updateAnnotationServiceForm } from "../toolbar.js"
-import { getAnnotationLocationHTML, getAnnotationInboxLocationHTML, getDocument } from "../../../doc.js";
+import { getAnnotationLocationHTML, getAnnotationInboxLocationHTML, getDocument, escapeCharacters } from "../../../doc.js";
 import Config from "../../../config.js";
 import { fragmentFromString } from "../../../util.js";
 import { showUserIdentityInput } from "../../../auth.js";
 import { getLinkRelation } from "../../../graph.js";
-import { getSelectedParentElement } from "../../utils/annotation.js";
+import { exportSelection, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 
 const ns = Config.ns;
 
@@ -41,8 +41,32 @@ export class SocialToolbar extends ToolbarView {
     ];
   }
 
+  getSelectionAsHTML(selection) {
+    selection = selection || window.getSelection();
+    if (!selection.rangeCount) return "";
+  
+    const div = document.createElement("div");
+  
+    for (let i = 0; i < selection.rangeCount; i++) {
+      const range = selection.getRangeAt(i);
+      const fragment = range.cloneContents();
+  
+      // console.log("RANGE CONTENTS:");
+      // fragment.childNodes.forEach(node => {
+      //   console.log("Child:", node);
+      //   if (node.children) {
+      //     Array.from(node.children).forEach(child => console.log("Grandchild:", child));
+      //   }
+      // });
+  
+      div.appendChild(fragment);
+    }
+  
+    return div.getHTML();
+  }  
+
   getTextQuoteSelector() {
-    Editor.restoreSelection();
+    restoreSelection(this.selection);
   
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
@@ -50,7 +74,7 @@ export class SocialToolbar extends ToolbarView {
     var selectedParentElement = getSelectedParentElement(range);
   // console.log('getSelectedParentElement:', selectedParentElement);
   
-    const selectionHTML = getSelectionAsHTML(selection); //.replace(Config.Editor.regexEmptyHTMLTags, '');
+    const selectionHTML = this.getSelectionAsHTML(selection); //.replace(Config.Editor.regexEmptyHTMLTags, '');
   
     var exact = selectionHTML;
     // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, document);
@@ -75,10 +99,6 @@ export class SocialToolbar extends ToolbarView {
       prefix,
       suffix
     }
-  }
-
-  getSelectionAsHTML() {
-
   }
 
   replaceSelectionWithFragment(fragment) {
