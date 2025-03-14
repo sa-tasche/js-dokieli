@@ -93,20 +93,23 @@ export function processAction(action, formValues, selectionData) {
   //XXX: Sort of a placeholder switch but don't really need it now
   switch(action) {
     case 'approve': case 'disapprove': case 'specificity': case 'bookmark': case 'comment':
-      annotationDistribution.forEach(annotation => {
-        Object.assign(annotation, otherFormData);
-        var data = '';
+      annotationDistribution.forEach(annotationData => {
+        // We want to have one object with the annotation distribution data and remaining data from the form that is the same for all annotations. However, we need to overwrite any default values that we got initially from the form data with the latest calculations from annotation distribution data.
+        const annotation = {
+          ...otherFormData,
+          ...annotationData
+        };
 
         var noteData = createNoteData(annotation);
         annotation['motivatedByIRI'] = noteData['motivatedByIRI'];
 
         if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
           var notificationData = createActivityData(annotation, { 'relativeObject': true });
-          notificationData['statements'] = DO.U.createNoteDataHTML(noteData);
+          notificationData['statements'] = createNoteDataHTML(noteData);
           note = createActivityHTML(notificationData);
         }
         else {
-          note = DO.U.createNoteDataHTML(noteData);
+          note = createNoteDataHTML(noteData);
         }
 
         data = createHTML('', note);
@@ -115,7 +118,7 @@ export function processAction(action, formValues, selectionData) {
         // console.log(data)
         // console.log(annotation)
 
-        postActivity(annotation['containerIRI'], id, data, annotation)
+        postActivity(annotation['containerIRI'], annotation.id, data, annotation)
           .catch(error => {
             // console.log('Error serializing annotation:', error)
             // console.log(error)
@@ -132,12 +135,12 @@ export function processAction(action, formValues, selectionData) {
 
             // console.log(annotation, formData.options)
 
-            return positionActivity(annotation, options);
+            return positionActivity(annotation, formData.options);
           })
 
           .then(() => {
             if (action != 'bookmark') {
-              return sendNotification(annotation, options);
+              return sendNotification(annotation, formData.options);
             }
           })
 

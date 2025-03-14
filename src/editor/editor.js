@@ -71,6 +71,11 @@ export class Editor {
     return toolbarView.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
   }
 
+  showTextQuoteSelectorFromLocation(containerNode, selector, refId, motivatedBy, docRefType, options) {
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView.showTextQuoteSelectorFromLocation();
+  }
+
   replaceSelectionWithFragment(){
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
     return toolbarView.replaceSelectionWithFragment()
