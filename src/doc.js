@@ -533,6 +533,26 @@ function createActivityHTML(o) {
   return data
 }
 
+function tagsToBodyObjects(string) {
+  var bodyObjects = [];
+
+  let tagsArray = string
+    .split(',')
+    .map(tag => escapeCharacters(tag.trim()))
+    .filter(tag => tag.length);
+
+  tagsArray = uniqueArray(tagsArray.sort());
+
+  tagsArray.forEach(tag => {
+    bodyObjects.push({
+      "purpose": "tagging",
+      "value": tag
+    })
+  })
+
+  return bodyObjects;
+}
+
 function getClosestSectionNode(node) {
   return node.closest('section') || node.closest('div') || node.closest('article') || node.closest('main') || node.closest('body');
 }

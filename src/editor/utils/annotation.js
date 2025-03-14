@@ -1,8 +1,9 @@
 import { Plugin, TextSelection, NodeSelection, EditorState } from "prosemirror-state"
 import { replaceSelectionWithDOMFragment, docSelectionToHtml } from "./dom.js";
 import { getRandomUUID, fragmentFromString } from "./../../util.js";
-import { escapeCharacters } from "./../../doc.js";
-import { Icon } from "../../ui/icons.js"
+import { escapeCharacters, tagsToBodyObjects } from "./../../doc.js";
+import { Icon } from "../../ui/icons.js";
+import Config from "../../config.js";
 
 // 1. new annotation
   // replace the selection with fragment 
@@ -184,7 +185,7 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 }
 
 //TODO: This function returns noteData and also replaces the selection with an HTML reference to the note. Make it so that the reference related stuff is done elsewehere.
-export function createNoteData(data, annotation) {
+export function createNoteData(annotation) {
   const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
 
   const { tagging, content, language, license, ['ref-type']: refType, url } = formData;
@@ -193,6 +194,7 @@ export function createNoteData(data, annotation) {
 
   var mode;
   var ref;
+  let noteData = {};
 
   //TODO: This should be an object elsewhere?
   switch(profile) {
@@ -255,7 +257,7 @@ export function createNoteData(data, annotation) {
         bodyObject["rights"] = bodyObject["license"] = license;
       }
 
-      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(tagging));
+      noteData["body"] = [bodyObject].concat(tagsToBodyObjects(tagging));
 
       if (Config.User.IRI) {
         noteData.creator["iri"] = Config.User.IRI;
@@ -275,6 +277,7 @@ export function createNoteData(data, annotation) {
 
     case 'bookmark':
       docRefType = '';
+
       noteData = {
         "type": action,
         "mode": mode,
@@ -314,7 +317,7 @@ export function createNoteData(data, annotation) {
         bodyObject["rights"] = bodyObject["license"] = license;
       }
 
-      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(tagging));
+      noteData["body"] = [bodyObject].concat(tagsToBodyObjects(tagging));
 
       if (Config.User.IRI) {
         noteData.creator["iri"] = Config.User.IRI;
@@ -374,7 +377,7 @@ export function createNoteData(data, annotation) {
         bodyObject["rights"] = bodyObject["license"] = license;
       }
 
-      noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(tagging));
+      noteData["body"] = [bodyObject].concat(tagsToBodyObjects(tagging));
 
       if (Config.User.IRI) {
         noteData.creator["iri"] = Config.User.IRI;
