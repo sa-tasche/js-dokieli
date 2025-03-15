@@ -268,7 +268,7 @@ let customNodes = {
   //TODO: table, caption, thead, tbody, tfoot, tr, th, td
 
   //TODO: math
-    svg: {
+  svg: {
     content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
@@ -339,11 +339,53 @@ let customNodes = {
     toDOM(node) { return ["http://www.w3.org/2000/svg marker", { ...node.attrs.originalAttributes }, 0]; },
   },
 
+  button: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "button", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["button", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  label: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "label", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["label", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  select: {
+    content: "block+",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "select", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["select", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  option: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "option", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["option", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  input: {
+    group: "inline",
+    inline: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "input", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["input", { ...node.attrs.originalAttributes }]; },
+  },
+  textarea: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "textarea", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["textarea", { ...node.attrs.originalAttributes }, 0]; },
+  }
 };
 
 const customMarks = {};
 
-const inlineElements = ['span', 'mark', 'button', 'code', 'cite', 'a', 'sup', 'sub', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'];
+const inlineElements = ['span', 'mark', 'code', 'cite', 'a', 'sup', 'sub', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'];
 inlineElements.forEach(tagName => {
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
