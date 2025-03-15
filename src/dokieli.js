@@ -3906,7 +3906,7 @@ console.log(reason);
       var buttonDisabled = '';
 
       var s = '<section id="document-do" class="do"><h2>Do</h2><ul>';
-      s += '<li><button class="resource-share" title="Share resource">' + Icon[".fas.fa-bullhorn.fa-2x"] + 'Share</button></li>';
+      s += '<li><button class="resource-share"' + getButtonDisabledHTML('resource-share') + ' title="Share resource">' + Icon[".fas.fa-bullhorn.fa-2x"] + 'Share</button></li>';
       s += '<li><button class="resource-reply" title="Reply">' + Icon[".fas.fa-reply.fa-2x"] + 'Reply</button></li>';
 
       var activitiesIcon = Icon[".fas.fa-bolt.fa-2x"];
@@ -4425,11 +4425,15 @@ console.log(reason);
       }
     },
 
-    shareResource: function shareResource (e, iri) {
+    shareResource: function(listenerEvent, iri) {
+      if (document.querySelector('#share-resource.do.on')) { return; }
+
+      // Config.ButtonStates['resource-share'] = false;
+
       iri = iri || currentLocation();
       const documentURL = stripFragmentFromString(iri);
 
-      var button = e.target.closest('button');
+      var button = listenerEvent.target.closest('button');
       if (button) {
         button.disabled = true;
       }
@@ -4701,10 +4705,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       var shareResource = document.getElementById('share-resource');
       shareResource.addEventListener('click', function (e) {
         if (e.target.closest('button.close')) {
-          var rs = document.querySelector('#document-do .resource-share');
-          if (rs) {
-            rs.disabled = false;
-          }
+          // Config.ButtonStates['resource-share'] = true;
+          listenerEvent.target.closest('button').disabled = false;
         }
 
         if (e.target.closest('button.share')) {
@@ -4991,9 +4993,10 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
             // return Promise.all(promises)
           }
-          else {
-            node.innerHTML = 'No contacts with ' + Icon[".fas.fa-inbox"] + ' inbox found in your profile, but you can enter contacts individually:';
-          }
+          //TODO: This feature used to exist where user was able to enter WebIDs in a textarea (one per line? comma-separated).
+          // else {
+          //   node.innerHTML = 'No contacts with ' + Icon[".fas.fa-inbox"] + ' inbox found in your profile, but you can enter contacts individually:';
+          // }
 
           return Promise.resolve();
         });
