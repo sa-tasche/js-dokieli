@@ -3980,6 +3980,7 @@ console.log(reason);
           var node = b.closest('li');
           b.outerHTML = DO.C.Editor.EnableEditorButton;
           DO.Editor.toggleEditor('social', e);
+          DO.U.hideDocumentMenu();
           hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
         }
         else {
@@ -3987,7 +3988,8 @@ console.log(reason);
           if (b) {
             node = b.closest('li');
             b.outerHTML = DO.C.Editor.DisableEditorButton;
-            DO.Editor.toggleEditor('author');
+            DO.Editor.toggleEditor('author', e);
+            DO.U.hideDocumentMenu();
             showAutoSaveStorage(node, documentURL);
           }
         }
