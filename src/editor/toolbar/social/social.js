@@ -1,4 +1,4 @@
-import { formHandlerAnnotate } from "./handlers.js"
+import { formHandlerAnnotate, shareButtonHandler } from "./handlers.js"
 import { ToolbarView, annotateFormControls, updateAnnotationInboxForm, updateAnnotationServiceForm } from "../toolbar.js"
 import { getAnnotationLocationHTML, getAnnotationInboxLocationHTML, getDocument, escapeCharacters } from "../../../doc.js";
 import Config from "../../../config.js";
@@ -22,6 +22,13 @@ export class SocialToolbar extends ToolbarView {
     if (this.dom.classList.contains('editor-toolbar-active') && !e.target.closest('.do') && e.target.closest('input[type]')?.type !== 'file') { 
       // console.log('------HERE NOW: cleanupToolbar');
       this.cleanupToolbar();
+    }
+  }
+
+
+  getToolbarButtonClickHandlers() {
+    return {
+      share: shareButtonHandler
     }
   }
 
@@ -167,46 +174,18 @@ export class SocialToolbar extends ToolbarView {
     }
   }
 
-  signInRequired(button) {
-    const buttons = {
-      approve: true,
-      disapprove: true,
-      specificity: true,
-      bookmark: true,
-      comment: true
-    }
-
-    return buttons[button];
-  }
-
   populateFormAnnotate(action, node) {
     updateAnnotationInboxForm(action);
-
-    getLinkRelation(ns.oa.annotationService.value, null, getDocument())
-      .then(url => {
-        Config.AnnotationService = url[0];
-        updateAnnotationServiceForm(action);
-      })
-      .catch(reason => {
-        //TODO signinRequired
-        if(this.signInRequired(action) && !Config.User.IRI) {
-          showUserIdentityInput();
-        }
-        else {
-          updateAnnotationServiceForm(action);
-        }
-      });
   }
 
   //TODO function getTransactionHistory()
   getPopulateForms() {
     return {
-    approve: this.populateFormAnnotate.bind(this),
-    disapprove: this.populateFormAnnotate.bind(this),
-    specificity: this.populateFormAnnotate.bind(this),
-    bookmark: this.populateFormAnnotate.bind(this),
-    comment: this.populateFormAnnotate.bind(this)
+      approve: this.populateFormAnnotate.bind(this),
+      disapprove: this.populateFormAnnotate.bind(this),
+      specificity: this.populateFormAnnotate.bind(this),
+      bookmark: this.populateFormAnnotate.bind(this),
+      comment: this.populateFormAnnotate.bind(this)
     }
   }
 }
-

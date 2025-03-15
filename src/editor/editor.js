@@ -6,10 +6,14 @@ import { keymapPlugin } from "./toolbar/author/keymap.js";
 import { AuthorToolbar } from "./toolbar/author/author.js";
 import { SocialToolbar } from "./toolbar/social/social.js";
 import Config from "./../config.js";
-import { addMessageToLog, getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML, insertDocumentLevelHTML, selectArticleNode, setDate, setEditSelections, showActionMessage } from "../doc.js";
+import { addMessageToLog, getAgentHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML, insertDocumentLevelHTML, selectArticleNode, setDate, setEditSelections, showActionMessage } from "../doc.js";
 import { getAgentName, getGraphImage, getGraphInbox, getGraphTypes, getResourceGraph } from "../graph.js";
-import { fragmentFromString } from "../util.js";
+import { fragmentFromString, generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
+import rdf from 'rdf-ext';
+import { Icon } from "../ui/icons.js";
+
+const ns = Config.ns;
 
 export class Editor {
   constructor(mode, node) {
@@ -33,6 +37,7 @@ export class Editor {
         this.destroySocialToolbar();
         this.createEditor(this.node);
         break;
+
       case 'social':
       default:
         this.destroyEditor();
@@ -68,17 +73,17 @@ export class Editor {
 
   importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
+    return toolbarView?.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
   }
 
-  showTextQuoteSelectorFromLocation(containerNode, selector, refId, motivatedBy, docRefType, options) {
+  showTextQuoteSelectorFromLocation() {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView.showTextQuoteSelectorFromLocation();
+    return toolbarView?.showTextQuoteSelectorFromLocation();
   }
 
   replaceSelectionWithFragment(){
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView.replaceSelectionWithFragment()
+    return toolbarView?.replaceSelectionWithFragment()
   }
 
   //Creating a ProseMirror editor view at a specified this.node
@@ -108,7 +113,10 @@ export class Editor {
 
     this.node.replaceChildren();
 
-    this.editorView = new EditorView(this.node, { state, editable: () => true });
+    this.editorView = new EditorView(this.node, { 
+      state, 
+      editable: () => true,
+     });
 
     console.log("Editor created. Mode:", this.mode);
   }

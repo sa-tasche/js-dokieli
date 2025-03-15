@@ -31,6 +31,7 @@ export class AuthorToolbar extends ToolbarView {
       { name: 'formHandlerImg', fn: formHandlerImg },
       { name: 'formHandlerCitation', fn: formHandlerCitation },
       // { name: 'formHandlerSparkline', fn: formHandlerSparkline },
+      // { name: 'formHandlerSemantics', fn: formHandlerSemantics },
       { name: 'formHandlerAnnotate', fn: formHandlerAnnotate },
     ];
   }

@@ -1,9 +1,13 @@
 import { schema } from "../schema/base.js"
 import { buttonIcons } from "../../ui/button-icons.js"
-import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
+import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocument, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, restoreSelection, setSelection } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";
+import { showUserIdentityInput } from "../../auth.js";
+import { getLinkRelation } from "../../graph.js";
+import Config from "../../config.js";
 
+const ns = Config.ns;
 
 export class ToolbarView {
   constructor(mode, buttons, editorView) {
@@ -82,7 +86,7 @@ export class ToolbarView {
 
   getFormHandlers() {
     return [];
-  }
+}
 
   bindFormHandlers() {
     this.getFormHandlers().forEach(handler => {
@@ -125,9 +129,9 @@ export class ToolbarView {
       document.querySelector('.editor-toolbar-actions').appendChild(li);
 
       // TODO: figure this out, perhaps if updateButtonState[mode] or something
-    //   // if (pm) {
+      //   // if (pm) {
       this.updateButtonState(schema, buttonNode, button,this.editorView);
-    // // }
+      // // }
       const formControlsHTML = this.toolbarPopups[button];
 
       if (formControlsHTML) {
@@ -152,87 +156,90 @@ export class ToolbarView {
         }
       }
 
-      buttonNode.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        var buttonActive = e.target.closest('button');
-
-        if (buttonActive) {
-          this.editorView?.focus();
-
-          buttonActive.classList.toggle('editor-button-active');
-
-          //If button is connected to a ProseMirror command (see `toolbarCommands`), we call it.
-          if (command) {
-            command(this.editorView.state, this.editorView.dispatch, this.editorView);
+        buttonNode.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (this.signInRequired(button)) {
+            this.checkAnnotationServiceUpdateForm(button)
           }
+          var buttonActive = e.target.closest('button');
 
-          //Update active class on non-clicked buttons to see if they should be active or not
-          this.buttons.forEach(({button: btn}) => {
-            const btnNode = this.dom.querySelector(`#${'editor-button-' + btn}`);
+          if (buttonActive) {
+            this.editorView?.focus();
 
-            if (this.toolbarPopups[btn]) {
-              //Except the one that we've just clicked.
-              if (btn === button) return;
-              //Clean up all or any that's active.
-              btnNode.classList.remove('editor-button-active');
+            buttonActive.classList.toggle('editor-button-active');
+
+            //If button is connected to a ProseMirror command (see `toolbarCommands`), we call it.
+            if (command) {
+              command(this.editorView.state, this.editorView.dispatch, this.editorView);
             }
-            else {
-              //Checks if the other buttons are connected to an applied node/mark, then make active.
-              // TODO: if pm do this
-              this.updateButtonState(schema, btnNode, btn, this.editorView);
-            }
-          })
 
-          //If there is a popup (toolbarForm) associated with this button.
-          if (this.toolbarPopups[button]) {
-            const toolbarForm = this.dom.querySelector(`#editor-toolbar-form-${button}`);
-            // Loop over popups to hide non-active ones.
-            this.buttons.forEach(({ button: b}) => {
-              // Ignore current popup (corresponding to clicked button).
-              if (b === button) return;
+            //Update active class on non-clicked buttons to see if they should be active or not
+            this.buttons.forEach(({button: btn}) => {
+              const btnNode = this.dom.querySelector(`#${'editor-button-' + btn}`);
 
-              // Hide all other popups.
-              else if (this.toolbarPopups[b]) {
-                this.dom.querySelector(`#editor-toolbar-form-${b}`).classList.remove('editor-toolbar-form-active');
+              if (this.toolbarPopups[btn]) {
+                //Except the one that we've just clicked.
+                if (btn === button) return;
+                //Clean up all or any that's active.
+                btnNode.classList.remove('editor-button-active');
               }
-            })
+              else {
+                //Checks if the other buttons are connected to an applied node/mark, then make active.
+                // TODO: if pm do this
+                this.updateButtonState(schema, btnNode, btn, this.editorView);
+              }
+            });
 
-            const margin = 10;
+            //If there is a popup (toolbarForm) associated with this button.
+            if (this.toolbarPopups[button]) {
+              const toolbarForm = this.dom.querySelector(`#editor-toolbar-form-${button}`);
+              // Loop over popups to hide non-active ones.
+              this.buttons.forEach(({ button: b}) => {
+                // Ignore current popup (corresponding to clicked button).
+                if (b === button) return;
 
-            // Toggle visibility of current popup.
-            toolbarForm.classList.toggle('editor-toolbar-form-active');
+                // Hide all other popups.
+                else if (this.toolbarPopups[b]) {
+                  this.dom.querySelector(`#editor-toolbar-form-${b}`).classList.remove('editor-toolbar-form-active');
+                }
+              })
 
-            //Position it now because it needs to be near the button that was clicked.
-            const toolbarHeight = this.dom.offsetHeight;
-            const toolbarWidth = this.dom.offsetWidth;
-            const selection = window.getSelection();
-            const range = selection.getRangeAt(0);
-            const selectionPosition = range.getBoundingClientRect();
+              const margin = 10;
 
-            toolbarForm.style.left = `${(toolbarWidth / 2 ) - (toolbarForm.offsetWidth / 2)}px`;
+              // Toggle visibility of current popup.
+              toolbarForm.classList.toggle('editor-toolbar-form-active');
 
-            toolbarForm.style.right = 'initial';
+              //Position it now because it needs to be near the button that was clicked.
+              const toolbarHeight = this.dom.offsetHeight;
+              const toolbarWidth = this.dom.offsetWidth;
+              const selection = window.getSelection();
+              const range = selection.getRangeAt(0);
+              const selectionPosition = range.getBoundingClientRect();
 
-            // 1. if there is space for toolbar above selection, and space for popup below selection, do that - when selection is in the middle, ideal scenario
-            if ((selectionPosition.top >= toolbarHeight + (margin * 2)) && (window.innerHeight - selectionPosition.bottom >= toolbarForm.offsetHeight + (margin * 2))) { // this condition is right but
-// console.log("condition 1")
-              toolbarForm.style.top = `${toolbarHeight + selectionPosition.height + (margin * 1.5)}px`;
-            }
-            // 2. if there is space for toolbar above selection, but no space for popup below, it's a given that there's space for popup above toolbar (because it means the selection is very close to the bottom) - when selection is very close to the bottom
-            else if (selectionPosition.top >= toolbarHeight + (margin * 2) && (window.innerHeight - selectionPosition.bottom < toolbarForm.offsetHeight + (margin * 2))) {
-// console.log("condition 2")
-              toolbarForm.style.top = `-${toolbarForm.offsetHeight + (margin / 2)}px`;
-            }
-            // 3. if no space for toolbar above selection, put it below selection, and popup below toolbar - when selection is very close to the top
-            else {
-// console.log("condition 3")
-              toolbarForm.style.top = `${toolbarHeight + (margin / 2)}px`;
+              toolbarForm.style.left = `${(toolbarWidth / 2 ) - (toolbarForm.offsetWidth / 2)}px`;
+
+              toolbarForm.style.right = 'initial';
+
+              // 1. if there is space for toolbar above selection, and space for popup below selection, do that - when selection is in the middle, ideal scenario
+              if ((selectionPosition.top >= toolbarHeight + (margin * 2)) && (window.innerHeight - selectionPosition.bottom >= toolbarForm.offsetHeight + (margin * 2))) { // this condition is right but
+              // console.log("condition 1")
+                toolbarForm.style.top = `${toolbarHeight + selectionPosition.height + (margin * 1.5)}px`;
+              }
+              // 2. if there is space for toolbar above selection, but no space for popup below, it's a given that there's space for popup above toolbar (because it means the selection is very close to the bottom) - when selection is very close to the bottom
+              else if (selectionPosition.top >= toolbarHeight + (margin * 2) && (window.innerHeight - selectionPosition.bottom < toolbarForm.offsetHeight + (margin * 2))) {
+                // console.log("condition 2")
+                toolbarForm.style.top = `-${toolbarForm.offsetHeight + (margin / 2)}px`;
+              }
+              // 3. if no space for toolbar above selection, put it below selection, and popup below toolbar - when selection is very close to the top
+              else {
+                // console.log("condition 3")
+                toolbarForm.style.top = `${toolbarHeight + (margin / 2)}px`;
+              }
             }
           }
-        }
-      });
+        });
+      }
     });
 
     // this.updateToolbarVisibility();
@@ -404,6 +411,37 @@ export class ToolbarView {
     }
   }
 
+
+  signInRequired(button) {
+    const buttons = {
+      approve: true,
+      disapprove: true,
+      specificity: true,
+      bookmark: true,
+      comment: true
+    }
+
+    return buttons[button];
+  }
+
+  checkAnnotationServiceUpdateForm(action) {
+    getLinkRelation(ns.oa.annotationService.value, null, getDocument())
+      .then(url => {
+        Config.AnnotationService = url[0];
+        updateAnnotationServiceForm(action);
+      })
+      .catch(reason => {
+        //TODO signinRequired
+        if (this.signInRequired(action) && !Config.User.IRI) {
+          console.log("here sign in required")
+          showUserIdentityInput();
+        }
+        else {
+          updateAnnotationServiceForm(action);
+        }
+      });
+  }
+
   showTextQuoteSelectorFromLocation(containerNode) {
     var motivatedBy = 'oa:highlighting';
     var selector = getTextQuoteSelectorFromLocation(document.location);
@@ -422,8 +460,8 @@ export class ToolbarView {
         'do': true,
         'mode': '#selector'
       };
-  // console.log(selector)
-  // console.log(refId)
+      // console.log(selector)
+      // console.log(refId)
       this.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options);
     }
   }
@@ -537,7 +575,7 @@ function getButtonHTML(button, buttonClass, buttonTitle, buttonTextContent, opti
 // Consider putting this elsewhere or making it part of the class
 export function annotateFormControls(options) {
   return `
-    <label for="${options.button}-tagging">Tags</label> <input class="editor-toolbar-input" id="${options.button}-tagging" name="comment-tagging" placeholder="Separate tags with commas" />
+    <label for="${options.button}-tagging">Tags</label> <input class="editor-toolbar-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
     <textarea class="editor-toolbar-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
     <select class="editor-toolbar-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
     <select class="editor-toolbar-select" name="${options.button}-license">${getLicenseOptionsHTML()}</select>

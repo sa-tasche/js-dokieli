@@ -34,6 +34,10 @@ const ns = Config.ns;
 //actions = ['selector', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment'] //Social
 //actions = ['note'] //Author
 
+export function shareButtonHandler(e) {
+  DO.U.shareResource(e)
+}
+
 export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
