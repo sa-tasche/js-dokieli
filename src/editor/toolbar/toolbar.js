@@ -28,6 +28,8 @@ export class ToolbarView {
     this.bindFormHandlers();
 
     this.formEventListeners = this.getFormEventListeners();
+    this.toolbarButtonEventListeners = this.getFormEventListeners();
+    this.toolbarButtonClickHandlers = this.getToolbarButtonClickHandlers();
 
     // for PM stuff
     this.editorView = editorView;
@@ -94,6 +96,10 @@ export class ToolbarView {
     });
   }
 
+  getToolbarButtonClickHandlers() {
+    return {}
+  }
+
   getFormEventListeners() {
     return {};
   }
@@ -156,6 +162,13 @@ export class ToolbarView {
         }
       }
 
+      if (this.toolbarButtonClickHandlers[button]) {
+        buttonNode.addEventListener("click", this.toolbarButtonClickHandlers[button])
+        if (this.signInRequired(button)) {
+          this.checkAnnotationServiceUpdateForm(button)
+        }
+      }
+      else {
         buttonNode.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -241,7 +254,6 @@ export class ToolbarView {
         });
       }
     });
-
     // this.updateToolbarVisibility();
   }
 
@@ -450,6 +462,10 @@ export class ToolbarView {
       //XXX: TODO: Copied from showAnnotation
   
       var refId = document.location.hash.substring(1);
+
+      //XXX: If already highlighted, don't run again.
+      if (document.getElementById(refId)) { return; }
+
       var refLabel = getReferenceLabel(motivatedBy);
   
       containerNode = containerNode || getDocumentContentNode(document);
