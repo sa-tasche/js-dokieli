@@ -25,6 +25,8 @@ export class Editor {
     this.editorView = null;
     this.socialToolbarView = null;
     this.authorToolbarView = null;
+
+    this.hasRunTextQuoteSelector = false;
   }
 
   // Initialize editor and toolbar based on the default editor mode
@@ -45,7 +47,10 @@ export class Editor {
         break;
     }
 
-    this.showTextQuoteSelectorFromLocation();
+    if (!this.hasRunTextQuoteSelector && (this.socialToolbarView || this.authorToolbarView)) {
+      this.showTextQuoteSelectorFromLocation();
+      this.hasRunTextQuoteSelector = true;
+    }
   }
 
   showEditorModeActionMessage(e, mode) {
