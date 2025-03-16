@@ -22,14 +22,16 @@ function checkForSlashCommand(view) {
 
   // text before cursor position within the node
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
-  const Slash = new SlashMenu('author', ['language', 'license', 'documentType', 'inbox', 'inReplyTo'], view);
+  console.log(textBefore)
+  const Slash = new SlashMenu(view);
 
-  if (textBefore === "/") {
+  if (textBefore === "/" || textBefore.substring([textBefore.length-2], textBefore.length) == " /") {
     const cursorCoords = $from.pos;
     const coords = view.coordsAtPos(cursorCoords);
-console.log(coords)
+    console.log(coords)
     Slash.showMenu(coords.left, coords.bottom);
-  } else {
+  }
+  else {
     Slash.hideMenu();
   }
 }
