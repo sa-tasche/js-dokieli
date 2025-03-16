@@ -139,5 +139,25 @@ export const buttonIcons = {
   astronaut: {
     title: 'Sign in',
     icon: Icon['.fas.fa-user-astronaut.fa-2x']
+  },
+  license: {
+    title: 'License',
+    icon: Icon['.fas.fa-certificate']
+  },
+  language: {
+    title: 'Language',
+    icon: Icon['.fas.fa-language']
+  },
+  'document-type': {
+    title: 'Document type',
+    icon: Icon['.fas.fa-shape']
+  },
+  inbox: {
+    title: 'Inbox',
+    icon: Icon['.fas.fa-inbox']
+  },
+  'in-reply-to': {
+    title: 'In reply to',
+    icon: Icon['.fas.fa-reply.fa-2x']
   }
 }
