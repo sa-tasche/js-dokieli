@@ -1,56 +1,38 @@
+import { getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceTypeOptionsHTML, insertDocumentLevelHTML } from "../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../util.js";
-
-const buttonIcons = {
-  license: {
-    title: 'license',
-    icon: Icon['.fas.fa-paragraph']
-  },
-  language: {
-    title: 'language',
-    icon: Icon['.fas.fa-italic']
-  },
-  documentType: {
-    title: 'document type',
-    icon: Icon['.fas.fa-file-alt']
-  },
-  inbox: {
-    title: 'inbox',
-    icon: Icon['.fas.fa-inbox']
-  },
-  inReplyTo: {
-    title: 'in-reply-to',
-    icon: Icon['.fas.fa-reply']
-  }
-}
-
-export function getButtonHTML(button, buttonClass, buttonTitle, buttonTextContent, options = {}) {
-  if (!button) {
-    throw new Error('Need to pass button.');
-  }
-
-  const textContent = buttonTextContent || buttonIcons[button].textContent;
-  const title = buttonTitle || buttonIcons[button].title;
-  const icon = buttonIcons[button].icon;
-
-  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
-
-  return `<button${buttonClass ? ` class="${buttonClass}"` : ''} title="${title}"${options.type ? ` type="${options.type}"` : ''}>${buttonContent}</button>`;
-}
+import { getButtonHTML } from "../toolbar/toolbar.js";
+import { formHandlerInbox, formHandlerInReplyTo, formHandlerDocumentType, formHandlerLanguage, formHandlerLicense } from "./handlers.js";
 
 export class SlashMenu {
-  constructor(mode, buttons, editorView) {
-    this.mode = mode;
+  constructor(editorView) {
     this.editorView = editorView;
     this.menuContainer = document.createElement("div");
-    this.menuContainer.classList.add("slash-menu-container", "slash-menu-toolbar");
+    this.menuContainer.id = 'document-slashmenu';
+    this.menuContainer.classList.add("slashmenu-toolbar");
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
-    
-    this.slashMenuButtons = buttons.map(button => ({
+
+    this.slashMenuButtons = ['document-type', 'language', 'license', 'inbox', 'in-reply-to'].map(button => ({
       button,
       dom: () => fragmentFromString(getButtonHTML(button)).firstChild
     }));
+
+    this.createMenuItems();
+
+    this.formHandlerDocumentType = formHandlerDocumentType.bind(this);
+    this.formHandlerLanguage = formHandlerLanguage.bind(this);
+    this.formHandlerLicense = formHandlerLicense.bind(this);
+    this.formHandlerInbox = formHandlerInbox.bind(this);
+    this.formHandlerInReplyTo = formHandlerInReplyTo.bind(this);
+
+    this.formEventListeners = {
+      'document-type': [ { event: 'submit', callback: this.formHandlerDocumentType }, { event: 'click', callback: (e) => this.formClickHandler(e, 'document-type') } ],
+      language: [ { event: 'submit', callback: this.formHandlerLanguage }, { event: 'click', callback: (e) => this.formClickHandler(e, 'language') } ],
+      license: [ { event: 'submit', callback: this.formHandlerLicense }, { event: 'click', callback: (e) => this.formClickHandler(e, 'license') } ],
+      inbox: [ { event: 'submit', callback: this.formHandlerInbox }, { event: 'click', callback: (e) => this.formClickHandler(e, 'inbox') } ],
+      'in-reply-to': [ { event: 'submit', callback: this.formHandlerInReplyTo }, { event: 'click', callback: (e) => this.formClickHandler(e, 'in-reply-to') } ],
+    }
 
     document.body.appendChild(this.menuContainer);
     this.bindHideEvents();
@@ -58,7 +40,6 @@ export class SlashMenu {
 
   showMenu(cursorX, cursorY) {
     this.menuContainer.style.display = "block";
-    this.createMenuItems();
     
     this.menuContainer.style.left = `${cursorX}px`;
     this.menuContainer.style.top = `${cursorY}px`;
@@ -69,10 +50,30 @@ export class SlashMenu {
     this.menuContainer.innerHTML = ""; 
   }
 
+  formClickHandler(e, button) {
+    var buttonNode = e.target.closest('button');
+    
+    if (buttonNode) {
+      var buttonClasses = buttonNode.classList;
+      
+      if (buttonNode.type !== 'submit') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      if (buttonClasses.contains('editor-slashmenu-cancel')) {
+       // TODO: hide opup
+       console.log("CANCEL")
+      }
+    }
+  }
+
   createMenuItems() {
+    const ul = document.createElement('ul');
+
     this.slashMenuButtons.forEach(({ button, dom }) => {
       const menuItem = this.createMenuItem(button, dom);
-      this.menuContainer.appendChild(menuItem);
+      ul.appendChild(menuItem);
       
       menuItem.addEventListener("click", (e) => {
         e.preventDefault();
@@ -80,124 +81,118 @@ export class SlashMenu {
         this.handlePopups(button);
       });
     });
+
+    this.menuContainer.appendChild(ul);
   }
 
   createMenuItem(button, domFunction) {
     const buttonNode = domFunction();
     buttonNode.id = "editor-button-" + button;
-    const menuItem = document.createElement("div");
-    menuItem.classList.add("slash-menu-item");
+    const menuItem = document.createElement("li");
     menuItem.appendChild(buttonNode);
     return menuItem;
   }
 
   handlePopups(button) {
-    let popupContent = [];
-    
-    if (button === "language") {
-      popupContent = ["English", "Spanish", "French", "German"];
-    } else if (button === "license") {
-      popupContent = ["MIT", "GPL-3.0", "Apache-2.0", "BSD-3"];
-    } else if (button === "documentType") {
-      popupContent = ["Blogpost", "Recipe", "Article"];
-    } else if (button === "inbox") {
-      popupContent = [this.createInboxInput()];
-    } else if (button === "inReplyTo") {
-      popupContent = [this.createInReplyToInput()];
+    let popupContent = {
+      'document-type': this.createDocumentTypeWidget(),
+      language: this.createLanguageWidget(),
+      license: this.createLicenseWidget(),
+      inbox: this.createInboxWidget(),
+      'in-reply-to': this.createInReplyToWidget()
     }
 
-    const popup = this.createPopup(popupContent, button);
-    this.openPopup(popup);
+    const popup = popupContent[button];
+    this.openPopup(popup, button);
   }
 
-  createPopup(items, button) {
-    const popup = document.createElement("div");
-    popup.classList.add("popup-container");
+  createLanguageWidget() {
+    var node = fragmentFromString(`
+      <form>
+        <fieldset>
+          <legend>Add a language</legend>
+          <label for="language">Language</label> <select name="language">${getLanguageOptionsHTML({ 'selected': '' })}</select>
+          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
+          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        </fieldset>
+      </form>
+    `);
 
-    const list = document.createElement("ul");
-    items.forEach(item => {
-      const listItem = document.createElement("li");
-      if (typeof item === 'string') {
-        listItem.textContent = item;
-        listItem.addEventListener("click", () => {
-          this.insertSelection(item, button);
-          this.hideMenu();
-        });
-      } else {
-        listItem.appendChild(item);
-      }
-      list.appendChild(listItem);
-    });
-
-    popup.appendChild(list);
-    return popup;
+    return node;
   }
 
-  createInboxInput() {
+  createLicenseWidget() {
+    var node = fragmentFromString(`
+      <form>
+        <fieldset>
+          <legend>Add a license</legend>
+          <label for="license">License</label> <select name="license">${getLicenseOptionsHTML({ 'selected': '' })}</select>
+          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
+          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        </fieldset>
+      </form>
+    `);
+
+    return node;
+  }
+
+  createDocumentTypeWidget() {
+    var node = fragmentFromString(`
+      <form>
+        <fieldset>
+          <legend>Add a type</legend>
+          <label for="document-type">Document type</label> <select name="document-type">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
+          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
+          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        </fieldset>
+      </form>
+    `);
+    return node;
+  }
+
+  createInboxWidget() {
     const inputContainer = document.createElement("div");
     const input = document.createElement("input");
     input.placeholder = "Enter inbox URL...";
-    const button = document.createElement("button");
-    button.textContent = "Add Inbox";
-    button.addEventListener("click", () => {
-      this.insertSelection(`Inbox: ${input.value}`, "inbox");
-      this.hideMenu();
-    });
     inputContainer.appendChild(input);
-    inputContainer.appendChild(button);
     return inputContainer;
   }
 
-  createInReplyToInput() {
+  createInReplyToWidget() {
     const inputContainer = document.createElement("div");
     const input = document.createElement("input");
     input.placeholder = "Enter URL to reply to...";
-    const button = document.createElement("button");
-    button.textContent = "Add Reply";
-    button.addEventListener("click", () => {
-      this.insertSelection(`In Reply to: ${input.value}`, "inReplyTo");
-      this.hideMenu();
-    });
     inputContainer.appendChild(input);
-    inputContainer.appendChild(button);
     return inputContainer;
   }
 
-  openPopup(popup) {
-    this.menuContainer.innerHTML = "";
+  openPopup(popup, button) {
+    this.menuContainer.replaceChildren();
     this.menuContainer.appendChild(popup);
+
+    const popupForm = this.menuContainer.querySelector('form');
+
+    if (this.formEventListeners[button]) {
+      this.formEventListeners[button].forEach(({ event, callback }) => {
+        console.log(event, callback)
+        popupForm.addEventListener(event, callback);
+      });
+    }
+
     this.menuContainer.style.display = "block";
   }
 
-  insertSelection(selection, button) {
+  // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. 
+  replaceSelectionWithFragment(fragment) {
     const { state, dispatch } = this.editorView;
-    const selectionRange = window.getSelection().getRangeAt(0);
+    const { selection, schema } = state;
     
-  let label = '';
-  switch (button) {
-    case 'license':
-      label = 'License: ';
-      break;
-    case 'documentType':
-      label = 'Document Type: ';
-      break;
-    case 'language':
-      label = 'Language: ';
-      break;
-    // case 'inbox':
-    //   label = 'Inbox: ';
-    //   break;
-    // case 'replyTo':
-    //   label = 'In Reply To: ';
-    //   break;
-    default:
-      label = '';
-  }
-
-  const transaction = state.tr.replaceSelectionWith(state.schema.text(`${label}${selection}`));
-     dispatch(transaction);
-
-    console.log(`Inserted ${button}:`, selection);
+    // Convert DOM fragment to a ProseMirror node
+    let node = DOMParser.fromSchema(schema).parse(fragment);
+  
+    // Apply the transformation to insert the node at selection
+    let tr = state.tr.replaceSelectionWith(node);
+    dispatch(tr);  
   }
 
   bindHideEvents() {
