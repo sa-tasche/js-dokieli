@@ -1,5 +1,6 @@
 import { deleteSelection, splitBlock, newlineInCode, joinBackward } from "prosemirror-commands";
 import { keymap } from "prosemirror-keymap";
+import { SlashMenu } from '../../slashMenu/slashMenu.js'
 
 function customEnterCommand(state, dispatch) {
   const { selection } = state;
@@ -15,48 +16,24 @@ function customEnterCommand(state, dispatch) {
   }
 }
 
-function showToolbar(view) {
-  const toolbar = document.querySelector(".editor-toolbar");
-  if (!toolbar) {
-    console.warn("Toolbar element not found.");
-    return;
-  }
-
-  const { state } = view;
-  const { selection } = state;
-  const { $from } = selection;
-
-  // todo: find out why in some nodes it positions top of the node instead of near cursor
-  // cursor coordinates
-  const coords = view.coordsAtPos($from.pos);
-
-  toolbar.style.position = "absolute";
-  toolbar.style.left = `${coords.left}px`;
-  toolbar.style.top = `${coords.top + 25}px`; 
-  toolbar.classList.add("editor-toolbar-active");
-}
-
-function hideToolbar() {
-  const toolbar = document.querySelector(".editor-toolbar");
-  if (toolbar) {
-    toolbar.classList.remove("editor-toolbar-active");
-  }
-}
-
 function checkForSlashCommand(view) {
   const { selection } = view.state;
   const { $from } = selection;
 
   // text before cursor position within the node
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
+  const Slash = new SlashMenu('author', ['language', 'license', 'documentType', 'inbox', 'inReplyTo'], view);
 
   if (textBefore === "/") {
-    showToolbar(view);
-  }
-  else {
-    hideToolbar();
+    const cursorCoords = $from.pos;
+    const coords = view.coordsAtPos(cursorCoords);
+console.log(coords)
+    Slash.showMenu(coords.left, coords.bottom);
+  } else {
+    Slash.hideMenu();
   }
 }
+
 
 function customBackspaceCommand(state, dispatch) {
   const { $from } = state.selection;

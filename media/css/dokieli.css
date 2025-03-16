@@ -3588,3 +3588,127 @@ svg.leaflet-image-layer.leaflet-interactive path {
   margin-left: -12px;
   border-right-color: #fff;
   }
+
+
+  /* // TODO: move to editor.css? */
+/* Slash Menu Container */
+.slash-menu-container {
+  display: none;
+  position: absolute;
+  background-color: #242424;
+  background: linear-gradient(to bottom, #242424, rgba(36, 36, 36, 0.75));
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  color: #fff;
+  padding: 10px 15px;
+  z-index: 9999;
+}
+
+/* Menu Items */
+.slash-menu-item {
+  margin: 5px 0;
+  padding: 5px 10px;
+  background-color: #242424;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Hover State for Menu Items */
+.slash-menu-item:hover {
+  background-color: #333;
+}
+
+/* Active Button State */
+.slash-menu-item .editor-button-active {
+  background-color: #000;
+  color: yellow;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Popup Form */
+.editor-toolbar-form {
+  background-color: #242424;
+  border-radius: 5px;
+  color: #999;
+  padding: 1.5em 1em 1em;
+  margin-top: 5px;
+  display: none;
+}
+
+.editor-toolbar-form.active {
+  display: block;
+}
+
+/* Popup Button Styles */
+.editor-toolbar-form button {
+  background-color: transparent;
+  border: none;
+  color: #fff;
+  font-weight: normal;
+  padding: 10px 15px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Hover State for Buttons in Popups */
+.editor-toolbar-form button:hover {
+  background-color: #333;
+}
+
+/* Popup Fields */
+.editor-toolbar-form input,
+.editor-toolbar-form select {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 3px;
+}
+
+.editor-toolbar-form label {
+  color: #fff;
+  font-weight: bold;
+}
+
+.editor-toolbar-form legend {
+  margin: 0 0 1em 0;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Active Popup Form */
+.editor-toolbar-form.active {
+  display: block;
+}
+
+/* Button Styles for Popup Menu Items */
+.editor-toolbar-form button {
+  font-weight: bold;
+  background-color: #242424;
+  background: linear-gradient(to bottom, #242424, rgba(36, 36, 36, 0.89));
+  border: 0;
+  border-right: 1px solid #000;
+  border-left: 1px solid #333;
+  color: #fff;
+  height: 50px;
+  min-width: 50px;
+  transition: background-color 0.2s ease-in;
+}
+
+.editor-toolbar-form button:hover {
+  background-color: #000;
+  color: yellow;
+}
+
+.editor-toolbar-form button.editor-button-active {
+  background-color: #000;
+  background: linear-gradient(to bottom, #242424, rgba(0, 0, 0, 0.89));
+  color: yellow;
+}
