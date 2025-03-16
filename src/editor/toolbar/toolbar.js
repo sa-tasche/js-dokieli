@@ -65,6 +65,122 @@ export class ToolbarView {
 
     document.removeEventListener("mousedown", this.updateToolbarVisibilityHandler);
     document.addEventListener("mousedown", this.updateToolbarVisibilityHandler);
+
+    
+  }
+
+
+  initializeButtons(buttons) {
+    buttons.forEach(({ button, command, dom }) => {
+        const buttonNode = this.createButtonNode(button, dom);
+        const listItem = document.createElement("li");
+        listItem.appendChild(buttonNode);
+        document.querySelector('.editor-toolbar-actions').appendChild(listItem);
+
+        this.updateButtonState(schema, buttonNode, button, this.editorView);
+        this.setupPopup(button);
+        this.attachButtonHandler(buttonNode, button, command);
+    });
+  }
+
+  createButtonNode(button, domFunction) {
+      const buttonNode = domFunction();
+      buttonNode.id = 'editor-button-' + button;
+      return buttonNode;
+  }
+
+  setupPopup(button) {
+      const formControlsHTML = this.toolbarPopups[button];
+      if (!formControlsHTML) return;
+
+      const toolbarForm = document.createElement('form');
+      toolbarForm.classList.add('editor-toolbar-form');
+      toolbarForm.id = 'editor-toolbar-form-' + button;
+      toolbarForm.appendChild(fragmentFromString(`<fieldset>${formControlsHTML({ button })}</fieldset>`));
+
+      this.dom.appendChild(toolbarForm);
+
+      if (this.populateForms[button]) {
+          const state = this.editorView?.state;
+          this.populateForms[button](button, toolbarForm, state);
+      }
+
+      if (this.formEventListeners[button]) {
+          this.formEventListeners[button].forEach(({ event, callback }) => {
+              toolbarForm.addEventListener(event, callback);
+          });
+      }
+  }
+
+  attachButtonHandler(buttonNode, button, command) {
+      const handler = this.toolbarButtonClickHandlers[button] || ((e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (this.signInRequired(button)) {
+              this.checkAnnotationServiceUpdateForm(button);
+          }
+
+          this.toggleButtonState(buttonNode, button, command);
+          this.handlePopups(button);
+      });
+
+      buttonNode.addEventListener("click", handler);
+  }
+
+  toggleButtonState(buttonNode, button, command) {
+      this.editorView?.focus();
+      buttonNode.classList.toggle('editor-button-active');
+
+      if (command) {
+          command(this.editorView.state, this.editorView.dispatch, this.editorView);
+      }
+
+      this.buttons.forEach(({ button: btn }) => {
+          const btnNode = this.dom.querySelector(`#editor-button-${btn}`);
+          if (!this.toolbarPopups[btn]) {
+              this.updateButtonState(schema, btnNode, btn, this.editorView);
+          } else if (btn !== button) {
+              btnNode.classList.remove('editor-button-active');
+          }
+      });
+  }
+
+  handlePopups(button) {
+      if (!this.toolbarPopups[button]) return;
+
+      const toolbarForm = this.dom.querySelector(`#editor-toolbar-form-${button}`);
+      this.closeOtherPopups(button);
+      toolbarForm.classList.toggle('editor-toolbar-form-active');
+
+      this.positionPopup(toolbarForm);
+  }
+
+  closeOtherPopups(activeButton) {
+      this.buttons.forEach(({ button: b }) => {
+          if (b !== activeButton && this.toolbarPopups[b]) {
+              this.dom.querySelector(`#editor-toolbar-form-${b}`).classList.remove('editor-toolbar-form-active');
+          }
+      });
+  }
+
+  positionPopup(toolbarForm) {
+      const margin = 10;
+      const toolbarHeight = this.dom.offsetHeight;
+      const toolbarWidth = this.dom.offsetWidth;
+      const selection = window.getSelection();
+      const range = selection.getRangeAt(0);
+      const selectionPosition = range.getBoundingClientRect();
+
+      toolbarForm.style.left = `${(toolbarWidth / 2) - (toolbarForm.offsetWidth / 2)}px`;
+      toolbarForm.style.right = 'initial';
+
+      if ((selectionPosition.top >= toolbarHeight + margin * 2) && (window.innerHeight - selectionPosition.bottom >= toolbarForm.offsetHeight + margin * 2)) {
+          toolbarForm.style.top = `${toolbarHeight + selectionPosition.height + margin * 1.5}px`;
+      } else if (selectionPosition.top >= toolbarHeight + margin * 2) {
+          toolbarForm.style.top = `-${toolbarForm.offsetHeight + margin / 2}px`;
+      } else {
+          toolbarForm.style.top = `${toolbarHeight + margin / 2}px`;
+      }
   }
 
   // TODO: define default behavior for all of these methods
@@ -126,135 +242,7 @@ export class ToolbarView {
     this.dom.appendChild(this.ul);
     this.documentBody.appendChild(this.dom);
 
-    this.buttons.forEach(({ button, command, dom }) => {
-      const buttonNode = dom();
-      buttonNode.id = 'editor-button-' + button;
-
-      const li = document.createElement("li");
-      li.appendChild(buttonNode);
-      document.querySelector('.editor-toolbar-actions').appendChild(li);
-
-      // TODO: figure this out, perhaps if updateButtonState[mode] or something
-      //   // if (pm) {
-      this.updateButtonState(schema, buttonNode, button,this.editorView);
-      // // }
-      const formControlsHTML = this.toolbarPopups[button];
-
-      if (formControlsHTML) {
-        const toolbarForm = document.createElement('form');
-        toolbarForm.classList.add('editor-toolbar-form');
-        toolbarForm.id = 'editor-toolbar-form-' + button;
-        toolbarForm.appendChild(fragmentFromString(`<fieldset>${formControlsHTML({ button })}</fieldset>`));
-
-        this.dom.appendChild(toolbarForm);
-
-        // Populate forms where applicable
-        if (this.populateForms[button]) {
-          const state = this.editorView ? this.editorView.state : null;
-          this.populateForms[button](button, toolbarForm, state);
-        }
-
-        // Add event listeners where applicable
-        if (this.formEventListeners[button]) {
-          this.formEventListeners[button].forEach((listener) => {
-            toolbarForm.addEventListener(listener.event, listener.callback);
-          })
-        }
-      }
-
-      if (this.toolbarButtonClickHandlers[button]) {
-        buttonNode.addEventListener("click", this.toolbarButtonClickHandlers[button])
-        if (this.signInRequired(button)) {
-          this.checkAnnotationServiceUpdateForm(button)
-        }
-      }
-      else {
-        buttonNode.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (this.signInRequired(button)) {
-            this.checkAnnotationServiceUpdateForm(button)
-          }
-          var buttonActive = e.target.closest('button');
-
-          if (buttonActive) {
-            this.editorView?.focus();
-
-            buttonActive.classList.toggle('editor-button-active');
-
-            //If button is connected to a ProseMirror command (see `toolbarCommands`), we call it.
-            if (command) {
-              command(this.editorView.state, this.editorView.dispatch, this.editorView);
-            }
-
-            //Update active class on non-clicked buttons to see if they should be active or not
-            this.buttons.forEach(({button: btn}) => {
-              const btnNode = this.dom.querySelector(`#${'editor-button-' + btn}`);
-
-              if (this.toolbarPopups[btn]) {
-                //Except the one that we've just clicked.
-                if (btn === button) return;
-                //Clean up all or any that's active.
-                btnNode.classList.remove('editor-button-active');
-              }
-              else {
-                //Checks if the other buttons are connected to an applied node/mark, then make active.
-                // TODO: if pm do this
-                this.updateButtonState(schema, btnNode, btn, this.editorView);
-              }
-            });
-
-            //If there is a popup (toolbarForm) associated with this button.
-            if (this.toolbarPopups[button]) {
-              const toolbarForm = this.dom.querySelector(`#editor-toolbar-form-${button}`);
-              // Loop over popups to hide non-active ones.
-              this.buttons.forEach(({ button: b}) => {
-                // Ignore current popup (corresponding to clicked button).
-                if (b === button) return;
-
-                // Hide all other popups.
-                else if (this.toolbarPopups[b]) {
-                  this.dom.querySelector(`#editor-toolbar-form-${b}`).classList.remove('editor-toolbar-form-active');
-                }
-              })
-
-              const margin = 10;
-
-              // Toggle visibility of current popup.
-              toolbarForm.classList.toggle('editor-toolbar-form-active');
-
-              //Position it now because it needs to be near the button that was clicked.
-              const toolbarHeight = this.dom.offsetHeight;
-              const toolbarWidth = this.dom.offsetWidth;
-              const selection = window.getSelection();
-              const range = selection.getRangeAt(0);
-              const selectionPosition = range.getBoundingClientRect();
-
-              toolbarForm.style.left = `${(toolbarWidth / 2 ) - (toolbarForm.offsetWidth / 2)}px`;
-
-              toolbarForm.style.right = 'initial';
-
-              // 1. if there is space for toolbar above selection, and space for popup below selection, do that - when selection is in the middle, ideal scenario
-              if ((selectionPosition.top >= toolbarHeight + (margin * 2)) && (window.innerHeight - selectionPosition.bottom >= toolbarForm.offsetHeight + (margin * 2))) { // this condition is right but
-              // console.log("condition 1")
-                toolbarForm.style.top = `${toolbarHeight + selectionPosition.height + (margin * 1.5)}px`;
-              }
-              // 2. if there is space for toolbar above selection, but no space for popup below, it's a given that there's space for popup above toolbar (because it means the selection is very close to the bottom) - when selection is very close to the bottom
-              else if (selectionPosition.top >= toolbarHeight + (margin * 2) && (window.innerHeight - selectionPosition.bottom < toolbarForm.offsetHeight + (margin * 2))) {
-                // console.log("condition 2")
-                toolbarForm.style.top = `-${toolbarForm.offsetHeight + (margin / 2)}px`;
-              }
-              // 3. if no space for toolbar above selection, put it below selection, and popup below toolbar - when selection is very close to the top
-              else {
-                // console.log("condition 3")
-                toolbarForm.style.top = `${toolbarHeight + (margin / 2)}px`;
-              }
-            }
-          }
-        });
-      }
-    });
-    // this.updateToolbarVisibility();
+    this.initializeButtons(this.buttons)
   }
 
   getPopulateForms() {
@@ -377,7 +365,6 @@ export class ToolbarView {
     const startParentNode = selection.getRangeAt(0).startContainer.parentNode;
     const endParentNode = selection.getRangeAt(selection.rangeCount - 1).endContainer.parentNode;
 
-    console.log(startParentNode, endParentNode)
     return startParentNode === endParentNode; // Returns true if both are the same
   }
 
@@ -445,7 +432,6 @@ export class ToolbarView {
       .catch(reason => {
         //TODO signinRequired
         if (this.signInRequired(action) && !Config.User.IRI) {
-          console.log("here sign in required")
           showUserIdentityInput();
         }
         else {
@@ -574,7 +560,7 @@ export class ToolbarView {
 }
 
 //Given a button action, generates an HTML string for the button including an icon and text.
-function getButtonHTML(button, buttonClass, buttonTitle, buttonTextContent, options = {}) {
+export function getButtonHTML(button, buttonClass, buttonTitle, buttonTextContent, options = {}) {
   if (!button) {
     throw new Error('Need to pass button.');
   }
