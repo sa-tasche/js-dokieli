@@ -1,6 +1,6 @@
 import { deleteSelection, splitBlock, newlineInCode, joinBackward } from "prosemirror-commands";
 import { keymap } from "prosemirror-keymap";
-import { SlashMenu } from '../../slashMenu/slashMenu.js'
+import { SlashMenu } from "../../slashmenu/slashmenu.js";
 
 function customEnterCommand(state, dispatch) {
   const { selection } = state;
