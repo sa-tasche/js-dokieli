@@ -84,32 +84,32 @@ export class ToolbarView {
   }
 
   createButtonNode(button, domFunction) {
-      const buttonNode = domFunction();
-      buttonNode.id = 'editor-button-' + button;
-      return buttonNode;
+    const buttonNode = domFunction();
+    buttonNode.id = 'editor-button-' + button;
+    return buttonNode;
   }
 
   setupPopup(button) {
-      const formControlsHTML = this.toolbarPopups[button];
-      if (!formControlsHTML) return;
+    const formControlsHTML = this.toolbarPopups[button];
+    if (!formControlsHTML) return;
 
-      const toolbarForm = document.createElement('form');
-      toolbarForm.classList.add('editor-toolbar-form');
-      toolbarForm.id = 'editor-toolbar-form-' + button;
-      toolbarForm.appendChild(fragmentFromString(`<fieldset>${formControlsHTML({ button })}</fieldset>`));
+    const toolbarForm = document.createElement('form');
+    toolbarForm.classList.add('editor-toolbar-form');
+    toolbarForm.id = 'editor-toolbar-form-' + button;
+    toolbarForm.appendChild(fragmentFromString(`<fieldset>${formControlsHTML({ button })}</fieldset>`));
 
-      this.dom.appendChild(toolbarForm);
+    this.dom.appendChild(toolbarForm);
 
-      if (this.populateForms[button]) {
-          const state = this.editorView?.state;
-          this.populateForms[button](button, toolbarForm, state);
-      }
+    if (this.populateForms[button]) {
+      const state = this.editorView?.state;
+      this.populateForms[button](button, toolbarForm, state);
+    }
 
-      if (this.formEventListeners[button]) {
-          this.formEventListeners[button].forEach(({ event, callback }) => {
-              toolbarForm.addEventListener(event, callback);
-          });
-      }
+    if (this.formEventListeners[button]) {
+      this.formEventListeners[button].forEach(({ event, callback }) => {
+        toolbarForm.addEventListener(event, callback);
+      });
+    }
   }
 
   attachButtonHandler(buttonNode, button, command) {
