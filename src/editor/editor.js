@@ -73,7 +73,7 @@ export class Editor {
     this.showEditorModeActionMessage(e, mode);
     Config.EditorEnabled = (mode === 'author');
 
-    this.setEditorDataItems(e);
+    // this.setEditorDataItems(e);
   }
 
   importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
