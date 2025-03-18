@@ -2820,7 +2820,14 @@ function createLanguageHTML(language, options = {}) {
 
 function createResourceTypeHTML(url, options = {}) {
 
-  return html;
+
+function createInReplyToHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'in-reply-to';
+  options['title'] = 'In reply to';
+
+  return createDefinitionListHTML([{'href': url, 'rel': 'as:inReplyTo'}], options);
 }
 
 function getAnnotationInboxLocationHTML(action) {
