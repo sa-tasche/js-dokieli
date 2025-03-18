@@ -2897,7 +2897,7 @@ function getResourceTypeOptionsHTML(options) {
   if ('selected' in options) {
     selectedType = options.selected;
     if (selectedType == '') {
-      s += '<option selected="selected" value="">Choose a document type</option>';
+      s += '<option selected="selected" value="">Choose a resource type</option>';
     }
   }
   else {
@@ -3355,6 +3355,9 @@ export {
   createLanguageHTML,
   createLicenseHTML,
   createRightsHTML,
+  createResourceTypeHTML,
+  createInboxHTML,
+  createInReplyToHTML,
   getAnnotationInboxLocationHTML,
   getAnnotationLocationHTML,
   getResourceTypeOptionsHTML,
@@ -3373,5 +3376,6 @@ export {
   getReferenceLabel,
   createNoteDataHTML,
   tagsToBodyObjects,
-  createRDFaHTML
+  createRDFaHTML,
+  createDefinitionListHTML
 }
