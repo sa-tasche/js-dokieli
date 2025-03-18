@@ -2819,6 +2819,14 @@ function createLanguageHTML(language, options = {}) {
 }
 
 function createResourceTypeHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'resource-type';
+  var textContent = Config.ResourceType[url].name || url;
+  options['title'] = 'Type';
+
+  return createDefinitionListHTML([{'href': url, 'rel': 'rdf:type', textContent}], options);
+}
 
 function createInboxHTML(url, options = {}) {
   if (!url) return '';
