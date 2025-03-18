@@ -2820,6 +2820,14 @@ function createLanguageHTML(language, options = {}) {
 
 function createResourceTypeHTML(url, options = {}) {
 
+function createInboxHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'inbox';
+  options['title'] = 'Inbox';
+
+  return createDefinitionListHTML([{'href': url, 'rel': 'ldp:inbox'}], options);
+}
 
 function createInReplyToHTML(url, options = {}) {
   if (!url) return '';
