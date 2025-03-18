@@ -148,7 +148,7 @@ export const buttonIcons = {
     title: 'Language',
     icon: Icon['.fas.fa-language']
   },
-  'document-type': {
+  'resource-type': {
     title: 'Document type',
     icon: Icon['.fas.fa-shape']
   },

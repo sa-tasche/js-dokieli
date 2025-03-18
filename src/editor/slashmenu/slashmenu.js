@@ -2,7 +2,9 @@ import { getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceTypeOptionsHT
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../util.js";
 import { getButtonHTML } from "../toolbar/toolbar.js";
-import { formHandlerInbox, formHandlerInReplyTo, formHandlerDocumentType, formHandlerLanguage, formHandlerLicense } from "./handlers.js";
+import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerResourceType } from "./handlers.js";
+import { TextSelection } from "prosemirror-state";
+import { DOMParser } from "prosemirror-model";
 
 export class SlashMenu {
   constructor(editorView) {
@@ -20,18 +22,18 @@ export class SlashMenu {
 
     this.createMenuItems();
 
-    this.formHandlerDocumentType = formHandlerDocumentType.bind(this);
     this.formHandlerLanguage = formHandlerLanguage.bind(this);
     this.formHandlerLicense = formHandlerLicense.bind(this);
     this.formHandlerInbox = formHandlerInbox.bind(this);
     this.formHandlerInReplyTo = formHandlerInReplyTo.bind(this);
+    this.formHandlerResourceType = formHandlerResourceType.bind(this);
 
     this.formEventListeners = {
-      'document-type': [ { event: 'submit', callback: this.formHandlerDocumentType }, { event: 'click', callback: (e) => this.formClickHandler(e, 'document-type') } ],
       language: [ { event: 'submit', callback: this.formHandlerLanguage }, { event: 'click', callback: (e) => this.formClickHandler(e, 'language') } ],
       license: [ { event: 'submit', callback: this.formHandlerLicense }, { event: 'click', callback: (e) => this.formClickHandler(e, 'license') } ],
       inbox: [ { event: 'submit', callback: this.formHandlerInbox }, { event: 'click', callback: (e) => this.formClickHandler(e, 'inbox') } ],
       'in-reply-to': [ { event: 'submit', callback: this.formHandlerInReplyTo }, { event: 'click', callback: (e) => this.formClickHandler(e, 'in-reply-to') } ],
+      'resource-type': [ { event: 'submit', callback: this.formHandlerResourceType }, { event: 'click', callback: (e) => this.formClickHandler(e, 'resource-type') } ],
     }
 
     document.body.appendChild(this.menuContainer);
@@ -95,7 +97,7 @@ export class SlashMenu {
 
   handlePopups(button) {
     let popupContent = {
-      'document-type': this.createDocumentTypeWidget(),
+      'resource-type': this.createResourceTypeWidget(),
       language: this.createLanguageWidget(),
       license: this.createLicenseWidget(),
       inbox: this.createInboxWidget(),
@@ -111,7 +113,7 @@ export class SlashMenu {
       <form>
         <fieldset>
           <legend>Add a language</legend>
-          <label for="language">Language</label> <select name="language">${getLanguageOptionsHTML({ 'selected': '' })}</select>
+          <label for="language">Language</label> <select name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
           ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
           ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
         </fieldset>
@@ -126,44 +128,56 @@ export class SlashMenu {
       <form>
         <fieldset>
           <legend>Add a license</legend>
-          <label for="license">License</label> <select name="license">${getLicenseOptionsHTML({ 'selected': '' })}</select>
+          <label for="license">License</label> <select name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
           ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
           ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
         </fieldset>
       </form>
     `);
 
-    return node;
-  }
-
-  createDocumentTypeWidget() {
-    var node = fragmentFromString(`
-      <form>
-        <fieldset>
-          <legend>Add a type</legend>
-          <label for="document-type">Document type</label> <select name="document-type">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
-          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-        </fieldset>
-      </form>
-    `);
     return node;
   }
 
   createInboxWidget() {
-    const inputContainer = document.createElement("div");
-    const input = document.createElement("input");
-    input.placeholder = "Enter inbox URL...";
-    inputContainer.appendChild(input);
-    return inputContainer;
+    var node = fragmentFromString(`
+      <form>
+        <fieldset>
+          <legend>Add an inbox</legend>
+          <label for="inbox">Inbox</label> <input contenteditable="false" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
+          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        </fieldset>
+      </form>
+    `);
+    return node;
   }
 
   createInReplyToWidget() {
-    const inputContainer = document.createElement("div");
-    const input = document.createElement("input");
-    input.placeholder = "Enter URL to reply to...";
-    inputContainer.appendChild(input);
-    return inputContainer;
+    var node = fragmentFromString(`
+      <form>
+        <fieldset>
+          <legend>Add an in reply to URL</legend>
+          <label for="in-reply-to">In reply to</label> <input contenteditable="false" name="in-reply-to" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
+          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        </fieldset>
+      </form>
+    `);
+    return node;
+  }
+
+  createResourceTypeWidget() {
+    var node = fragmentFromString(`
+      <form>
+        <fieldset>
+          <legend>Add a type</legend>
+          <label for="resource-type">Resource type</label> <select name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
+          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
+          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        </fieldset>
+      </form>
+    `);
+    return node;
   }
 
   openPopup(popup, button) {
@@ -174,7 +188,6 @@ export class SlashMenu {
 
     if (this.formEventListeners[button]) {
       this.formEventListeners[button].forEach(({ event, callback }) => {
-        console.log(event, callback)
         popupForm.addEventListener(event, callback);
       });
     }

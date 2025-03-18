@@ -62,22 +62,20 @@ export class AuthorToolbar extends ToolbarView {
   getToolbarPopups() {
     const toolbarPopups = {
       a: (options) => `<legend>Add a link</legend>
-        <label for="a-href">URL</label> <input class="editor-toolbar-input" id="a-href" name="a-href" required="" placeholder="Paste or type a link (URL)" type="url" />
+        <label for="a-href">URL</label> <input class="editor-toolbar-input" id="a-href" name="a-href" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
         <label for="a-title">Title</label> <input class="editor-toolbar-input" id="a-title" name="a-title" placeholder="Add advisory information for the tooltip." type="text" />
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
       `,
 
       blockquote: (options) => `<legend>Add the source of the blockquote</legend>
-        <label for="blockquote-cite">URL</label> <input class="editor-toolbar-input" id="blockquote-cite" name="blockquote-cite" placeholder="Paste or type a link (URL)" type="url"  pattern="https?://.+" oninvalid="setCustomValidity('Please enter a valid URL')" 
-        oninput="setCustomValidity('')" />
+        <label for="blockquote-cite">URL</label> <input class="editor-toolbar-input" id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
       `,
 
       q: (options) => `<legend>Add the source of the quote</legend>
-        <label for="q-cite">URL</label> <input class="editor-toolbar-input" id="q-cite" name="q-cite" placeholder="Paste or type a link (URL)" type="url" pattern="https?://.+" oninvalid="setCustomValidity('Please enter a valid URL')" 
-        oninput="setCustomValidity('')"  />
+        <label for="q-cite">URL</label> <input class="editor-toolbar-input" id="q-cite" name="q-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
         ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
       `,
@@ -88,7 +86,7 @@ export class AuthorToolbar extends ToolbarView {
       img: (options) => `<legend>Add an image with a description</legend>
         <figure class="img-preview"><p>Drag an image here</p></figure>
         <label for="img-file">Upload</label> <input class="editor-toolbar-input" id="img-file" name="img-file" type="file" />
-        <label for="img-src">URL</label> <input class="editor-toolbar-input" id="img-src" name="img-src" placeholder="https://example.org/path/to/image.jpg" required="" type="text" />
+        <label for="img-src">URL</label> <input class="editor-toolbar-input" id="img-src" name="img-src" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
         <label for="img-alt">Description</label> <input class="editor-toolbar-input" id="img-alt" name="img-alt" placeholder="Describe the image for people who are blind or have low vision." />
         <label for="img-figcaption">Caption</label> <input class="editor-toolbar-input" id="img-figcaption" name="img-figcaption" placeholder="A caption or legend for the figure." />
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}
@@ -104,7 +102,7 @@ export class AuthorToolbar extends ToolbarView {
         <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label for="ref-footnote">Footnote</label>
         <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label for="ref-reference">Reference</label>
         <select class="editor-toolbar-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML()}</select>
-        <input class="editor-toolbar-input" id="citation-url" name="citation-url" placeholder="https://example.org/article#results" type="text" value="" />
+        <input class="editor-toolbar-input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
         <textarea class="editor-toolbar-textarea" cols="20" id="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
         <select class="editor-toolbar-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
         ${getButtonHTML('submit', 'editor-toolbar-submit', 'Save', 'Save', { type: 'submit' })}

@@ -15,7 +15,6 @@ import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeR
 import { generateGeoView } from './geo.js'
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo } from './auth.js'
-import { createRDFaHTML } from './template.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
