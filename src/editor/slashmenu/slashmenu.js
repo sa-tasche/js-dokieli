@@ -15,9 +15,17 @@ export class SlashMenu {
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
 
-    this.slashMenuButtons = ['document-type', 'language', 'license', 'inbox', 'in-reply-to'].map(button => ({
+    const slashMenuButtonLabels = {
+      'language': 'Language',
+      'license': 'License',
+      'inbox': 'Inbox',
+      'in-reply-to': 'In reply to',
+      'resource-type': 'Resource type',
+    }
+
+    this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'resource-type'].map(button => ({
       button,
-      dom: () => fragmentFromString(getButtonHTML(button)).firstChild
+      dom: () => fragmentFromString(getButtonHTML(button, null, null, slashMenuButtonLabels[button])).firstChild,
     }));
 
     this.createMenuItems();
@@ -90,6 +98,8 @@ export class SlashMenu {
   createMenuItem(button, domFunction) {
     const buttonNode = domFunction();
     buttonNode.id = "editor-button-" + button;
+
+    const labelNode = document.createElement("span");
     const menuItem = document.createElement("li");
     menuItem.appendChild(buttonNode);
     return menuItem;
@@ -195,19 +205,22 @@ export class SlashMenu {
     this.menuContainer.style.display = "block";
   }
 
-  // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. 
+  // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. and 3. for the specific case of the slash menu i need to update the selection so that it includes (and replaces) the slash
+  // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. and 3. for the specific case of the slash menu i need to update the selection so that it includes (and replaces) the slash
   replaceSelectionWithFragment(fragment) {
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
-    
-    // Convert DOM fragment to a ProseMirror node
+  
+    // if (!selection.empty) return; // not sure we need this
+  
+    const newSelection = TextSelection.create(state.doc, Math.max(selection.from - 1, 0), selection.from);
+  
     let node = DOMParser.fromSchema(schema).parse(fragment);
   
-    // Apply the transformation to insert the node at selection
-    let tr = state.tr.replaceSelectionWith(node);
-    dispatch(tr);  
+    let tr = state.tr.setSelection(newSelection).replaceSelectionWith(node);
+    
+    dispatch(tr);
   }
-
   bindHideEvents() {
     this.editorView.setProps({
       handleTextInput: (view, from, to, text) => {
