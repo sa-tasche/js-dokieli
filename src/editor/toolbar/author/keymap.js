@@ -16,26 +16,34 @@ function customEnterCommand(state, dispatch) {
   }
 }
 
+
 function checkForSlashCommand(view) {
   const { selection } = view.state;
   const { $from } = selection;
 
-  // text before cursor position within the node
-  const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
-  console.log(textBefore)
   const Slash = new SlashMenu(view);
 
-  if (textBefore === "/" || textBefore.substring([textBefore.length-2], textBefore.length) == " /") {
-    const cursorCoords = $from.pos;
-    const coords = view.coordsAtPos(cursorCoords);
-    console.log(coords)
-    Slash.showMenu(coords.left, coords.bottom);
-  }
-  else {
+  const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
+  console.log(textBefore);
+
+  const domNode = view.domAtPos($from.pos).node;
+  console.log(domNode)
+
+  if (textBefore === "/" || textBefore.substring(textBefore.length - 2) === " /") {
+
+    const rect = domNode.getBoundingClientRect();
+    console.log("Bounding Rect: ", rect);
+
+    const cursorX = rect.left + window.scrollX;
+    const cursorY = rect.top + window.scrollY;
+
+    console.log("Adjusted Position: ", cursorX, cursorY);
+
+    Slash.showMenu(cursorX, cursorY);
+  } else {
     Slash.hideMenu();
   }
 }
-
 
 function customBackspaceCommand(state, dispatch) {
   const { $from } = state.selection;
