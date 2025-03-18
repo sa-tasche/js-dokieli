@@ -1236,6 +1236,7 @@ function getRDFaPrefixHTML(prefixes){
   return Object.keys(prefixes).map(i => { return i + ': ' + prefixes[i]; }).join(' ');
 }
 
+//TODO: Consider if/how setDocumentRelation and createDefinitionListHTML
 function setDocumentRelation(rootNode, data, options) {
   rootNode = rootNode || document;
   if (!data || !options) { return; }
@@ -2788,17 +2789,36 @@ function createDefinitionListHTML(data, options = {}) {
   return html;
 }
 
+// function createLanguageHTML(language, options = {}) {
+//   if (!language) return '';
+
+//   var id = (options.id) ? ` id="${options.id}"` : '';
+//   var property = options.language || 'dcterms:language';
+//   var label = options.label || 'Language';
+//   var name = Config.Languages[language] || language;
+
+//   var html = `
+//     <dl class="${label.toLowerCase()}"${id}>
+//       <dt>${label}</dt>
+//       <dd><span content="${language}" lang="" property="${property}" xml:lang="">${name}</span></dd>
+//     </dl>`;
+
+//   return html;
+// }
+
+
 function createLanguageHTML(language, options = {}) {
   if (!language) return '';
-  
-  var html = '';
-  var property = (options && options.language) ? options.language : 'dcterms:language';
-  var label = (options && options.label) ? options.label : 'Language';
 
-  var name = Config.Languages[language] || language;
-  html = '<dl class="' + label.toLowerCase() + '"><dt>' + label + '</dt><dd>';
-  html += '<span content="' + language + '" lang="" property="' + property + '" xml:lang="">' + name + '</span>';
-  html += '</dd></dl>';
+  var property = options.property || 'dcterms:language';
+  var content = language;
+  var textContent = Config.Languages[language] || language;
+  options['title'] = options.label || 'Language';
+
+  return createDefinitionListHTML([{ property, content, textContent, lang: '', xmlLang: '' }], options);
+}
+
+function createResourceTypeHTML(url, options = {}) {
 
   return html;
 }
