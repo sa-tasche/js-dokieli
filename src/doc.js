@@ -2745,6 +2745,49 @@ function createLicenseRightsHTML(iri, options = {}) {
   return html;
 }
 
+//TODO: Consider if/how setDocumentRelation and createDefinitionListHTML
+//TODO: Extend with data.resource, data.datatype
+function createDefinitionListHTML(data, options = {}) {
+  // console.log(data, options)
+  if (!data || !options) { return; }
+
+  var id = (options.id) ? ` id="${options.id}"` : '';
+  var title = options.title || options.id;
+  var classAttribute = (options.class) ? ` class="${options.class}"` : ` class="${title.toLowerCase()}"`;
+
+  var dds = [];
+
+  data.forEach(d => {
+    var lang = d.lang !== undefined ? ` lang="${d.lang}"` : '';
+    var xmlLang = d.xmlLang !== undefined ? ` xml:lang="${d.xmlLang}"` : '';
+    var resource = d.resource ? ` resource="${d.resource}"`: '';
+    var content= d.content ? ` content="${d.content}"`: '';
+    var datatype= d.datatype ? ` datatype="${d.datatype}"`: '';
+
+    //d.href is required, d.resource is optional.
+
+    if (d.rel && d.property) {
+      dds.push(`<dd><a href="${d.href}"${content}"${lang} property="${d.property}" rel="${d.rel}${resource}${xmlLang}>${d.textContent || d.href}</a></dd>`);
+    }
+    else if (d.rel) {
+      dds.push(`<dd><a href="${d.href}" rel="${d.rel}"${resource}>${d.textContent || d.href}</dd>`);
+    }
+    else if (d.property) {
+      dds.push(`<dd><span${content}${datatype}${lang} property="${d.property}"${xmlLang}>${d.textContent}</span></dd>`);
+    }
+  });
+
+  var html = `
+    <dl${classAttribute}${id}>
+      <dt>${title}</dt>
+      ${dds.join('\n')}
+    </dl>`;
+
+  // console.log(html);
+
+  return html;
+}
+
 function createLanguageHTML(language, options = {}) {
   if (!language) return '';
   
