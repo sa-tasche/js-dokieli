@@ -1,21 +1,53 @@
 import { deleteSelection, splitBlock, newlineInCode, joinBackward } from "prosemirror-commands";
 import { keymap } from "prosemirror-keymap";
 import { SlashMenu } from "../../slashmenu/slashmenu.js";
+import { TextSelection } from "prosemirror-state";
 
 function customEnterCommand(state, dispatch) {
   const { selection } = state;
-  const { $from, $to } = selection;
+  const { $from } = selection;
+  const { schema, tr } = state;
 
-  const isCodeBlock = $from.node($from.depth).type.name === "pre";
+  let isCodeBlock = false;
+  let isListItem = false;
+  let listItemDepth = null;
 
-  if (isCodeBlock && state.selection.empty) {
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth);
+    if (node.type.name === "pre") {
+      isCodeBlock = true;
+      break;
+    }
+    if (node.type.name === "li") {
+      isListItem = true;
+      listItemDepth = depth;
+      break;
+    }
+  }
+
+  if (isCodeBlock) {
     return newlineInCode(state, dispatch);
   }
-  else {
-    return splitBlock(state, dispatch);
-  }
-}
+  if (isListItem && listItemDepth !== null) {
+    const liType = schema.nodes.li;
+    const paragraphType = schema.nodes.p;
 
+    const newListItem = liType.create(
+      {}, 
+      paragraphType.create()
+    );
+
+    const insertPos = $from.after(listItemDepth);
+
+    tr.insert(insertPos, newListItem);
+
+    dispatch(tr.setSelection(TextSelection.create(tr.doc, insertPos + 2)));
+
+    return true;
+  }
+
+  return splitBlock(state, dispatch);
+}
 
 function checkForSlashCommand(view) {
   const { selection } = view.state;
@@ -24,20 +56,15 @@ function checkForSlashCommand(view) {
   const Slash = new SlashMenu(view);
 
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
-  console.log(textBefore);
 
   const domNode = view.domAtPos($from.pos).node;
-  console.log(domNode)
 
   if (textBefore === "/" || textBefore.substring(textBefore.length - 2) === " /") {
 
     const rect = domNode.getBoundingClientRect();
-    console.log("Bounding Rect: ", rect);
 
     const cursorX = rect.left + window.scrollX;
     const cursorY = rect.top + window.scrollY;
-
-    console.log("Adjusted Position: ", cursorX, cursorY);
 
     Slash.showMenu(cursorX, cursorY);
   } else {

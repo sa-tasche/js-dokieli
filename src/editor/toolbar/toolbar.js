@@ -39,7 +39,7 @@ export class ToolbarView {
 
     this.dom = document.createElement("div");
     this.dom.id = 'document-editor';
-    this.dom.className = 'do editor-toolbar editor-toolbar-view-transition';
+    this.dom.className = 'do editor-toolbar editor-form-view-transition';
 
     this.addToolbar();
 
@@ -75,7 +75,7 @@ export class ToolbarView {
         const buttonNode = this.createButtonNode(button, dom);
         const listItem = document.createElement("li");
         listItem.appendChild(buttonNode);
-        document.querySelector('.editor-toolbar-actions').appendChild(listItem);
+        document.querySelector('.editor-form-actions').appendChild(listItem);
 
         this.updateButtonState(schema, buttonNode, button, this.editorView);
         this.setupPopup(button);
@@ -94,9 +94,9 @@ export class ToolbarView {
     if (!formControlsHTML) return;
 
     const toolbarForm = document.createElement('form');
-    toolbarForm.classList.add('editor-toolbar-form');
-    toolbarForm.id = 'editor-toolbar-form-' + button;
-    toolbarForm.appendChild(fragmentFromString(`<fieldset>${formControlsHTML({ button })}</fieldset>`));
+    toolbarForm.classList.add('editor-form');
+    toolbarForm.id = 'editor-form-' + button;
+    toolbarForm.appendChild(fragmentFromString(`${formControlsHTML({ button })}`));
 
     this.dom.appendChild(toolbarForm);
 
@@ -148,9 +148,9 @@ export class ToolbarView {
   handlePopups(button) {
       if (!this.toolbarPopups[button]) return;
 
-      const toolbarForm = this.dom.querySelector(`#editor-toolbar-form-${button}`);
+      const toolbarForm = this.dom.querySelector(`#editor-form-${button}`);
       this.closeOtherPopups(button);
-      toolbarForm.classList.toggle('editor-toolbar-form-active');
+      toolbarForm.classList.toggle('editor-form-active');
 
       this.positionPopup(toolbarForm);
   }
@@ -158,7 +158,7 @@ export class ToolbarView {
   closeOtherPopups(activeButton) {
       this.buttons.forEach(({ button: b }) => {
           if (b !== activeButton && this.toolbarPopups[b]) {
-              this.dom.querySelector(`#editor-toolbar-form-${b}`).classList.remove('editor-toolbar-form-active');
+              this.dom.querySelector(`#editor-form-${b}`).classList.remove('editor-form-active');
           }
       });
   }
@@ -225,20 +225,20 @@ export class ToolbarView {
   }
 
   addToolbar() {
-    var ul = document.querySelector('.editor-toolbar-actions');
+    var ul = document.querySelector('.editor-form-actions');
 
     if (ul) { 
       ul.parentNode.removeChild(ul); 
     }
 
-    const toolbarForms = this.dom.getElementsByClassName('editor-toolbar-form');
+    const toolbarForms = this.dom.getElementsByClassName('editor-form');
 
     Array.from(toolbarForms).forEach((form) => {
       this.dom.removeChild(form);
     });
 
     this.ul = document.createElement('ul');
-    this.ul.classList.add('editor-toolbar-actions');
+    this.ul.classList.add('editor-form-actions');
     this.dom.appendChild(this.ul);
     this.documentBody.appendChild(this.dom);
 
@@ -255,14 +255,14 @@ export class ToolbarView {
 
   // hides toolbar, updates state of all buttons, hides and resets all forms. 
   cleanupToolbar() {
-    this.dom.classList.remove("editor-toolbar-active");
+    this.dom.classList.remove("editor-form-active");
 
 // update buttons
     this.buttons.forEach(({button}) => {
       this.clearToolbarButton(button);
 // clear forms
       if (this.toolbarPopups[button]) {
-        const toolbarForm = document.querySelector('#editor-toolbar-form-' + button + '.editor-toolbar-form-active');
+        const toolbarForm = document.querySelector('#editor-form-' + button + '.editor-form-active');
         if (toolbarForm) {
           this.clearToolbarForm(toolbarForm);
         }
@@ -294,8 +294,8 @@ export class ToolbarView {
       const isSelection = selection && !selection.isCollapsed;
       // Hide the toolbar when there is no selection
       if (!isSelection) {
-        // if (this.dom.classList.contains('editor-toolbar-active')) {
-        //   // this.dom.classList.remove("editor-toolbar-active");
+        // if (this.dom.classList.contains('editor-form-active')) {
+        //   // this.dom.classList.remove("editor-form-active");
         //   // console.log("selection update, cleanup toolbar")
         //   // this.cleanupToolbar();
         // }
@@ -329,7 +329,7 @@ export class ToolbarView {
 
       // Display the toolbar
       // TODO: do not change visibility if the selection is within a .do element (except the annotation maybe?)
-      this.dom.classList.add("editor-toolbar-active");
+      this.dom.classList.add("editor-form-active");
       
       this.dom.style.left = `${selectedPosition.left + (selectedPosition.width / 2 ) - (toolbarWidth / 2)}px`;
 
@@ -382,7 +382,7 @@ export class ToolbarView {
   }
 
   clearToolbarForm(toolbarForm) {
-    toolbarForm.classList.remove('editor-toolbar-form-active');
+    toolbarForm.classList.remove('editor-form-active');
     toolbarForm.removeAttribute('style');
     toolbarForm.reset();
     // TOD
@@ -402,7 +402,7 @@ export class ToolbarView {
         e.stopPropagation();
       }
 
-      if (buttonClasses.contains('editor-toolbar-cancel')) {
+      if (buttonClasses.contains('editor-form-cancel')) {
         const toolbarForm = buttonNode.closest('form');
         this.clearToolbarForm(toolbarForm);
         this.clearToolbarButton(button);
@@ -577,15 +577,17 @@ export function getButtonHTML(button, buttonClass, buttonTitle, buttonTextConten
 // Consider putting this elsewhere or making it part of the class
 export function annotateFormControls(options) {
   return `
-    <label for="${options.button}-tagging">Tags</label> <input class="editor-toolbar-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
-    <textarea class="editor-toolbar-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
-    <select class="editor-toolbar-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
-    <select class="editor-toolbar-select" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
-    <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>
-    <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
+    <fieldset>
+      <label for="${options.button}-tagging">Tags</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
+      <textarea class="editor-form-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
+      <select class="editor-form-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
+      <select class="editor-form-select" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
+      <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>
+      <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
 
-    ${getButtonHTML('submit', 'editor-toolbar-submit', 'Post', 'Post', { type: 'submit' })}
-    ${getButtonHTML('cancel', 'editor-toolbar-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      ${getButtonHTML('submit', 'editor-form-submit', 'Post', 'Post', { type: 'submit' })}
+      ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+    </fieldset>
   `
 }
 

@@ -243,7 +243,7 @@ export function formHandlerCitation(e) {
 
   citationUrl.focus();
 
-  document.querySelector('.editor-toolbar-form input[name="citation-ref-type"]').checked = true;
+  document.querySelector('.editor-form input[name="citation-ref-type"]').checked = true;
 }
 
 //TODO
@@ -298,7 +298,7 @@ export function formHandlerCitation(e) {
 //     Object.keys(DO.C.RefAreas).forEach(key => {
 //       refAreas += '<option value="' + key + '">' + key + ' - ' + DO.C.RefAreas[key] + '</option>';
 //     });
-//     form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
+//     form.querySelector('.medium-editor-form-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
 //     var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
 //     rA.addEventListener('change', (e) => {
 //       e.preventDefault();
@@ -329,7 +329,7 @@ export function formHandlerCitation(e) {
 
 //   queryURL = getProxyableIRI(queryURL);
 
-//   form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '"></div>' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+//   form.querySelector('.medium-editor-form-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '"></div>' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 //   sG = document.getElementById(sparklineGraphId);
 
 //   getResourceGraph(queryURL)
@@ -351,7 +351,7 @@ export function formHandlerCitation(e) {
 //         for (var i = 0; i < sparkline.length; i++) {
 //           sparkline[i].parentNode.removeChild(sparkline[i]);
 //         }
-//         form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
+//         form.querySelector('.medium-editor-form-save').insertAdjacentHTML('beforebegin', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
 
 //         var dataset = e.target.value;
 //         var title = e.target.querySelector('*[value="' + e.target.value + '"]').textContent.trim();
@@ -478,29 +478,29 @@ export function inputRuleImage(selection) {
 TODO:
 
 case 'rdfa':
-  r.about = this.getForm().querySelector('#rdfa-about.medium-editor-toolbar-input');
-  r.rel = this.getForm().querySelector('#rdfa-rel.medium-editor-toolbar-input');
-  r.href = this.getForm().querySelector('#rdfa-href.medium-editor-toolbar-input');
-  r.typeOf = this.getForm().querySelector('#rdfa-typeof.medium-editor-toolbar-input');
-  r.resource = this.getForm().querySelector('#rdfa-resource.medium-editor-toolbar-input');
-  r.property = this.getForm().querySelector('#rdfa-property.medium-editor-toolbar-input');
-  r.content = this.getForm().querySelector('#rdfa-content.medium-editor-toolbar-input');
-  r.datatype = this.getForm().querySelector('#rdfa-datatype.medium-editor-toolbar-input');
-  r.language = this.getForm().querySelector('#rdfa-language.medium-editor-toolbar-input');
+  r.about = this.getForm().querySelector('#rdfa-about.medium-editor-form-input');
+  r.rel = this.getForm().querySelector('#rdfa-rel.medium-editor-form-input');
+  r.href = this.getForm().querySelector('#rdfa-href.medium-editor-form-input');
+  r.typeOf = this.getForm().querySelector('#rdfa-typeof.medium-editor-form-input');
+  r.resource = this.getForm().querySelector('#rdfa-resource.medium-editor-form-input');
+  r.property = this.getForm().querySelector('#rdfa-property.medium-editor-form-input');
+  r.content = this.getForm().querySelector('#rdfa-content.medium-editor-form-input');
+  r.datatype = this.getForm().querySelector('#rdfa-datatype.medium-editor-form-input');
+  r.language = this.getForm().querySelector('#rdfa-language.medium-editor-form-input');
   break;
 
 case 'cite':
-  r.search = this.getForm().querySelector('#specref-search.medium-editor-toolbar-input');
+  r.search = this.getForm().querySelector('#specref-search.medium-editor-form-input');
   r.select = this.getForm().querySelector('input[name="specref-item"]:checked');
   r.citationType = this.getForm().querySelector('input[name="citation-type"]:checked');
-  r.citationRelation = this.getForm().querySelector('#citation-relation.medium-editor-toolbar-select');
-  r.url = this.getForm().querySelector('#citation-url.medium-editor-toolbar-input');
-  r.content = this.getForm().querySelector('#citation-content.medium-editor-toolbar-textarea');
-  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
+  r.citationRelation = this.getForm().querySelector('#citation-relation.medium-editor-form-select');
+  r.url = this.getForm().querySelector('#citation-url.medium-editor-form-input');
+  r.content = this.getForm().querySelector('#citation-content.medium-editor-form-textarea');
+  r.language = this.getForm().querySelector('#article-language.medium-editor-form-select');
   break;
 
 case 'sparkline':
-  r.search = this.getForm().querySelector('#sparkline-search.medium-editor-toolbar-input');
+  r.search = this.getForm().querySelector('#sparkline-search.medium-editor-form-input');
   r.select = this.getForm().querySelector('#sparkline-select');
   r.sparkline = this.getForm().querySelector('#sparkline-graph .sparkline');
   r.selectionDataSet = this.getForm().querySelector('#sparkline-selection-dataset');

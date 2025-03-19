@@ -11,7 +11,7 @@ export class SlashMenu {
     this.editorView = editorView;
     this.menuContainer = document.createElement("div");
     this.menuContainer.id = 'document-slashmenu';
-    this.menuContainer.classList.add("slashmenu-toolbar");
+    this.menuContainer.classList.add("editor-slashmenu");
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
 
@@ -71,9 +71,8 @@ export class SlashMenu {
         e.stopPropagation();
       }
 
-      if (buttonClasses.contains('editor-slashmenu-cancel')) {
-       // TODO: hide opup
-       console.log("CANCEL")
+      if (buttonClasses.contains('editor-form-cancel')) {
+        this.hideMenu();
       }
     }
   }
@@ -107,87 +106,79 @@ export class SlashMenu {
 
   handlePopups(button) {
     let popupContent = {
-      'resource-type': this.createResourceTypeWidget(),
-      language: this.createLanguageWidget(),
-      license: this.createLicenseWidget(),
-      inbox: this.createInboxWidget(),
-      'in-reply-to': this.createInReplyToWidget()
+      language: this.createLanguageWidgetHTML(),
+      license: this.createLicenseWidgetHTML(),
+      inbox: this.createInboxWidgetHTML(),
+      'in-reply-to': this.createInReplyToWidgetHTML(),
+      'resource-type': this.createResourceTypeWidgetHTML(),
     }
 
-    const popup = popupContent[button];
+    const popup = fragmentFromString(`<form class="editor-form editor-form-active">${popupContent[button]}</form>`);
     this.openPopup(popup, button);
   }
 
-  createLanguageWidget() {
-    var node = fragmentFromString(`
-      <form>
-        <fieldset>
-          <legend>Add a language</legend>
-          <label for="language">Language</label> <select name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
-          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-        </fieldset>
-      </form>
-    `);
+  createLanguageWidgetHTML() {
+    var html = `
+      <fieldset>
+        <legend>Add a language</legend>
+        <label for="language">Language</label> <select name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
+        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
+        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      </fieldset>
+    `;
 
-    return node;
+    return html;
   }
 
-  createLicenseWidget() {
-    var node = fragmentFromString(`
-      <form>
-        <fieldset>
-          <legend>Add a license</legend>
-          <label for="license">License</label> <select name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
-          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-        </fieldset>
-      </form>
-    `);
+  createLicenseWidgetHTML() {
+    var html = `
+      <fieldset>
+        <legend>Add a license</legend>
+        <label for="license">License</label> <select name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
+        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
+        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      </fieldset>
+    `;
 
-    return node;
+    return html;
   }
 
-  createInboxWidget() {
-    var node = fragmentFromString(`
-      <form>
-        <fieldset>
-          <legend>Add an inbox</legend>
-          <label for="inbox">Inbox</label> <input contenteditable="false" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
-          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-        </fieldset>
-      </form>
-    `);
-    return node;
+  createInboxWidgetHTML() {
+    var html = `
+      <fieldset>
+        <legend>Add an inbox</legend>
+        <label for="inbox">Inbox</label> <input contenteditable="false" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
+        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      </fieldset>
+    `;
+    return html;
   }
 
-  createInReplyToWidget() {
-    var node = fragmentFromString(`
-      <form>
-        <fieldset>
-          <legend>Add an in reply to URL</legend>
-          <label for="in-reply-to">In reply to</label> <input contenteditable="false" name="in-reply-to" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
-          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-        </fieldset>
-      </form>
-    `);
-    return node;
+  createInReplyToWidgetHTML() {
+    var html = `
+      <fieldset>
+        <legend>Add an in reply to URL</legend>
+        <label for="in-reply-to">In reply to</label> <input contenteditable="false" name="in-reply-to" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
+        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      </fieldset>
+    `;
+
+    return html;
   }
 
-  createResourceTypeWidget() {
-    var node = fragmentFromString(`
-      <form>
-        <fieldset>
-          <legend>Add a type</legend>
-          <label for="resource-type">Resource type</label> <select name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
-          ${getButtonHTML('submit', 'editor-slashmenu-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-slashmenu-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-        </fieldset>
-      </form>
-    `);
-    return node;
+  createResourceTypeWidgetHTML() {
+    var html = `
+      <fieldset>
+        <legend>Add a type</legend>
+        <label for="resource-type">Resource type</label> <select name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
+        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
+        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      </fieldset>
+    `;
+
+    return html;
   }
 
   openPopup(popup, button) {

@@ -19,7 +19,7 @@ export class SocialToolbar extends ToolbarView {
 
   // FIXME: this doesn't work properly 
   updateToolbarVisibility(e) {
-    if (this.dom.classList.contains('editor-toolbar-active') && !e.target.closest('.do') && e.target.closest('input[type]')?.type !== 'file') { 
+    if (this.dom.classList.contains('editor-form-active') && !e.target.closest('.do') && e.target.closest('input[type]')?.type !== 'file') { 
       // console.log('------HERE NOW: cleanupToolbar');
       this.cleanupToolbar();
     }
@@ -156,7 +156,7 @@ export class SocialToolbar extends ToolbarView {
   }
 
   clearToolbarForm(toolbarForm, options = {}) {
-    toolbarForm.classList.remove('editor-toolbar-form-active');
+    toolbarForm.classList.remove('editor-form-active');
     toolbarForm.removeAttribute('style');
     
     //TODO
