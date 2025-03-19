@@ -197,8 +197,12 @@ z-index:2147483647;
 fill:#fff;
 vertical-align: bottom;
 }
-.editor-toolbar-form svg.fas,
-.editor-toolbar-form svg.far,
+.editor-form svg.fas,
+.editor-form svg.far {
+fill:#fff;
+}
+.editor-form svg.fas,
+.editor-form svg.far,
 dl svg.fas,
 dl svg.far,
 .progress svg.fas,
@@ -2038,35 +2042,35 @@ max-width:100px;
 display:inline-block;
 vertical-align:middle;
 }
-.editor-toolbar-form .sparkline {
+.editor-form .sparkline {
 margin:0.25em 0.5em;
 }
-.editor-toolbar-form .sparkline svg line {
+.editor-form .sparkline svg line {
 stroke:#fff;
 stroke-width:1px;
 }
-.editor-toolbar-form .sparkline svg circle.point {
+.editor-form .sparkline svg circle.point {
 stroke:#f00;
 fill:#f00;
 }
-.editor-toolbar-form *[id^="sparkline-graph"] {
+.editor-form *[id^="sparkline-graph"] {
 max-height:15em;
 max-width:30em;
 }
-.editor-toolbar-form *[id^="sparkline-select"] {
+.editor-form *[id^="sparkline-select"] {
 width:100%;
 }
-.editor-toolbar-form *[id^="sparkline-"] li {
+.editor-form *[id^="sparkline-"] li {
 float:none;
 margin-bottom:0.2em;
 }
-.editor-toolbar-form *[id^="sparkline-"] a {
+.editor-form *[id^="sparkline-"] a {
 font-size:0.9em;
 line-height:1.2;
 word-wrap:break-word;
 font-weight:normal;
 }
-.editor-toolbar-form a[class^="editor-toolbar-"] {
+.editor-form a[class^="editor-form-"] {
 font-size:1.25em;
 }
 
@@ -2087,12 +2091,55 @@ border-color: transparent transparent transparent #009000 !important;
 */
 
 /*TODO MOVE TO editor.css */
-.editor-toolbar-form label[for^="rdfa-"] {
+
+
+  /* // TODO: move to editor.css? */
+/* Slash Menu Container */
+#document-slashmenu {
+  display: none;
+  position: absolute;
+  background-color: #242424;
+  background: linear-gradient(to bottom, #242424, rgba(36, 36, 36, 0.75));
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  color: #fff;
+  padding: 0 15px;
+  z-index: 9999;
+}
+
+/* Menu Items */
+.slashmenu-toolbar li {
+  margin: 5px 0;
+  padding: 5px 10px;
+  background-color: #242424;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Hover State for Menu Items */
+.slashmenu-toolbar li:hover {
+  background-color: #333;
+}
+
+/* Active Button State */
+.slashmenu-toolbar li .editor-button-active {
+  background-color: #000;
+  color: yellow;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+
+
+.editor-form label[for^="rdfa-"] {
 font-weight:bold;
 width:30%;
 text-align:right;
 }
-.editor-toolbar-form input[id^="rdfa-"] {
+.editor-form input[id^="rdfa-"] {
 height:auto;
 width:65%;
 }
@@ -2105,7 +2152,7 @@ bottom:-8px;
 #citation-url {
 display:block;
 }
-.editor-toolbar-form button {
+.editor-form button {
 background-color:transparent;
 border:none;
 }
@@ -2119,14 +2166,14 @@ padding-bottom:0.25em;
 div.specref-search-results li {
 float:none;
 }
-.editor-toolbar-form label a {
+.editor-form label a {
 font-size:1em;
 font-weight:normal;
 margin:0;
 text-decoration:underline;
 }
 
-.editor-toolbar-form textarea[name="content"] {
+.editor-form textarea[name="content"] {
 padding:0.5em;
 width:calc(100% - 1em - 2px);
 width:-moz-available;
@@ -2134,34 +2181,34 @@ margin:0 auto;
 display:block;
 font-size:1em;
 }
-.editor-toolbar-form select {
+.editor-form select {
 display:inline-block;
 font-size:1em;
 }
-.editor-toolbar-form select[id$="-language"],
-.editor-toolbar-form select[id$="-license"] {
+.editor-form select[id$="-language"],
+.editor-form select[id$="-license"] {
 margin-top:0.25em;
 vertical-align:top;
 }
 
-.editor-toolbar-form label[for^="ref-"],
-.editor-toolbar-form label[for^="annotation-location-"],
-.editor-toolbar-form label[for^="annotation-inbox"],
-.editor-toolbar-form label[for^="bookmark-"] {
+.editor-form label[for^="ref-"],
+.editor-form label[for^="annotation-location-"],
+.editor-form label[for^="annotation-inbox"],
+.editor-form label[for^="bookmark-"] {
 width:auto;
 font-size:1em;
 line-height:1;
 }
-.editor-toolbar-form .annotation-inbox,
-.editor-toolbar-form .annotation-location-selection {
+.editor-form .annotation-inbox,
+.editor-form .annotation-location-selection {
 margin: 0 1em 0 1em;
 display:inline-block;
 vertical-align: top;
 }
-.editor-toolbar-form .annotation-inbox {
+.editor-form .annotation-inbox {
 margin-left:0;
 }
-.editor-toolbar-form input:nth-of-type(2):before {
+.editor-form input:nth-of-type(2):before {
 margin-left: 68px;
 }
 #ref-reference {
@@ -2296,9 +2343,12 @@ max-width:none;
   border-width: 0 8px 8px 8px;
   top: -8px; }
 
+.editor-slashmenu,
 .editor-toolbar {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 16px;
+}
+.editor-toolbar {
   left: 0;
   position: absolute;
   top: 0;
@@ -2308,12 +2358,12 @@ max-width:none;
   .editor-toolbar ol {
     margin: 0;
     padding: 0; }
-  .editor-toolbar .editor-toolbar-actions li {
+  .editor-toolbar .editor-form-actions li {
     float: left;
     list-style: none;
     margin: 0;
     padding: 0; }
-    .editor-toolbar .editor-toolbar-actions li button {
+    .editor-toolbar .editor-form-actions li button {
       box-sizing: border-box;
       cursor: pointer;
       display: block;
@@ -2322,17 +2372,17 @@ max-width:none;
       margin: 0;
       padding: 15px;
       text-decoration: none; }
-      .editor-toolbar .editor-toolbar-actions li button:focus {
+      .editor-toolbar .editor-form-actions li button:focus {
         outline: none; }
-    .editor-toolbar .editor-toolbar-actions li .editor-action-underline {
+    .editor-toolbar .editor-form-actions li .editor-action-underline {
       text-decoration: underline; }
-    .editor-toolbar .editor-toolbar-actions li .editor-action-pre {
+    .editor-toolbar .editor-form-actions li .editor-action-pre {
       font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
       font-size: 12px;
       font-weight: 100;
       padding: 15px 0; }
 
-.editor-toolbar-active {
+.editor-form-active {
   visibility: visible; }
 
 .editor-sticky-toolbar {
@@ -2342,7 +2392,7 @@ max-width:none;
 .editor-relative-toolbar {
   position: relative; }
 
-.editor-toolbar-active.editor-toolbar-view-transition {
+.editor-form-active.editor-form-view-transition {
   -webkit-animation: editor-pop-upwards 160ms forwards linear;
           animation: editor-pop-upwards 160ms forwards linear; }
 
@@ -2352,31 +2402,31 @@ max-width:none;
 .editor-action-italic {
   font-style: italic; }
 
-.editor-toolbar-form {
+.editor-form {
   display: none;
-  width:100%;
+  /* width:100%; */
   max-width:30em;
   z-index:2147483647;
   /* padding:1em; */
   }
-  .editor-toolbar-form input,
-  .editor-toolbar-form button {
+  .editor-form input,
+  .editor-form button {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-  .editor-toolbar-form .editor-toolbar-form-row {
+  .editor-form .editor-form-row {
     line-height: 14px;
     margin-left: 5px;
     padding-bottom: 5px; }
 
-  .editor-toolbar-form label {
+  .editor-form label {
     font-weight: bold !important;
   }
-  .editor-toolbar-form .editor-toolbar-input {
+  .editor-form .editor-form-input {
     font-size:1em;
     padding:0.25em 0.5em;
   }
 
-  .editor-toolbar-form .editor-toolbar-input,
-  .editor-toolbar-form label {
+  .editor-form .editor-form-input,
+  .editor-form label {
     /* border: none;
     box-sizing: border-box;
     font-size: 14px;
@@ -2385,8 +2435,8 @@ max-width:none;
     width: 316px;
     display: inline-block; */
   }
-  .editor-toolbar-form .editor-toolbar-input:focus,
-  .editor-toolbar-form label:focus {
+  .editor-form .editor-form-input:focus,
+  .editor-form label:focus {
     /* -webkit-appearance: none;
         -moz-appearance: none;
             appearance: none;
@@ -2400,32 +2450,32 @@ max-width:none;
     overflow: auto;
   }
 
-  .editor-toolbar-form button {
+  .editor-form button {
     display: inline-block;
     margin: 0 10px;
     text-decoration: none; }
-    .editor-toolbar-form button span {
+    .editor-form button span {
       display:none;
       }
 
-.editor-toolbar-form-active {
+.editor-form-active {
   position: absolute;
   display: block; }
 
-.editor-toolbar-actions:after {
+.editor-form-actions:after {
   clear: both;
   content: "";
   display: table; }
 
-.editor-toolbar-form .img-preview {
+.editor-form .img-preview {
 min-height:10em;
 border:3px dashed #aaa;
 border-radius:0.5em;
 }
-.editor-toolbar-form .img-preview p {
+.editor-form .img-preview p {
 text-align: center;
 }
-.editor-toolbar-form .img-preview img {
+.editor-form .img-preview img {
 max-width:100%;
 height:auto;
 }
@@ -2479,47 +2529,47 @@ height:auto;
     .editor-toolbar li button:hover svg {
       fill: yellow; }
   
-  .editor-toolbar .editor-toolbar-actions li:first-child button {
+  .editor-toolbar .editor-form-actions li:first-child button {
     border-bottom-left-radius: 5px;
     border-top-left-radius: 5px; }
-  .editor-toolbar .editor-toolbar-actions li:last-child button {
+  .editor-toolbar .editor-form-actions li:last-child button {
     border-bottom-right-radius: 5px;
     border-top-right-radius: 5px; }
-  .editor-toolbar .editor-toolbar-actions li button.editor-button-active {
+  .editor-toolbar .editor-form-actions li button.editor-button-active {
     background-color: #000;
     background: -webkit-linear-gradient(top, #242424, rgba(0, 0, 0, 0.89));
     background: linear-gradient(to bottom, #242424, rgba(0, 0, 0, 0.89));
     color: yellow; }
 
-.editor-toolbar-form {
+.editor-form {
   background: #242424;
   border-radius: 5px;
   color: #999;
   /* margin:0.5em 0.5em 0.75em 0.5em; */
   padding:1.5em 1em 1em;
   }
-  .editor-toolbar-form fieldset {
+  .editor-form fieldset {
     border:0;
     padding:0;
   }
-  .editor-toolbar-form legend {
+  .editor-form legend {
     margin:0 0 1em 0;
   }
-  .editor-toolbar-form legend,
-  .editor-toolbar-form label {
+  .editor-form legend,
+  .editor-form label {
     color:#fff;
     font-weight:bold;
   }
 
-  .editor-toolbar-form .editor-toolbar-input {
+  .editor-form .editor-form-input {
     background: #242424;
     box-sizing: border-box;
     color: #ccc;
     height: 50px; }
-  .editor-toolbar-form a {
+  .editor-form a {
     color: #fff; }
 
-.editor-toolbar-anchor-preview {
+.editor-form-anchor-preview {
   background: #242424;
   border-radius: 5px;
   color: #fff; }
@@ -3600,7 +3650,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
   color: #fff;
-  padding: 10px 15px;
+  padding: 0 15px;
   z-index: 9999;
 }
 
