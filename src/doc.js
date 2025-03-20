@@ -2851,6 +2851,28 @@ function createInReplyToHTML(url, options = {}) {
   return createDefinitionListHTML([{'href': url, 'rel': 'as:inReplyTo'}], options);
 }
 
+function createPublicationStatusHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'publication-status';
+  var textContent = Config.PublicationStatus[url].name || url;
+  options['title'] = 'Status';
+
+  return createDefinitionListHTML(
+    [
+      {
+        prefix: 'pso: http://purl.org/spar/pso/',
+        rel: 'pso:holdsStatusInTime',
+        resource: '#' + generateAttributeId(),
+        child: {
+          rel: 'pso:withStatus', resource: url, typeOf: 'pso:PublicationStatus', textContent
+        }
+      }
+    ],
+    options
+  );
+}
+
 function createResourceTypeHTML(url, options = {}) {
   if (!url) return '';
 
@@ -3370,6 +3392,7 @@ export {
   createLanguageHTML,
   createLicenseHTML,
   createRightsHTML,
+  createPublicationStatusHTML,
   createResourceTypeHTML,
   createInboxHTML,
   createInReplyToHTML,
