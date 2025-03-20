@@ -149,7 +149,7 @@ export const buttonIcons = {
     icon: Icon['.fas.fa-language']
   },
   'resource-type': {
-    title: 'Document type',
+    title: 'Resource type',
     icon: Icon['.fas.fa-shape']
   },
   inbox: {

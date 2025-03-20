@@ -20,7 +20,7 @@ export class SlashMenu {
       'license': 'License',
       'inbox': 'Inbox',
       'in-reply-to': 'In reply to',
-      'resource-type': 'Resource type',
+      'resource-type': 'Type',
     }
 
     this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'resource-type'].map(button => ({

@@ -2833,16 +2833,6 @@ function createLanguageHTML(language, options = {}) {
   return createDefinitionListHTML([{ property, content, textContent, lang: '', xmlLang: '' }], options);
 }
 
-function createResourceTypeHTML(url, options = {}) {
-  if (!url) return '';
-
-  options['class'] = options.class || 'resource-type';
-  var textContent = Config.ResourceType[url].name || url;
-  options['title'] = 'Type';
-
-  return createDefinitionListHTML([{'href': url, 'rel': 'rdf:type', textContent}], options);
-}
-
 function createInboxHTML(url, options = {}) {
   if (!url) return '';
 
@@ -2859,6 +2849,16 @@ function createInReplyToHTML(url, options = {}) {
   options['title'] = 'In reply to';
 
   return createDefinitionListHTML([{'href': url, 'rel': 'as:inReplyTo'}], options);
+}
+
+function createResourceTypeHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'resource-type';
+  var textContent = Config.ResourceType[url].name || url;
+  options['title'] = 'Type';
+
+  return createDefinitionListHTML([{'href': url, 'rel': 'rdf:type', textContent}], options);
 }
 
 function getAnnotationInboxLocationHTML(action) {
@@ -2905,28 +2905,6 @@ function getAnnotationLocationHTML(action) {
   return s;
 }
 
-function getResourceTypeOptionsHTML(options) {
-  options = options || {};
-  var s = '', selectedType = '';
-
-  if ('selected' in options) {
-    selectedType = options.selected;
-    if (selectedType == '') {
-      s += '<option selected="selected" value="">Choose a resource type</option>';
-    }
-  }
-  else {
-    selectedType = 'http://schema.org/Article';
-  }
-
-  Object.keys(Config.ResourceType).forEach(iri => {
-    var selected = (iri == selectedType) ? ' selected="selected"' : '';
-    s += '<option value="' + iri + '" title="' + Config.ResourceType[iri].description  + '"' + selected + '>' + Config.ResourceType[iri].name  + '</option>';
-  });
-
-  return s;
-}
-
 function getPublicationStatusOptionsHTML(options) {
   options = options || {};
   var s = '', selectedIRI = '';
@@ -2945,6 +2923,28 @@ function getPublicationStatusOptionsHTML(options) {
     var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
     s += '<option value="' + iri + '" title="' + Config.PublicationStatus[iri].description  + '"' + selected + '>' + Config.PublicationStatus[iri].name  + '</option>';
   })
+
+  return s;
+}
+
+function getResourceTypeOptionsHTML(options) {
+  options = options || {};
+  var s = '', selectedType = '';
+
+  if ('selected' in options) {
+    selectedType = options.selected;
+    if (selectedType == '') {
+      s += '<option selected="selected" value="">Choose a resource type</option>';
+    }
+  }
+  else {
+    selectedType = 'http://schema.org/Article';
+  }
+
+  Object.keys(Config.ResourceType).forEach(iri => {
+    var selected = (iri == selectedType) ? ' selected="selected"' : '';
+    s += '<option value="' + iri + '" title="' + Config.ResourceType[iri].description  + '"' + selected + '>' + Config.ResourceType[iri].name  + '</option>';
+  });
 
   return s;
 }
