@@ -2759,22 +2759,37 @@ function createDefinitionListHTML(data, options = {}) {
   var dds = [];
 
   data.forEach(d => {
+    var prefix = d.prefix ? ` prefix="${d.prefix}"`: '';
     var lang = d.lang !== undefined ? ` lang="${d.lang}"` : '';
     var xmlLang = d.xmlLang !== undefined ? ` xml:lang="${d.xmlLang}"` : '';
     var resource = d.resource ? ` resource="${d.resource}"`: '';
-    var content= d.content ? ` content="${d.content}"`: '';
-    var datatype= d.datatype ? ` datatype="${d.datatype}"`: '';
+    var content = d.content ? ` content="${d.content}"`: '';
+    var datatype = d.datatype ? ` datatype="${d.datatype}"`: '';
+    var typeOf = d.typeOf ? ` typeof="${d.typeOf}"`: '';
 
     //d.href is required, d.resource is optional.
 
-    if (d.rel && d.property) {
+    ///XXX: This can be further developed
+    if (d.child) {
+      var childTypeOf = d.child.typeOf ? ` typeof="${d.child.typeOf}"` : '';
+      var childResource = d.child.resource ? ` resource="${d.child.resource}"` : '';
+
+      dds.push(`
+        <dd>
+          <span${content}${datatype}${lang}${prefix} rel="${d.rel}"${resource}${typeOf}${xmlLang}>
+            <span rel="${d.child.rel}"${childResource}${childTypeOf}>${d.child.textContent}</span>
+          </span>
+        </dd>
+      `);
+    }
+    else if (d.rel && d.property) {
       dds.push(`<dd><a href="${d.href}"${content}"${lang} property="${d.property}" rel="${d.rel}${resource}${xmlLang}>${d.textContent || d.href}</a></dd>`);
     }
     else if (d.rel) {
-      dds.push(`<dd><a href="${d.href}" rel="${d.rel}"${resource}>${d.textContent || d.href}</dd>`);
+      dds.push(`<dd><a href="${d.href}"${prefix} rel="${d.rel}"${resource}>${d.textContent || d.href}</dd>`);
     }
     else if (d.property) {
-      dds.push(`<dd><span${content}${datatype}${lang} property="${d.property}"${xmlLang}>${d.textContent}</span></dd>`);
+      dds.push(`<dd><span${content}${datatype}${lang}${prefix} property="${d.property}"${xmlLang}>${d.textContent}</span></dd>`);
     }
   });
 
