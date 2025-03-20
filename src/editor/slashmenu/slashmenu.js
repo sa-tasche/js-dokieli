@@ -1,8 +1,8 @@
-import { getLanguageOptionsHTML, getLicenseOptionsHTML, getResourceTypeOptionsHTML, insertDocumentLevelHTML } from "../../doc.js";
+import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML } from "../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../util.js";
 import { getButtonHTML } from "../toolbar/toolbar.js";
-import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerResourceType } from "./handlers.js";
+import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType } from "./handlers.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
 
@@ -11,7 +11,7 @@ export class SlashMenu {
     this.editorView = editorView;
     this.menuContainer = document.createElement("div");
     this.menuContainer.id = 'document-slashmenu';
-    this.menuContainer.classList.add("editor-slashmenu");
+    this.menuContainer.classList.add("editor-slashmenu", "editor-form");
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
 
@@ -20,10 +20,11 @@ export class SlashMenu {
       'license': 'License',
       'inbox': 'Inbox',
       'in-reply-to': 'In reply to',
+      'publication-status': 'Status',
       'resource-type': 'Type',
     }
 
-    this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'resource-type'].map(button => ({
+    this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type'].map(button => ({
       button,
       dom: () => fragmentFromString(getButtonHTML(button, null, null, slashMenuButtonLabels[button])).firstChild,
     }));
@@ -34,6 +35,7 @@ export class SlashMenu {
     this.formHandlerLicense = formHandlerLicense.bind(this);
     this.formHandlerInbox = formHandlerInbox.bind(this);
     this.formHandlerInReplyTo = formHandlerInReplyTo.bind(this);
+    this.formHandlerPublicationStatus = formHandlerPublicationStatus.bind(this);
     this.formHandlerResourceType = formHandlerResourceType.bind(this);
 
     this.formEventListeners = {
@@ -41,6 +43,7 @@ export class SlashMenu {
       license: [ { event: 'submit', callback: this.formHandlerLicense }, { event: 'click', callback: (e) => this.formClickHandler(e, 'license') } ],
       inbox: [ { event: 'submit', callback: this.formHandlerInbox }, { event: 'click', callback: (e) => this.formClickHandler(e, 'inbox') } ],
       'in-reply-to': [ { event: 'submit', callback: this.formHandlerInReplyTo }, { event: 'click', callback: (e) => this.formClickHandler(e, 'in-reply-to') } ],
+      'publication-status': [ { event: 'submit', callback: this.formHandlerPublicationStatus }, { event: 'click', callback: (e) => this.formClickHandler(e, 'publication-status') } ],
       'resource-type': [ { event: 'submit', callback: this.formHandlerResourceType }, { event: 'click', callback: (e) => this.formClickHandler(e, 'resource-type') } ],
     }
 
@@ -110,6 +113,7 @@ export class SlashMenu {
       license: this.createLicenseWidgetHTML(),
       inbox: this.createInboxWidgetHTML(),
       'in-reply-to': this.createInReplyToWidgetHTML(),
+      'publication-status': this.createPublicationStatusWidgetHTML(),
       'resource-type': this.createResourceTypeWidgetHTML(),
     }
 
@@ -168,6 +172,19 @@ export class SlashMenu {
     return html;
   }
 
+  createPublicationStatusWidgetHTML() {
+    var html = `
+      <fieldset>
+        <legend>Add a publication status</legend>
+        <label for="publication-status">PUblication status</label> <select name="publication-status" required="">${getPublicationStatusOptionsHTML({ 'selected': '' })}</select>
+        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
+        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      </fieldset>
+    `;
+
+    return html;
+  }
+
   createResourceTypeWidgetHTML() {
     var html = `
       <fieldset>
@@ -194,6 +211,7 @@ export class SlashMenu {
     }
 
     this.menuContainer.style.display = "block";
+    this.menuContainer.style.padding = 0;
   }
 
   // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. and 3. for the specific case of the slash menu i need to update the selection so that it includes (and replaces) the slash
