@@ -385,14 +385,16 @@ let customNodes = {
 
 const customMarks = {};
 
-const inlineElements = ['span', 'mark', 'code', 'cite', 'a', 'sup', 'sub', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'];
+const inlineElements = ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'code', 'cite', 'a', 'sup', 'sub', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'];
 inlineElements.forEach(tagName => {
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: tagName, getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return [tagName, { ...node.attrs.originalAttributes }, 0]; },
 
-    inclusive: false
+    inclusive: false,
+    excludes: "",
+    group: "inline"
   }
 
   switch(tagName) {
