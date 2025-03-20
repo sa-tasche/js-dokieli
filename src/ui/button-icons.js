@@ -159,5 +159,9 @@ export const buttonIcons = {
   'in-reply-to': {
     title: 'In reply to',
     icon: Icon['.fas.fa-reply.fa-2x']
+  },
+  'publication-status': {
+    title: 'Publication status',
+    icon: Icon['.fas.fa-timeline']
   }
 }
