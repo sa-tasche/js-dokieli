@@ -1,4 +1,4 @@
-import { createResourceTypeHTML, createLanguageHTML, createLicenseHTML, createInboxHTML, createInReplyToHTML } from "../../doc.js";
+import { createLanguageHTML, createLicenseHTML, createInboxHTML, createInReplyToHTML, createPublicationStatusHTML, createResourceTypeHTML } from "../../doc.js";
 import { getFormValues, fragmentFromString } from "../../util.js";
 
 export function formHandlerLanguage(e) {
@@ -55,6 +55,21 @@ export function formHandlerInReplyTo(e) {
   const options = {};
 
   const htmlString = createInReplyToHTML(inReplyTo, options);
+
+  this.replaceSelectionWithFragment(fragmentFromString(htmlString));
+  this.hideMenu()
+}
+
+export function formHandlerPublicationStatus(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+  // console.log(formValues);
+  const publicationStatus = formValues['publication-status'];
+  const options = {};
+
+  const htmlString = createPublicationStatusHTML(publicationStatus, options);
 
   this.replaceSelectionWithFragment(fragmentFromString(htmlString));
   this.hideMenu()
