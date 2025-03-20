@@ -2094,44 +2094,23 @@ border-color: transparent transparent transparent #009000 !important;
 
 
   /* // TODO: move to editor.css? */
-/* Slash Menu Container */
-#document-slashmenu {
-  display: none;
-  position: absolute;
-  background-color: #242424;
-  background: linear-gradient(to bottom, #242424, rgba(36, 36, 36, 0.75));
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+.editor-slashmenu {
+  /* padding: 1em !important; */
+}
+
+.editor-slashmenu li {
+  list-style: none;
+}
+
+.editor-slashmenu button span {
   color: #fff;
-  padding: 0 15px;
-  z-index: 9999;
+  display: block !important;
+  margin-left: 1em;
 }
 
-/* Menu Items */
-.slashmenu-toolbar li {
-  margin: 5px 0;
-  padding: 5px 10px;
-  background-color: #242424;
-  border-radius: 3px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  color: #fff;
-  transition: background-color 0.2s ease-in-out;
+.editor-slashmenu button {
+  display: flex !important;
 }
-
-/* Hover State for Menu Items */
-.slashmenu-toolbar li:hover {
-  background-color: #333;
-}
-
-/* Active Button State */
-.slashmenu-toolbar li .editor-button-active {
-  background-color: #000;
-  color: yellow;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-}
-
 
 
 .editor-form label[for^="rdfa-"] {
@@ -3638,43 +3617,3 @@ svg.leaflet-image-layer.leaflet-interactive path {
   margin-left: -12px;
   border-right-color: #fff;
   }
-
-
-  /* // TODO: move to editor.css? */
-/* Slash Menu Container */
-#document-slashmenu {
-  display: none;
-  position: absolute;
-  background-color: #242424;
-  background: linear-gradient(to bottom, #242424, rgba(36, 36, 36, 0.75));
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
-  color: #fff;
-  padding: 0 15px;
-  z-index: 9999;
-}
-
-/* Menu Items */
-.slashmenu-toolbar li {
-  margin: 5px 0;
-  padding: 5px 10px;
-  background-color: #242424;
-  border-radius: 3px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  color: #fff;
-  transition: background-color 0.2s ease-in-out;
-}
-
-/* Hover State for Menu Items */
-.slashmenu-toolbar li:hover {
-  background-color: #333;
-}
-
-/* Active Button State */
-.slashmenu-toolbar li .editor-button-active {
-  background-color: #000;
-  color: yellow;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-}

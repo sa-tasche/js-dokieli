@@ -552,7 +552,7 @@ ins {
 ul {
   padding: 0;
   margin-bottom: 1em;
-  list-style-position: inside;
+  /* list-style-position: inside; */
 }
 
 dt {
