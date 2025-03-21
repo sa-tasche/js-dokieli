@@ -1,7 +1,7 @@
 import { toggleMark, setBlockType } from "prosemirror-commands"
 import { wrapInList, liftListItem } from "prosemirror-schema-list"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
-import { buttonIcons } from "./../../../ui/button-icons.js"
+import { getButtonHTML } from "./../../../ui/button-icons.js"
 import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
@@ -66,8 +66,8 @@ export class AuthorToolbar extends ToolbarView {
           <legend>Add a link</legend>
           <label for="a-href">URL</label> <input class="editor-form-input" id="a-href" name="a-href" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
           <label for="a-title">Title</label> <input class="editor-form-input" id="a-title" name="a-title" placeholder="Add advisory information for the tooltip." type="text" />
-          ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
         </fieldset>
       `,
 
@@ -75,8 +75,8 @@ export class AuthorToolbar extends ToolbarView {
         <fieldset>
           <legend>Add the source of the blockquote</legend>
           <label for="blockquote-cite">URL</label> <input class="editor-form-input" id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
         </fieldset>
       `,
 
@@ -84,8 +84,8 @@ export class AuthorToolbar extends ToolbarView {
         <fieldset>
           <legend>Add the source of the quote</legend>
           <label for="q-cite">URL</label> <input class="editor-form-input" id="q-cite" name="q-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
         </fieldset>
       `,
 
@@ -100,8 +100,8 @@ export class AuthorToolbar extends ToolbarView {
           <label for="img-src">URL</label> <input class="editor-form-input" id="img-src" name="img-src" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
           <label for="img-alt">Description</label> <input class="editor-form-input" id="img-alt" name="img-alt" placeholder="Describe the image for people who are blind or have low vision." />
           <label for="img-figcaption">Caption</label> <input class="editor-form-input" id="img-figcaption" name="img-figcaption" placeholder="A caption or legend for the figure." />
-          ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
         </fieldset>
       `,
 
@@ -119,8 +119,8 @@ export class AuthorToolbar extends ToolbarView {
           <input class="editor-form-input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
           <textarea class="editor-form-textarea" cols="20" id="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
-          ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-          ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
         </fieldset>
       `,
 
@@ -417,21 +417,6 @@ function getSchemaTypeFromButton(schema, button) {
   }
 
   return null;
-}
-
-//Given button node, update it active class based on whether associated mark/node is applied to the selection.
-//Given a button action, generates an HTML string for the button including an icon and text.
-function getButtonHTML(button, buttonClass, buttonTitle, buttonTextContent, options = {}) {
-  if (!button) {
-    throw new Error('Need to pass button.');
-  }
-  const textContent = buttonTextContent || buttonIcons[button].textContent;
-  const title = buttonTitle || buttonIcons[button].title;
-  const icon = buttonIcons[button].icon;
-
-  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
-
-  return `<button${buttonClass ? ` class="${buttonClass}"` : ''} title="${title}"${options.type ? ` type="${options.type}"` : ''}>${buttonContent}</button>`;
 }
 
 //Heading is a schema (as opposed to h1-h6). This is an intermediary step to find out how to apply setBlockType (which level of heading). If heading is applied, it either toggles to new heading or to paragraph.

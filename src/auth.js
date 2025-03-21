@@ -9,6 +9,7 @@ import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade } from './graph.js'
 import { removeLocalStorageAuthClient, removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
 import solidAuth, { logout, popupLogin } from 'solid-auth-client'
+import { getButtonHTML } from './ui/button-icons.js';
 
 const ns = Config.ns;
 
@@ -16,7 +17,8 @@ const ns = Config.ns;
 
 
 function getUserSignedInHTML() {
-  return getAgentHTML() + '<button class="signout-user" title="Live long and prosper">' + Icon[".far.fa-spock-hand"] + '</button>'
+  // return getAgentHTML() + '<button class="signout-user" title="Live long and prosper">' + Icon[".far.fa-spock-hand"] + '</button>'
+  return getAgentHTML() + getButtonHTML({ button: 'signout', buttonClass: 'signout-user', buttonTitle: 'Live long and prosper"' });
 }
 
 
@@ -58,7 +60,8 @@ async function showUserSigninSignout (node) {
       s = getUserSignedInHTML()
     }
     else {
-      s = '<button class="signin-user" title="Sign in to authenticate">' + Icon['.fas.fa-user-astronaut.fa-2x'] + 'Sign in</button>'
+      // s = '<button class="signin-user" title="Sign in to authenticate">' + Icon['.fas.fa-user-astronaut'] + 'Sign in</button>'
+      s = `${getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' })}`;
     }
 
     node.insertAdjacentHTML('beforeend', '<section id="user-info">' + s + '</section>')

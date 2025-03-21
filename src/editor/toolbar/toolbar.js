@@ -1,5 +1,5 @@
 import { schema } from "../schema/base.js"
-import { buttonIcons } from "../../ui/button-icons.js"
+import { buttonIcons, getButtonHTML } from "../../ui/button-icons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocument, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
 import { getTextQuoteHTML, cloneSelection, restoreSelection, setSelection } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";
@@ -17,7 +17,7 @@ export class ToolbarView {
     this.toolbarPopups = this.getToolbarPopups()
     this.selection = null;
 
-    this.buttons = buttons.map(button => { return { button, command: this.toolbarCommands[button], dom: () => fragmentFromString(getButtonHTML(button)).firstChild } })
+    this.buttons = buttons.map(button => { return { button, command: this.toolbarCommands[button], dom: () => fragmentFromString(getButtonHTML({ button })).firstChild } })
 
     this.populateForms = this.getPopulateForms();
 
@@ -585,8 +585,8 @@ export function annotateFormControls(options) {
       <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>
       <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
 
-      ${getButtonHTML('submit', 'editor-form-submit', 'Post', 'Post', { type: 'submit' })}
-      ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+      ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Post', buttonTextContent: 'Post', buttonType: 'submit' })}
+      ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
     </fieldset>
   `
 }

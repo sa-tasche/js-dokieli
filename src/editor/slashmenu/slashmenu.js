@@ -1,7 +1,7 @@
 import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML } from "../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../util.js";
-import { getButtonHTML } from "../toolbar/toolbar.js";
+import { getButtonHTML } from "../../ui/button-icons.js";
 import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType } from "./handlers.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
@@ -26,7 +26,7 @@ export class SlashMenu {
 
     this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type'].map(button => ({
       button,
-      dom: () => fragmentFromString(getButtonHTML(button, null, null, slashMenuButtonLabels[button])).firstChild,
+      dom: () => fragmentFromString(getButtonHTML({ button, buttonTextContent: slashMenuButtonLabels[button]} )).firstChild,
     }));
 
     this.createMenuItems();
@@ -125,9 +125,9 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a language</legend>
-        <label for="language">Language</label> <select name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
-        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        <label for="language">Language</label> <select class="editor-form-select" name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
+        ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+        ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
       </fieldset>
     `;
 
@@ -138,9 +138,9 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a license</legend>
-        <label for="license">License</label> <select name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
-        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        <label for="license">License</label> <select class="editor-form-select" name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
+        ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+        ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
       </fieldset>
     `;
 
@@ -151,9 +151,9 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add an inbox</legend>
-        <label for="inbox">Inbox</label> <input contenteditable="false" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
-        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        <label for="inbox">Inbox</label> <input class="editor-form-input" contenteditable="false" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+        ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
       </fieldset>
     `;
     return html;
@@ -163,9 +163,9 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add an in reply to URL</legend>
-        <label for="in-reply-to">In reply to</label> <input contenteditable="false" name="in-reply-to" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
-        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        <label for="in-reply-to">In reply to</label> <input class="editor-form-input" contenteditable="false" name="in-reply-to" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+        ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
       </fieldset>
     `;
 
@@ -176,9 +176,9 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a publication status</legend>
-        <label for="publication-status">PUblication status</label> <select name="publication-status" required="">${getPublicationStatusOptionsHTML({ 'selected': '' })}</select>
-        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        <label for="publication-status">Publication status</label> <select class="editor-form-select" name="publication-status" required="">${getPublicationStatusOptionsHTML({ 'selected': '' })}</select>
+        ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+        ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
       </fieldset>
     `;
 
@@ -189,9 +189,9 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a type</legend>
-        <label for="resource-type">Resource type</label> <select name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
-        ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-        ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
+        <label for="resource-type">Resource type</label> <select class="editor-form-select" name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
+        ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+        ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
       </fieldset>
     `;
 

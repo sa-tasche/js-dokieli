@@ -1,6 +1,6 @@
 'use strict'
 
-import { Icon } from './ui/icons.js';
+import { getButtonHTML } from './ui/button-icons.js';
 import rdf from 'rdf-ext';
 
 /**
@@ -69,8 +69,8 @@ export default {
   },
   MessageLog: [],
   AvatarSize: 48,
-  DisableLocalStorageButtons: '<button class="local-storage-disable-html" title="Disable local storage (temporary) in the browser">' + Icon[".fas.fa-database.fa-2x"] + 'Local Storage</button>',
-  EnableLocalStorageButtons: '<button class="local-storage-enable-html" title="Enable local storage (temporary) in the browser">' + Icon[".fas.fa-database.fa-2x"] + 'Local Storage</button>',
+  DisableLocalStorageButtons: getButtonHTML({ button: 'local-storage', buttonClass: 'local-storage-disable-html', buttonTextContent: 'Local Storage', buttonTitle: 'Disable local storage (temporary) in the browser', iconSize: 'fa-2x' }),
+  EnableLocalStorageButtons: getButtonHTML({ button: 'local-storage', buttonClass: 'local-storage-enable-html', buttonTextContent: 'Local Storage', buttonTitle: 'Enable local storage (temporary) in the browser', iconSize: 'fa-2x' }),
   CDATAStart: '//<![CDATA[',
   CDATAEnd: '//]]>',
   SortableList: false,
@@ -85,14 +85,14 @@ export default {
     regexEmptyHTMLTags: /<[^\/>][^>]*><\/[^>]+>/gim,
     mode: 'social',
     ButtonLabelType: 'fontawesome',
-    DisableEditorButton: '<button class="editor-disable" title="Disable editor">' + Icon[".fas.fa-i-cursor.fa-2x"] + 'Edit</button>',
-    EnableEditorButton: '<button class="editor-enable" title="Enable editor">' + Icon[".fas.fa-i-cursor.fa-2x"] + 'Edit</button>'
+    DisableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
+    EnableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' })
   },
   Button: {
-    Close: '<button class="close" title="Close">' + Icon[".fas.fa-times.fa-2x"] + '</button>',
-    Delete: '<button class="delete" title="Delete">' + Icon[".fas.fa-trash-alt"] + '</button>',
-    Toggle: '<button class="toggle" title="Show/Hide">' + Icon[".fas.fa-angle-right"] + '</button>',
-    More: '<button class="more" title="Show more">' + Icon[".fas.fa-rotate"] + '</button>'
+    Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
+    Delete: getButtonHTML({ button: 'delete', buttonClass: 'delete', buttonTitle: 'Delete' }),
+    Toggle: getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonTitle: 'Show/Hide' }),
+    More: getButtonHTML({ button: 'more', buttonClass: 'more', buttonTitle: 'Show more' })
   },
   ButtonStates: {
     'resource-share': true,

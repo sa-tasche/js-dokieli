@@ -1473,6 +1473,10 @@ function getButtonDisabledHTML(id) {
   return html;
 }
 
+function isButtonDisabled(id) {
+  return !Config.ButtonStates[id];
+}
+
 function getGraphContributorsRole(g, options) {
   options = options || {};
   options['sort'] = options['sort'] || false;
@@ -3415,5 +3419,6 @@ export {
   createNoteDataHTML,
   tagsToBodyObjects,
   createRDFaHTML,
-  createDefinitionListHTML
+  createDefinitionListHTML,
+  isButtonDisabled
 }

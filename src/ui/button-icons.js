@@ -106,7 +106,7 @@ export const buttonIcons = {
   },
   close: {
     title: 'Close',
-    icon: Icon['.fas.fa-times.fa-2x']
+    icon: Icon['.fas.fa-times']
   },
   submit: {
     title: 'Submit',
@@ -130,15 +130,15 @@ export const buttonIcons = {
   },
   cursor: {
     title: 'Cursor',
-    icon: Icon['.fas.fa-i-cursor.fa-2x']
+    icon: Icon['.fas.fa-i-cursor']
   }, 
-  spock: {
+  signout: {
     title: 'Live long and prosper',
     icon: Icon['.far.fa-spock-hand']
   },
-  astronaut: {
+  signin: {
     title: 'Sign in',
-    icon: Icon['.fas.fa-user-astronaut.fa-2x']
+    icon: Icon['.fas.fa-user-astronaut']
   },
   license: {
     title: 'License',
@@ -158,10 +158,112 @@ export const buttonIcons = {
   },
   'in-reply-to': {
     title: 'In reply to',
-    icon: Icon['.fas.fa-reply.fa-2x']
+    icon: Icon['.fas.fa-reply']
   },
   'publication-status': {
     title: 'Publication status',
     icon: Icon['.fas.fa-timeline']
+  },
+  activities: {
+    title: 'Activities',
+    icon: Icon['.fas.fa-bolt']
+  },
+  new: {
+    title: 'New',
+    icon: Icon['.far.fa-lightbulb']
+  },
+  open: {
+    title: 'Open',
+    icon: Icon['.fas.fa-coffee']
+  },
+  save: {
+    title: 'Save',
+    icon: Icon['.fas.fa-life-ring']
+  },
+  'save-as': {
+    title: 'Save As',
+    icon: Icon['.far.fa-paper-plane']
+  },
+  messages: {
+    title: 'Messages',
+    icon: Icon['.fas.fa-scroll']
+  },
+  print: {
+    title: 'Print document',
+    icon: Icon[".fas.fa-print"] 
+  },
+  'data-meta': {
+    title: 'Embed structured data',
+    icon: Icon [".fas.fa-table"]
+  },
+  table: {
+    title: 'table',
+    icon: Icon [".fas.fa-table"]
+  },
+  source: {
+    title: 'Edit article source code',
+    icon: Icon[".fas.fa-code"] 
+  },
+  memento: {
+    title: 'Memento article',
+    icon: Icon[".far.fa-clock"] 
+  },
+  version: {
+    title: 'Create version',
+    icon: Icon[".fas.fa-code-branch"]
+  },
+  immutable: {
+    title: 'Make immutable',
+    icon: Icon[".far.fa-snowflake"] 
+  },
+  'robustify-links': {
+    title: 'Robustify Links',
+    icon: Icon[".fas.fa-link"]
+  },
+  archive: {
+    title: 'Archive',
+    icon: Icon[".fas.fa-archive"]
+  },
+  feed: {
+    title: 'Generate Web feed',
+    icon: Icon[".fas.fa-rss"] 
+  },
+  export: {
+    title: 'export',
+    icon: Icon[".fas.fa-external-link-alt"]
+  },
+  cursor: {
+    title: 'cursor',
+    icon: Icon[".fas.fa-i-cursor"]
+  },
+  'local-storage': {
+    title: '',
+    icon: Icon[".fas.fa-database"]
   }
+}
+
+//Given a button action, generates an HTML string for the button including an icon and text.
+export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonTitle, buttonTextContent, buttonType, iconSize }) {
+  if (!button) {
+    throw new Error('Need to pass button.');
+  }
+
+  const className = buttonClass ? ` class="${buttonClass}"` : '';
+  const title = ` title="${buttonTitle || buttonIcons[button].title}"`;
+  const disabled = buttonDisabled ? ` disabled=""` : '';
+  const type = buttonType ? ` type="${buttonType}"` : '';
+  const textContent = buttonTextContent || buttonIcons[button].textContent;
+  let icon = buttonIcons[button].icon;
+
+  if (iconSize) {
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(icon, 'image/svg+xml');
+    let svgElement = doc.querySelector('svg');
+    svgElement.classList.add(iconSize);
+    icon = new XMLSerializer().serializeToString(svgElement);
+  }
+
+  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
+
+  return `<button${className}${disabled}${title}${type}>${buttonContent}</button>`;
 }
