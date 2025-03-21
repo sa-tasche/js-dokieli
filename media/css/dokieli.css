@@ -214,6 +214,10 @@ dl svg.fas.fa-2x,
 dl svg.fas-fa-2x {
 vertical-align: bottom;
 }
+.editor-slashmenu li svg.fas,
+.editor-slashmenu li svg.far {
+height:auto;
+}
 
 i.fas, i.far, i.fab {
 background-repeat:no-repeat;
@@ -2100,15 +2104,16 @@ border-color: transparent transparent transparent #009000 !important;
 
 .editor-slashmenu li {
   list-style: none;
+  padding:0.5em 0.5em 0.5em 0;
 }
 
-.editor-slashmenu button span {
+.editor-slashmenu li button span {
   color: #fff;
-  display: block !important;
+  display: block;
   margin-left: 1em;
 }
 
-.editor-slashmenu button {
+.editor-slashmenu li button {
   display: flex !important;
 }
 
@@ -2155,10 +2160,10 @@ text-decoration:underline;
 .editor-form textarea[name="content"] {
 padding:0.5em;
 width:calc(100% - 1em - 2px);
-width:-moz-available;
+/* width:-moz-available; */
 margin:0 auto;
 display:block;
-font-size:1em;
+/* font-size:1em; */
 }
 .editor-form select {
 display:inline-block;
@@ -2387,10 +2392,17 @@ max-width:none;
   max-width:30em;
   z-index:2147483647;
   /* padding:1em; */
+  font-size: 18px;
+  }
+  .editor-form ul {
+    margin:0;
   }
   .editor-form input,
+  .editor-form textarea,
   .editor-form button {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size:16px;
+  }
   .editor-form .editor-form-row {
     line-height: 14px;
     margin-left: 5px;
@@ -2400,7 +2412,7 @@ max-width:none;
     font-weight: bold !important;
   }
   .editor-form .editor-form-input {
-    font-size:1em;
+    /* font-size:1em; */
     padding:0.25em 0.5em;
   }
 
@@ -2437,7 +2449,11 @@ max-width:none;
       display:none;
       }
 
-.editor-form-active {
+  .editor-form button:first-child {
+  margin:0;
+  }
+
+  .editor-form-active {
   position: absolute;
   display: block; }
 
@@ -2525,11 +2541,11 @@ height:auto;
   border-radius: 5px;
   color: #999;
   /* margin:0.5em 0.5em 0.75em 0.5em; */
-  padding:1.5em 1em 1em;
+  padding:1em;
   }
   .editor-form fieldset {
-    border:0;
-    padding:0;
+    /* border:0;
+    padding:0; */
   }
   .editor-form legend {
     margin:0 0 1em 0;
@@ -2540,12 +2556,20 @@ height:auto;
     font-weight:bold;
   }
 
-  .editor-form .editor-form-input {
+  .editor-form .editor-form-input,
+  .editor-form .editor-form-textarea {
     background: #242424;
     box-sizing: border-box;
-    color: #ccc;
-    height: 50px; }
-  .editor-form a {
+    color: #eee;}
+  .editor-form .editor-form-input {
+    height: 50px;
+  }
+  .editor-form .editor-form-textarea {
+    height: 150px;
+  }
+
+
+    .editor-form a {
     color: #fff; }
 
 .editor-form-anchor-preview {
