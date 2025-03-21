@@ -79,26 +79,16 @@ function checkForSlashCommand(view) {
 
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
 
-  const domNode = view.domAtPos($from.pos).node;
-
   if (textBefore === "/" || textBefore.substring(textBefore.length - 2) === " /") {
-    //TODO: Perhaps checkForSlashCommand is called twice and domNode is defined (and with nodeType == 1 or 3) but when it is nodeType 3 it fails because of getBoundingClientRect
-    console.log(domNode)
+    const coords = view.coordsAtPos($from.pos);
 
-    if (!domNode && domNode.nodeType != 1) return;
+    console.log("Cursor coords:", coords.left, coords.top);
 
-    const rect = domNode.getBoundingClientRect();
-
-    const cursorX = rect.left + window.scrollX;
-    const cursorY = rect.top + window.scrollY;
-
-    Slash.showMenu(cursorX, cursorY);
-  }
-  else {
+    Slash.showMenu(coords.left, coords.top);
+  } else {
     Slash.hideMenu();
   }
 }
-
 
 function customBackspaceCommand(state, dispatch) {
   const { selection } = state;
@@ -107,7 +97,7 @@ function customBackspaceCommand(state, dispatch) {
   const listItemTypes = [schema.nodes.li, schema.nodes.dd, schema.nodes.dt];
   const listTypes = [schema.nodes.ul, schema.nodes.ol, schema.nodes.dl];
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
-  let node;
+  const parentOffset = $from.parentOffset;
 
   if (textBefore === "/") {
     Slash.hideMenu()
@@ -115,47 +105,6 @@ function customBackspaceCommand(state, dispatch) {
 
   if (!selection.empty) {
     return deleteSelection(state, dispatch);
-  }
-
-  let insideList = false;
-  let listDepth = null;
-  let parentList = null;
-  let parentListPos = null;
-
-  for (let depth = $from.depth; depth > 0; depth--) {
-    node = $from.node(depth);
-    if (listItemTypes.includes(node.type)) {
-      insideList = true;
-      listDepth = depth;
-    }
-    if (listTypes.includes(node.type)) {
-      parentList = node;
-      parentListPos = $from.before(depth);
-      break;
-    }
-  }
-
-  console.log(insideList, node.type, backspaceCount)
-
-  if ($from.parentOffset === 0 && !insideList ||  backspaceCount === 1) {
-    return joinBackward(state, dispatch);
-  }
-  
-  if (insideList && $from.index(listDepth) === 1 && backspaceCount === 0) {
-    backspaceCount += 1;
-    if (dispatch) {
-      let tr = state.tr;
-      tr.lift($from.blockRange(), listDepth);
-      dispatch(tr);
-    }
-    return true;
-  }
-
-  if (!insideList && parentList) {
-    if (dispatch) {
-      return wrapInList(parentList.type)(state, dispatch);
-    }
-    return true;
   }
   else {
     return joinBackward(state, dispatch);
