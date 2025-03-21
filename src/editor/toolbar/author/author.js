@@ -59,6 +59,12 @@ export class AuthorToolbar extends ToolbarView {
     return toolbarCommands;
   }
 
+  getFormLegends() {
+    return {
+      note: 'Add note',
+    }
+  }
+
   getToolbarPopups() {
     const toolbarPopups = {
       a: (options) => `

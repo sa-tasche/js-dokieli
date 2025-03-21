@@ -132,6 +132,15 @@ export class SocialToolbar extends ToolbarView {
     selection.removeAllRanges();
   }
 
+  getFormLegends() {
+    return {
+      approve: 'Approve',
+      disapprove: 'Disapprove',
+      specificity:  'Specificity',
+      bookmark:  'Bookmark',
+      comment:  'Comment',
+    }
+  }
 
   getToolbarPopups() {
     const toolbarPopups = {

@@ -24,6 +24,8 @@ export class ToolbarView {
     // Default empty formHandlers, listeners (subclasses should override)
     this.formHandlers = this.getFormHandlers();
 
+    this.formLegends = this.getFormLegends();
+
     // Bind event handlers
     this.bindFormHandlers();
 
@@ -96,7 +98,7 @@ export class ToolbarView {
     const toolbarForm = document.createElement('form');
     toolbarForm.classList.add('editor-form');
     toolbarForm.id = 'editor-form-' + button;
-    toolbarForm.appendChild(fragmentFromString(`${formControlsHTML({ button })}`));
+    toolbarForm.appendChild(fragmentFromString(`${formControlsHTML({ button, legend: this.formLegends[button] })}`));
 
     this.dom.appendChild(toolbarForm);
 
@@ -559,25 +561,11 @@ export class ToolbarView {
   }
 }
 
-//Given a button action, generates an HTML string for the button including an icon and text.
-export function getButtonHTML(button, buttonClass, buttonTitle, buttonTextContent, options = {}) {
-  if (!button) {
-    throw new Error('Need to pass button.');
-  }
-
-  const textContent = buttonTextContent || buttonIcons[button].textContent;
-  const title = buttonTitle || buttonIcons[button].title;
-  const icon = buttonIcons[button].icon;
-
-  const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
-
-  return `<button${buttonClass ? ` class="${buttonClass}"` : ''} title="${title}"${options.type ? ` type="${options.type}"` : ''}>${buttonContent}</button>`;
-}
-
 // Consider putting this elsewhere or making it part of the class
 export function annotateFormControls(options) {
   return `
     <fieldset>
+      <legend>${options.legend}</legend>
       <label for="${options.button}-tagging">Tags</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
       <textarea class="editor-form-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
       <select class="editor-form-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
