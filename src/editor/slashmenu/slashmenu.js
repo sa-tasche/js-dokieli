@@ -11,7 +11,7 @@ export class SlashMenu {
     this.editorView = editorView;
     this.menuContainer = document.createElement("div");
     this.menuContainer.id = 'document-slashmenu';
-    this.menuContainer.classList.add("editor-slashmenu", "editor-form");
+    this.menuContainer.classList.add('do', 'editor-slashmenu', 'editor-form');
     this.menuContainer.style.display = "none";
     this.menuContainer.style.position = "absolute";
 
