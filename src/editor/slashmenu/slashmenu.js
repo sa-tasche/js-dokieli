@@ -38,6 +38,7 @@ export class SlashMenu {
     this.formHandlerPublicationStatus = formHandlerPublicationStatus.bind(this);
     this.formHandlerResourceType = formHandlerResourceType.bind(this);
 
+    //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
     this.formEventListeners = {
       language: [ { event: 'submit', callback: this.formHandlerLanguage }, { event: 'click', callback: (e) => this.formClickHandler(e, 'language') } ],
       license: [ { event: 'submit', callback: this.formHandlerLicense }, { event: 'click', callback: (e) => this.formClickHandler(e, 'license') } ],

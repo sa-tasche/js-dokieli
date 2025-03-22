@@ -12,6 +12,7 @@ export class AuthorToolbar extends ToolbarView {
     this.editorView = editorView;
   }
 
+  //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
   getFormEventListeners() {
     return {
       a: [ { event: 'submit', callback: this.formHandlerA }, { event: 'click', callback: (e) => this.formClickHandler(e, 'a') } ],

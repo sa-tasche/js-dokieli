@@ -32,6 +32,7 @@ export class SocialToolbar extends ToolbarView {
     }
   }
 
+  //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
   getFormEventListeners() {
     return {
       approve: [ { event: 'submit', callback: (e) => this.formHandlerAnnotate(e, 'approve') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'approve') } ],
