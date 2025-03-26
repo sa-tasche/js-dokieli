@@ -1,9 +1,10 @@
 import { schema } from "../../schema/base.js"
-import { getTextQuoteHTML } from "../../utils/annotation.js";
+import { createNoteData, getSelectedParentElement, getTextQuoteHTML, restoreSelection } from "../../utils/annotation.js";
 import { toggleBlockquote } from "../../utils/dom.js";
 import { getRandomUUID, getFormValues } from "../../../util.js"
 import { fragmentFromString } from "../../../util.js"
 import { getResource } from "../../../fetcher.js";
+import { getFormActionData } from "../social/handlers.js";
 
 export function formHandlerA(e) {
   e.preventDefault();
@@ -150,115 +151,36 @@ export function formHandlerAnnotate(e, action) {
   this.cleanupToolbar()
 }
 
-export function formHandlerQ(e) {
+//TODO: 
+export function formHandlerCitation(e, action) {
   e.preventDefault();
   e.stopPropagation();
 
+  restoreSelection(this.selection);
+  const selection = window.getSelection();
+
+  const range = selection.getRangeAt(0);
+  const selectedParentElement = getSelectedParentElement(range);
+
   const formValues = getFormValues(e.target);
-  const cite = formValues['q-cite'];
 
-  const attrs = { cite };
+console.log(formValues);
 
-  this.updateMarkWithAttributes(schema, 'q', attrs)(this.editorView.state, this.editorView.dispatch);
+  //TODO: Mark the selection after successful comment. Move out.
+  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+  //Mark the selected content in the document
+  const selector = this.getTextQuoteSelector();
 
-  this.clearToolbarForm(e.target);
-  this.clearToolbarButton('q');
-}
+  const selectionData = {
+    selection,
+    selector,
+    selectedParentElement,
+    selectedContent: this.getSelectionAsHTML()
+  };
 
-//TODO: 
-export function formHandlerCitation(e) {
-  const citationSpecRefSearch = document.querySelector('#citation-specref-search');
-  const citationUrl = document.querySelector('#citation-url');
+  processAction(action, formValues, selectionData);
 
-  citationSpecRefSearch.focus();
-  citationSpecRefSearch.value = this.selection;
-
-  var specrefSearchResults = document.querySelector('.specref-search-results');
-  if(specrefSearchResults) {
-    //FIXME: innerHTML
-    specrefSearchResults.innerHTML = '';
-  }
-
-  var specref = document.querySelector('#citation-specref-search-submit');
-  specref.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-// console.log(e);
-
-    var keyword = citationSpecRefSearch.value.trim();
-    var url = 'https://api.specref.org/search-refs?q=' + keyword;
-    var headers = {'Accept': 'application/json'};
-    var options = {'noCredentials': true};
-
-    getResource(url, headers, options).then(response => {
-      // console.log(response);
-      return response.text();
-    }).then(data => {
-      data = JSON.parse(data);
-// console.log(data);
-
-      var searchResultsHTML = '';
-      var searchResultsItems = [];
-
-      var href, title, publisher, date, status;
-
-      //TODO: Clean input data
-
-      Object.keys(data).forEach(key => {
-        // console.log(data[key])
-        if ('href' in data[key] &&
-            !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
-
-          //fugly WG21
-            (!('publisher' in data[key]) || ((data[key].publisher.toLowerCase() != 'wg21') || ((data[key].href.startsWith('https://wg21.link/n') || data[key].href.startsWith('https://wg21.link/p') || data[key].href.startsWith('https://wg21.link/std')) && !data[key].href.endsWith('.yaml') && !data[key].href.endsWith('/issue') && !data[key].href.endsWith('/github') && !data[key].href.endsWith('/paper'))))
-
-            ) {
-
-          href = data[key].href;
-          title = data[key].title || href;
-          publisher = data[key].publisher || '';
-          date = data[key].date || '';
-          status = data[key].status || '';
-
-          if (publisher) {
-            publisher = '. ' + publisher;
-          }
-          if (date) {
-            date = '. ' + date;
-          }
-          if (status) {
-            status = '. ' + status;
-          }
-
-          searchResultsItems.push('<li><input type="radio" name="specref-item" value="' + key + '" id="ref-' + key + '" /> <label for="ref-' + key + '"><a href="' + href + '" target="_blank">' + title + '</a>' + publisher + date + status + '</label></li>');
-        }
-      });
-
-      searchResultsHTML = '<ul>' + searchResultsItems.join('') + '</ul>';
-
-      if (searchResultsItems) {
-        specrefSearchResults = document.querySelector('.specref-search-results');
-        if(specrefSearchResults) {
-          //FIXME: innerHTML
-          specrefSearchResults.innerHTML = searchResultsHTML;
-        }
-
-        //XXX: Assigning 'change' action to ul because it gets removed when there is a new search result / replaced. Perhaps it'd be nicer (but more expensive?) to destroy/create .specref-search-results node?
-        specrefSearchResults.querySelector('ul').addEventListener('change', (e) => {
-          var checkedCheckbox = e.target.closest('input');
-          if (checkedCheckbox) {
-// console.log(e.target);
-            document.querySelector('#citation-url').value = data[checkedCheckbox.value].href;
-          }
-        });
-      }
-    });
-
-  });
-
-  citationUrl.focus();
-
-  document.querySelector('.editor-form input[name="citation-ref-type"]').checked = true;
+  this.clearToolbarButton('citation');
 }
 
 //TODO
@@ -525,8 +447,15 @@ case 'sparkline':
 
   */
 
-export function processAction(action, options = {}) {
+export function processAction(action, formValues, selectionData) {
+  console.log(action, formValues, selectionData)
+
+  const formData = getFormActionData(action, formValues, selectionData);
+console.log(formData);
+  // const { annotationDistribution, ...otherFormData } = formData;
+
 //TODO: Need to get values for id, refId, opts, 
+const { id, refId, type: citationType, url: citationUrl, content: citationContent, language:  citationLanguage } = formData;
 
   var noteData, note, asideNote, asideNode, parentSection;
 
@@ -540,7 +469,7 @@ export function processAction(action, options = {}) {
       '+ note + '\n\
       </aside>';
       asideNode = fragmentFromString(asideNote);
-      parentSection = getClosestSectionNode(selectedParentElement);
+      parentSection = getClosestSectionNode(selectionData.selectedParentElement);
       parentSection.appendChild(asideNode);
 
       DO.U.positionNote(refId, id);
@@ -552,7 +481,7 @@ export function processAction(action, options = {}) {
       noteData = createNoteData({'id': id})
       note = DO.U.createNoteDataHTML(noteData);
 
-      switch(opts.citationType) {
+      switch(citationType) {
         case 'ref-footnote': default:
           // var nES = selectedParentElement.nextElementSibling;
           asideNote = '\n\
@@ -560,32 +489,32 @@ export function processAction(action, options = {}) {
 '+ note + '\n\
 </aside>';
           asideNode = fragmentFromString(asideNote);
-          parentSection = getClosestSectionNode(selectedParentElement);
+          parentSection = getClosestSectionNode(selectionData.selectedParentElement);
           parentSection.appendChild(asideNode);
 
           DO.U.positionNote(refId, id);
           break;
 
         case 'ref-reference':
-          options = opts;
-          opts.url = opts.url.trim(); //XXX: Perhaps use escapeCharacters()?
-          options['citationId'] = opts.url;
+          var options = {};
+          citationUrl = citationUrl.trim(); //XXX: Perhaps use escapeCharacters()?
+          options['citationId'] = citationUrl;
           options['refId'] = refId;
 
           //TODO: offline mode
-          DO.U.getCitation(opts.url, options)
+          DO.U.getCitation(citationUrl, options)
             .then(citationGraph => {
-              var citationURI = opts.url;
+              var citationURI = citationUrl;
               // console.log(citationGraph)
               // console.log(citationGraph.toString())
               // console.log(options.citationId)
               // console.log( getProxyableIRI(options.citationId))
-              if (isValidISBN(opts.url)) {
+              if (isValidISBN(citationUrl)) {
                 citationURI = citationGraph.term.value;
                 // options.citationId = citationURI;
               }
-              else if(opts.url.match(/^10\.\d+\//)) {
-                citationURI = 'http://dx.doi.org/' + opts.url;
+              else if(citationUrl.match(/^10\.\d+\//)) {
+                citationURI = 'http://dx.doi.org/' + citationUrl;
                 // options.citationId = citationURI;
               }
               //FIXME: subjectIRI shouldn't be set here. Bug in RDFaProcessor (see also SimpleRDF ES5/6). See also: https://github.com/dokieli/dokieli/issues/132

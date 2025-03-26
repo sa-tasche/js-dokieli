@@ -349,11 +349,117 @@ TODO:
     });
   }
 
+  populateFormCitation(button, node, state) {
+    // const { selection } = state;
+    // const { from, to } = selection;
+    const citationSpecRefSearch = document.querySelector('#citation-specref-search');
+    // console.log(citationSpecRefSearch);
+  
+    const citationUrl = document.querySelector('#citation-url');  
+    // console.log(citationUrl);
+  
+    citationSpecRefSearch.focus();
+    citationSpecRefSearch.value = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
+  
+    var specrefSearchResults = document.querySelector('.specref-search-results');
+  
+    if (specrefSearchResults) {
+      specrefSearchResults.replaceChildren();
+    }
+
+    // console.log(specrefSearchResults);
+  
+    var specref = document.querySelector('#citation-specref-search-submit');
+    // console.log(specref);
+
+    specref.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // console.log(e);
+  
+      var keyword = citationSpecRefSearch.value.trim();
+      var url = 'https://api.specref.org/search-refs?q=' + encodeURIComponent(keyword);
+      var headers = {'Accept': 'application/json'};
+      var options = {'noCredentials': true};
+
+      getResource(url, headers, options)
+        .then(response => {
+          // console.log(response);
+          return response.text();
+        })
+        .then(data => {
+          data = JSON.parse(data);
+          // console.log(data);
+    
+          var searchResultsHTML = '';
+          var searchResultsItems = [];
+    
+          var href, title, publisher, date, status;
+    
+          //TODO: Clean input data
+  
+          Object.keys(data).forEach(key => {
+            // console.log(data[key])
+            if ('href' in data[key] &&
+                !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
+    
+              //fugly WG21
+                (!('publisher' in data[key]) || ((data[key].publisher.toLowerCase() != 'wg21') || ((data[key].href.startsWith('https://wg21.link/n') || data[key].href.startsWith('https://wg21.link/p') || data[key].href.startsWith('https://wg21.link/std')) && !data[key].href.endsWith('.yaml') && !data[key].href.endsWith('/issue') && !data[key].href.endsWith('/github') && !data[key].href.endsWith('/paper'))))
+    
+                ) {
+    
+              href = data[key].href;
+              title = data[key].title || href;
+              publisher = data[key].publisher || '';
+              date = data[key].date || '';
+              status = data[key].status || '';
+    
+              if (publisher) {
+                publisher = '. ' + publisher;
+              }
+              if (date) {
+                date = '. ' + date;
+              }
+              if (status) {
+                status = '. ' + status;
+              }
+    
+              searchResultsItems.push('<li><input name="specref-item" id="ref-' + key + '" type="radio" value="' + key + '" /> <label for="ref-' + key + '"><a href="' + href + '" target="_blank">' + title + '</a>' + publisher + date + status + '</label></li>');
+            }
+          });
+          searchResultsHTML = '<ul>' + searchResultsItems.join('') + '</ul>';
+    
+          if (searchResultsItems) {
+            specrefSearchResults = document.querySelector('.specref-search-results');
+            if(specrefSearchResults) {
+              //FIXME: innerHTML
+              specrefSearchResults.replaceChildren(fragmentFromString(searchResultsHTML));
+            }
+    
+            //XXX: Assigning 'change' action to ul because it gets removed when there is a new search result / replaced. Perhaps it'd be nicer (but more expensive?) to destroy/create .specref-search-results node?
+            specrefSearchResults.querySelector('ul').addEventListener('change', (e) => {
+              var checkedCheckbox = e.target.closest('input');
+              if (checkedCheckbox) {
+                // console.log(e.target);
+                document.querySelector('#citation-url').value = data[checkedCheckbox.value].href;
+              }
+            });
+          }
+        });
+    });
+
+    citationUrl.focus();
+
+    document.querySelector('.editor-form input[name="citation-ref-type"]').checked = true;
+  }
+
+
   //TODO function getTransactionHistory()
 
   getPopulateForms() {
     return {
       img: this.populateFormImg,
+      citation: this.populateFormCitation
     }
   }
 
