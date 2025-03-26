@@ -2,9 +2,8 @@ import { deleteSelection, splitBlock, newlineInCode, joinBackward } from "prosem
 import { keymap } from "prosemirror-keymap";
 import { SlashMenu } from "../../slashmenu/slashmenu.js";
 import { TextSelection } from "prosemirror-state";
-import { wrapInList } from "prosemirror-schema-list";
+import { undo, redo } from "prosemirror-history";
 
-let backspaceCount = 0;
 let Slash;
 
 function customEnterCommand(state, dispatch) {
@@ -82,8 +81,6 @@ function checkForSlashCommand(view) {
   if (textBefore === "/" || textBefore.substring(textBefore.length - 2) === " /") {
     const coords = view.coordsAtPos($from.pos);
 
-    console.log("Cursor coords:", coords.left, coords.top);
-
     Slash.showMenu(coords.left, coords.top);
   } else {
     Slash.hideMenu();
@@ -93,22 +90,17 @@ function checkForSlashCommand(view) {
 function customBackspaceCommand(state, dispatch) {
   const { selection } = state;
   const { $from } = selection;
-  const { schema } = state;
-  const listItemTypes = [schema.nodes.li, schema.nodes.dd, schema.nodes.dt];
-  const listTypes = [schema.nodes.ul, schema.nodes.ol, schema.nodes.dl];
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, "\n");
-  const parentOffset = $from.parentOffset;
 
   if (textBefore === "/") {
-    Slash.hideMenu()
+    Slash.hideMenu();
   }
 
   if (!selection.empty) {
     return deleteSelection(state, dispatch);
   }
-  else {
-    return joinBackward(state, dispatch);
-  }
+
+  return joinBackward(state, dispatch);
 }
 
 function customSlashCommand(state, dispatch, view) {
@@ -119,5 +111,7 @@ function customSlashCommand(state, dispatch, view) {
 export const keymapPlugin = keymap({
   "Backspace": customBackspaceCommand,
   "Enter": customEnterCommand,
-  "/": (state, dispatch, view) => customSlashCommand(state, dispatch, view)
+  "/": (state, dispatch, view) => customSlashCommand(state, dispatch, view),
+  "Mod-z": undo,
+  "Mod-y": redo, 
 });

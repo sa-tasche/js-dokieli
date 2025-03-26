@@ -1,6 +1,7 @@
 import { EditorView } from "prosemirror-view";
 import { DOMParser, DOMSerializer } from "prosemirror-model";
 import { Plugin, EditorState } from "prosemirror-state"
+import { history } from 'prosemirror-history';
 import { schema } from "./schema/base.js"
 import { keymapPlugin } from "./toolbar/author/keymap.js";
 import { AuthorToolbar } from "./toolbar/author/author.js";
@@ -113,7 +114,7 @@ export class Editor {
 
     const state = EditorState.create({
       doc: DOMParser.fromSchema(schema).parse(this.node),
-      plugins: [keymapPlugin, editorToolbarPlugin]
+      plugins: [history(), keymapPlugin, editorToolbarPlugin]
     });
 
     this.node.replaceChildren();
