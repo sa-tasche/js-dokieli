@@ -183,6 +183,40 @@ console.log(formValues);
   this.clearToolbarButton('citation');
 }
 
+
+export function formHandlerSemantics(e, action) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  restoreSelection(this.selection);
+  const selection = window.getSelection();
+
+  const range = selection.getRangeAt(0);
+  const selectedParentElement = getSelectedParentElement(range);
+console.log(e.target)
+  const formValues = getFormValues(e.target);
+
+console.log(formValues);
+
+  //TODO: Mark the selection after successful comment. Move out.
+  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
+  //Mark the selected content in the document
+  const selector = this.getTextQuoteSelector();
+
+  const selectionData = {
+    selection,
+    selector,
+    selectedParentElement,
+    selectedContent: this.getSelectionAsHTML()
+  };
+
+  processAction(action, formValues, selectionData);
+
+  // const formData = getFormActionData(action, formValues, selectionData);
+
+  this.clearToolbarButton('semantics');
+}
+
 //TODO
 // export function formHandlerSparkline(e) {
 //   input.search.focus();
@@ -426,16 +460,6 @@ case 'rdfa':
   r.language = this.getForm().querySelector('#rdfa-language.medium-editor-form-input');
   break;
 
-case 'cite':
-  r.search = this.getForm().querySelector('#specref-search.medium-editor-form-input');
-  r.select = this.getForm().querySelector('input[name="specref-item"]:checked');
-  r.citationType = this.getForm().querySelector('input[name="citation-type"]:checked');
-  r.citationRelation = this.getForm().querySelector('#citation-relation.medium-editor-form-select');
-  r.url = this.getForm().querySelector('#citation-url.medium-editor-form-input');
-  r.content = this.getForm().querySelector('#citation-content.medium-editor-form-textarea');
-  r.language = this.getForm().querySelector('#article-language.medium-editor-form-select');
-  break;
-
 case 'sparkline':
   r.search = this.getForm().querySelector('#sparkline-search.medium-editor-form-input');
   r.select = this.getForm().querySelector('#sparkline-select');
@@ -455,6 +479,7 @@ console.log(formData);
   // const { annotationDistribution, ...otherFormData } = formData;
 
 //TODO: Need to get values for id, refId, opts, 
+//FIXME: Some keys are shared e.g., content: citationContent and semanticsContent. And, some keys dont exist?
 const { id, refId, type: citationType, url: citationUrl, content: citationContent, language:  citationLanguage } = formData;
 
   var noteData, note, asideNote, asideNode, parentSection;

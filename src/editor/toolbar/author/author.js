@@ -4,7 +4,7 @@ import { DOMSerializer } from "prosemirror-model"
 import { TextSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { getButtonHTML } from "./../../../ui/button-icons.js"
-import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation } from "./handlers.js"
+import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation, formHandlerSemantics } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
 import { escapeCharacters, getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
 import { getResource } from "../../../fetcher.js"
@@ -26,6 +26,7 @@ export class AuthorToolbar extends ToolbarView {
       q: [ { event: 'submit', callback: this.formHandlerQ }, { event: 'click', callback: (e) => this.formClickHandler(e, 'q') } ],
       blockquote: [ { event: 'submit', callback: this.formHandlerBlockquote }, { event: 'click', callback: (e) => this.formClickHandler(e, 'blockquote') } ],
       img: [ { event: 'submit', callback: this.formHandlerImg }, { event: 'click', callback: (e) => this.formClickHandler(e, 'img') } ],
+      semantics: [ { event: 'submit', callback: (e) => this.formHandlerSemantics(e, 'semantics') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'semantics') } ],
       citation: [ { event: 'submit', callback: (e) => this.formHandlerCitation(e, 'citation') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'citation') } ],
       note: [ { event: 'submit', callback: (e) => this.formHandlerAnnotate(e, 'note') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'note') } ],
     }
@@ -39,7 +40,7 @@ export class AuthorToolbar extends ToolbarView {
       { name: 'formHandlerImg', fn: formHandlerImg },
       { name: 'formHandlerCitation', fn: formHandlerCitation },
       // { name: 'formHandlerSparkline', fn: formHandlerSparkline },
-      // { name: 'formHandlerSemantics', fn: formHandlerSemantics },
+      { name: 'formHandlerSemantics', fn: formHandlerSemantics },
       { name: 'formHandlerAnnotate', fn: formHandlerAnnotate },
     ];
   }
@@ -124,7 +125,7 @@ export class AuthorToolbar extends ToolbarView {
       citation: (options) => `
         <fieldset>
           <legend>Add a citation</legend>
-          <label for="citation-specref-search">Search</label><input class="editor-form-input" id="citation-specref-search" name="citation-specref-search" placeholder="Enter terms to search for specifications" type="text" value="" />
+          <label for="citation-specref-search">Search</label> <input class="editor-form-input" id="citation-specref-search" name="citation-specref-search" placeholder="Enter terms to search for specifications" type="text" value="" />
           <input id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="Search" />
           <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label for="ref-footnote">Footnote</label>
           <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label for="ref-reference">Reference</label>
@@ -139,19 +140,22 @@ export class AuthorToolbar extends ToolbarView {
         </fieldset>
       `,
 
-      // semantics: (options) => `
-      // '<label for="rdfa-about">about</label><input id="rdfa-about" class="editor-form-input" placeholder="https://example.org/foo#bar" />',
-      // '<label for="rdfa-resource">resource</label><input id="rdfa-resource" class="editor-form-input" placeholder="https://example.net/baz" />',
-      // '<label for="rdfa-typeof">typeof</label><input id="rdfa-typeof" class="editor-form-input" placeholder="https://example.net/baz" />',
-      // '<label for="rdfa-rel">rel</label><input id="rdfa-rel" class="editor-form-input" placeholder="schema:url">',
-      // '<label for="rdfa-property">property</label><input id="rdfa-property" class="editor-form-input" placeholder="schema:name" />',
-      // '<label for="rdfa-href">href</label><input id="rdfa-href" class="editor-form-input" placeholder="https://example.net/baz" />',
-      // '<label for="rdfa-content">content</label><input id="rdfa-content" class="editor-form-input" placeholder="Baz" />',
-      // '<label for="rdfa-language">language</label><input id="rdfa-language" class="editor-form-input" placeholder="en" />',
-      // '<label for="rdfa-datatype">datatype</label><input id="rdfa-datatype" class="editor-form-input" placeholder="https://example.net/baz" />
-      // ${getButtonHTML('submit', 'editor-form-submit', 'Save', 'Save', { type: 'submit' })}
-      // ${getButtonHTML('cancel', 'editor-form-cancel', 'Cancel', 'Cancel', { type: 'button' })}
-      // `
+      semantics: (options) => `
+        <fieldset>
+          <legend>Add semantics</legend>
+          <label for="semantics-about">about</label> <input class="editor-form-input" id="semantics-about" name="semantics-about" placeholder="Enter URL, e.g., https://example.net/foo#bar" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
+          <label for="semantics-resource">resource</label> <input class="editor-form-input" id="semantics-resource" name="semantics-resource" placeholder="Enter URL, e.g., https://example.net/foo#bar" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
+          <label for="semantics-typeof">typeof</label> <input class="editor-form-input" id="semantics-typeof" name="semantics-typeof" placeholder="Enter URL, e.g., https://example.net/foo#Baz" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
+          <label for="semantics-rel">rel</label> <input class="editor-form-input" id="semantics-rel" name="semantics-rel" placeholder="schema:url" type="text" value="" />
+          <label for="semantics-property">property</label> <input class="editor-form-input" id="semantics-property" placeholder="schema:name" type="text" value="" />
+          <label for="semantics-href">href</label> <input class="editor-form-input" name="semantics-href" id="semantics-href" placeholder="Enter URL, e.g., https://example.net/foo" type="url" value="" />
+          <label for="semantics-content">content</label> <input class="editor-form-input" name="semantics-content" id="semantics-content placeholder="Enter content, e.g., 'Baz'" type="text" value="" />
+          <label for="semantics-language">language</label> <input class="editor-form-input" id="semantics-language" name="semantics-language" placeholder="Enter language code, e.g., en" type="text" value="" />
+          <label for="semantics-datatype">datatype</label> <input class="editor-form-input" id="semantics-datatype" name="semantics-datatype" placeholder="Enter URL, e.g., https://example.net/qux" type="text" value="" />
+          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
+          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
+        </fieldset>
+      `
 
 /*
 TODO:

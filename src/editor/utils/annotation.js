@@ -1,7 +1,7 @@
 import { Plugin, TextSelection, NodeSelection, EditorState } from "prosemirror-state"
 import { replaceSelectionWithDOMFragment, docSelectionToHtml } from "./dom.js";
 import { getRandomUUID, fragmentFromString } from "./../../util.js";
-import { escapeCharacters, tagsToBodyObjects } from "./../../doc.js";
+import { createRDFaHTML, escapeCharacters, tagsToBodyObjects } from "./../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
 
@@ -190,7 +190,9 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 export function createNoteData(annotation) {
   const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
 
-  const { tagging, content, language, license, ['ref-type']: refType, url } = formData;
+  const { tagging, content, language, license, ['ref-type']: refType, url,
+    about, resource, ['typeof']: typeOf, href, rel, property, datatype
+  } = formData;
 
   // aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
 
@@ -436,23 +438,24 @@ export function createNoteData(annotation) {
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
       break;
 
-    // case 'semantics':
-    //   //TODO: inlist, prefix
-    //   //TODO: lang/xmlllang
-    //   noteData = {
-    //     about: opts.about,
-    //     typeOf: opts.typeOf,
-    //     rel: opts.rel,
-    //     href: opts.href,
-    //     resource: opts.resource,
-    //     property: opts.property,
-    //     content: opts.content,
-    //     datatype: opts.datatype,
-    //     lang: opts.language,
-    //     textContent: _this.base.selection
-    //   };
-    //   ref = createRDFaHTML(noteData, 'expanded');
-    //   break;
+    case 'semantics':
+      //TODO: inlist, prefix
+      //TODO: lang/xmlllang
+      noteData = {
+        about,
+        typeOf,
+        rel,
+        href,
+        resource,
+        property,
+        content,
+        datatype,
+        lang: language,
+        textContent: selectionData.selectedContent
+      };
+console.log(noteData)
+      ref = createRDFaHTML(noteData, 'expanded');
+      break;
   }
 
   if (ref) {
