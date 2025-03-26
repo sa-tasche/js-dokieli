@@ -569,7 +569,9 @@ export function annotateFormControls(options) {
       <legend>${options.legend}</legend>
       <textarea class="editor-form-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
       <label for="${options.button}-tagging">Tags</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
+      <label for="${options.button}-language">Language</label>
       <select class="editor-form-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
+      <label for="${options.button}license">License</label>
       <select class="editor-form-select" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
       <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>
       <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
