@@ -1,10 +1,17 @@
 import { toggleMark, setBlockType } from "prosemirror-commands"
 import { wrapInList, liftListItem } from "prosemirror-schema-list"
+import { DOMSerializer } from "prosemirror-model"
+import { TextSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { getButtonHTML } from "./../../../ui/button-icons.js"
 import { formHandlerA, formHandlerAnnotate, formHandlerBlockquote, formHandlerImg, formHandlerQ, formHandlerCitation } from "./handlers.js"
 import { ToolbarView, annotateFormControls } from "../toolbar.js"
-import { getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
+import { escapeCharacters, getCitationOptionsHTML, getLanguageOptionsHTML } from "../../../doc.js"
+import { getResource } from "../../../fetcher.js"
+import { fragmentFromString } from "../../../util.js"
+import Config from "../../../config.js";
+
+const ns = Config.ns;
 
 export class AuthorToolbar extends ToolbarView {
   constructor(mode, buttons, editorView) {
@@ -19,7 +26,7 @@ export class AuthorToolbar extends ToolbarView {
       q: [ { event: 'submit', callback: this.formHandlerQ }, { event: 'click', callback: (e) => this.formClickHandler(e, 'q') } ],
       blockquote: [ { event: 'submit', callback: this.formHandlerBlockquote }, { event: 'click', callback: (e) => this.formClickHandler(e, 'blockquote') } ],
       img: [ { event: 'submit', callback: this.formHandlerImg }, { event: 'click', callback: (e) => this.formClickHandler(e, 'img') } ],
-      citation: [ { event: 'submit', callback: this.formHandlerCitation }, { event: 'click', callback: (e) => this.formClickHandler(e, 'citation') } ],
+      citation: [ { event: 'submit', callback: (e) => this.formHandlerCitation(e, 'citation') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'citation') } ],
       note: [ { event: 'submit', callback: (e) => this.formHandlerAnnotate(e, 'note') }, { event: 'click', callback: (e) => this.formClickHandler(e, 'note') } ],
     }
   }
@@ -105,8 +112,8 @@ export class AuthorToolbar extends ToolbarView {
           <figure class="img-preview"><p>Drag an image here</p></figure>
           <label for="img-file">Upload</label> <input class="editor-form-input" id="img-file" name="img-file" type="file" />
           <label for="img-src">URL</label> <input class="editor-form-input" id="img-src" name="img-src" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          <label for="img-alt">Description</label> <input class="editor-form-input" id="img-alt" name="img-alt" placeholder="Describe the image for people who are blind or have low vision." />
-          <label for="img-figcaption">Caption</label> <input class="editor-form-input" id="img-figcaption" name="img-figcaption" placeholder="A caption or legend for the figure." />
+          <label for="img-alt">Description</label> <input class="editor-form-input" id="img-alt" name="img-alt" placeholder="Describe the image for people who are blind or have low vision." type="text" value="" />
+          <label for="img-figcaption">Caption</label> <input class="editor-form-input" id="img-figcaption" name="img-figcaption" placeholder="A caption or legend for the figure." type="text" value="" />
           ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
           ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
         </fieldset>
@@ -124,7 +131,7 @@ export class AuthorToolbar extends ToolbarView {
           <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label for="ref-reference">Reference</label>
           <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML()}</select>
           <input class="editor-form-input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          <textarea class="editor-form-textarea" cols="20" id="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
+          <textarea class="editor-form-textarea" cols="20" id="citation-content" name="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
           ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
           ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
@@ -208,10 +215,11 @@ TODO:
     const { selection , doc } = view.state;
     const { from, to } = selection;
     //TODO: Use Config.ContextLength
-    const contextLength = options.contextLength || 32;
+    const contextLength = Config.ContextLength;
 
     var exact = doc.textBetween(from, to); // consider \n
     const textNode = view.domAtPos(from).node;
+    console.log(textNode)
     const selectedParentElement = textNode.parentNode;
     console.log(selectedParentElement)
 

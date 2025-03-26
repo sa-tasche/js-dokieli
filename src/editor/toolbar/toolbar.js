@@ -102,11 +102,6 @@ export class ToolbarView {
 
     this.dom.appendChild(toolbarForm);
 
-    if (this.populateForms[button]) {
-      const state = this.editorView?.state;
-      this.populateForms[button](button, toolbarForm, state);
-    }
-
     if (this.formEventListeners[button]) {
       this.formEventListeners[button].forEach(({ event, callback }) => {
         toolbarForm.addEventListener(event, callback);
@@ -152,6 +147,12 @@ export class ToolbarView {
 
       const toolbarForm = this.dom.querySelector(`#editor-form-${button}`);
       this.closeOtherPopups(button);
+
+      if (this.populateForms[button]) {
+        const state = this.editorView?.state;
+        this.populateForms[button](button, toolbarForm, state);
+      }
+      
       toolbarForm.classList.toggle('editor-form-active');
 
       this.positionPopup(toolbarForm);
@@ -566,8 +567,8 @@ export function annotateFormControls(options) {
   return `
     <fieldset>
       <legend>${options.legend}</legend>
-      <label for="${options.button}-tagging">Tags</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
       <textarea class="editor-form-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
+      <label for="${options.button}-tagging">Tags</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
       <select class="editor-form-select" name="${options.button}-language">${getLanguageOptionsHTML()}</select>
       <select class="editor-form-select" name="${options.button}-license">${getLicenseOptionsHTML()}</select>
       <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>

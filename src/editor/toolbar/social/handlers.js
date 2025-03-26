@@ -178,6 +178,9 @@ export function processAction(action, formValues, selectionData) {
 //TODO: MOVE
 
 export function getFormActionData(action, formValues, selectionData) {
+console.log(selectionData)
+console.log(selectionData.selectedParentElement)
+
   const data = {
     action: action,
     selectionData: selectionData,
@@ -190,7 +193,7 @@ export function getFormActionData(action, formValues, selectionData) {
     annotationDistribution: [],
     formData: {}, // keep the forms with modified keys in this object
 
-    parentNodeWithId: selectionData.selectedParentElement.closest('[id]'),
+    parentNodeWithId: selectionData.selectedParentElement?.closest('[id]'),
 
     //Role/Capability for Authors/Editors
     // ref: '',

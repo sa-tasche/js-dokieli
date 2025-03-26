@@ -113,5 +113,5 @@ export const keymapPlugin = keymap({
   "Enter": customEnterCommand,
   "/": (state, dispatch, view) => customSlashCommand(state, dispatch, view),
   "Mod-z": undo,
-  "Mod-y": redo, 
+  "Mod-y": redo,
 });

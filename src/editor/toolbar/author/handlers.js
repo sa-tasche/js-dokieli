@@ -110,6 +110,21 @@ export function formHandlerImg(e) {
 //actions = ['selector', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment'] //Social
 //actions = ['note'] //Author
 
+export function formHandlerQ(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+  const cite = formValues['q-cite'];
+
+  const attrs = { cite };
+
+  this.updateMarkWithAttributes(schema, 'q', attrs)(this.editorView.state, this.editorView.dispatch);
+
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('q');
+}
+
 // UPDATE this with what's in social/handlers.js; consider moving to one location and refer to processActions particular to each subclass
 export function formHandlerAnnotate(e, action) {
   e.preventDefault();
