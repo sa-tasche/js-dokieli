@@ -219,6 +219,7 @@ console.log(selectionData.selectedParentElement)
     }
   });
 
+  //FIXME: Doublecheck if this should be data.formData instead of data.type
   //TODO: If the citation-type is separated into their own actions, we don't need this.
   if (data['type'] == 'ref-footnote') {
     data.motivatedBy = 'oa:describing';

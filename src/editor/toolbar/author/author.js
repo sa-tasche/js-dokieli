@@ -19,6 +19,10 @@ export class AuthorToolbar extends ToolbarView {
     this.editorView = editorView;
   }
 
+  initPlugin(editorView) {
+    this.editorView = editorView;
+  }
+
   //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
   getFormEventListeners() {
     return {
@@ -147,11 +151,11 @@ export class AuthorToolbar extends ToolbarView {
           <label for="semantics-resource">resource</label> <input class="editor-form-input" id="semantics-resource" name="semantics-resource" placeholder="Enter URL, e.g., https://example.net/foo#bar" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
           <label for="semantics-typeof">typeof</label> <input class="editor-form-input" id="semantics-typeof" name="semantics-typeof" placeholder="Enter URL, e.g., https://example.net/foo#Baz" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URI')" type="url" value="" />
           <label for="semantics-rel">rel</label> <input class="editor-form-input" id="semantics-rel" name="semantics-rel" placeholder="schema:url" type="text" value="" />
-          <label for="semantics-property">property</label> <input class="editor-form-input" id="semantics-property" placeholder="schema:name" type="text" value="" />
-          <label for="semantics-href">href</label> <input class="editor-form-input" name="semantics-href" id="semantics-href" placeholder="Enter URL, e.g., https://example.net/foo" type="url" value="" />
-          <label for="semantics-content">content</label> <input class="editor-form-input" name="semantics-content" id="semantics-content placeholder="Enter content, e.g., 'Baz'" type="text" value="" />
-          <label for="semantics-language">language</label> <input class="editor-form-input" id="semantics-language" name="semantics-language" placeholder="Enter language code, e.g., en" type="text" value="" />
-          <label for="semantics-datatype">datatype</label> <input class="editor-form-input" id="semantics-datatype" name="semantics-datatype" placeholder="Enter URL, e.g., https://example.net/qux" type="text" value="" />
+          <label for="semantics-property">property</label> <input class="editor-form-input" name="semantics-property" id="semantics-property" placeholder="schema:name" type="text" value="" />
+          <label for="semantics-href">href</label> <input class="editor-form-input" id="semantics-href" name="semantics-href" placeholder="Enter URL, e.g., https://example.net/foo" type="url" value="" />
+          <label for="semantics-content">content</label> <input class="editor-form-input" id="semantics-content" name="semantics-content" placeholder="Enter content, e.g., 'Baz'" type="text" value="" />
+          <label for="semantics-language">language</label> <input class="editor-form-input" name="semantics-language" id="semantics-language" placeholder="Enter language code, e.g., en" type="text" value="" />
+          <label for="semantics-datatype">datatype</label> <input class="editor-form-input" name="semantics-datatype" id="semantics-datatype" placeholder="Enter URL, e.g., https://example.net/qux" type="text" value="" />
           ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
           ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
         </fieldset>
@@ -267,6 +271,7 @@ TODO:
   }
 
   replaceSelectionWithFragment(fragment) {
+console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
     
@@ -275,6 +280,7 @@ TODO:
   
     // Apply the transformation to insert the node at selection
     let tr = state.tr.replaceSelectionWith(node);
+    console.log(tr)
     dispatch(tr);  
   }
   

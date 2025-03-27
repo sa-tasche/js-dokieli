@@ -80,30 +80,6 @@ export function rangeSelectsSingleNode (range) {
       range.endOffset === range.startOffset + 1;
 }
 
-// moved to Edtior.replaceSelectionWithFragment
-export function replaceSelectionWithFragment(selection, fragment) {
-  if (!selection.rangeCount) return;
-  const ranges = [];
-
-  for (let i = 0; i < selection.rangeCount; i++) {
-    ranges.push(selection.getRangeAt(i));
-  }
-
-  const mergedRange = document.createRange();
-  mergedRange.setStart(ranges[0].startContainer, ranges[0].startOffset);
-  mergedRange.setEnd(ranges[ranges.length - 1].endContainer, ranges[ranges.length - 1].endOffset);
-
-  selection.removeAllRanges();
-
-  mergedRange.deleteContents();
-
-  mergedRange.collapse(true);
-
-  mergedRange.insertNode(fragment);
-
-  selection.removeAllRanges();
-}
-
 export function exportSelection(selectedParentElement, selection) {
   if (!selection.rangeCount) return;
 
@@ -189,11 +165,11 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 //TODO: This function returns noteData and also replaces the selection with an HTML reference to the note. Make it so that the reference related stuff is done elsewehere.
 export function createNoteData(annotation) {
   const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
-
+console.log(annotation)
   const { tagging, content, language, license, ['ref-type']: refType, url,
     about, resource, ['typeof']: typeOf, href, rel, property, datatype
   } = formData;
-
+console.log(formData)
   // aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
 
   var mode;
@@ -457,8 +433,12 @@ console.log(noteData)
       ref = createRDFaHTML(noteData, 'expanded');
       break;
   }
-
+  console.log(ref);
+  console.log(DO);
+  console.log(DO.Editor);
+  console.log(DO.Editor.replaceSelectionWithFragment)
   if (ref) {
+    console.log("inside ref check")
     DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
   }
 

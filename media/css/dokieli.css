@@ -2095,13 +2095,16 @@ border-color: transparent transparent transparent #009000 !important;
   display: flex;
   align-content: center;
   flex-wrap: wrap;
-  font-size: 0.7em;
+  /* font-size: 0.7em; */
 }
 .editor-form fieldset button {
   justify-self: end;
   align-self: end;
 }
 
+/* TODO: default to a flex-column  */
+
+/* this is for the annotate-related forms */
 .editor-form fieldset {
   display: grid;
   grid-template-columns: auto auto;
@@ -2407,7 +2410,7 @@ width:65%;
 }
 /*used with default theme*/
 .toolbar-arrow-under:after {
-  border-color: #fafafa transparent transparent transparent; 
+  border-color: #333 transparent transparent transparent; 
   top: 50px;
   border-width: 8px 8px 0 8px;
 }
@@ -2673,7 +2676,7 @@ max-width:none;
   display: none;
   z-index:2147483647;
   padding:1em;
-  font-size: 18px;
+  /* font-size: 18px; */
   }
   .editor-form ul {
     margin:0;
@@ -2688,7 +2691,7 @@ max-width:none;
   .editor-form textarea,
   .editor-form button {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size:16px;
+    /* font-size:16px; */
   }
   .editor-form .editor-form-row {
     line-height: 14px;
@@ -2700,7 +2703,7 @@ max-width:none;
   }
 
   .editor-form label:not([for="annotation-location-personal-storage"]) {
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
   }
 
   .editor-form .editor-form-input {
@@ -2773,16 +2776,16 @@ height:auto;
     vertical-align: sub; }
   .editor-element sup {
     vertical-align: super; }
-
+    .editor-form a
 .editor-hidden {
   display: none; }
 .toolbar-arrow-under:after {
-  border-color: #fafafa transparent transparent transparent;
+  border-color: #242424 transparent transparent transparent;
   top: 50px;
  }
 
 .toolbar-arrow-over:before {
-  border-color: transparent transparent #fafafa transparent;
+  border-color: transparent transparent #242424 transparent;
   top: -8px; }
 
 .editor-toolbar {
@@ -2801,7 +2804,7 @@ height:auto;
     -webkit-transition: background-color .2s ease-in;
             transition: background-color .2s ease-in; }
     .editor-toolbar li button:hover {
-      background-color: #D3D1CB;
+      background-color: #EEE;
       color: #080; }
     .editor-toolbar li button.editor-button-active svg,
     .editor-toolbar li button:hover svg {
@@ -2837,14 +2840,6 @@ height:auto;
   height: 150px;
 }
 
-
-.editor-form a {
-  color: #fff;
-}
-
-.editor-form a:hover {
-  background-color: #333;
-}
 
 .editor-form-anchor-preview {
   background: #242424;

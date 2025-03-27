@@ -38,7 +38,7 @@ export class Editor {
     switch (this.mode) {
       case 'author':
         this.destroySocialToolbar();
-        this.createEditor(this.node);
+        this.authorToolbarView = this.createEditor(this.node);
         break;
 
       case 'social':
@@ -87,13 +87,18 @@ export class Editor {
     return toolbarView?.showTextQuoteSelectorFromLocation();
   }
 
-  replaceSelectionWithFragment(){
+  replaceSelectionWithFragment(fragment){
+    console.log(this)
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    return toolbarView?.replaceSelectionWithFragment()
+    console.log(toolbarView)
+    console.log(toolbarView?.replaceSelectionWithFragment)
+    return toolbarView?.replaceSelectionWithFragment(fragment)
   }
+
 
   //Creating a ProseMirror editor view at a specified this.node
   createEditor() {
+    this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'note']);
     const editorToolbarPlugin = new Plugin({
       // this editorView is passed onto the Plugin - not this.editorView
       view(editorView) {
@@ -102,12 +107,13 @@ export class Editor {
         console.log(editorView);
 
         //TODO: 'math', 'sparkline',
-        this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'note'], editorView);
+        this.authorToolbarView.initEditorView(editorView);
 
         // Append DOM portion of toolbar to current editor.
         // editorView.dom.parentNode.appendChild(toolbarView.dom);
 
         // Return toolbar class. Caller will call its update method in every editor update.
+        console.log(this.authorToolbarView)
         return this.authorToolbarView;
       }
     });
@@ -157,6 +163,7 @@ export class Editor {
     document.body.appendChild(this.socialToolbarView.dom); // idk why this is needed? or is it not?
     console.log("SocialToolbar created. Mode:", this.mode);
   }
+  
 
   destroySocialToolbar() {
     if (this.socialToolbarView) {
@@ -165,6 +172,7 @@ export class Editor {
       console.log("SocialToolbar destroyed. Mode:", this.mode);
     }
   }
+
 
   updateDocumentTitle() {
     var h1 = document.querySelector('h1');

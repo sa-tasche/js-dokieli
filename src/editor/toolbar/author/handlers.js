@@ -608,8 +608,11 @@ const { id, refId, type: citationType, url: citationUrl, content: citationConten
       break;
 
     case 'semantics':
-      //This only updates the DOM. Nothing further. The 'id' is not used.
-      noteData = createNoteData({'id': id});
+console.log(formData)
+
+    //This only updates the DOM. Nothing further. The 'id' is not used.
+      noteData = createNoteData(formData);
+
       break;
 
   }
