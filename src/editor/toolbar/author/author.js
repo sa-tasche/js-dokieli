@@ -83,6 +83,10 @@ export class AuthorToolbar extends ToolbarView {
       a: (options) => `
         <fieldset>
           <legend>Add a link</legend>
+          <dl class="info">
+            <dt class="required">*</dt>
+            <dd>Required field</dd>
+          </dl>
           <label for="a-href">URL</label> <input class="editor-form-input" id="a-href" name="a-href" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
           <label for="a-title">Title</label> <input class="editor-form-input" id="a-title" name="a-title" placeholder="Add advisory information for the tooltip." type="text" />
           ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
@@ -134,6 +138,7 @@ export class AuthorToolbar extends ToolbarView {
           <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label for="ref-footnote">Footnote</label>
           <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label for="ref-reference">Reference</label>
           <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML()}</select>
+          <label for="citation-url">URL</label>
           <input class="editor-form-input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
           <textarea class="editor-form-textarea" cols="20" id="citation-content" name="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
           <label for="citation-language">Language</label>

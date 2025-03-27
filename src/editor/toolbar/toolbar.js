@@ -567,6 +567,11 @@ export function annotateFormControls(options) {
   return `
     <fieldset>
       <legend>${options.legend}</legend>
+      <dl class="info">
+        <dt class="required">*</dt>
+        <dd>Required field</dd>
+      </dl>
+      <label for="${options.button}-content">Note</label>
       <textarea class="editor-form-textarea" cols="20" id="${options.button}-content" name="${options.button}-content" placeholder="${options.placeholder ? options.placeholder : 'What do you think?'}" required="" rows="5"></textarea>
       <label for="${options.button}-tagging">Tags</label> <input class="editor-form-input" id="${options.button}-tagging" name="${options.button}-tagging" placeholder="Separate tags with commas" />
       <label for="${options.button}-language">Language</label>
