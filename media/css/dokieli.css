@@ -310,6 +310,19 @@ html > .do {
 font-family:sans-serif;
 }
 
+dl.info dt,
+dl.info dd {
+display: inline;
+}
+dl.info dd {
+margin-left:0.5em;
+}
+dl.info:after,
+dl.info dd + dt:before {
+content: "\A";
+white-space: pre;
+}
+
 .do th,
 .do legend {
 font-weight:bold !important;
@@ -884,6 +897,8 @@ margin-bottom:1em;
 .success { background-color:#FFFFFF; color:#008800; font-weight:bold; }
 .warning { background-color:#FFFF00; color:#000000; font-weight:bold; }
 .error { background-color:#FF0000; color:#FFFFFF; font-weight:bold; }
+.required { background-color:#FFFFFF; color: #FF0000; }
+
 a.highlight,
 .highlight { background-color:#00FFFF; color:#000000; }
 .highlight .highlight { background-color:#0099FF; color:#000000; }
@@ -2399,7 +2414,7 @@ span {
 }
 
 
-.editor-form label[for^="rdfa-"] {
+/* .editor-form label[for^="rdfa-"] {
 font-weight:bold;
 width:30%;
 text-align:right;
@@ -2407,7 +2422,7 @@ text-align:right;
 .editor-form input[id^="rdfa-"] {
 height:auto;
 width:65%;
-}
+} */
 /*used with default theme*/
 .toolbar-arrow-under:after {
   border-color: #333 transparent transparent transparent; 
@@ -2435,6 +2450,17 @@ float:none;
 }
 div.specref-search-results label {
 font-weight:normal !important;
+}
+
+.editor-form .info {
+  font-weight:normal;
+}
+
+label:has(+ [required]):after {
+content: "*";
+color: #f00;
+font-weight:bold;
+margin-left:5px;
 }
 
 .editor-form label a {
