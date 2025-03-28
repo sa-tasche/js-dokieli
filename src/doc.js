@@ -626,7 +626,7 @@ function createNoteDataHTML(n) {
         buttonDelete = '<button class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>' ;
       }
       articleClass = (motivatedByIRI == 'oa:commenting') ? '': ' class="do"';
-      aAbout = ('iri' in n) ? n.iri : '';
+      aAbout = ('iri' in n) ? n.iri : aAbout;
       break;
     case 'write':
       hX = 1;
@@ -821,7 +821,7 @@ function createNoteDataHTML(n) {
 <dl about="' + n.citation.citingEntity + '">\n\
 <dt>Cited by</dt><dd><a href="' + n.citation.citingEntity + '">' + citingEntityLabel + '</a></dd>\n\
 <dt>Citation type</dt><dd><a href="' + n.citation.citationCharacterization + '">' + citationCharacterizationLabel+ '</a></dd>\n\
-<dt>Cites</dt><dd><a href="' + n.citation.citedEntity + '" property="' + n.citation.citationCharacterization + '">' + citedEntityLabel + '</a></dd>\n\
+<dt>Cites</dt><dd><a href="' + n.citation.citedEntity + '" rel="' + n.citation.citationCharacterization + '">' + citedEntityLabel + '</a></dd>\n\
 </dl>\n\
 ';
 
@@ -832,7 +832,7 @@ function createNoteDataHTML(n) {
       break;
 
     default:
-      console.log(`XXX: noteData with "${n.type}" type not implemented yet`);
+      console.log(`XXX: noteData ${n} with "${n.type}" type not implemented yet`);
       break;
   }
 
