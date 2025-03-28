@@ -1,11 +1,16 @@
 import { schema } from "../../schema/base.js"
 import { createNoteData, getSelectedParentElement, getTextQuoteHTML, restoreSelection } from "../../utils/annotation.js";
 import { toggleBlockquote } from "../../utils/dom.js";
-import { getRandomUUID, getFormValues } from "../../../util.js"
+import { getRandomUUID, getFormValues, isValidISBN } from "../../../util.js"
 import { fragmentFromString } from "../../../util.js"
 import { getResource } from "../../../fetcher.js";
 import { getFormActionData } from "../social/handlers.js";
-import { createRDFaMarkObject } from "../../../doc.js";
+import { buildReferences, createNoteDataHTML, createRDFaMarkObject, getClosestSectionNode } from "../../../doc.js";
+import { stripFragmentFromString } from "../../../uri.js";
+import { getGraphInbox } from "../../../graph.js";
+import { notifyInbox } from "../../../inbox.js";
+import rdf from 'rdf-ext';
+import Config from "../../../config.js";
 
 export function formHandlerA(e) {
   e.preventDefault();
@@ -132,24 +137,30 @@ export function formHandlerAnnotate(e, action) {
   e.preventDefault();
   e.stopPropagation();
 
+  // TODO: use prosemirror selection
+  const selection = window.getSelection();
+
+  const range = selection.getRangeAt(0);
+  const selectedParentElement = getSelectedParentElement(range);
+
   const formValues = getFormValues(e.target);
-
-  // const tagging = formValues[`${action}-tagging`];
-  // const content = formValues[`${action}-content`];
-  // const language = formValues[`${action}-language`];
-  // const license = formValues[`${action}-license`];
-
-  // console.log(tagging, content, language, license);
 
   //TODO: Mark the selection after successful comment. Move out.
   //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
-  
-  // process actions
-  processAction()
   //Mark the selected content in the document
-  // this.clearToolbarForm(e.target);
-  // this.clearToolbarButton(action);
-  this.cleanupToolbar()
+  const selector = this.getTextQuoteSelector();
+
+  const selectionData = {
+    selection,
+    selector,
+    selectedParentElement,
+    selectedContent: this.getSelectionAsHTML()
+  };
+
+  processAction(action, formValues, selectionData);
+
+  this.clearToolbarForm(e.target);
+  this.clearToolbarButton('note');
 }
 
 //TODO: 
@@ -158,6 +169,7 @@ export function formHandlerCitation(e, action) {
   e.stopPropagation();
 
   restoreSelection(this.selection);
+  // TODO: use prosemirror selection
   const selection = window.getSelection();
 
   const range = selection.getRangeAt(0);
@@ -181,6 +193,7 @@ export function formHandlerCitation(e, action) {
 
   processAction(action, formValues, selectionData);
 
+  this.clearToolbarForm(e.target);
   this.clearToolbarButton('citation');
 }
 
@@ -191,10 +204,11 @@ export function formHandlerSemantics(e, action) {
   const data = {};
 
   restoreSelection(this.selection);
-  const selection = window.getSelection();
+  // TODO: use prosemirror selection
+  // const selection = window.getSelection();
 
-  const range = selection.getRangeAt(0);
-  const selectedParentElement = getSelectedParentElement(range);
+  // const range = selection.getRangeAt(0);
+  // const selectedParentElement = getSelectedParentElement(range);
   console.log(e.target)
 
   const formValues = getFormValues(e.target);
@@ -216,8 +230,165 @@ export function formHandlerSemantics(e, action) {
 
   this.updateMarkWithAttributes(schema, element, attrs)(this.editorView.state, this.editorView.dispatch);
 
+  this.clearToolbarForm(e.target);
   this.clearToolbarButton('semantics');
 }
+
+export function processAction(action, formValues, selectionData) {
+  const data = getFormActionData(action, formValues, selectionData);
+console.log(data);
+  // const { annotationDistribution, ...otherFormData } = data;
+
+//TODO: Need to get values for id, refId, opts, 
+//FIXME: Some keys are shared e.g., content: citationContent and semanticsContent. And, some keys dont exist?
+  const { id, refId, formData } = data;
+
+  var noteData, note, asideNote, asideNode, parentSection;
+
+  noteData = createNoteData(data);
+
+  switch(action) {
+    case 'note':
+      note = createNoteDataHTML(noteData);
+      // var nES = selectedParentElement.nextElementSibling;
+      asideNote = `
+        <aside class="note">
+          ${note}
+        </aside>
+      `;
+      asideNode = fragmentFromString(asideNote);
+      // parentSection.appendChild(asideNode);
+
+      DO.Editor.insertFragmentInNode(asideNode);
+
+      DO.U.positionNote(refId, id);
+      break;
+
+    case 'citation': //footnote reference
+      let { 'ref-type': refType, url: citationUrl, relation: citationRelation, content: citationContent, language: citationLanguage } = formData;
+
+      //TODO: Refactor this what's in positionInteraction
+
+      switch(refType) {
+        case 'ref-footnote': default:
+          note = createNoteDataHTML(noteData);
+          console.log(noteData, note)
+
+          // var nES = selectedParentElement.nextElementSibling;
+          asideNote = `
+            <aside class="note">
+              ${note}
+            </aside>
+          `;
+          asideNode = fragmentFromString(asideNote);
+          parentSection = getClosestSectionNode(selectionData.selectedParentElement);
+          parentSection.appendChild(asideNode);
+
+          // DO.U.positionNote(refId, id);
+          break;
+
+        case 'ref-reference':
+          let options = {};
+          citationUrl = citationUrl.trim(); //XXX: Perhaps use escapeCharacters()?
+          options['citationId'] = citationUrl;
+          options['refId'] = refId;
+          options['citationRelation'] = citationRelation;
+
+          //TODO: offline mode
+          //TODO Move getCitation
+          DO.U.getCitation(citationUrl, options)
+            .then(citationGraph => {
+              var citationURI = citationUrl;
+              // console.log(citationGraph)
+              // console.log(citationGraph.toString())
+              // console.log(options.citationId)
+              // console.log( getProxyableIRI(options.citationId))
+              if (isValidISBN(citationUrl)) {
+                citationURI = citationGraph.term.value;
+                // options.citationId = citationURI;
+              }
+              else if (citationUrl.match(/^10\.\d+\//)) {
+                citationURI = 'http://dx.doi.org/' + citationUrl;
+                // options.citationId = citationURI;
+              }
+              //FIXME: subjectIRI shouldn't be set here. Bug in RDFaProcessor (see also SimpleRDF ES5/6). See also: https://github.com/dokieli/dokieli/issues/132
+
+              citationURI = citationURI.replace(/(https?:\/\/(dx\.)?doi\.org\/)/i, 'http://dx.doi.org/');
+
+              //XXX: I don't know what this is going on about...
+              // else if (stripFragmentFromString(options.citationId) !==  getProxyableIRI(options.citationId)) {
+              //   citationURI = currentLocation();
+              // }
+
+              var citation = DO.U.getCitationHTML(citationGraph, citationURI, options);
+
+              //TODO: references nodes, e.g., references, normative-references, informative-references
+              var references = document.querySelector('#references');
+              var referencesList = references?.querySelector('dl, ol, ul') || references;
+
+              buildReferences(referencesList, id, citation);
+
+              options['showRobustLinksDecoration'] = true;
+
+              // var node = document.querySelector('[id="' + id + '"] a[about]');
+
+              // var robustLink = DO.U.createRobustLink(citationURI, node, options);
+
+              // console.log(citationURI, citation, options)
+              var s = citationGraph.node(rdf.namedNode(citationURI));
+              var inboxes = getGraphInbox(s);
+
+              if (!inboxes) {
+                s = citationGraph.node(rdf.namedNode(stripFragmentFromString(citationURI)));
+              }
+
+              inboxes = getGraphInbox(s);
+
+              if (!inboxes) {
+                s = citationGraph.node(rdf.namedNode(options.citationId));
+              }
+              else {
+                var inboxURL = inboxes[0];
+
+                var citedBy = location.href.split(location.search||location.hash||/[?#]/)[0] + '#' + options.refId;
+
+                var notificationStatements = `
+                  <dl about="${citedBy}">
+                    <dt>Action</dt><dd>Citation</dd>
+                    <dt>Cited by</dt><dd><a href="${citedBy}">${citedBy}</a></dd>
+                    <dt>Citation type</dt><dd><a href="${citationUrl}">${Config.Citation[options.citationRelation]}</a></dd>
+                    <dt>Cites</dt><dd><a href="${citationUrl}" property="${options.citationRelation}">${citationUrl}</a></dd>
+                  </dl>
+                `;
+
+                var notificationData = {
+                  "type": ['as:Announce'],
+                  "inbox": inboxURL,
+                  "object": citedBy,
+                  "target": citationUrl,
+                  "statements": notificationStatements
+                };
+
+                notifyInbox(notificationData);
+                //XXX: Inform the user that a notification was sent?
+              }
+            });
+          break;
+      }
+      break;
+
+    // case 'semantics':
+    //   // console.log(data)
+
+    //   //This only updates the DOM. Nothing further. The 'id' is not used.
+    //   noteData = createNoteData(data);
+
+    //   break;
+
+  }
+}
+
+
 
 //TODO
 // export function formHandlerSparkline(e) {
@@ -253,9 +424,9 @@ export function formHandlerSemantics(e, action) {
 //   var textInputA = selection.split(' of ')[0];
 //   var textInputB = selection.substr(selection.indexOf(' of ') + 4);
 
-//   if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
-//     Object.keys(DO.C.RefAreas).forEach(key => {
-//       if(DO.C.RefAreas[key].toLowerCase() == textInputB.toLowerCase()) {
+//   if(!Config.RefAreas[textInputB.toUpperCase()]) {
+//     Object.keys(Config.RefAreas).forEach(key => {
+//       if(Config.RefAreas[key].toLowerCase() == textInputB.toLowerCase()) {
 //         textInputB = key;
 //       }
 //     });
@@ -266,10 +437,10 @@ export function formHandlerSemantics(e, action) {
 //     sG.parentNode.removeChild(sG);
 //   }
 
-//   if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
+//   if(!Config.RefAreas[textInputB.toUpperCase()]) {
 //     var refAreas;
-//     Object.keys(DO.C.RefAreas).forEach(key => {
-//       refAreas += '<option value="' + key + '">' + key + ' - ' + DO.C.RefAreas[key] + '</option>';
+//     Object.keys(Config.RefAreas).forEach(key => {
+//       refAreas += '<option value="' + key + '">' + key + ' - ' + Config.RefAreas[key] + '</option>';
 //     });
 //     form.querySelector('.medium-editor-form-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
 //     var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
@@ -449,19 +620,6 @@ export function inputRuleImage(selection) {
 
 /*
 TODO:
-
-case 'rdfa':
-  r.about = this.getForm().querySelector('#rdfa-about.medium-editor-form-input');
-  r.rel = this.getForm().querySelector('#rdfa-rel.medium-editor-form-input');
-  r.href = this.getForm().querySelector('#rdfa-href.medium-editor-form-input');
-  r.typeOf = this.getForm().querySelector('#rdfa-typeof.medium-editor-form-input');
-  r.resource = this.getForm().querySelector('#rdfa-resource.medium-editor-form-input');
-  r.property = this.getForm().querySelector('#rdfa-property.medium-editor-form-input');
-  r.content = this.getForm().querySelector('#rdfa-content.medium-editor-form-input');
-  r.datatype = this.getForm().querySelector('#rdfa-datatype.medium-editor-form-input');
-  r.language = this.getForm().querySelector('#rdfa-language.medium-editor-form-input');
-  break;
-
 case 'sparkline':
   r.search = this.getForm().querySelector('#sparkline-search.medium-editor-form-input');
   r.select = this.getForm().querySelector('#sparkline-select');
@@ -472,151 +630,4 @@ case 'sparkline':
 
 
   */
-
-export function processAction(action, formValues, selectionData) {
-  const formData = getFormActionData(action, formValues, selectionData);
-console.log(formData);
-  // const { annotationDistribution, ...otherFormData } = formData;
-
-//TODO: Need to get values for id, refId, opts, 
-//FIXME: Some keys are shared e.g., content: citationContent and semanticsContent. And, some keys dont exist?
-  const { id, refId, type: citationType, url: citationUrl, content: citationContent, language:  citationLanguage } = formData;
-
-  var noteData, note, asideNote, asideNode, parentSection;
-
-  switch(action) {
-    case 'note':
-      noteData = createNoteData({'id': id})
-      note = DO.U.createNoteDataHTML(noteData);
-      // var nES = selectedParentElement.nextElementSibling;
-      asideNote = '\n\
-      <aside class="note">\n\
-      '+ note + '\n\
-      </aside>';
-      asideNode = fragmentFromString(asideNote);
-      parentSection = getClosestSectionNode(selectionData.selectedParentElement);
-      parentSection.appendChild(asideNode);
-
-      DO.U.positionNote(refId, id);
-      break;
-
-    case 'cite': //footnote reference
-      //TODO: Refactor this what's in positionInteraction
-
-      noteData = createNoteData({'id': id})
-      note = DO.U.createNoteDataHTML(noteData);
-
-      switch(citationType) {
-        case 'ref-footnote': default:
-          // var nES = selectedParentElement.nextElementSibling;
-          asideNote = '\n\
-<aside class="note">\n\
-'+ note + '\n\
-</aside>';
-          asideNode = fragmentFromString(asideNote);
-          parentSection = getClosestSectionNode(selectionData.selectedParentElement);
-          parentSection.appendChild(asideNode);
-
-          DO.U.positionNote(refId, id);
-          break;
-
-        case 'ref-reference':
-          var options = {};
-          citationUrl = citationUrl.trim(); //XXX: Perhaps use escapeCharacters()?
-          options['citationId'] = citationUrl;
-          options['refId'] = refId;
-
-          //TODO: offline mode
-          DO.U.getCitation(citationUrl, options)
-            .then(citationGraph => {
-              var citationURI = citationUrl;
-              // console.log(citationGraph)
-              // console.log(citationGraph.toString())
-              // console.log(options.citationId)
-              // console.log( getProxyableIRI(options.citationId))
-              if (isValidISBN(citationUrl)) {
-                citationURI = citationGraph.term.value;
-                // options.citationId = citationURI;
-              }
-              else if(citationUrl.match(/^10\.\d+\//)) {
-                citationURI = 'http://dx.doi.org/' + citationUrl;
-                // options.citationId = citationURI;
-              }
-              //FIXME: subjectIRI shouldn't be set here. Bug in RDFaProcessor (see also SimpleRDF ES5/6). See also: https://github.com/dokieli/dokieli/issues/132
-
-              citationURI = citationURI.replace(/(https?:\/\/(dx\.)?doi\.org\/)/i, 'http://dx.doi.org/');
-
-              //XXX: I don't know what this is going on about...
-              // else if (stripFragmentFromString(options.citationId) !==  getProxyableIRI(options.citationId)) {
-              //   citationURI = currentLocation();
-              // }
-
-              var citation = DO.U.getCitationHTML(citationGraph, citationURI, options);
-
-              //TODO: references nodes, e.g., references, normative-references, informative-references
-              var references = document.querySelector('#references');
-              var referencesList = references?.querySelector('dl, ol, ul') || references;
-
-              buildReferences(referencesList, id, citation);
-
-              options['showRobustLinksDecoration'] = true;
-
-              // var node = document.querySelector('[id="' + id + '"] a[about]');
-
-              // var robustLink = DO.U.createRobustLink(citationURI, node, options);
-
-              // console.log(citationURI, citation, options)
-              var s = citationGraph.node(rdf.namedNode(citationURI));
-              var inboxes = getGraphInbox(s);
-
-              if (!inboxes) {
-                s = citationGraph.node(rdf.namedNode(stripFragmentFromString(citationURI)));
-              }
-
-              inboxes = getGraphInbox(s);
-
-              if (!inboxes) {
-                s = citationGraph.node(rdf.namedNode(options.citationId));
-              }
-              else {
-                var inboxURL = inboxes[0];
-
-                var citedBy = location.href.split(location.search||location.hash||/[?#]/)[0] + '#' + options.refId;
-
-                var notificationStatements = '<dl about="' + citedBy + '">\n\
-  <dt>Action</dt><dd>Citation</dd>\n\
-  <dt>Cited by</dt><dd><a href="' + citedBy + '">' + citedBy + '</a></dd>\n\
-  <dt>Citation type</dt><dd><a href="' + options.url + '">' + DO.C.Citation[options.citationRelation] + '</a></dd>\n\
-  <dt>Cites</dt><dd><a href="' + options.url + '" property="' + options.citationRelation + '">' + options.url + '</a></dd>\n\
-</dl>\n\
-';
-
-                var notificationData = {
-                  "type": ['as:Announce'],
-                  "inbox": inboxURL,
-                  "object": citedBy,
-                  "target": options.url,
-                  "statements": notificationStatements
-                };
-
-                notifyInbox(notificationData);
-                //XXX: Inform the user that a notification was sent?
-              }
-            });
-          break;
-      }
-      break;
-
-    case 'semantics':
-      // console.log(formData)
-
-      //This only updates the DOM. Nothing further. The 'id' is not used.
-      noteData = createNoteData(formData);
-
-      break;
-
-  }
-
-
-
-}
+ 
