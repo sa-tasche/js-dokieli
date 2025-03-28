@@ -89,10 +89,10 @@ function updateUserUI(fields, formValues) {
 export function processAction(action, formValues, selectionData) {
   //TODO:
 
-  const formData = getFormActionData(action, formValues, selectionData);
-  const { annotationDistribution, ...otherFormData } = formData;
+  const data = getFormActionData(action, formValues, selectionData);
+  const { annotationDistribution, ...otherFormData } = data;
 
-  let data, note;
+  let noteHTML, note;
 
   //XXX: Sort of a placeholder switch but don't really need it now
   switch(action) {
@@ -116,13 +116,13 @@ export function processAction(action, formValues, selectionData) {
           note = createNoteDataHTML(noteData);
         }
 
-        data = createHTML('', note);
+        noteHTML = createHTML('', note);
 
         // console.log(noteData)
         // console.log(data)
         // console.log(annotation)
 
-        postActivity(annotation['containerIRI'], annotation.id, data, annotation)
+        postActivity(annotation['containerIRI'], annotation.id, noteHTML, annotation)
           .catch(error => {
             // console.log('Error serializing annotation:', error)
             // console.log(error)
@@ -137,14 +137,14 @@ export function processAction(action, formValues, selectionData) {
               annotation['noteIRI'] = annotation['noteURL'] = location;
             }
 
-            // console.log(annotation, formData.options)
+            // console.log(annotation, data.options)
 
-            return positionActivity(annotation, formData.options);
+            return positionActivity(annotation, data.options);
           })
 
           .then(() => {
             if (action != 'bookmark') {
-              return sendNotification(annotation, formData.options);
+              return sendNotification(annotation, data.options);
             }
           })
 
@@ -178,8 +178,8 @@ export function processAction(action, formValues, selectionData) {
 //TODO: MOVE
 
 export function getFormActionData(action, formValues, selectionData) {
-console.log(selectionData)
-console.log(selectionData.selectedParentElement)
+console.log(selectionData) // undefined
+// console.log(selectionData.selectedParentElement)
 
   const data = {
     action: action,

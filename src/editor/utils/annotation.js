@@ -165,7 +165,7 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 //TODO: This function returns noteData and also replaces the selection with an HTML reference to the note. Make it so that the reference related stuff is done elsewehere.
 export function createNoteData(annotation) {
   const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
-  console.log(annotation)
+  // console.log(annotation)
   const { tagging, content, language, license, ['ref-type']: refType, url,
     about, resource, ['typeof']: typeOf, href, rel, property, datatype
   } = formData;

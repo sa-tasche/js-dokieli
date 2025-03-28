@@ -34,7 +34,7 @@ export const buttonIcons = {
     icon: Icon['.fas.fa-link']
   },
   citation: {
-    title: 'cite',
+    title: 'citation',
     icon: Icon['.fas.fa-hashtag']
   },
   //TODO: Change annotate or note's icon
