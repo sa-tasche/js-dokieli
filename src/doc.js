@@ -3272,6 +3272,34 @@ function getReferenceLabel(motivatedBy) {
   return Config.MotivationSign[motivatedBy] || '#';
 }
 
+function createRDFaMarkObject(r, mode) {
+  let about = r['about'];
+  let resource = r['resource'];
+  let typeOf = r['typeof'];
+  let rel = r['rel'];
+  let property = r['property'];
+  let href = r['href'];
+  let content = r['content'];
+  let lang = r['lang'];
+  let datatype = r['datatype'];
+
+  let id = generateAttributeId();
+
+  about = about || '#' + id;
+
+  //TODO: Figure out how to use user's preferred vocabulary. Huh?
+  property = property || 'rdfs:label';
+
+  let xmlLang = lang;
+  datatype = lang ? undefined : datatype;
+
+  let element = ('datatype' in r && r.datatype == 'xsd:dateTime') ? 'time' : ((href == '') ? 'span' : 'a');
+
+  let attrs = { id, about, resource, 'typeof': typeOf, rel, property, href, content, lang, 'xml:lang': xmlLang, datatype };
+
+  return { element, attrs }
+}
+
 function createRDFaHTML(r, mode) {
   var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '';
 
@@ -3419,6 +3447,7 @@ export {
   createNoteDataHTML,
   tagsToBodyObjects,
   createRDFaHTML,
+  createRDFaMarkObject,
   createDefinitionListHTML,
   isButtonDisabled
 }
