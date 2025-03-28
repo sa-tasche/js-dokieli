@@ -272,19 +272,31 @@ TODO:
   }
 
   replaceSelectionWithFragment(fragment) {
-console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
     
-    // Convert DOM fragment to a ProseMirror node
     let node = DOMParser.fromSchema(schema).parse(fragment);
   
-    // Apply the transformation to insert the node at selection
     let tr = state.tr.replaceSelectionWith(node);
     console.log(tr)
     dispatch(tr);  
   }
+
+  //Equivalent to insertAdjacentHTML('beforend') / appendChild?
+  insertFragmentInNode(fragment) {
+    const { state, dispatch } = this.editorView;
+    const { selection } = state;
   
+    const endPos = getClosestSectionNodeEndPos(this.editorView)
+
+    let resolvedPos = state.doc.resolve(selection.$anchor.start(selection.$anchor.depth));
+  
+    let node = DOMParser.fromSchema(schema).parse(fragment);
+  
+    let tr = state.tr.insert(endPos, node);
+  
+    dispatch(tr);
+  }
   updateMarkWithAttributes(schema, markType, attrs) {
     return (state, dispatch) => {
 // console.log(state, dispatch)
@@ -920,4 +932,36 @@ async function getImageDimensions(blobUrl) {
   
     img.src = blobUrl;
   })
+}
+
+//XXX: I don't know what to do with this thing yet - VB
+// I think this should actually be getClosestSectionNodeEndPos and return parentPos + parentNode.nodeSize (which is the position where the fragment should be inserted to resemble `beforeend`)
+function getClosestSectionNodeEndPos(view) {
+  const { from } = view.state.selection;
+  const nodePos = view.state.doc.resolve(from);
+
+  function findClosestAncestor(pos) {
+    let parentPos = pos.before();
+    let parentNode = view.state.doc.nodeAt(parentPos);
+
+    while (parentNode) {
+      console.log("parentNode", parentNode)
+
+      var parentNodeName = parentNode.type.name.toLowerCase();
+
+      if (parentNodeName === 'section') {
+        return parentPos + parentNode.nodeSize;
+      }
+      else if (['div', 'article', 'main', 'body'].includes(parentNodeName)) {
+        return parentPos + parentNode.nodeSize;
+      }
+
+      parentPos = view.state.doc.resolve(parentPos).before();
+      parentNode = view.state.doc.nodeAt(parentPos);
+    }
+
+    return null;
+  }
+
+  return findClosestAncestor(nodePos); 
 }
