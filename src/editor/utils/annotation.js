@@ -6,11 +6,11 @@ import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
 
 // 1. new annotation
-  // replace the selection with fragment 
+// replace the selection with fragment 
 // 2. old annotation
-  // take textQuoteSelector
-  // calculate to anchorand head --> anchor will be the index of the first character of anchor and so on
-  // create a new (PM) selection
+// take textQuoteSelector
+// calculate to anchorand head --> anchor will be the index of the first character of anchor and so on
+// create a new (PM) selection
 // now that we have a selection --> docSelectionToHTML --> fragmentFromString --> replaceSelectionWithDOMFragment
 
 
@@ -37,7 +37,7 @@ export function getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType
     refOpen = '<span class="ref' + doMode + '" rel="schema:hasPart" resource="#h-' + refId + '" typeof="oa:Annotation"><span rel="oa:motivatedBy" resource="oa:highlighting"></span><span rel="oa:hasTarget" resource="#' + refId + '" typeof="http://purl.org/dc/dcmitype/Text">';
     refClose = '</span></span>';
   }
-  var mark = '<mark datatype="rdf:HTML" id="'+ refId +'" property="rdf:value">' + selectedContent + '</mark>';
+  var mark = '<mark datatype="rdf:HTML" id="' + refId + '" property="rdf:value">' + selectedContent + '</mark>';
 
   return refOpen + mark + docRefType + refClose;
 }
@@ -54,17 +54,17 @@ export function getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType
 //From https://github.com/yabwe/medium-editor/blob/master/src/js/selection.js
 export function getSelectedParentElement(range) {
   if (!range) {
-      return null;
+    return null;
   }
 
   // Selection encompasses a single element
   if (rangeSelectsSingleNode(range) && range.startContainer.childNodes[range.startOffset].nodeType !== 3) {
-      return range.startContainer.childNodes[range.startOffset];
+    return range.startContainer.childNodes[range.startOffset];
   }
 
   // Selection range starts inside a text node, so get its parent
   if (range.startContainer.nodeType === 3) {
-      return range.startContainer.parentNode;
+    return range.startContainer.parentNode;
   }
 
   // Selection starts inside an element
@@ -73,11 +73,11 @@ export function getSelectedParentElement(range) {
 
 //From https://github.com/yabwe/medium-editor/blob/master/src/js/selection.js
 //http://stackoverflow.com/questions/15867542/range-object-get-selection-parent-node-chrome-vs-firefox
-export function rangeSelectsSingleNode (range) {
+export function rangeSelectsSingleNode(range) {
   var startNode = range.startContainer;
   return startNode === range.endContainer &&
-      startNode.hasChildNodes() &&
-      range.endOffset === range.startOffset + 1;
+    startNode.hasChildNodes() &&
+    range.endOffset === range.startOffset + 1;
 }
 
 export function exportSelection(selectedParentElement, selection) {
@@ -92,7 +92,7 @@ export function exportSelection(selectedParentElement, selection) {
   const mergedRange = document.createRange();
   mergedRange.setStart(ranges[0].startContainer, ranges[0].startOffset);
   mergedRange.setEnd(ranges[ranges.length - 1].endContainer, ranges[ranges.length - 1].endOffset);
-  
+
   const preSelectionRange = mergedRange.cloneRange();
   preSelectionRange.selectNodeContents(selectedParentElement);
   preSelectionRange.setEnd(mergedRange.startContainer, mergedRange.startOffset);
@@ -113,7 +113,7 @@ export function cloneSelection() {
   const clonedSelection = [];
 
   for (let i = 0; i < selection.rangeCount; i++) {
-    const range = selection.getRangeAt(i).cloneRange(); 
+    const range = selection.getRangeAt(i).cloneRange();
     const fragment = range.cloneContents();
     clonedSelection.push({ range, fragment });
   }
@@ -165,11 +165,11 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 //TODO: This function returns noteData and also replaces the selection with an HTML reference to the note. Make it so that the reference related stuff is done elsewehere.
 export function createNoteData(annotation) {
   const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
-console.log(annotation)
+  console.log(annotation)
   const { tagging, content, language, license, ['ref-type']: refType, url,
     about, resource, ['typeof']: typeOf, href, rel, property, datatype
   } = formData;
-console.log(formData)
+  console.log(formData)
   // aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
 
   var mode;
@@ -177,7 +177,7 @@ console.log(formData)
   let noteData = {};
 
   //TODO: This should be an object elsewhere?
-  switch(profile) {
+  switch (profile) {
     case 'https://www.w3.org/ns/activitystreams':
       mode = 'object';
       break;
@@ -186,7 +186,7 @@ console.log(formData)
       break;
   }
 
-  switch(action) {
+  switch (action) {
     // case 'sparkline':
     //   var figureIRI = generateAttributeId(null, opts.selectionDataSet);
     //   ref = '<span rel="schema:hasPart" resource="#figure-' + figureIRI + '">\n\
@@ -374,7 +374,7 @@ console.log(formData)
       break;
 
     case 'citation': //footnote reference
-      switch(refType) {
+      switch (refType) {
         case 'ref-footnote': default:
           docRefType = '<sup class="' + refType + '"><a href="#' + id + '" rel="cito:isCitedBy">' + refLabel + '</a></sup>';
           noteData = {
@@ -429,7 +429,7 @@ console.log(formData)
         lang: language,
         textContent: selectionData.selectedContent
       };
-console.log(noteData)
+      console.log(noteData)
       ref = createRDFaHTML(noteData, 'expanded');
       break;
   }
