@@ -5,6 +5,7 @@ import { getRandomUUID, getFormValues } from "../../../util.js"
 import { fragmentFromString } from "../../../util.js"
 import { getResource } from "../../../fetcher.js";
 import { getFormActionData } from "../social/handlers.js";
+import { createRDFaMarkObject } from "../../../doc.js";
 
 export function formHandlerA(e) {
   e.preventDefault();
@@ -164,7 +165,7 @@ export function formHandlerCitation(e, action) {
 
   const formValues = getFormValues(e.target);
 
-console.log(formValues);
+// console.log(formValues);
 
   //TODO: Mark the selection after successful comment. Move out.
   //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
@@ -187,32 +188,33 @@ console.log(formValues);
 export function formHandlerSemantics(e, action) {
   e.preventDefault();
   e.stopPropagation();
+  const data = {};
 
   restoreSelection(this.selection);
   const selection = window.getSelection();
 
   const range = selection.getRangeAt(0);
   const selectedParentElement = getSelectedParentElement(range);
-console.log(e.target)
+  console.log(e.target)
+
   const formValues = getFormValues(e.target);
+  console.log(formValues);
 
-console.log(formValues);
+  //TODO: Copied from social/handlers.js getFormActionData
+  Object.entries(formValues).forEach(([key, value]) => {
+    if (key.startsWith(`${action}-`)) {
+      data[key.substring(action.length + 1)] = value;
+    }
+  });
 
-  //TODO: Mark the selection after successful comment. Move out.
-  //TODO: Use node.textBetween to determine prefix, exact, suffix + parentnode with closest id
-  //Mark the selected content in the document
-  const selector = this.getTextQuoteSelector();
+  let { element, attrs } = createRDFaMarkObject(data);
 
-  const selectionData = {
-    selection,
-    selector,
-    selectedParentElement,
-    selectedContent: this.getSelectionAsHTML()
-  };
+  attrs = Object.fromEntries(
+    Object.entries(attrs).filter(([_, value]) => value)
+  );
+  console.log(element, attrs)
 
-  processAction(action, formValues, selectionData);
-
-  // const formData = getFormActionData(action, formValues, selectionData);
+  this.updateMarkWithAttributes(schema, element, attrs)(this.editorView.state, this.editorView.dispatch);
 
   this.clearToolbarButton('semantics');
 }
@@ -472,15 +474,13 @@ case 'sparkline':
   */
 
 export function processAction(action, formValues, selectionData) {
-  console.log(action, formValues, selectionData)
-
   const formData = getFormActionData(action, formValues, selectionData);
 console.log(formData);
   // const { annotationDistribution, ...otherFormData } = formData;
 
 //TODO: Need to get values for id, refId, opts, 
 //FIXME: Some keys are shared e.g., content: citationContent and semanticsContent. And, some keys dont exist?
-const { id, refId, type: citationType, url: citationUrl, content: citationContent, language:  citationLanguage } = formData;
+  const { id, refId, type: citationType, url: citationUrl, content: citationContent, language:  citationLanguage } = formData;
 
   var noteData, note, asideNote, asideNode, parentSection;
 
@@ -608,9 +608,9 @@ const { id, refId, type: citationType, url: citationUrl, content: citationConten
       break;
 
     case 'semantics':
-console.log(formData)
+      // console.log(formData)
 
-    //This only updates the DOM. Nothing further. The 'id' is not used.
+      //This only updates the DOM. Nothing further. The 'id' is not used.
       noteData = createNoteData(formData);
 
       break;

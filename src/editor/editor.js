@@ -25,7 +25,7 @@ export class Editor {
     this.node = node || document.body;
     this.editorView = null;
     this.socialToolbarView = null;
-    this.authorToolbarView = null;
+    this.authorToolbarView = this.editorView?.pluginViews[0];
 
     this.hasRunTextQuoteSelector = false;
   }
@@ -38,7 +38,8 @@ export class Editor {
     switch (this.mode) {
       case 'author':
         this.destroySocialToolbar();
-        this.authorToolbarView = this.createEditor(this.node);
+        this.createEditor(this.node);
+        this.authorToolbarView = this.editorView?.pluginViews[0];
         break;
 
       case 'social':
@@ -95,10 +96,8 @@ export class Editor {
     return toolbarView?.replaceSelectionWithFragment(fragment)
   }
 
-
   //Creating a ProseMirror editor view at a specified this.node
   createEditor() {
-    this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'note']);
     const editorToolbarPlugin = new Plugin({
       // this editorView is passed onto the Plugin - not this.editorView
       view(editorView) {
@@ -107,13 +106,12 @@ export class Editor {
         console.log(editorView);
 
         //TODO: 'math', 'sparkline',
-        this.authorToolbarView.initEditorView(editorView);
+        this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'note'], editorView);
 
         // Append DOM portion of toolbar to current editor.
         // editorView.dom.parentNode.appendChild(toolbarView.dom);
 
         // Return toolbar class. Caller will call its update method in every editor update.
-        console.log(this.authorToolbarView)
         return this.authorToolbarView;
       }
     });

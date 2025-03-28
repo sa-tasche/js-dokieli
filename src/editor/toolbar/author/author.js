@@ -1,6 +1,6 @@
 import { toggleMark, setBlockType } from "prosemirror-commands"
 import { wrapInList, liftListItem } from "prosemirror-schema-list"
-import { DOMSerializer } from "prosemirror-model"
+import { DOMSerializer, DOMParser } from "prosemirror-model"
 import { TextSelection } from "prosemirror-state"
 import { schema, allowedEmptyAttributes } from "./../../schema/base.js"
 import { getButtonHTML } from "./../../../ui/button-icons.js"
@@ -16,10 +16,6 @@ const ns = Config.ns;
 export class AuthorToolbar extends ToolbarView {
   constructor(mode, buttons, editorView) {
     super(mode, buttons, editorView)
-    this.editorView = editorView;
-  }
-
-  initPlugin(editorView) {
     this.editorView = editorView;
   }
 
@@ -159,7 +155,7 @@ export class AuthorToolbar extends ToolbarView {
           <label for="semantics-property">property</label> <input class="editor-form-input" name="semantics-property" id="semantics-property" placeholder="schema:name" type="text" value="" />
           <label for="semantics-href">href</label> <input class="editor-form-input" id="semantics-href" name="semantics-href" placeholder="Enter URL, e.g., https://example.net/foo" type="url" value="" />
           <label for="semantics-content">content</label> <input class="editor-form-input" id="semantics-content" name="semantics-content" placeholder="Enter content, e.g., 'Baz'" type="text" value="" />
-          <label for="semantics-language">language</label> <input class="editor-form-input" name="semantics-language" id="semantics-language" placeholder="Enter language code, e.g., en" type="text" value="" />
+          <label for="semantics-lang">lang</label> <input class="editor-form-input" name="semantics-lang" id="semantics-lang" placeholder="Enter language code, e.g., en" type="text" value="" />
           <label for="semantics-datatype">datatype</label> <input class="editor-form-input" name="semantics-datatype" id="semantics-datatype" placeholder="Enter URL, e.g., https://example.net/qux" type="text" value="" />
           ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
           ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
