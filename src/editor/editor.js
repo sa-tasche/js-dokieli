@@ -96,6 +96,11 @@ export class Editor {
     return toolbarView?.replaceSelectionWithFragment(fragment)
   }
 
+  insertFragmentInNode(fragment, parentNode){
+    const toolbarView = this.authorToolbarView || this.socialToolbarView;
+    return toolbarView?.insertFragmentInNode(fragment, parentNode)
+  }
+
   //Creating a ProseMirror editor view at a specified this.node
   createEditor() {
     const editorToolbarPlugin = new Plugin({
