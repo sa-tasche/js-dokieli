@@ -403,10 +403,12 @@ aside.do.on:not([id="document-items"]) label[for$="-input"] {
 vertical-align: middle;
 }
 
-aside.do input {
+aside.do input,
+.editor-form input {
 padding:0.2em;
 }
-aside.do input[type="checkbox"] {
+aside.do input[type="checkbox"],
+.editor-form input[type="checkbox"] {
 padding:0;
 vertical-align: middle;
 padding: 0;
@@ -416,27 +418,33 @@ height: 1.5em;
 vertical-align: middle;
 cursor: pointer;
 }
-aside.do input[type="text"] {
-width: calc(100% - 14em);padding: 0.75em;
+aside.do input[type="text"],
+.editor-form input[type="text"],
+.editor-form input[type="input"],
+.editor-form select {
 font-size: 1em;
 border: 2px solid #ccc;
 border-radius: 5px;
-margin: 0.5em
+padding: 0.75em;
+}
+aside.do input[type="text"] {
+width: calc(100% - 14em);padding: 0.75em;
+margin: 0.5em;
 }
 
 aside.do input#share-resource-clipboard{
 width: calc(100% - 7em);
 margin-left: 0;
 }
+.editor-form input + label
 aside.do input + label {
 margin-left:0.25em;
 vertical-align: middle;
 display:inline-block;
 }
-
+.editor-form textarea,
 aside.do textarea {
 display: block;
-width:96% !important;
 max-width:44em !important;
 padding: 0.75em;
 font-size: 1em;
@@ -444,6 +452,10 @@ border: 2px solid #ccc;
 border-radius: 5px;
 margin-bottom: 1em;
 }
+aside.do textarea {
+width:96% !important;
+}
+
 
 aside.do.on ul {
 margin:0;
@@ -2117,22 +2129,33 @@ border-color: transparent transparent transparent #009000 !important;
   align-self: end;
 }
 
-/* TODO: default to a flex-column  */
-
-/* this is for the annotate-related forms */
+/* Basic default for all fieldsets in forms  */
 .editor-form fieldset {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* Annotate-related forms */
+#editor-form-approve fieldset,
+#editor-form-disapprove fieldset,
+#editor-form-bookmark fieldset,
+#editor-form-comment fieldset,
+#editor-form-specificity fieldset {
   display: grid;
   grid-template-columns: auto auto;
-  grid-template-rows: repeat(8, auto);
-  grid-gap: 8px;
+  grid-template-rows: repeat(10, auto);
+  grid-gap: 0.5em;
   border: none;
   padding-block: 0;
   grid-template-areas:
   "legend legend"
-  "textarea textarea"
+  "info info"
   "label1 label1"
+  "textarea textarea"
+  "label2 label2"
   "input1 input1"
-  "label2 label3"
+  "label3 label4"
   "select1 select2"
   "span1 span1"
   "button1 button2";
@@ -2151,6 +2174,10 @@ border-color: transparent transparent transparent #009000 !important;
   label:nth-of-type(3) {
   grid-area: label3;
   }
+  label:nth-of-type(4) {
+    grid-area: label4;
+  }
+  
 
   input:nth-of-type(1) {
   grid-area: input1;
@@ -2195,7 +2222,7 @@ border-color: transparent transparent transparent #009000 !important;
   display: grid;
   grid-template-columns: auto auto auto auto;
   grid-template-rows: auto auto auto 1fr auto;
-  grid-gap: 8px;
+  grid-gap: 0.5em;
   border: none;
   padding-block: 0;
   
@@ -2210,7 +2237,7 @@ border-color: transparent transparent transparent #009000 !important;
   display: grid;
   grid-template-columns: auto auto;
   grid-template-rows: repeat(11, auto);
-  grid-gap: 8px 0px;
+  grid-gap: 0.5em;
   border: none;
   padding-block: 0;
   grid-template-areas:
@@ -2306,22 +2333,33 @@ span {
 
 }
 
+.specref-search-results {
+  display: flex;
+  flex-direction: column;
+  ul li { 
+    display: flex;
+    margin: 0.5em 0;  
+  }
+}
+
 #editor-form-citation fieldset {
   display: grid;
-  grid-template-columns: auto auto auto auto;
-  grid-template-rows: repeat(8, auto);
-  grid-gap: 8px 0px;
+  grid-template-columns: repeat(4, auto);
+  grid-template-rows: repeat(10, auto);
+  grid-gap: 0.5em;
   border: none;
   padding-block: 0;
   grid-template-areas:
-"legend legend legend legend"
-"label1 input1 input1 input2"
-"input3 label2 input4 label3"
-"select1 select1 input5 input5"
-"textarea textarea textarea textarea"
-"label4 label4 select2 select2"
-"results results results results"
-". . button1 button2";
+  "legend legend legend legend"
+  "label1 label1 label1 label1"
+  "input1 input1 input1 input2"
+  "input3 label2 input4 label3"
+  "select1 select1 label4 input5"
+  "textarea textarea textarea textarea"
+  "label5 label5 label5 label5"
+  "select2 select2 select2 . "
+  "results results results results"
+  ". . button1 button2";
 
 
   legend {
@@ -2377,6 +2415,10 @@ span {
 
   label:nth-of-type(4) {
     grid-area: label4
+  }
+
+  label:nth-of-type(5) {
+    grid-area: label5
   }
 
   select:nth-of-type(1) {
@@ -2453,7 +2495,9 @@ font-weight:normal !important;
 }
 
 .editor-form .info {
-  font-weight:normal;
+font-weight: normal;
+margin: 0.5em 0 0 0;
+font-size: small;
 }
 
 label:has(+ [required]):after {
