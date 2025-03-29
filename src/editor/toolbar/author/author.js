@@ -288,8 +288,6 @@ TODO:
     const { selection } = state;
   
     const endPos = getClosestSectionNodeEndPos(this.editorView)
-
-    let resolvedPos = state.doc.resolve(selection.$anchor.start(selection.$anchor.depth));
   
     let node = DOMParser.fromSchema(schema).parse(fragment);
   
