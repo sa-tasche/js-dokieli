@@ -179,7 +179,7 @@ export class ToolbarView {
 
       if ((selectionPosition.top >= toolbarHeight + margin * 2) && (window.innerHeight - selectionPosition.bottom >= toolbarForm.offsetHeight + margin * 2)) {
           toolbarForm.style.top = `${toolbarHeight + selectionPosition.height + margin * 1.5}px`;
-      } else if (selectionPosition.top >= toolbarHeight + margin * 2) {
+      } else if (selectionPosition.top >= toolbarHeight + toolbarForm.offsetHeight  + margin * 2) {
           toolbarForm.style.top = `-${toolbarForm.offsetHeight + margin / 2}px`;
       } else {
           toolbarForm.style.top = `${toolbarHeight + margin / 2}px`;
