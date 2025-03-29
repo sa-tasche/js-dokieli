@@ -268,23 +268,21 @@ console.log(data);
       let { 'ref-type': refType, url: citationUrl, relation: citationRelation, content: citationContent, language: citationLanguage } = formData;
 
       //TODO: Refactor this what's in positionInteraction
-
       switch(refType) {
         case 'ref-footnote': default:
           note = createNoteDataHTML(noteData);
           console.log(noteData, note)
 
-          // var nES = selectedParentElement.nextElementSibling;
           asideNote = `
             <aside class="note">
               ${note}
             </aside>
           `;
-          asideNode = fragmentFromString(asideNote);
-          parentSection = getClosestSectionNode(selectionData.selectedParentElement);
-          parentSection.appendChild(asideNode);
 
-          // DO.U.positionNote(refId, id);
+          DO.Editor.insertFragmentInNode(asideNode);
+
+
+          DO.U.positionNote(refId, id);
           break;
 
         case 'ref-reference':
