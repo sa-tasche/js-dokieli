@@ -429,16 +429,14 @@ export function createNoteData(annotation) {
         lang: language,
         textContent: selectionData.selectedContent
       };
-      console.log(noteData)
       ref = createRDFaHTML(noteData, 'expanded');
       break;
   }
-  console.log(ref);
-  console.log(DO);
-  console.log(DO.Editor);
-  console.log(DO.Editor.replaceSelectionWithFragment)
+
+  console.log(ref)
   if (ref) {
-    console.log("inside ref check")
+    // console.log(this.mode)
+    console.log(DO.Editor)
     DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
   }
 

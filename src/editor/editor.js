@@ -91,7 +91,8 @@ export class Editor {
   replaceSelectionWithFragment(fragment){
     console.log(this)
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    console.log(toolbarView)
+    console.log('mode',this.mode)
+    console.log('toolbar',toolbarView)
     console.log(toolbarView?.replaceSelectionWithFragment)
     return toolbarView?.replaceSelectionWithFragment(fragment)
   }
@@ -149,6 +150,7 @@ export class Editor {
 
       this.editorView.destroy();
       this.editorView = null;
+      this.authorToolbarView = null;
       //FIXME: DO NOT USE innerHTML
       // TODO: is there HTML serializer? 
       this.node.innerHTML = new XMLSerializer().serializeToString(content);

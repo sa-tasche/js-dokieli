@@ -110,6 +110,8 @@ export class SocialToolbar extends ToolbarView {
   }
 
   replaceSelectionWithFragment(fragment) {
+console.log('---', fragment)
+
     const selection = this.selection;
     if (!selection.rangeCount) return;
     const ranges = [];

@@ -2140,11 +2140,12 @@ border-color: transparent transparent transparent #009000 !important;
 #editor-form-approve fieldset,
 #editor-form-disapprove fieldset,
 #editor-form-bookmark fieldset,
+#editor-form-note fieldset,
 #editor-form-comment fieldset,
 #editor-form-specificity fieldset {
   display: grid;
   grid-template-columns: auto auto;
-  grid-template-rows: repeat(10, auto);
+  grid-template-rows: repeat(11, auto);
   grid-gap: 0.5em;
   border: none;
   padding-block: 0;
@@ -2158,6 +2159,7 @@ border-color: transparent transparent transparent #009000 !important;
   "label3 label4"
   "select1 select2"
   "span1 span1"
+  "span2 span2"
   "button1 button2";
 
   legend {
@@ -2195,12 +2197,17 @@ border-color: transparent transparent transparent #009000 !important;
   grid-area: select2;
   }
 
-  span {
+  span:nth-of-type(1) {
   grid-area: span1;
+  }
+  span:nth-of-type(2) {
+  grid-area: span2;
+  }
+  span {
   margin: 0 !important;
   font-size: 0.8em;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   }
   button {
   width: max-content;

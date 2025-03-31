@@ -271,13 +271,14 @@ TODO:
     return selectedContent;
   }
 
+
   replaceSelectionWithFragment(fragment) {
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
     
-    let node = DOMParser.fromSchema(schema).parse(fragment);
+    let node = DOMParser.fromSchema(schema).parseSlice(fragment, { preserveWhitespace: true });
   
-    let tr = state.tr.replaceSelectionWith(node);
+    let tr = state.tr.replaceSelection(node);
     console.log(tr)
     dispatch(tr);  
   }
