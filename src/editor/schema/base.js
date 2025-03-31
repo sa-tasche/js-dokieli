@@ -385,7 +385,7 @@ let customNodes = {
 
 const customMarks = {};
 
-const inlineElements = ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'code', 'cite', 'a', 'sup', 'sub', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'];
+const inlineElements = ['span', 'progress', 'del', 'ins', 'data', 'datalist', 'mark', 'code', 'cite', 'sup', 'sub', 'a', 'time', 'em', 'strong', 'dfn', 'abbr', 'q', 'var', 'samp', 'kbd', 'bdi'];
 inlineElements.forEach(tagName => {
   customMarks[tagName] = {
     attrs: { originalAttributes: { default: {} } },
