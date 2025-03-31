@@ -471,6 +471,7 @@ export class ToolbarView {
     }
   }
 
+  // TODO: refactor this to use replaceSelectionWithFragment
   importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
     // console.log(containerNode)
     // console.log(selector)

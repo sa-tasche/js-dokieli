@@ -166,10 +166,13 @@ export function getInboxOfClosestNodeWithSelector(node, selector) {
 export function createNoteData(annotation) {
   const { action, id, datetime, selectionData, refId, refLabel, motivatedBy, targetIRI, resourceIRI, selectionLanguage, targetLanguage, formData, annotationInboxLocation, profile } = annotation;
   // console.log(annotation)
+
   const { tagging, content, language, license, ['ref-type']: refType, url,
     about, resource, ['typeof']: typeOf, href, rel, property, datatype
   } = formData;
+
   console.log(formData)
+
   // aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
 
   var mode;
@@ -181,7 +184,8 @@ export function createNoteData(annotation) {
     case 'https://www.w3.org/ns/activitystreams':
       mode = 'object';
       break;
-    default:
+
+      default:
       mode = 'write';
       break;
   }
@@ -232,6 +236,7 @@ export function createNoteData(annotation) {
         noteData["language"] = language;
         bodyObject["language"] = language;
       }
+
       if (license) {
         noteData["rights"] = noteData["license"] = license;
         bodyObject["rights"] = bodyObject["license"] = license;
@@ -242,13 +247,17 @@ export function createNoteData(annotation) {
       if (Config.User.IRI) {
         noteData.creator["iri"] = Config.User.IRI;
       }
+
       if (Config.User.Name) {
         noteData.creator["name"] = Config.User.Name;
       }
+
       noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+
       if (Config.User.URL) {
         noteData.creator["url"] = Config.User.URL;
       }
+
       if (annotationInboxLocation && Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
         noteData.inbox = Config.User.TypeIndex[ns.as.Announce.value];
       }
@@ -292,6 +301,7 @@ export function createNoteData(annotation) {
         noteData["language"] = language;
         bodyObject["language"] = language;
       }
+
       if (license) {
         noteData["rights"] = noteData["license"] = license;
         bodyObject["rights"] = bodyObject["license"] = license;
@@ -302,16 +312,20 @@ export function createNoteData(annotation) {
       if (Config.User.IRI) {
         noteData.creator["iri"] = Config.User.IRI;
       }
+
       if (Config.User.Name) {
         noteData.creator["name"] = Config.User.Name;
       }
+
       noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+
       if (Config.User.URL) {
         noteData.creator["url"] = Config.User.URL;
       }
 
       // note = DO.U.createNoteDataHTML(noteData);
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType, { 'do': true });
+
       break;
 
     //Internal Note
@@ -352,6 +366,7 @@ export function createNoteData(annotation) {
         noteData["language"] = language;
         bodyObject["language"] = language;
       }
+
       if (license) {
         noteData["rights"] = noteData["license"] = license;
         bodyObject["rights"] = bodyObject["license"] = license;
@@ -362,21 +377,26 @@ export function createNoteData(annotation) {
       if (Config.User.IRI) {
         noteData.creator["iri"] = Config.User.IRI;
       }
+
       if (Config.User.Name) {
         noteData.creator["name"] = Config.User.Name;
       }
+
       noteData.creator["image"] = Config.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+
       if (Config.User.URL) {
         noteData.creator["url"] = Config.User.URL;
       }
 
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
+      DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
       break;
 
     case 'citation': //footnote reference
       switch (refType) {
         case 'ref-footnote': default:
           docRefType = '<sup class="' + refType + '"><a href="#' + id + '" rel="cito:isCitedBy">' + refLabel + '</a></sup>';
+
           noteData = {
             "type": refType,
             "mode": mode,
@@ -397,6 +417,7 @@ export function createNoteData(annotation) {
             noteData["language"] = language;
             bodyObject["language"] = language;
           }
+
           if (license) {
             noteData["rights"] = noteData["license"] = license;
             bodyObject["rights"] = bodyObject["license"] = license;
@@ -412,6 +433,9 @@ export function createNoteData(annotation) {
       }
 
       ref = getTextQuoteHTML(refId, motivatedBy, selectionData.selectedContent, docRefType);
+
+      DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+
       break;
 
     case 'semantics':
@@ -429,16 +453,20 @@ export function createNoteData(annotation) {
         lang: language,
         textContent: selectionData.selectedContent
       };
+
       ref = createRDFaHTML(noteData, 'expanded');
+
+      DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+
       break;
   }
 
-  console.log(ref)
-  if (ref) {
-    // console.log(this.mode)
-    console.log(DO.Editor)
-    DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
-  }
+  // revisit when we refactor importTextQuoteSelector
+  // if (ref) {
+  //   // console.log(this.mode)
+  //   console.log(DO.Editor)
+  //   DO.Editor.replaceSelectionWithFragment(fragmentFromString(ref));
+  // }
 
   return noteData;
 }
