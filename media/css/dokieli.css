@@ -420,6 +420,7 @@ cursor: pointer;
 }
 aside.do input[type="text"],
 .editor-form input[type="text"],
+.editor-form input[type="url"],
 .editor-form input[type="input"],
 .editor-form select {
 font-size: 1em;
@@ -2132,7 +2133,8 @@ border-color: transparent transparent transparent #009000 !important;
 /* Basic default for all fieldsets in forms  */
 .editor-form fieldset {
   display: flex;
-  flex-direction: column;
+  flex-direction: column;  
+  border: none;
 }
 
 
@@ -2225,6 +2227,16 @@ border-color: transparent transparent transparent #009000 !important;
 
 /* styles for specific popups */
 
+#editor-form-semantics fieldset {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-auto-rows: auto;
+  grid-gap: 0.5em;
+  border: none;
+  padding-block: 0;
+
+}
+
 #editor-form-a fieldset{
   display: grid;
   grid-template-columns: auto auto auto auto;
@@ -2238,6 +2250,34 @@ border-color: transparent transparent transparent #009000 !important;
     "label1 input1 input1 input1"
     "label2 input2 input2 input2"
     ". . button1 button2";
+
+  legend {
+    grid-area: legend;
+  }
+
+  label:nth-of-type(1) {
+    grid-area: label1;
+  }
+  label:nth-of-type(2) {
+    grid-area: label2;
+  }
+
+
+  input:nth-of-type(1) {
+    grid-area: input1;
+  }
+  input:nth-of-type(2) {
+    grid-area: input2;
+  }
+
+  button:nth-of-type(1) {
+    grid-area: button1;
+  }
+  button:nth-of-type(2) {
+    grid-area: button2;
+  }
+
+
 }
 
 #editor-form-img fieldset {
@@ -2281,11 +2321,11 @@ span {
 
 
   button:nth-of-type(1) {
-    grid-column: button1;
+    grid-area: button1;
   }
 
   button:nth-of-type(2) {
-    grid-column: button2;
+    grid-area: button2;
   }
 
 
