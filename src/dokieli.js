@@ -1371,11 +1371,13 @@ DO = {
           objectValue = DOMPurify.sanitize(objectValue);
         }
 
-        if (!g.node(rdf.namedNode(t.object.value)).out(ns.rdf.type).values.length) {
+        //XXX: Don't remember why this if was included but it seems to be problematic since it skips adding nodes where the object doesn't have a type. So commenting it out for now. Seems to work as expected.
+        // if (!g.node(rdf.namedNode(t.object.value)).out(ns.rdf.type).values.length) {
           if (!graphNodes.includes(t.subject.value)) {
             graphNodes.push(t.subject.value);
             graphData.nodes.push({"id": t.subject.value, "group": sGroup, "visited": sVisited });
           }
+
           if (!graphNodes.includes(t.object.value)) {
             if (t.object.value in DO.C.Resource) {
               // console.log(t.object.value)
@@ -1390,7 +1392,7 @@ DO = {
             graphNodes.push(objectValue);
             graphData.nodes.push({"id": objectValue, "group": oGroup, "visited": oVisited });
           }
-        }
+        // }
 
         graphData.links.push({"source": t.subject.value, "target": objectValue, "value": t.predicate.value});
       });
