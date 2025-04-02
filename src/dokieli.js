@@ -1503,7 +1503,7 @@ DO = {
     initUser: function() {
       getLocalStorageProfile().then(user => {
         if (user && 'object' in user) {
-          user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
+          // user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
           DO.C['User'] = user.object.describes;
         }
@@ -3948,7 +3948,7 @@ console.log(reason);
 
       //TODO: Use DO.C.Editor.mode and getButtonHTML instead
       if (DO.C.EditorAvailable) {
-        var editFile = (DO.C.EditorEnabled && DO.C.User.Role == 'author')
+        var editFile = (DO.C.EditorEnabled && DO.C.Editor.mode == 'author')
           ? DO.C.Editor.DisableEditorButton
           : DO.C.Editor.EnableEditorButton;
         s += '<li>' + editFile + '</li>';

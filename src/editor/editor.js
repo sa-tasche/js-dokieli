@@ -68,7 +68,6 @@ export class Editor {
   }
 
   toggleEditor(mode, e) {
-    Config.User.Role = mode;
     updateLocalStorageProfile(Config.User);
     const node = document.body;
     this.init(mode, node);

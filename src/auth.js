@@ -254,7 +254,6 @@ function submitSignInOIDC (url) {
 }
 
 function setUserInfo (subjectIRI, options = {}) {
-  options.role = Config.User.Role;
   options.ui = Config.User.UI;
 
   return getSubjectInfo(subjectIRI, options).then(subject => {
