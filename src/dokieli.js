@@ -6645,8 +6645,15 @@ console.log(response)
 //       }
     },
 
+    createNewDocument: function(e) {
+      DO.Editor.toggleEditor('author', e, { template: 'new' });
 
-    createNewDocument: function createNewDocument (e) {
+      DO.U.hideDocumentMenu();
+    },
+
+
+    //XXX: To be deprecated. Formerly used for createNewDocument 
+    createNewDocumentSaveAs: function(e) {
       e.target.disabled = true
       document.documentElement.appendChild(fragmentFromString('<aside id="create-new-document" class="do on">' + DO.C.Button.Close + '<h2>Create New Document</h2></aside>'))
 

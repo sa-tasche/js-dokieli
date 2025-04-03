@@ -558,6 +558,9 @@ export class ToolbarView {
   destroy() {
     //this.dom is #document-toolbar
     //TODO: Also remove itself
+    if (!this.documentBody.querySelector('#document-editor')) {
+      return;
+    }
     this.documentBody.removeChild(this.dom);
     document.removeEventListener("selectionchange", this.selectionHandler);
   }

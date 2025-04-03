@@ -67,7 +67,14 @@ export class Editor {
     }
   }
 
-  toggleEditor(mode, e) {
+  toggleEditor(mode, e, options) {
+    DO.Editor['new'] = false;
+
+    if (options?.template === 'new' ) {
+      DO.Editor['new'] = true;
+      this.setTemplate(mode, options);
+    }
+
     updateLocalStorageProfile(Config.User);
     const node = document.body;
     this.init(mode, node);
@@ -76,6 +83,30 @@ export class Editor {
 
     // this.setEditorDataItems(e);
   }
+
+  setTemplate(mode, options) {
+    switch(options.template) {
+      case 'new':
+        this.setTemplateNew(mode, options);
+        break;
+    }
+  }
+
+  setTemplateNew(mode, options) {
+    //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
+    // Add initial nodes h1, p with no content.
+    document.body.replaceChildren(fragmentFromString(`<main><article><h1 data-placeholder="Title" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-placeholder="Cogito, ergo sum."></p></div></article></main>`));
+
+    // If the initial nodes have no content, show placeholder text, else remove placeholder text.
+
+    /*
+    Update head > title to 'Untitled'. Make sure to have Save update head > title with h1 value (if specified).
+    Set flag e.g. Config.Editor.New = true
+    Update Save function to check this flag. If New = true, ask where to save.
+    Immutable, Version button states should be disabled/false
+    */
+  }
+
 
   importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options) {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
@@ -99,6 +130,10 @@ export class Editor {
   insertFragmentInNode(fragment, parentNode){
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
     return toolbarView?.insertFragmentInNode(fragment, parentNode)
+  }
+
+  hasNonWhitespaceText = (node) => {
+    return !!node.textContent.trim();
   }
 
   //Creating a ProseMirror editor view at a specified this.node
@@ -128,11 +163,19 @@ export class Editor {
 
     this.node.replaceChildren();
 
-    this.editorView = new EditorView(this.node, { 
-      state, 
+    this.editorView = new EditorView(this.node, {
+      state,
       editable: () => true,
+      attributes: {
+        class: `${this.hasNonWhitespaceText(state.doc) ? '' : 'do-new'}`,
+        // "data-placeholder": state.doc.childCount === 0 ? placeholderText : "",
+        // "data-placeholder": `${hasNonWhitespaceText(state.doc) ? '' : 'Hello World'}`,
+      }
      });
 
+
+    // console.log(this.editorView.state.doc)
+    // console.log(hasNonWhitespaceText(state.doc))
     console.log("Editor created. Mode:", this.mode);
   }
 
@@ -140,20 +183,24 @@ export class Editor {
     if (this.editorView) {
       console.log(this.editorView.state.doc.content);
       const content = DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
+      // console.log(content)
       // const serializer = DOMSerializer.fromSchema(schema);
-
-      // const fragment = serializer.serializeFragment(view.state.doc.content);
-
       // const htmlString = new XMLSerializer().serializeToString(fragment);
-      // document.body.innerHTML = htmlString;
+
+      // const json = this.editorView.state.doc.toJSON();
+      // console.log(json);
 
       this.editorView.destroy();
       this.editorView = null;
       this.authorToolbarView = null;
-      //FIXME: DO NOT USE innerHTML
-      // TODO: is there HTML serializer? 
-      this.node.innerHTML = new XMLSerializer().serializeToString(content);
-      //TODO: Test below for above.
+
+      //TODO: Create a new function that normalises, e.g., clean up PM related stuff, handle other non-PM but dokieli stuff
+      //TODO: dokieli menu is currently outside of body, but it should be in body. Clone the menu, add it back into the body after replaceChildren
+
+      document.body.replaceChildren(content);
+
+
+      // document.body.insertAdjacentHTML('afterbegin', content);
       // document.body.replaceChildren(new DOMParser().parseFromString(content, "text/html").body);
 
       console.log("Editor destroyed. Mode:", this.mode);

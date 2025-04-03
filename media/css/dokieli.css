@@ -2688,19 +2688,38 @@ max-width:none;
   height: 40px;
   width: 40px; }
 
-.editor-placeholder {
-  position: relative; }
-  .editor-placeholder:after {
+  [class~="do-new"] {
+    height:100%;
+  }
+
+  [class~="do-new"] h1:after,
+  [class~="do-new"] p:after {
+    color:#333;
     content: attr(data-placeholder) !important;
     font-style: italic;
+
     position: absolute;
     left: 0;
     top: 0;
-    white-space: pre;
-    padding: inherit;
-    margin: inherit; }
+    /* white-space: pre; */
+    /* padding: inherit;
+    margin: inherit; */
+  }
 
-.editor-placeholder-relative {
+  [class~="do-new"] h1[data-placeholder],
+  [class~="do-new"] p[data-placeholder] {
+    /* height:1em; */
+    position:relative;
+    background-color:#eee;
+  }
+
+  /*Move to basic.css?*/
+h1 + div p:first-child {
+  margin-top:0;
+}
+
+
+/* .editor-placeholder-relative {
   position: relative; }
   .editor-placeholder-relative:after {
     content: attr(data-placeholder) !important;
@@ -2708,7 +2727,7 @@ max-width:none;
     position: relative;
     white-space: pre;
     padding: inherit;
-    margin: inherit; }
+    margin: inherit; } */
 
 .toolbar-arrow-under:after, .toolbar-arrow-over:before {
   border-style: solid;
@@ -2963,8 +2982,8 @@ height:auto;
   border-radius: 5px;
   color: #fff; }
 
-.editor-placeholder:after {
-  color: #b3b3b1; }
+/* .editor-placeholder:after {
+  color: #b3b3b1; } */
 .editor-table-builder {
   display: none;
   position: absolute;
