@@ -15,7 +15,7 @@ export const allowedEmptyAttributes = ['open', 'alt'];
 const headings = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
 
 function getAttributes (node) {
-  const attrs = {};
+  let attrs = {};
   for (const attr of node.attributes) {
     attrs[attr.name] = attr.value; 
   }
@@ -23,7 +23,7 @@ function getAttributes (node) {
   const nodeName = node.nodeName.toLowerCase();
 
   if (headings.includes(nodeName)) {
-    return {
+    attrs = {
       ...attrs,
       level: nodeName[1],
     }
@@ -116,8 +116,8 @@ let customNodes = {
     attrs: { level: { default: 1, validate: "number" }, originalAttributes: { default: {} } },
     parseDOM: headings.map(h => ({ tag: h, getAttrs(node) { return getAttributes(node); } })),
     toDOM(node) {
-      const { level, ...attrsWithoutLevel } = node.attrs;
-      return ["h" + node.attrs.level, { ...node.attrs.originalAttributes }, 0]
+      const { level, ...attrsWithoutLevel } = node.attrs.originalAttributes;
+      return ["h" + node.attrs.originalAttributes.level, { ...attrsWithoutLevel }, 0]
     },
     defining: true
   },
