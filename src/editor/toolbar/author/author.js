@@ -179,47 +179,6 @@ TODO:
 
   // Called when there is a state change, e.g., added something to the DOM or selection change.
   update(view) {
-    // const placeHolderCandidates = document.body.querySelectorAll('.do-new h1:first-child, .do-new p:first-child');
-    // console.log(placeHolderCandidates)
-
-    const { state, dispatch } = this.editorView;
-    const { doc, tr } = state;
-
-    doc.descendants((node, pos) => {
-console.log(node.attrs, pos)
-      // Check if the node has a "class" attribute containing "do-new"
-      if (node.attrs.class && node.attrs.class.includes("do-new")) {
-        const firstChild = node.firstChild;
-console.log(firstChild)
-        if (firstChild && (firstChild.type.name === "heading" || firstChild.type.name === "p")) {
-          const isEmpty = !firstChild.textContent.trim();
-          const hasPlaceholder = firstChild.attrs["data-placeholder"];
-
-          if (isEmpty && !hasPlaceholder) {
-            tr.setNodeMarkup(pos + 1, null, { ...firstChild.attrs, "data-placeholder": true });
-          } else if (!isEmpty && hasPlaceholder) {
-            const newAttrs = { ...firstChild.attrs };
-            delete newAttrs["data-placeholder"];
-            tr.setNodeMarkup(pos + 1, null, newAttrs);
-          }
-        }
-      }
-    });
-    if (tr.steps.length) {
-      dispatch(tr);
-    }
-
-    // if (placeHolderCandidates) {
-    //   placeHolderCandidates.forEach(i => {
-    //     if (!i.textContent.trim()) {
-    //       i.addAttribute('data-placeholder');
-    //     }
-    //     else if (i.hasAttribute('data-placeholder') && i.textContent.trim()) {
-    //       i.removeAttribute('data-placeholder');
-    //     }
-    //   });
-    // }
-
     this.selectionUpdate(view);
     const selection = window.getSelection();
     const isSelection = selection && !selection.isCollapsed;
