@@ -131,6 +131,9 @@ export default {
       'target': ''
     },
     'skipClassWithValue': '',
+    'skipEscapingDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
+    'removeWrapperSelector': '.ProseMirror'
+  },
 
   Placeholder: {
     h1: 'Title',
