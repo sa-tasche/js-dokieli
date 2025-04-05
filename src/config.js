@@ -131,7 +131,13 @@ export default {
       'target': ''
     },
     'skipClassWithValue': '',
-    'skipEscapingDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3']
+
+  Placeholder: {
+    h1: 'Title',
+    h2: 'Section title',
+    h3: 'Sub-section title',
+    h4: 'Sub-sub-section title',
+    p: 'Cogito, ergo sum.'
   },
 
   ArticleNodeSelectors: [
