@@ -91,11 +91,11 @@ body {
   /*width:100%;*/
 }
 
-body>header {
+header:first-child {
   text-align: center;
 }
 
-body>header {
+header:first-child {
   margin-top: 2em;
 }
 
@@ -606,8 +606,8 @@ dl+hr:before {
   content: "\2042";
 }
 
-body>header,
-body>footer {
+header:first-child,
+footer:first-child {
   overflow: hidden;
   padding-top: 1em;
   padding-bottom: 1em;
@@ -616,28 +616,28 @@ body>footer {
   margin-top: 2em;
 }
 
-body>footer>* {
+footer:first-child>* {
   max-width: 50em;
   margin: 0 auto;
 }
 
-body>header a,
-body>footer a,
-body>footer a:hover {
+header:first-child a,
+footer:first-child a,
+footer:first-child a:hover {
   color: inherit;
   border-bottom-color: #080;
 }
 
-body>header a:hover,
-body>footer a:hover {
+header:first-child a:hover,
+footer:first-child a:hover {
   background-color: transparent;
 }
 
-body>footer a:visited {
+footer:first-child a:visited {
   color: #fff;
 }
 
-body>footer h2 {
+footer:first-child h2 {
   margin-top: 1em;
 }
 
@@ -1224,8 +1224,8 @@ margin-bottom:0;
 #home #features,
 #home #get-involved,
 /* #home #supporters, */
-body>header,
-body>footer {
+header:first-child,
+footer:first-child {
   padding: 1em 0.25em;
   margin-top: 0;
   margin-bottom:0;
@@ -1252,17 +1252,17 @@ body>footer {
   content: "";
 }
 
-body>header {
+header:first-child {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-body>header {
+header:first-child {
   padding:0.5em 1em;
 }
 
-body>header address a {
+header:first-child address a {
   display: block;
   font-size: 2em;
   font-weight: bold;
@@ -1271,22 +1271,22 @@ body>header address a {
   line-height: 1;
 }
 
-body>header address a img {
+header:first-child address a img {
 vertical-align: middle;
 }
 
-body>header address a img + span {
+header:first-child address span {
 margin-left:0.25em;
 }
-body.do-site>header address a img + span {
+body.do-site header:first-child address span {
 display: none;
 }
 
-body>header nav {
+header:first-child nav {
 margin-right:4.5em;
 }
 
-body>header ul {
+header:first-child ul {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1294,13 +1294,13 @@ body>header ul {
   gap: 2em;
 }
 
-body>header li {
+header:first-child li {
   display: inline;
 }
-body>header li:before {
+header:first-child li:before {
   content: "";
 }
-body>header li a {
+header:first-child li a {
   text-decoration: none;
 }
 
@@ -1392,7 +1392,8 @@ body>header li a {
   grid-area: c;
 }
 
-#home #supporters li {
+#home #supporters li,
+#home #supporters li p {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1402,7 +1403,9 @@ body>header li a {
   border:0;
 }
 
-#home #supporters a img + span {
+#home #supporters a img + span,
+/*XXX: ProseMirror hack*/
+#home #supporters p a:has(img) + span:not(:has(time)) {
   display: none;
 }
 
@@ -1447,6 +1450,18 @@ body>header li a {
 
 #home #features .do.fragment {
   display: none;
+}
+
+/*XXX: ProseMirror hack*/
+figcaption > p:only-child,
+li > p:only-child {
+  margin: 0;
+  display:inline;
+}
+
+figcaption > p:first-of-type:nth-of-type(1):not(:only-child),
+li > p:first-of-type:nth-of-type(1):not(:only-child) {
+  margin-top: 0;
 }
 
 /*

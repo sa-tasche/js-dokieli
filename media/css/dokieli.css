@@ -326,6 +326,7 @@ white-space: pre;
 .do th,
 .do legend {
 font-weight:bold !important;
+padding:0;
 }
 .do label {
 font-weight:normal !important;
@@ -437,7 +438,7 @@ aside.do input#share-resource-clipboard{
 width: calc(100% - 7em);
 margin-left: 0;
 }
-.editor-form input + label
+.editor-form input + label,
 aside.do input + label {
 margin-left:0.25em;
 vertical-align: middle;
@@ -2493,7 +2494,7 @@ span {
 }
 
 .editor-slashmenu li button span {
-  color: #fff;
+  /* color: #000; */
   display: block;
   margin-left: 1em;
 }
@@ -2689,11 +2690,11 @@ max-width:none;
   width: 40px; }
 
   [class~="do-new"] {
-    height:100%;
+    height:100vh;
   }
 
-  [class~="do-new"] h1:after,
-  [class~="do-new"] p:after {
+  [class~="do-new"] h1:has(br:only-child):after,
+  [class~="do-new"] p:has(br:only-child):after {
     color:#333;
     content: attr(data-placeholder) !important;
     font-style: italic;
@@ -2706,8 +2707,8 @@ max-width:none;
     margin: inherit; */
   }
 
-  [class~="do-new"] h1[data-placeholder],
-  [class~="do-new"] p[data-placeholder] {
+  [class~="do-new"] h1[data-placeholder]:has(br),
+  [class~="do-new"] p[data-placeholder]:has(br) {
     /* height:1em; */
     position:relative;
     background-color:#eee;
