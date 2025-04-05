@@ -28,6 +28,7 @@ export function formHandlerLicense(e) {
   const htmlString = createLicenseHTML(license, options);
 
   this.replaceSelectionWithFragment(fragmentFromString(htmlString));
+  this.hideMenu()
 }
 
 export function formHandlerInbox(e) {
