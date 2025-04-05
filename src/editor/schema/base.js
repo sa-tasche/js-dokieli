@@ -97,13 +97,6 @@ let customNodes = {
     parseDOM: [{ tag: "nav", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["nav", { ...node.attrs.originalAttributes }, 0]; }
   },
-  address: {
-    content: "block+",
-    group: "block",
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "address", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["address", { ...node.attrs.originalAttributes }, 0]; }
-  },
   p: {
     content: "inline*",
     group: "block",
@@ -111,13 +104,19 @@ let customNodes = {
     parseDOM: [{ tag: "p", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["p", { ...node.attrs.originalAttributes }, 0]; }
   },
+  address: {
+    content: "inline+",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "address", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["address", { ...node.attrs.originalAttributes }, 0]; }
+  },
   heading: {
     content: "inline*",
     group: "block",
     attrs: { level: { default: 1, validate: "number" }, originalAttributes: { default: {} } },
     parseDOM: headings.map(h => ({ tag: h, getAttrs(node) { return getAttributes(node); } })),
     toDOM(node) {
-      console.log(node.attrs);
       const { level, originalAttributes } = node.attrs;
       return ["h" + level, { ...originalAttributes }, 0]
     },
@@ -234,11 +233,11 @@ let customNodes = {
     toDOM(node) { return ["figure", { ...node.attrs.originalAttributes }, 0]; },
   },
   figcaption: {
-    content: "inline*",
+    content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "figcaption", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["figpcaption", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM(node) { return ["figcaption", { ...node.attrs.originalAttributes }, 0]; },
   },
   details: {
     content: "block+",
