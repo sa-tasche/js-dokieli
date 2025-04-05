@@ -72,6 +72,18 @@ function domToString (node, options) {
 function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
   options = options || Config.DOMNormalisation
   var out = ''
+// console.log(node)
+//   const wrapper = node.querySelector(options.removeWrapperSelector);
+
+//   if (wrapper) {
+//     const parent = wrapper.parentNode;
+
+//     while (wrapper.firstChild) {
+//       parent.insertBefore(wrapper.firstChild, wrapper);
+//     }
+
+//     parent.removeChild(wrapper);
+//   }
 
   if (typeof node.nodeType === 'undefined') return out
 

@@ -28,6 +28,8 @@ export class Editor {
     this.authorToolbarView = this.editorView?.pluginViews[0];
 
     this.hasRunTextQuoteSelector = false;
+
+    this.placeholder = Config.Placeholder;
   }
 
   // Initialize editor and toolbar based on the default editor mode
@@ -70,19 +72,27 @@ export class Editor {
   toggleEditor(mode, e, options) {
     DO.Editor['new'] = false;
 
+    let node = document.body;
+
     if (options?.template === 'new' ) {
       DO.Editor['new'] = true;
       this.setTemplate(mode, options);
+      node = node.querySelector('article');
     }
 
     updateLocalStorageProfile(Config.User);
-    const node = document.body;
+
     this.init(mode, node);
     this.showEditorModeActionMessage(e, mode);
     Config.EditorEnabled = (mode === 'author');
 
     // this.setEditorDataItems(e);
   }
+
+  // replaceContent(mode, content) {
+  //   this.destroyEditor(content);
+  //   this.init(mode);
+  // }
 
   setTemplate(mode, options) {
     switch(options.template) {
@@ -95,7 +105,7 @@ export class Editor {
   setTemplateNew(mode, options) {
     //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
     // Add initial nodes h1, p with no content.
-    document.body.replaceChildren(fragmentFromString(`<main><article><h1 data-placeholder="Title" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-placeholder="Cogito, ergo sum."></p></div></article></main>`));
+    document.body.replaceChildren(fragmentFromString(`<main><article><h1 data-placeholder="${this.placeholder.h1}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-placeholder="${this.placeholder.p}"></p></div></article></main>`));
 
     // If the initial nodes have no content, show placeholder text, else remove placeholder text.
 
@@ -137,7 +147,7 @@ export class Editor {
   }
 
   //Creating a ProseMirror editor view at a specified this.node
-  createEditor() {
+  createEditor(options) {
     const editorToolbarPlugin = new Plugin({
       // this editorView is passed onto the Plugin - not this.editorView
       view(editorView) {
@@ -179,10 +189,10 @@ export class Editor {
     console.log("Editor created. Mode:", this.mode);
   }
 
-  destroyEditor() {
+  destroyEditor(content) {
     if (this.editorView) {
       console.log(this.editorView.state.doc.content);
-      const content = DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
+      const content = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
       // console.log(content)
       // const serializer = DOMSerializer.fromSchema(schema);
       // const htmlString = new XMLSerializer().serializeToString(fragment);
