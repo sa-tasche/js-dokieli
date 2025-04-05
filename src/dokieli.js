@@ -4224,14 +4224,19 @@ console.log(reason);
       options = options || {};
 
       getResourceInfo(data, options).then(i => {
-        if (e.target.closest('.create-version')) {
-          createMutableResource(url);
+        if (DO.Editor.new) {
+          DO.U.saveAsDocument(e);
         }
-        else if (e.target.closest('.create-immutable')) {
-          createImmutableResource(url);
-        }
-        else if (e.target.closest('.resource-save')) {
-          updateMutableResource(url);
+        else {
+          if (e.target.closest('.create-version')) {
+            createMutableResource(url);
+          }
+          else if (e.target.closest('.create-immutable')) {
+            createImmutableResource(url);
+          }
+          else if (e.target.closest('.resource-save')) {
+            updateMutableResource(url);
+          }
         }
       });
     },
@@ -6651,7 +6656,6 @@ console.log(response)
       DO.U.hideDocumentMenu();
     },
 
-
     //XXX: To be deprecated. Formerly used for createNewDocument 
     createNewDocumentSaveAs: function(e) {
       e.target.disabled = true
@@ -6761,7 +6765,10 @@ console.log(response)
     },
 
     saveAsDocument: async function saveAsDocument (e) {
-      e.target.disabled = true;
+      if (e) {
+        e.target.closest('button').disabled = true;
+      }
+
       document.documentElement.appendChild(fragmentFromString('<aside id="save-as-document" class="do on">' + DO.C.Button.Close + '<h2>Save As Document</h2></aside>'));
 
       var saveAsDocument = document.getElementById('save-as-document');
@@ -6913,9 +6920,13 @@ console.log(response)
       }
       accessibilityReport = '<details id="accessibility-report-save-as"><summary>Accessibility Report</summary>' + accessibilityReport + '</details>';
 
-
-      var dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
-      var derivationData = '<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label for="derivation-data">Derivation data</label></li>'
+      let dokielizeResource = '';
+      let derivationData = '';
+      
+      if (!DO.Editor['new']) {
+        dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
+        derivationData = '<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label for="derivation-data">Derivation data</label></li>'
+      }
 
       var id = 'location-save-as';
       var action = 'write';
@@ -6952,23 +6963,25 @@ console.log(response)
         var html = document.documentElement.cloneNode(true)
         var o, r
 
-        var dokielize = document.querySelector('#dokielize-resource')
-        if (dokielize.checked) {
-          html = getDocument(html)
-          html = await DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
-        }
+        if (!DO.Editor['new']) {
+          var dokielize = document.querySelector('#dokielize-resource')
+          if (dokielize.checked) {
+            html = getDocument(html)
+            html = await DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
+          }
 
-        var wasDerived = document.querySelector('#derivation-data')
-        if (wasDerived.checked) {
-          o = { 'id': 'document-derived-from', 'title': 'Derived From' };
-          r = { 'rel': 'prov:wasDerivedFrom', 'href': DO.C.DocumentURL };
-          html = setDocumentRelation(html, [r], o);
+          var wasDerived = document.querySelector('#derivation-data')
+          if (wasDerived.checked) {
+            o = { 'id': 'document-derived-from', 'title': 'Derived From' };
+            r = { 'rel': 'prov:wasDerivedFrom', 'href': DO.C.DocumentURL };
+            html = setDocumentRelation(html, [r], o);
 
-          html = setDate(html, { 'id': 'document-derived-on', 'property': 'prov:generatedAtTime', 'title': 'Derived On' });
+            html = setDate(html, { 'id': 'document-derived-on', 'property': 'prov:generatedAtTime', 'title': 'Derived On' });
 
-          o = { 'id': 'document-identifier', 'title': 'Identifier' };
-          r = { 'rel': 'owl:sameAs', 'href': storageIRI };
-          html = setDocumentRelation(html, [r], o);
+            o = { 'id': 'document-identifier', 'title': 'Identifier' };
+            r = { 'rel': 'owl:sameAs', 'href': storageIRI };
+            html = setDocumentRelation(html, [r], o);
+          }
         }
 
         var inboxLocation = saveAsDocument.querySelector('#' + locationInboxId + '-' + locationInboxAction);
@@ -7017,14 +7030,25 @@ console.log(response)
 
             let url = response.url || storageIRI
 
-            var documentMode = (DO.C.WebExtension) ? '' : '?author=true'
+            if (DO.Editor['new']) {
+              DO.Editor['new'] = false;
 
-            saveAsDocument.insertAdjacentHTML('beforeend',
-              '<div class="response-message"><p class="success">' +
-              'Document saved at <a href="' + url + documentMode + '">' + url + '</a></p></div>'
-            )
+              window.history.pushState({}, null, url);
 
-            window.open(url + documentMode, '_blank')
+              // DO.Editor.replaceContent('author', fragmentFromString(html));
+
+              DO.U.hideDocumentMenu();
+            }
+            else {
+              var documentMode = (DO.C.WebExtension) ? '' : '?author=true'
+
+              saveAsDocument.insertAdjacentHTML('beforeend',
+                '<div class="response-message"><p class="success">' +
+                'Document saved at <a href="' + url + documentMode + '">' + url + '</a></p></div>'
+              )
+
+              window.open(url + documentMode, '_blank');
+            }
           })
 
           .catch(error => {
