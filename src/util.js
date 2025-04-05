@@ -25,6 +25,16 @@ function convertToISO8601Duration(timeValue) {
   return formattedDuration;
 }
 
+function debounce(func, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
+
 function removeChildren(node) {
   while (node.firstChild) {
     node.removeChild(node.firstChild);
