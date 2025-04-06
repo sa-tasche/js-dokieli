@@ -50,7 +50,7 @@ export function formHandlerImg(e) {
 
   const formValues = getFormValues(e.target);
 
-  const p = fragmentFromString('<p>Drag an image here</p>');
+  // const p = fragmentFromString('<p>Drag an image here</p>');
 
   const src = formValues['img-src'];
   const alt = formValues['img-alt'];
@@ -85,7 +85,7 @@ export function formHandlerImg(e) {
 
   this.insertImage(attrs)(this.editorView.state, this.editorView.dispatch);
 
-  preview.replaceChildren(p);
+  preview.replaceChildren();
   this.clearToolbarForm(e.target);
   this.clearToolbarButton('img');
 }
@@ -209,10 +209,10 @@ export function formHandlerSemantics(e, action) {
 
   // const range = selection.getRangeAt(0);
   // const selectedParentElement = getSelectedParentElement(range);
-  console.log(e.target)
+  // console.log(e.target)
 
   const formValues = getFormValues(e.target);
-  console.log(formValues);
+  // console.log(formValues);
 
   //TODO: Copied from social/handlers.js getFormActionData
   Object.entries(formValues).forEach(([key, value]) => {
@@ -226,7 +226,7 @@ export function formHandlerSemantics(e, action) {
   attrs = Object.fromEntries(
     Object.entries(attrs).filter(([_, value]) => value)
   );
-  console.log(element, attrs)
+  // console.log(element, attrs)
 
   this.updateMarkWithAttributes(schema, element, attrs)(this.editorView.state, this.editorView.dispatch);
 
@@ -236,7 +236,7 @@ export function formHandlerSemantics(e, action) {
 
 export function processAction(action, formValues, selectionData) {
   const data = getFormActionData(action, formValues, selectionData);
-console.log(data);
+// console.log(data);
   // const { annotationDistribution, ...otherFormData } = data;
 
 //TODO: Need to get values for id, refId, opts, 
@@ -271,16 +271,15 @@ console.log(data);
       switch(refType) {
         case 'ref-footnote': default:
           note = createNoteDataHTML(noteData);
-          console.log(noteData, note)
 
           asideNote = `
             <aside class="note">
               ${note}
             </aside>
           `;
+          asideNode = fragmentFromString(asideNote);
 
           DO.Editor.insertFragmentInNode(asideNode);
-
 
           DO.U.positionNote(refId, id);
           break;
