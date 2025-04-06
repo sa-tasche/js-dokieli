@@ -7033,23 +7033,30 @@ console.log(response)
 
             let url = response.url || storageIRI
 
+            var documentMode = (DO.C.WebExtension) ? '' : '?author=true'
+
+            saveAsDocument.insertAdjacentHTML('beforeend',
+              '<div class="response-message"><p class="success">' +
+              'Document saved at <a href="' + url + documentMode + '">' + url + '</a></p></div>'
+            )
+
             if (DO.Editor['new']) {
+              DO.Editor.replaceContent('author', fragmentFromString(html));
               DO.Editor['new'] = false;
 
-              window.history.pushState({}, null, url);
+              var urlObject = new URL(url);
+              var documentURLObject = new URL(DO.C.DocumentURL);
 
-              // DO.Editor.replaceContent('author', fragmentFromString(html));
-
-              DO.U.hideDocumentMenu();
+              if (urlObject.origin === documentURLObject.origin) {
+                window.history.pushState({}, null, url);
+                DO.U.setDocumentURL(url);
+                DO.U.hideDocumentMenu();
+              }
+              else {
+                window.open(url + documentMode, '_blank');
+              }
             }
             else {
-              var documentMode = (DO.C.WebExtension) ? '' : '?author=true'
-
-              saveAsDocument.insertAdjacentHTML('beforeend',
-                '<div class="response-message"><p class="success">' +
-                'Document saved at <a href="' + url + documentMode + '">' + url + '</a></p></div>'
-              )
-
               window.open(url + documentMode, '_blank');
             }
           })
