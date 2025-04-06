@@ -41,6 +41,13 @@ let customNodes = {
   text: {
     group: "inline"
   },
+  p: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "p", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["p", { ...node.attrs.originalAttributes }, 0]; }
+  },
   main: {
     content: "block*",
     group: "block",
@@ -96,13 +103,6 @@ let customNodes = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "nav", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["nav", { ...node.attrs.originalAttributes }, 0]; }
-  },
-  p: {
-    content: "inline*",
-    group: "block",
-    attrs: { originalAttributes: { default: {} } },
-    parseDOM: [{ tag: "p", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["p", { ...node.attrs.originalAttributes }, 0]; }
   },
   address: {
     content: "inline+",
