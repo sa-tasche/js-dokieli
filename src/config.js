@@ -1,6 +1,6 @@
 'use strict'
 
-import { Icon } from './template.js';
+import { getButtonHTML } from './ui/button-icons.js';
 import rdf from 'rdf-ext';
 
 /**
@@ -21,11 +21,11 @@ export default {
       DO.U.highlightItems();
       DO.U.showAsTabs();
       DO.U.initDocumentActions();
-      DO.U.showTextQuoteSelector();
       DO.U.showDocumentInfo();
       DO.U.showFragment();
       DO.U.initCopyToClipboard();
       DO.U.setDocumentMode();
+      DO.U.initEditor();
       DO.U.initMath();
       DO.U.initSlideshow();
     }
@@ -69,8 +69,8 @@ export default {
   },
   MessageLog: [],
   AvatarSize: 48,
-  DisableLocalStorageButtons: '<button class="local-storage-disable-html" title="Disable local storage (temporary) in the browser">' + Icon[".fas.fa-database.fa-2x"] + 'Local Storage</button>',
-  EnableLocalStorageButtons: '<button class="local-storage-enable-html" title="Enable local storage (temporary) in the browser">' + Icon[".fas.fa-database.fa-2x"] + 'Local Storage</button>',
+  DisableLocalStorageButtons: getButtonHTML({ button: 'local-storage', buttonClass: 'local-storage-disable-html', buttonTextContent: 'Local Storage', buttonTitle: 'Disable local storage (temporary) in the browser', iconSize: 'fa-2x' }),
+  EnableLocalStorageButtons: getButtonHTML({ button: 'local-storage', buttonClass: 'local-storage-enable-html', buttonTextContent: 'Local Storage', buttonTitle: 'Enable local storage (temporary) in the browser', iconSize: 'fa-2x' }),
   CDATAStart: '//<![CDATA[',
   CDATAEnd: '//]]>',
   SortableList: false,
@@ -83,15 +83,23 @@ export default {
   Editor: {
     headings: ["h1", "h2", "h3", "h4", "h5", "h6"],
     regexEmptyHTMLTags: /<[^\/>][^>]*><\/[^>]+>/gim,
+    mode: 'social',
     ButtonLabelType: 'fontawesome',
-    DisableEditorButton: '<button class="editor-disable" title="Disable editor">' + Icon[".fas.fa-i-cursor.fa-2x"] + 'Edit</button>',
-    EnableEditorButton: '<button class="editor-enable" title="Enable editor">' + Icon[".fas.fa-i-cursor.fa-2x"] + 'Edit</button>'
+    DisableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
+    EnableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
+    Placeholder: {
+      h1: 'Title',
+      h2: 'Section title',
+      h3: 'Sub-section title',
+      h4: 'Sub-sub-section title',
+      p: 'Cogito, ergo sum.'
+    },
   },
   Button: {
-    Close: '<button class="close" title="Close">' + Icon[".fas.fa-times.fa-2x"] + '</button>',
-    Delete: '<button class="delete" title="Delete">' + Icon[".fas.fa-trash-alt"] + '</button>',
-    Toggle: '<button class="toggle" title="Show/Hide">' + Icon[".fas.fa-angle-right"] + '</button>',
-    More: '<button class="more" title="Show more">' + Icon[".fas.fa-rotate"] + '</button>'
+    Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
+    Delete: getButtonHTML({ button: 'delete', buttonClass: 'delete', buttonTitle: 'Delete' }),
+    Toggle: getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonTitle: 'Show/Hide' }),
+    More: getButtonHTML({ button: 'more', buttonClass: 'more', buttonTitle: 'Show more' })
   },
   ButtonStates: {
     'resource-share': true,
@@ -130,7 +138,8 @@ export default {
       'target': ''
     },
     'skipClassWithValue': '',
-    'skipEscapingDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3']
+    'skipEscapingDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
+    'removeWrapperSelector': '.ProseMirror'
   },
 
   ArticleNodeSelectors: [
@@ -193,6 +202,19 @@ export default {
     "oa:questioning": "?",
     "oa:replying": "💬",
     "bookmark:Bookmark": "🔖"
+  },
+
+  ActionToMotivation: {
+    'approve': 'oa:assessing',
+    'disapprove': 'oa:assessing',
+    'specificity': 'oa:questioning',
+    'bookmark': 'oa:bookmarking',
+    'comment': 'oa:replying',
+    'note': 'oa:commenting',
+    'citation': 'oa:linking',
+    'footnote': 'oa:describing',
+    'reference': 'oa:linking',
+    'semantics': 'oa:classifying'
   },
 
   DocumentDoItems: [
@@ -431,7 +453,7 @@ export default {
   ],
 
   ActionActivityIndex: {
-    'article': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Note', 'https://www.w3.org/ns/activitystreams#Article', 'https://www.w3.org/ns/activitystreams#Document', 'http://schema.org/CreativeWork' ],
+    'comment': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Note', 'https://www.w3.org/ns/activitystreams#Article', 'https://www.w3.org/ns/activitystreams#Document', 'http://schema.org/CreativeWork' ],
     'approve': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Like', 'https://www.w3.org/ns/activitystreams#Activity', 'http://schema.org/CreativeWork' ],
     'disapprove': [ 'http://www.w3.org/ns/oa#Annotation', 'https://www.w3.org/ns/activitystreams#Dislike', 'https://www.w3.org/ns/activitystreams#Activity', 'http://schema.org/CreativeWork' ],
     'specificity': [ 'http://www.w3.org/ns/oa#Annotation','https://www.w3.org/ns/activitystreams#Note', 'https://www.w3.org/ns/activitystreams#Article', 'https://www.w3.org/ns/activitystreams#Document', 'http://schema.org/CreativeWork' ],

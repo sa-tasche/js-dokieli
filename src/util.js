@@ -25,6 +25,16 @@ function convertToISO8601Duration(timeValue) {
   return formattedDuration;
 }
 
+function debounce(func, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
+
 function removeChildren(node) {
   while (node.firstChild) {
     node.removeChild(node.firstChild);
@@ -134,6 +144,17 @@ function generateAttributeId(prefix, string, suffix) {
   return id;
 }
 
+function getFormValues(form) {
+  const formData = new FormData(form);
+
+  const formValues = Object.fromEntries(
+    [...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+  );
+
+// console.log(formValues);
+  return formValues;
+}
+
 function getHash(message, algo = "SHA-256") {
   var buffer = new TextEncoder("utf-8").encode(message);
   return window.crypto.subtle.digest(algo, buffer).then(function (hash) {
@@ -148,6 +169,13 @@ function getHash(message, algo = "SHA-256") {
     }
     return hexCodes.join("");
   });
+}
+
+//TODO: Consolidate with generateUUID() and related.
+function getRandomUUID() {
+  const uuid = crypto.randomUUID();
+  const randomLetter = String.fromCharCode(97 + Math.floor(Math.random() * 6)) // random letter from a-f
+  return randomLetter + uuid.slice(1);
 }
 
 function hashCode(s) {
@@ -170,6 +198,11 @@ function sortToLower(array, key) {
     return a.toLowerCase().localeCompare(b.toLowerCase());
   });
 }
+
+function kebabToCamel(str) {
+  return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+}
+
 
 function matchAllIndex(string, regexp) {
   // const matches = Array.from(string.matchAll(regexp));
@@ -225,6 +258,7 @@ function findPreviousDateTime(times, checkTime) {
 }
 
 export {
+  debounce,
   uniqueArray,
   getDateTimeISO,
   getDateTimeISOFromMDY,
@@ -238,8 +272,11 @@ export {
   generateId,
   getHash,
   hashCode,
+  getRandomUUID,
   sortToLower,
   matchAllIndex,
   isValidISBN,
-  findPreviousDateTime
+  findPreviousDateTime,
+  getFormValues,
+  kebabToCamel
 };

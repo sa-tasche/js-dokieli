@@ -7,19 +7,15 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getClosestSectionNode, getAgentHTML, setEditSelections, getNodeLanguage, createActivityHTML, createLanguageHTML, createLicenseHTML, createRightsHTML, getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getResourceTypeOptionsHTML, getPublicationStatusOptionsHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getCitationOptionsHTML, getDocumentNodeFromString, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
 import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime } from './util.js'
 import { generateGeoView } from './geo.js'
-import MediumEditor from "medium-editor/dist/js/medium-editor.js";
-// window.MediumEditor = MediumEditor;
-import MediumEditorTable from "medium-editor-tables/dist/js/medium-editor-tables.js";
-// window.MediumEditorTable = MediumEditorTable;
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo } from './auth.js'
-import { Icon, createRDFaHTML } from './template.js'
+import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
 const d3 = { ...d3Selection, ...d3Force };
@@ -29,6 +25,8 @@ import LinkHeader from 'http-link-header';
 import DOMPurify from 'dompurify';
 import rdf from 'rdf-ext';
 import Config from './config.js';
+import { Editor } from './editor/editor.js';
+import { getButtonHTML } from './ui/button-icons.js'
 
 const ns = Config.ns;
 let DO;
@@ -1371,11 +1369,13 @@ DO = {
           objectValue = DOMPurify.sanitize(objectValue);
         }
 
-        if (!g.node(rdf.namedNode(t.object.value)).out(ns.rdf.type).values.length) {
+        //XXX: Don't remember why this if was included but it seems to be problematic since it skips adding nodes where the object doesn't have a type. So commenting it out for now. Seems to work as expected.
+        // if (!g.node(rdf.namedNode(t.object.value)).out(ns.rdf.type).values.length) {
           if (!graphNodes.includes(t.subject.value)) {
             graphNodes.push(t.subject.value);
             graphData.nodes.push({"id": t.subject.value, "group": sGroup, "visited": sVisited });
           }
+
           if (!graphNodes.includes(t.object.value)) {
             if (t.object.value in DO.C.Resource) {
               // console.log(t.object.value)
@@ -1390,7 +1390,7 @@ DO = {
             graphNodes.push(objectValue);
             graphData.nodes.push({"id": objectValue, "group": oGroup, "visited": oVisited });
           }
-        }
+        // }
 
         graphData.links.push({"source": t.subject.value, "target": objectValue, "value": t.predicate.value});
       });
@@ -1498,142 +1498,10 @@ DO = {
       }
     },
 
-    getTextQuoteSelectorFromLocation: function(location) {
-      var regexp = /#selector\(type=TextQuoteSelector,(.*)\)/;
-      const matches = location.hash.match(regexp);
-
-      if (matches) {
-        var selectorsArray = matches[1].split(',')
-        var selector = {};
-
-        selectorsArray.forEach(s => {
-          var kv = s.split('=');
-
-          if (kv.length == 2) {
-            switch(kv[0]) {
-              case 'prefix':
-                selector['prefix'] = decodeURIComponent(kv[1]);
-                break;
-              case 'exact':
-                selector['exact'] = decodeURIComponent(kv[1]);
-                break;
-              case 'suffix':
-                selector['suffix'] = decodeURIComponent(kv[1]);
-                break;
-            }
-          }
-
-        })
-
-        return selector;
-      }
-    },
-
-    showTextQuoteSelector: function(containerNode) {
-      var motivatedBy = 'oa:highlighting';
-      var selector = DO.U.getTextQuoteSelectorFromLocation(document.location);
-      if (selector && selector.exact && selector.exact.length) {
-        //XXX: TODO: Copied from showAnnotation
-
-        var refId = document.location.hash.substring(1);
-        var refLabel = DO.U.getReferenceLabel(motivatedBy);
-
-        containerNode = containerNode || getDocumentContentNode(document);
-
-        var docRefType = '<sup class="ref-highlighting"><a rel="oa:hasTarget" href="#' + refId + '">' + refLabel + '</a></sup>';
-
-        var options = {
-          'do': true,
-          'mode': '#selector'
-        };
-// console.log(selector)
-// console.log(refId)
-        DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, options)
-      }
-    },
-
-    importTextQuoteSelector: function(containerNode, selector, refId, motivatedBy, docRefType, options) {
-// console.log(containerNode)
-// console.log(selector)
-// console.log(refId)
-// console.log(motivatedBy)
-// console.log(docRefType)
-// console.log(options)
-      var containerNodeTextContent = containerNode.textContent;
-      //XXX: Seems better?
-      // var containerNodeTextContent = fragmentFromString(getDocument(containerNode)).textContent.trim();
-// console.log(containerNodeTextContent);
-      options = options || {};
-
-// console.log(selector)
-      var prefix = selector.prefix || '';
-      var exact = selector.exact || '';
-      var suffix = selector.suffix || '';
-
-      var phrase = escapeRegExp(prefix.toString() + exact.toString() + suffix.toString());
-// console.log(phrase);
-
-      var selectedParentNode;
-
-      var textMatches = matchAllIndex(containerNodeTextContent, new RegExp(phrase, 'g'));
-// console.log(textMatches)
-
-      textMatches.forEach(item => {
-// console.log('phrase:')
-// console.log(phrase)
-// console.log(item)
-        var selectorIndex = item.index;
-// console.log('selectorIndex:')
-// console.log(selectorIndex)
-      // var selectorIndex = containerNodeTextContent.indexOf(prefix + exact + suffix);
-// console.log(selectorIndex);
-      // if (selectorIndex >= 0) {
-        var exactStart = selectorIndex + prefix.length
-        var exactEnd = selectorIndex + prefix.length + exact.length;
-        var selection = { start: exactStart, end: exactEnd };
-// console.log('selection:')
-// console.log(selection)
-        var ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType, options);
-// console.log('containerNode:')
-// console.log(containerNode)
-        MediumEditor.selection.importSelection(selection, containerNode, document);
-
-        //XXX: Review
-        selection = window.getSelection();
-// console.log(selection)
-        var r = selection.getRangeAt(0);
-        selection.removeAllRanges();
-        selection.addRange(r);
-        r.collapse(true);
-// console.log(r)
-// console.log('r.commonAncestorContainer:')
-// console.log(r.commonAncestorContainer)
-        selectedParentNode = r.commonAncestorContainer.parentNode;
-// console.log('selectedParentNode:')
-// console.log(selectedParentNode)
-        var selectedParentNodeValue = r.commonAncestorContainer.nodeValue;
-// console.log(selectedParentNodeValue)
-
-        var selectionUpdated = fragmentFromString(selectedParentNodeValue.substr(0, r.startOffset) + ref + selectedParentNodeValue.substr(r.startOffset + exact.length));
-// console.log(selectionUpdated)
-
-        //XXX: Review. This feels a bit dirty
-        for(var i = 0; i < selectedParentNode.childNodes.length; i++) {
-          var n = selectedParentNode.childNodes[i];
-          if (n.nodeType === 3 && n.nodeValue === selectedParentNodeValue) {
-            selectedParentNode.replaceChild(selectionUpdated, n);
-          }
-        }
-// console.log('---')
-      })
-
-      return selectedParentNode;
-    },
-
     initUser: function() {
       getLocalStorageProfile().then(user => {
         if (user && 'object' in user) {
-          user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
+          // user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
           DO.C['User'] = user.object.describes;
         }
@@ -1642,6 +1510,11 @@ DO = {
 
     getContentNode: function(node) {
       return getDocumentContentNode(document);
+    },
+
+    initEditor: function() {
+      DO['Editor'] = new Editor();
+      DO.Editor.init();
     },
 
     setDocumentURL: function(url) {
@@ -1655,6 +1528,8 @@ DO = {
     },
 
     setDocumentMode: function(mode) {
+      Config.Editor.mode = mode || Config.Editor.mode;
+
       var style = DO.U.urlParam('style');
 
       if (style) {
@@ -1708,14 +1583,14 @@ DO = {
 
           return stripFragmentFromString(url);
         });
-// console.log(urls);
+        // console.log(urls);
 
         if (urls.length) {
           // var options = {'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'filter': { 'subjects': [docURI, iri] }, 'title': iri };
           var options = {'subjectURI': urls[0], 'license': 'https://creativecommons.org/publicdomain/zero/1.0/', 'title': urls[0] };
 
           // DO.U.showGraphResources([docURI], '#graph-view', options);
-// console.log(options);
+          // console.log(options);
 
           var anchors = urls.map(url => `<a href="${url}">${url}</a>`);
 
@@ -1735,26 +1610,15 @@ DO = {
         }
       }
 
-      if (DO.C.EditorAvailable) {
-        if (DO.U.urlParam('author') == 'true' || DO.U.urlParam('social') == 'true') {
-          if (DO.U.urlParam('social') == 'true') {
-            mode = 'social';
-          }
-          else if (DO.U.urlParam('author') == 'true') {
-            mode = 'author';
-          }
-          var url = document.location.href;
-          window.history.replaceState({}, null, url.substr(0, url.lastIndexOf('?')));
+      if (DO.U.urlParam('author') == 'true' || DO.U.urlParam('social') == 'true') {
+        if (DO.U.urlParam('social') == 'true') {
+          Config.Editor.mode = 'social';
         }
-
-        switch(mode) {
-          case 'social': default:
-            DO.U.Editor.enableEditor('social');
-            break;
-          case 'author':
-            DO.U.Editor.enableEditor('author');
-            break;
+        else if (DO.U.urlParam('author') == 'true') {
+          Config.Editor.mode = 'author';
         }
+        var url = document.location.href;
+        window.history.replaceState({}, null, url.substr(0, url.lastIndexOf('?')));
       }
     },
 
@@ -3246,13 +3110,6 @@ console.log(reason);
       }
     },
 
-    updateDocumentTitle: function(e) {
-      var h1 = document.querySelector('h1');
-      if (h1) {
-        document.title = h1.textContent.trim();
-      }
-    },
-
     utf8Tob64: function(s) {
       return window.btoa(encodeURIComponent(s));
     },
@@ -3997,18 +3854,29 @@ console.log(reason);
       var iri = DO.C.DocumentURL;
 
       var li = [];
-      li.push('<li><button class="create-version"' + getButtonDisabledHTML('create-version') +
-        ' title="Version this article">' + Icon[".fas.fa-code-branch.fa-2x"] + 'Version</button></li>');
-      li.push('<li><button class="create-immutable"' + getButtonDisabledHTML('create-immutable') +
-        ' title="Make this article immutable and version it">' + Icon[".far.fa-snowflake.fa-2x"] + 'Immutable</button></li>');
-      li.push('<li><button class="robustify-links"' + getButtonDisabledHTML('robustify-links') +
-        ' title="Robustify Links">' + Icon[".fas.fa-link.fa-2x"] + 'Robustify Links</button></li>');
-      li.push('<li><button class="snapshot-internet-archive"' + getButtonDisabledHTML('snapshot-internet-archive') +
-        ' title="Capture with Internet Archive">' + Icon[".fas.fa-archive.fa-2x"] + 'Internet Archive</button></li>');
-      li.push('<li><button class="generate-feed"' + getButtonDisabledHTML('generate-feed') +
-        ' title="Generate Web feed">' + Icon[".fas.fa-rss.fa-2x"] + 'Feed</button></li>');
-      li.push('<li><button class="export-as-html"' + getButtonDisabledHTML('export-as-html') +
-        ' title="Export and save to file">' + Icon[".fas.fa-external-link-alt.fa-2x"] + 'Export</button></li>');
+      // li.push('<li><button class="create-version"' + getButtonDisabledHTML('create-version') +
+        // ' title="Version this article">' + Icon[".fas.fa-code-branch.fa-2x"] + 'Version</button></li>');
+      li.push(`<li>${getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonDisabled: isButtonDisabled('create-version'), buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x' })}</li>`);
+
+      // li.push('<li><button class="create-immutable"' + getButtonDisabledHTML('create-immutable') +
+        // ' title="Make this article immutable and version it">' + Icon[".far.fa-snowflake.fa-2x"] + 'Immutable</button></li>');
+      li.push(`<li>${getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonDisabled: isButtonDisabled('create-immutable'), buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x' })}</li>`);
+
+      // li.push('<li><button class="robustify-links"' + getButtonDisabledHTML('robustify-links') +
+      //   ' title="Robustify Links">' + Icon[".fas.fa-link.fa-2x"] + 'Robustify Links</button></li>');
+      li.push(`<li>${getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonDisabled: isButtonDisabled('robustify-links'), buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify Links', iconSize: 'fa-2x' })}</li>`);
+
+      // li.push('<li><button class="snapshot-internet-archive"' + getButtonDisabledHTML('snapshot-internet-archive') +
+      //   ' title="Capture with Internet Archive">' + Icon[".fas.fa-archive.fa-2x"] + 'Internet Archive</button></li>');
+      li.push(`<li>${getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonDisabled: isButtonDisabled('snapshot-internet-archive'), buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Internet Archive', iconSize: 'fa-2x' })}</li>`);
+
+      // li.push('<li><button class="generate-feed"' + getButtonDisabledHTML('generate-feed') +
+      //   ' title="Generate Web feed">' + Icon[".fas.fa-rss.fa-2x"] + 'Feed</button></li>');
+      li.push(`<li>${getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonDisabled: isButtonDisabled('generate-feed'), buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' })}</li>`);
+
+      // li.push('<li><button class="export-as-html"' + getButtonDisabledHTML('export-as-html') +
+      //   ' title="Export and save to file">' + Icon[".fas.fa-external-link-alt.fa-2x"] + 'Export</button></li>');
+      li.push(`<li>${getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonDisabled: isButtonDisabled('export-as-html'), buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' })}</li>`);
 
       e.target.closest('button').insertAdjacentHTML('afterend', '<ul id="memento-items" class="on">' + li.join('') + '</ul>');
 
@@ -4054,49 +3922,62 @@ console.log(reason);
       var buttonDisabled = '';
 
       var s = '<section id="document-do" class="do"><h2>Do</h2><ul>';
-      s += '<li><button class="resource-share" title="Share resource">' + Icon[".fas.fa-bullhorn.fa-2x"] + 'Share</button></li>';
-      s += '<li><button class="resource-reply" title="Reply">' + Icon[".fas.fa-reply.fa-2x"] + 'Reply</button></li>';
 
-      var activitiesIcon = Icon[".fas.fa-bolt.fa-2x"];
+      // s += '<li><button class="resource-share"' + getButtonDisabledHTML('resource-share') + ' title="Share resource">' + Icon[".fas.fa-bullhorn.fa-2x"] + 'Share</button></li>';
+      s += `${getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonDisabled: isButtonDisabled('resource-share'), buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' })}`;
 
+      // s += '<li><button class="resource-reply" title="Reply">' + Icon[".fas.fa-reply.fa-2x"] + 'Reply</button></li>';
+      s += `<li>${getButtonHTML({ button: 'in-reply-to', buttonClass: 'resource-reply', buttonTitle: 'Reply', buttonTextContent: 'Reply', iconSize: 'fa-2x' })}</li>`;
 
-      s += '<li><button class="resource-notifications"' + buttonDisabled +
-        ' title="Show notifications">' + activitiesIcon + 'Notifications</button></li>';
+      // var activitiesIcon = Icon[".fas.fa-bolt.fa-2x"];
+      // s += '<li><button class="resource-notifications"' + buttonDisabled +
+      //   ' title="Show notifications">' + activitiesIcon + 'Notifications</button></li>';
+      s += `<li>${getButtonHTML({ button: 'activities', buttonClass: 'resource-notifications', buttonTitle: 'Show notifications', buttonTextContent: 'Notifications', iconSize: 'fa-2x' })}</li>`;
 
-      s += '<li><button class="resource-new" title="Create new article">' + Icon[".far.fa-lightbulb.fa-2x"] + 'New</button></li>';
+      // s += '<li><button class="resource-new" title="Create new article">' + Icon[".far.fa-lightbulb.fa-2x"] + 'New</button></li>';
+      s += `<li>${getButtonHTML({ button: 'new', buttonClass: 'resource-new', buttonTitle: 'Create new article', buttonTextContent: 'New', iconSize: 'fa-2x' })}</li>`;
 
-      s += '<li><button class="resource-open" title="Open article">' + Icon[".fas.fa-coffee.fa-2x"] + 'Open</button></li>';
+      // s += '<li><button class="resource-open" title="Open article">' + Icon[".fas.fa-coffee.fa-2x"] + 'Open</button></li>';
+      s += `<li>${getButtonHTML({ button: 'open', buttonClass: 'resource-open', buttonTitle: 'Open article', buttonTextContent: 'Open', iconSize: 'fa-2x' })}</li>`;
 
-      s += '<li><button class="resource-save" title="Save article">' + Icon[".fas.fa-life-ring.fa-2x"] + 'Save</button></li>';
+      // s += '<li><button class="resource-save" title="Save article">' + Icon[".fas.fa-life-ring.fa-2x"] + 'Save</button></li>';
+      s += `<li>${getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: 'Save', iconSize: 'fa-2x' })}</li>`;
 
-      s += '<li><button class="resource-save-as"' + getButtonDisabledHTML('resource-save-as') + ' title="Save as article">' + Icon[".far.fa-paper-plane.fa-2x"] + 'Save As</button></li>';
+      // s += '<li><button class="resource-save-as"' + getButtonDisabledHTML('resource-save-as') + ' title="Save as article">' + Icon[".far.fa-paper-plane.fa-2x"] + 'Save As</button></li>';
+      s += `${getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonDisabled: isButtonDisabled('resource-save-as'), buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' })}`;
 
-      s += '<li><button class="resource-memento" title="Memento article">' + Icon[".far.fa-clock.fa-2x"] + 'Memento</button></li>';
+      // s += '<li><button class="resource-memento" title="Memento article">' + Icon[".far.fa-clock.fa-2x"] + 'Memento</button></li>';
+      s += `${getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x' })}`;
 
+      //TODO: Use DO.C.Editor.mode and getButtonHTML instead
       if (DO.C.EditorAvailable) {
-        var editFile = (DO.C.EditorEnabled && DO.C.User.Role == 'author')
+        var editFile = (DO.C.EditorEnabled && DO.C.Editor.mode == 'author')
           ? DO.C.Editor.DisableEditorButton
           : DO.C.Editor.EnableEditorButton;
         s += '<li>' + editFile + '</li>';
       }
 
-      s += '<li><button class="resource-source" title="Edit article source code">' + Icon[".fas.fa-code.fa-2x"] + 'Source</button></li>';
+      // s += '<li><button class="resource-source" title="Edit article source code">' + Icon[".fas.fa-code.fa-2x"] + 'Source</button></li>';
+      s += `${getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' })}`;
 
-      s += '<li><button class="embed-data-meta" title="Embed structured data (Turtle, JSON-LD, TriG)">' + Icon [".fas.fa-table.fa-2x"] + 'Embed Data</button></li>';
+      // s += '<li><button class="embed-data-meta" title="Embed structured data (Turtle, JSON-LD, TriG)">' + Icon [".fas.fa-table.fa-2x"] + 'Embed Data</button></li>';
+      s += `${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data (Turtle, JSON-LD, TriG)', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}`;
 
       if (DO.C.Resource[documentURL]['odrl'] && DO.C.Resource[documentURL]['odrl']['prohibitionAssignee'] == DO.C.User.IRI &&
         ((DO.C.Resource[documentURL]['odrl']['prohibitionActions'] && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].indexOf('http://www.w3.org/ns/odrl/2/print') > -1) ||
         (DO.C.Resource[documentURL]['odrl']['permissionActions'] && DO.C.Resource[documentURL]['odrl']['permissionActions'].indexOf('http://www.w3.org/ns/odrl/2/print') > -1))) {
-        s += '<li><button class="resource-print"' + getButtonDisabledHTML('resource-print') + ' title="Print document">' + Icon[".fas.fa-print.fa-2x"] + 'Print</button></li>';
+        // s += '<li><button class="resource-print"' + getButtonDisabledHTML('resource-print') + ' title="Print document">' + Icon[".fas.fa-print.fa-2x"] + 'Print</button></li>';
+        s += `${getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonDisabled: getButtonDisabledHTML('resource-print'), buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' })}`;
       }
 
+      // var trashIcon = getDocumentNodeFromString(Icon[".fas.fa-trash-alt"], {'contentType': 'image/svg+xml'})
+      // trashIcon.classList.add('fa-2x');
+      // trashIcon = trashIcon.outerHTML;
+      // s += '<li><button class="resource-delete" title="Delete article">' + trashIcon + 'Delete</button></li>';
+      s += `${getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x' })}`;
 
-      var trashIcon = getDocumentNodeFromString(Icon[".fas.fa-trash-alt"], {'contentType': 'image/svg+xml'})
-      trashIcon.classList.add('fa-2x');
-      trashIcon = trashIcon.outerHTML;
-      s += '<li><button class="resource-delete" title="Delete article">' + trashIcon + 'Delete</button></li>';
-
-      s += '<li><button class="message-log" title="Show message log">' + Icon [".fas.fa-scroll.fa-2x"] + 'Messages</button></li>';
+      // s += '<li><button class="message-log" title="Show message log">' + Icon [".fas.fa-scroll.fa-2x"] + 'Messages</button></li>';
+      s += `${getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' })}`;
 
       s += '</ul></section>';
 
@@ -4121,25 +4002,27 @@ console.log(reason);
         }
 
         var b;
-        if (DO.C.EditorAvailable) {
-          b = e.target.closest('button.editor-disable');
-          var documentURL = DO.C.DocumentURL;
+
+        b = e.target.closest('button.editor-disable');
+        var documentURL = DO.C.DocumentURL;
+        if (b) {
+          var node = b.closest('li');
+          b.outerHTML = DO.C.Editor.EnableEditorButton;
+          DO.Editor.toggleEditor('social', e);
+          DO.U.hideDocumentMenu();
+          hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
+        }
+        else {
+          b = e.target.closest('button.editor-enable');
           if (b) {
-            var node = b.closest('li');
-            b.outerHTML = DO.C.Editor.EnableEditorButton;
-            DO.U.Editor.enableEditor('social', e);
-            hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
-          }
-          else {
-            b = e.target.closest('button.editor-enable');
-            if (b) {
-              node = b.closest('li');
-              b.outerHTML = DO.C.Editor.DisableEditorButton;
-              DO.U.Editor.enableEditor('author', e);
-              showAutoSaveStorage(node, documentURL);
-            }
+            node = b.closest('li');
+            b.outerHTML = DO.C.Editor.DisableEditorButton;
+            DO.Editor.toggleEditor('author', e);
+            DO.U.hideDocumentMenu();
+            showAutoSaveStorage(node, documentURL);
           }
         }
+
 
         if (e.target.closest('.resource-notifications')) {
           DO.U.showNotifications(e);
@@ -4320,7 +4203,7 @@ console.log(reason);
                 .then(() => {
                   //FIXME:
                   getDocumentContentNode(document).innerHTML = '<main><article about="" typeof="schema:Article"></article></main>';
-                  DO.U.Editor.enableEditor('author');
+                  Editor.init('author');
 
 
                   // or better: createHTML() and update spawnDocument()
@@ -4344,14 +4227,19 @@ console.log(reason);
       options = options || {};
 
       getResourceInfo(data, options).then(i => {
-        if (e.target.closest('.create-version')) {
-          createMutableResource(url);
+        if (DO.Editor.new) {
+          DO.U.saveAsDocument(e);
         }
-        else if (e.target.closest('.create-immutable')) {
-          createImmutableResource(url);
-        }
-        else if (e.target.closest('.resource-save')) {
-          updateMutableResource(url);
+        else {
+          if (e.target.closest('.create-version')) {
+            createMutableResource(url);
+          }
+          else if (e.target.closest('.create-immutable')) {
+            createImmutableResource(url);
+          }
+          else if (e.target.closest('.resource-save')) {
+            updateMutableResource(url);
+          }
         }
       });
     },
@@ -4427,7 +4315,7 @@ console.log(reason);
 
         var motivatedBy = "oa:replying"
         var noteData = {
-          "type": 'article',
+          "type": 'comment',
           "mode": "write",
           "motivatedByIRI": motivatedBy,
           "id": attributeId,
@@ -4464,7 +4352,7 @@ console.log(reason);
           noteData["body"]["rights"] = noteData["body"]["license"] = noteData["rights"] = noteData["license"];
         }
 
-        note = DO.U.createNoteDataHTML(noteData)
+        note = createNoteDataHTML(noteData)
 
         var data = createHTML('', note)
 
@@ -4571,11 +4459,15 @@ console.log(reason);
       }
     },
 
-    shareResource: function shareResource (e, iri) {
+    shareResource: function(listenerEvent, iri) {
+      if (document.querySelector('#share-resource.do.on')) { return; }
+
+      // Config.ButtonStates['resource-share'] = false;
+
       iri = iri || currentLocation();
       const documentURL = stripFragmentFromString(iri);
 
-      var button = e.target.closest('button');
+      var button = listenerEvent.target.closest('button');
       if (button) {
         button.disabled = true;
       }
@@ -4847,10 +4739,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       var shareResource = document.getElementById('share-resource');
       shareResource.addEventListener('click', function (e) {
         if (e.target.closest('button.close')) {
-          var rs = document.querySelector('#document-do .resource-share');
-          if (rs) {
-            rs.disabled = false;
-          }
+          // Config.ButtonStates['resource-share'] = true;
+          listenerEvent.target.closest('button').disabled = false;
         }
 
         if (e.target.closest('button.share')) {
@@ -5137,9 +5027,10 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
             // return Promise.all(promises)
           }
-          else {
-            node.innerHTML = 'No contacts with ' + Icon[".fas.fa-inbox"] + ' inbox found in your profile, but you can enter contacts individually:';
-          }
+          //TODO: This feature used to exist where user was able to enter WebIDs in a textarea (one per line? comma-separated).
+          // else {
+          //   node.innerHTML = 'No contacts with ' + Icon[".fas.fa-inbox"] + ' inbox found in your profile, but you can enter contacts individually:';
+          // }
 
           return Promise.resolve();
         });
@@ -6762,8 +6653,14 @@ console.log(response)
 //       }
     },
 
+    createNewDocument: function(e) {
+      DO.Editor.toggleEditor('author', e, { template: 'new' });
 
-    createNewDocument: function createNewDocument (e) {
+      DO.U.hideDocumentMenu();
+    },
+
+    //XXX: To be deprecated. Formerly used for createNewDocument 
+    createNewDocumentSaveAs: function(e) {
       e.target.disabled = true
       document.documentElement.appendChild(fragmentFromString('<aside id="create-new-document" class="do on">' + DO.C.Button.Close + '<h2>Create New Document</h2></aside>'))
 
@@ -6871,7 +6768,10 @@ console.log(response)
     },
 
     saveAsDocument: async function saveAsDocument (e) {
-      e.target.disabled = true;
+      if (e) {
+        e.target.closest('button').disabled = true;
+      }
+
       document.documentElement.appendChild(fragmentFromString('<aside id="save-as-document" class="do on">' + DO.C.Button.Close + '<h2>Save As Document</h2></aside>'));
 
       var saveAsDocument = document.getElementById('save-as-document');
@@ -7023,9 +6923,13 @@ console.log(response)
       }
       accessibilityReport = '<details id="accessibility-report-save-as"><summary>Accessibility Report</summary>' + accessibilityReport + '</details>';
 
-
-      var dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
-      var derivationData = '<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label for="derivation-data">Derivation data</label></li>'
+      let dokielizeResource = '';
+      let derivationData = '';
+      
+      if (!DO.Editor['new']) {
+        dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
+        derivationData = '<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label for="derivation-data">Derivation data</label></li>'
+      }
 
       var id = 'location-save-as';
       var action = 'write';
@@ -7062,23 +6966,25 @@ console.log(response)
         var html = document.documentElement.cloneNode(true)
         var o, r
 
-        var dokielize = document.querySelector('#dokielize-resource')
-        if (dokielize.checked) {
-          html = getDocument(html)
-          html = await DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
-        }
+        if (!DO.Editor['new']) {
+          var dokielize = document.querySelector('#dokielize-resource')
+          if (dokielize.checked) {
+            html = getDocument(html)
+            html = await DO.U.spawnDokieli(document, html, 'text/html', storageIRI, {'init': false})
+          }
 
-        var wasDerived = document.querySelector('#derivation-data')
-        if (wasDerived.checked) {
-          o = { 'id': 'document-derived-from', 'title': 'Derived From' };
-          r = { 'rel': 'prov:wasDerivedFrom', 'href': DO.C.DocumentURL };
-          html = setDocumentRelation(html, [r], o);
+          var wasDerived = document.querySelector('#derivation-data')
+          if (wasDerived.checked) {
+            o = { 'id': 'document-derived-from', 'title': 'Derived From' };
+            r = { 'rel': 'prov:wasDerivedFrom', 'href': DO.C.DocumentURL };
+            html = setDocumentRelation(html, [r], o);
 
-          html = setDate(html, { 'id': 'document-derived-on', 'property': 'prov:generatedAtTime', 'title': 'Derived On' });
+            html = setDate(html, { 'id': 'document-derived-on', 'property': 'prov:generatedAtTime', 'title': 'Derived On' });
 
-          o = { 'id': 'document-identifier', 'title': 'Identifier' };
-          r = { 'rel': 'owl:sameAs', 'href': storageIRI };
-          html = setDocumentRelation(html, [r], o);
+            o = { 'id': 'document-identifier', 'title': 'Identifier' };
+            r = { 'rel': 'owl:sameAs', 'href': storageIRI };
+            html = setDocumentRelation(html, [r], o);
+          }
         }
 
         var inboxLocation = saveAsDocument.querySelector('#' + locationInboxId + '-' + locationInboxAction);
@@ -7134,7 +7040,25 @@ console.log(response)
               'Document saved at <a href="' + url + documentMode + '">' + url + '</a></p></div>'
             )
 
-            window.open(url + documentMode, '_blank')
+            if (DO.Editor['new']) {
+              DO.Editor.replaceContent('author', fragmentFromString(html));
+              DO.Editor['new'] = false;
+
+              var urlObject = new URL(url);
+              var documentURLObject = new URL(DO.C.DocumentURL);
+
+              if (urlObject.origin === documentURLObject.origin) {
+                window.history.pushState({}, null, url);
+                DO.U.setDocumentURL(url);
+                DO.U.hideDocumentMenu();
+              }
+              else {
+                window.open(url + documentMode, '_blank');
+              }
+            }
+            else {
+              window.open(url + documentMode, '_blank');
+            }
           })
 
           .catch(error => {
@@ -7147,6 +7071,7 @@ console.log(response)
             var requestAccess = '';
             var linkHeaders;
             var inboxURL;
+            // TODO: error.response could be undefined, handle this case (error UI)
             var link = error.response.headers.get('Link');
             if (link) {
               linkHeaders = LinkHeader.parse(link);
@@ -7995,14 +7920,6 @@ WHERE {\n\
       })
     },
 
-    getReferenceLabel: function(motivatedBy) {
-      motivatedBy = motivatedBy || '';
-      //TODO: uriToPrefix
-      motivatedBy = (motivatedBy.length && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
-
-      return DO.C.MotivationSign[motivatedBy] || '#';
-    },
-
     showRefs: function() {
       var refs = document.querySelectorAll('span.ref');
       for (var i = 0; i < refs.length; i++) {
@@ -8026,22 +7943,6 @@ WHERE {\n\
           }
         }
       }
-    },
-
-    getTextQuoteHTML: function(refId, motivatedBy, exact, docRefType, options){
-      options = options || {};
-
-      var doMode = (options.do) ? ' do' : '';
-
-      var refOpen = '<span class="ref' + doMode + '" rel="schema:hasPart" resource="#' + refId + '" typeof="http://purl.org/dc/dcmitype/Text">';
-      var refClose = '</span>';
-      if (motivatedBy == 'oa:highlighting') {
-        refOpen = '<span class="ref' + doMode + '" rel="schema:hasPart" resource="#h-' + refId + '" typeof="oa:Annotation"><span rel="oa:motivatedBy" resource="oa:highlighting"></span><span rel="oa:hasTarget" resource="#' + refId + '" typeof="http://purl.org/dc/dcmitype/Text">';
-        refClose = '</span></span>';
-      }
-      var mark = '<mark datatype="rdf:HTML" id="'+ refId +'" property="rdf:value">' + exact + '</mark>';
-
-      return refOpen + mark + docRefType + refClose;
     },
 
     positionNote: function(refId, noteId, refLabel) {
@@ -8256,7 +8157,7 @@ WHERE {\n\
 // console.log(note.oamotivatedBy);
         var motivatedBy = note.out(ns.oa.motivatedBy).values[0];
         if (motivatedBy) {
-          refLabel = DO.U.getReferenceLabel(motivatedBy);
+          refLabel = getReferenceLabel(motivatedBy);
         }
 
         var exact, prefix, suffix;
@@ -8316,13 +8217,13 @@ WHERE {\n\
             "suffix": suffix
           };
 
-          var selectedParentNode = DO.U.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
+          var selectedParentNode = DO.Editor.importTextQuoteSelector(containerNode, selector, refId, motivatedBy, docRefType, { 'do': true });
 
           var parentNodeWithId = selectedParentNode.closest('[id]');
           targetIRI = (parentNodeWithId) ? documentURL + '#' + parentNodeWithId.id : documentURL;
 // console.log(parentNodeWithId, targetIRI)
           var noteData = {
-            "type": 'article',
+            "type": 'comment',
             "mode": "read",
             "motivatedByIRI": motivatedBy,
             "id": id,
@@ -8399,7 +8300,7 @@ WHERE {\n\
         //XXX: Annotation without a selection
         else {
           noteData = {
-            "type": 'article',
+            "type": 'comment',
             "mode": "read",
             "motivatedByIRI": motivatedBy,
             "id": id,
@@ -8459,7 +8360,7 @@ WHERE {\n\
 
         if (inReplyTo && inReplyTo.includes(currentLocation())) {
           noteData = {
-            "type": 'article',
+            "type": 'comment',
             "mode": "read",
             "motivatedByIRI": motivatedBy,
             "id": id,
@@ -8592,7 +8493,7 @@ WHERE {\n\
       }
 
 // console.log(noteData)
-      var noteDataHTML = DO.U.createNoteDataHTML(noteData);
+      var noteDataHTML = createNoteDataHTML(noteData);
 
       var asideNote = '\n\
 <aside class="note do">\n\
@@ -8681,7 +8582,7 @@ WHERE {\n\
       var noteDataIRI = noteData.iri;
       
 // console.log(noteData)
-      var note = DO.U.createNoteDataHTML(noteData);
+      var note = createNoteDataHTML(noteData);
 
       var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
 
@@ -8724,331 +8625,6 @@ WHERE {\n\
       aside.classList.add('on');
 
       DO.U.showContactsActivities();
-    },
-
-    createNoteDataHTML: function(n) {
-// console.log(n);
-      var created = '';
-      var lang = '', xmlLang = '', language = '';
-      var license = '';
-      var rights = '';
-      var creator = '', authors = '', creatorImage = '', creatorNameIRI = '', creatorURLNameIRI = '';
-      var hasTarget = '', annotationTextSelector = '', target = '';
-      var inbox = '';
-      var heading, hX;
-      var aAbout = '', aPrefix = '';
-      var noteType = '';
-      var body = '';
-      var buttonDelete = '';
-      var note = '';
-      var targetLabel = '';
-      var bodyAltLabel = '';
-      var articleClass = '';
-      var prefixes = ' prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# schema: http://schema.org/ dcterms: http://purl.org/dc/terms/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp#"';
-
-      var canonicalId = n.canonical || 'urn:uuid:' + generateUUID();
-
-      var motivatedByIRI = n.motivatedByIRI || '';
-      var motivatedByLabel = '';
-
-      motivatedByIRI = getPrefixedNameFromIRI(motivatedByIRI);
-
-      switch(motivatedByIRI) {
-        case 'oa:replying': default:
-          motivatedByIRI = 'oa:replying';
-          motivatedByLabel = 'replies';
-          targetLabel = 'In reply to';
-          bodyAltLabel = 'Replied';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'oa:assessing':
-          motivatedByLabel = 'reviews';
-          targetLabel = 'Review of';
-          bodyAltLabel = 'Reviewed';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'oa:questioning':
-          motivatedByLabel = 'questions';
-          targetLabel = 'Questions';
-          bodyAltLabel = 'Questioned';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'oa:describing':
-          motivatedByLabel = 'describes';
-          targetLabel = 'Describes';
-          bodyAltLabel = 'Described'
-          aAbout = '#' + n.id;
-          break;
-        case 'oa:commenting':
-          motivatedByLabel = 'comments';
-          targetLabel = 'Comments on';
-          bodyAltLabel = 'Commented';
-          aAbout = '#' + n.id;
-          break;
-        case 'oa:bookmarking': case 'bookmark:Bookmark':
-          motivatedByLabel = 'bookmarks';
-          targetLabel = 'Bookmarked';
-          bodyAltLabel = 'Bookmarked';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'as:Like':
-          motivatedByLabel = 'Liked';
-          targetLabel = 'Like of';
-          bodyAltLabel = 'Liked';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-        case 'as:Dislike':
-          motivatedByLabel = 'Disliked';
-          targetLabel = 'Dislike of';
-          bodyAltLabel = 'Disliked';
-          aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
-          aPrefix = prefixes;
-          break;
-      }
-
-      switch(n.mode) {
-        default: case 'read':
-          hX = 3;
-          if ('creator' in n && 'iri' in n.creator && n.creator.iri == DO.C.User.IRI) {
-            buttonDelete = '<button class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>' ;
-          }
-          articleClass = (motivatedByIRI == 'oa:commenting') ? '': ' class="do"';
-          aAbout = ('iri' in n) ? n.iri : '';
-          break;
-        case 'write':
-          hX = 1;
-          break;
-        case 'object':
-          hX = 2;
-          break;
-      }
-
-      var creatorName = '';
-      var creatorIRI = '#' + generateAttributeId();
-      // creatorNameIRI = DO.C.SecretAgentNames[Math.floor(Math.random() * DO.C.SecretAgentNames.length)];
-
-      if ('creator' in n) {
-        if('iri' in n.creator) {
-          creatorIRI = n.creator.iri;
-        }
-
-        creatorName = creatorIRI;
-
-        if('name' in n.creator) {
-          creatorName = n.creator.name;
-          creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
-        }
-        else {
-          creatorName = getUserLabelOrIRI(creatorIRI);
-          creatorNameIRI = (creatorName == creatorIRI) ? creatorName : '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
-        }
-
-        var img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
-        if ('image' in n.creator) {
-          img = (n.mode == 'read') ? getProxyableIRI(n.creator.image) : n.creator.image;
-        }
-        else if (DO.C.User.Image && (creatorIRI == DO.C.User.IRI || DO.C.User.SameAs.includes(creatorIRI))) {
-          img = (n.mode == 'read') ? getProxyableIRI(DO.C.User.Image) : DO.C.User.Image;
-        }
-        else {
-          img = (DO.C.User.Contacts && DO.C.User.Contacts[creatorIRI] && DO.C.User.Contacts[creatorIRI].Image) ? DO.C.User.Contacts[creatorIRI].Image : img;
-        }
-        creatorImage = '<img alt="" height="48" rel="schema:image" src="' + img + '" width="48" /> ';
-
-        creatorURLNameIRI = ('url' in n.creator) ? '<a href="' + n.creator.url + '" rel="schema:url">' + creatorNameIRI + '</a>' : '<a href="' + creatorIRI + '">' + creatorNameIRI + '</a>';
-
-        creator = '<span about="' + creatorIRI + '" typeof="schema:Person">' + creatorImage + creatorURLNameIRI + '</span>';
-
-        authors = '<dl class="author-name"><dt>Authors</dt><dd><span rel="dcterms:creator">' + creator + '</span></dd></dl>';
-      }
-
-      heading = '<h' + hX + ' property="schema:name">' + creatorName + ' <span rel="oa:motivatedBy" resource="' + motivatedByIRI + '">' + motivatedByLabel + '</span></h' + hX + '>';
-
-      if ('inbox' in n && typeof n.inbox !== 'undefined') {
-        inbox = '<dl class="inbox"><dt>Notifications Inbox</dt><dd><a href="' + n.inbox + '" rel="ldp:inbox">' + n.inbox + '</a></dd></dl>';
-      }
-
-      if ('datetime' in n && typeof n.datetime !== 'undefined'){
-        var time = '<time datetime="' + n.datetime + '" datatype="xsd:dateTime" property="dcterms:created" content="' + n.datetime + '">' + n.datetime.substr(0,19).replace('T', ' ') + '</time>';
-        var timeLinked = ('iri' in n) ? '<a href="' + n.iri + '">' + time + '</a>' : time;
-        created = '<dl class="created"><dt>Created</dt><dd>' + timeLinked + '</dd></dl>';
-      }
-
-      if (n.language) {
-        language = createLanguageHTML(n.language, {property:'dcterms:language', label:'Language'});
-        lang = ' lang="' +  n.language + '"';
-        xmlLang = ' xml:lang="' +  n.language + '"';
-      }
-      if (n.license) {
-        license = createLicenseHTML(n.license, {rel:'schema:license', label:'License'});
-      }
-      if (n.rights) {
-        rights = createRightsHTML(n.rights, {rel:'dcterms:rights', label:'Rights'});
-      }
-
-      //TODO: Differentiate language, license, rights on Annotation from Body
-
-      switch(n.type) {
-        case 'article': case 'note': case 'bookmark': case 'approve': case 'disapprove': case 'specificity':
-          if (typeof n.target !== 'undefined' || typeof n.inReplyTo !== 'undefined') { //note, annotation, reply
-            //FIXME: Could resourceIRI be a fragment URI or *make sure* it is the document URL without the fragment?
-            //TODO: Use n.target.iri?
-// console.log(n)
-            if (typeof n.body !== 'undefined') {
-              var tagsArray = [];
-
-              n.body = Array.isArray(n.body) ? n.body : [n.body];
-              n.body.forEach(bodyItem => {
-                var bodyLanguage = createLanguageHTML(bodyItem.language, {property:'dcterms:language', label:'Language'}) || language;
-                var bodyLicense = createLicenseHTML(bodyItem.license, {rel:'schema:license', label:'License'}) || license;
-                var bodyRights = createRightsHTML(bodyItem.rights, {rel:'dcterms:rights', label:'Rights'}) || rights;
-                var bodyValue = bodyItem.value || bodyAltLabel;
-                // var bodyValue = bodyItem.value || '';
-                // var bodyFormat = bodyItem.format ? bodyItem.format : 'rdf:HTML';
-
-                if (bodyItem.purpose) {
-                  if (bodyItem.purpose == "describing" || bodyItem.purpose == ns.oa.describing.value) {
-                    body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
-                  }
-                  if (bodyItem.purpose == "tagging" || bodyItem.purpose == ns.oa.tagging.value) {
-                    tagsArray.push(bodyValue);
-                  }
-                }
-                else {
-                  body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
-                }
-              });
-
-              if (tagsArray.length) {
-                tagsArray = tagsArray
-                  .map(tag => escapeCharacters(tag.trim()))
-                  .filter(tag => tag.length);
-                tagsArray = uniqueArray(tagsArray.sort());
-
-                var tags = tagsArray.map(tag => '<li about="#tag-' + n.id + '-' + generateAttributeId(null, tag) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + tag + '</li>').join('');
-
-                body += '<dl id="tags-' + n.id + '" class="tags"><dt>Tags</dt><dd><ul rel="oa:hasBody">' + tags + '</ul></dd></dl>';
-              }
-            }
-            else if (n.bodyValue !== 'undefined') {
-              body += '<p property="oa:bodyValue">' + n.bodyValue + '</p>';
-            }
-// console.log(body)
-            var targetIRI = '';
-            var targetRelation = 'oa:hasTarget';
-            if (typeof n.target !== 'undefined' && 'iri' in n.target) {
-              targetIRI = n.target.iri;
-              var targetIRIFragment = getFragmentFromString(n.target.iri);
-              //TODO: Handle when there is no fragment
-              //TODO: Languages should be whatever is target's (not necessarily 'en')
-              if (typeof n.target.selector !== 'undefined') {
-                var selectionLanguage = ('language' in n.target.selector && n.target.selector.language) ? n.target.selector.language : '';
-
-                annotationTextSelector = '<div rel="oa:hasSelector" resource="#fragment-selector" typeof="oa:FragmentSelector"><dl class="conformsto"><dt>Fragment selector conforms to</dt><dd><a content="' + targetIRIFragment + '" lang="" property="rdf:value" rel="dcterms:conformsTo" href="https://tools.ietf.org/html/rfc3987" xml:lang="">RFC 3987</a></dd></dl><dl rel="oa:refinedBy" resource="#text-quote-selector" typeof="oa:TextQuoteSelector"><dt>Refined by</dt><dd><span lang="' + selectionLanguage + '" property="oa:prefix" xml:lang="' + selectionLanguage + '">' + n.target.selector.prefix + '</span><mark lang="' + selectionLanguage + '" property="oa:exact" xml:lang="' + selectionLanguage + '">' + n.target.selector.exact + '</mark><span lang="' + selectionLanguage + '" property="oa:suffix" xml:lang="' + selectionLanguage + '">' + n.target.selector.suffix + '</span></dd></dl></div>';
-              }
-            }
-            else if(typeof n.inReplyTo !== 'undefined' && 'iri' in n.inReplyTo) {
-              targetIRI = n.inReplyTo.iri;
-              targetRelation = ('rel' in n.inReplyTo) ? n.inReplyTo.rel : 'as:inReplyTo';
-              // TODO: pass document title and maybe author so they can be displayed on the reply too.
-            }
-
-            hasTarget = '<a href="' + targetIRI + '" rel="' + targetRelation + '">' + targetLabel + '</a>';
-            if (typeof n.target !== 'undefined' && typeof n.target.source !== 'undefined') {
-              hasTarget += ' (<a about="' + n.target.iri + '" href="' + n.target.source +'" rel="oa:hasSource" typeof="oa:SpecificResource">part of</a>)';
-            }
-
-            var targetLanguage = (typeof n.target !== 'undefined' && 'language' in n.target) ? '<dl><dt>Language</dt><dd><span lang="" property="dcterms:language" xml:lang="">' + n.target.language + '</span></dd></dl>': '';
-
-            target ='<dl class="target"><dt>' + hasTarget + '</dt>';
-            if (typeof n.target !== 'undefined' && typeof n.target.selector !== 'undefined') {
-              target += '<dd><blockquote about="' + targetIRI + '" cite="' + targetIRI + '">' + targetLanguage + annotationTextSelector + '</blockquote></dd>';
-            }
-            target += '</dl>';
-
-            target += '<dl class="renderedvia"><dt>Rendered via</dt><dd><a about="' + targetIRI + '" href="https://dokie.li/" rel="oa:renderedVia">dokieli</a></dd></dl>';
-
-            var canonical = '<dl class="canonical"><dt>Canonical</dt><dd rel="oa:canonical" resource="' + canonicalId + '">' + canonicalId + '</dd></dl>';
-
-            note = '<article about="' + aAbout + '" id="' + n.id + '" typeof="oa:Annotation' + noteType + '"' + aPrefix + articleClass + '>'+buttonDelete+'\n\
-  ' + heading + '\n\
-  ' + authors + '\n\
-  ' + created + '\n\
-  ' + language + '\n\
-  ' + license + '\n\
-  ' + rights + '\n\
-  ' + inbox + '\n\
-  ' + canonical + '\n\
-  ' + target + '\n\
-  ' + body + '\n\
-</article>';
-          }
-          break;
-
-        case 'ref-footnote':
-          var citationURL = (typeof n.citationURL !== 'undefined' && n.citationURL != '') ? '<a href="' + n.citationURL + '" rel="rdfs:seeAlso">' + n.citationURL + '</a>' : '';
-          var bodyValue = (n.body && n.body.length) ? n.body[0].value : '';
-          body = (bodyValue) ? ((citationURL) ? ', ' + bodyValue : bodyValue) : '';
-
-          note = '\n\
-  <dl about="#' + n.id +'" id="' + n.id +'" typeof="oa:Annotation">\n\
-    <dt><a href="#' + n.refId + '" rel="oa:hasTarget">' + n.refLabel + '</a><meta rel="oa:motivation" resource="' + motivatedByIRI + '" /></dt>\n\
-    <dd rel="oa:hasBody" resource="#n-' + n.id + '"><div datatype="rdf:HTML" property="rdf:value" resource="#n-' + n.id + '" typeof="oa:TextualBody">' + citationURL + body + '</div></dd>\n\
-  </dl>\n\
-';
-          break;
-
-        case 'ref-citation':
-          heading = '<h' + hX + '>Citation</h' + hX + '>';
-
-          var citingEntityLabel = ('citingEntityLabel' in n.citation) ? n.citation.citingEntityLabel : n.citation.citingEntity;
-          var citationCharacterizationLabel = DO.C.Citation[n.citation.citationCharacterization] || n.citation.citationCharacterization;
-          var citedEntityLabel = ('citedEntityLabel' in n.citation) ? n.citation.citedEntityLabel : n.citation.citedEntity;
-
-          var citation = '\n\
-  <dl about="' + n.citation.citingEntity + '">\n\
-    <dt>Cited by</dt><dd><a href="' + n.citation.citingEntity + '">' + citingEntityLabel + '</a></dd>\n\
-    <dt>Citation type</dt><dd><a href="' + n.citation.citationCharacterization + '">' + citationCharacterizationLabel+ '</a></dd>\n\
-    <dt>Cites</dt><dd><a href="' + n.citation.citedEntity + '" property="' + n.citation.citationCharacterization + '">' + citedEntityLabel + '</a></dd>\n\
-  </dl>\n\
-';
-
-          note = '<article about="' + aAbout + '" id="' + n.id + '" prefixes="cito: http://purl.org/spart/cito/"' + articleClass + '>\n\
-  ' + heading + '\n\
-  ' + citation + '\n\
-</article>';
-          break;
-
-        default:
-          break;
-      }
-
-      return note;
-    },
-
-    tagsToBodyObjects: function(string) {
-      var bodyObjects = [];
-
-      let tagsArray = string
-        .split(',')
-        .map(tag => escapeCharacters(tag.trim()))
-        .filter(tag => tag.length);
-
-      tagsArray = uniqueArray(tagsArray.sort());
-
-      tagsArray.forEach(tag => {
-        bodyObjects.push({
-          "purpose": "tagging",
-          "value": tag
-        })
-      })
-
-      return bodyObjects;
     },
 
     initMath: function(config) {
@@ -9102,2545 +8678,7 @@ WHERE {\n\
       }
     },
 
-    Editor: {
-      disableEditor: function(e) {
-        
-    //    _mediumEditors[1].destroy();
-        DO.C.EditorEnabled = false;
-        DO.C.User.Role = 'social';
-        DO.U.updateDocumentTitle();
-        // document.removeEventListener('click', DO.U.updateDocumentTitle);
-        return DO.U.Editor.MediumEditor.destroy();
-      },
 
-      enableEditor: function(editorMode, e, selector) {
-        if (typeof DO.U.Editor.MediumEditor !== 'undefined') {
-          DO.U.Editor.disableEditor();
-        }
-
-        if (e || (typeof e === 'undefined' && editorMode == 'author')) {
-          var message = 'Activated <em>' + editorMode + '</em> mode.';
-          message = {
-            'content': message,
-            'type': 'info'
-          }
-          addMessageToLog(message, Config.MessageLog);
-          showActionMessage(document.documentElement, message);
-        }
-
-        if (!document.getElementById('document-editor')) {
-          document.documentElement.appendChild(fragmentFromString('<aside id="document-editor" class="do"></aside>'))
-        }
-
-        // console.log(new DO.U.Editor.Button({action:'h2', label:'h2'}))
-        var editorOptions = {
-          author: {
-            id: 'author',
-            elementsContainer: document.getElementById('document-editor'),
-            placeholder: {
-              text: ["Make it so!", "This is not a Paper", "Cogito Ergo Sum", "Do One Thing and Do It Well", "Free Your Mind", "Do or Do Not"][Math.floor(Math.random() * 6)]
-            },
-            disableDoubleReturn: true,
-            paste: {
-              forcePlainText: false,
-              cleanPastedHTML: false,
-              cleanReplacements: [],
-              cleanAttrs: ['class', 'style', 'dir'],
-              cleanTags: ['area', 'basefont', 'br', 'font', 'hr', 'isindex', 'link', 'script', 'style', 'wbr']
-            },
-            buttonLabels: DO.C.Editor.ButtonLabelType,
-            toolbar: {
-              buttons: ['h2', 'h3', 'h4', 'em', 'strong', 'orderedlist', 'unorderedlist', 'code', 'pre', 'anchor', 'q', 'image', 'sparkline', 'rdfa', 'cite', 'note'],
-              diffLeft: 0,
-              diffTop: -10,
-              allowMultiParagraphSelection: false
-            },
-            anchorPreview: false,
-            extensions: {
-              'h2': new DO.U.Editor.Button({action:'h2', label:'h2'}),
-              'h3': new DO.U.Editor.Button({action:'h3', label:'h3'}),
-              'h4': new DO.U.Editor.Button({action:'h4', label:'h4'}),
-              'em': new DO.U.Editor.Button({action:'em', label:'em'}),
-              'strong': new DO.U.Editor.Button({action:'strong', label:'strong'}),
-              'code': new DO.U.Editor.Button({action:'code', label:'code'}),
-              'q': new DO.U.Editor.Button({action:'q', label:'q'}),
-              'image': new DO.U.Editor.Button({action:'image', label:'image'}),
-              'sparkline': new DO.U.Editor.Note({action:'sparkline', label:'sparkline'}),
-              'rdfa': new DO.U.Editor.Note({action:'rdfa', label:'rdfa'}),
-              'cite': new DO.U.Editor.Note({action:'cite', label:'cite'}),
-              'note': new DO.U.Editor.Note({action:'note', label:'note'})
-            }
-          },
-
-          social: {
-            id: 'social',
-            elementsContainer: document.getElementById('document-editor'),
-            buttonLabels: DO.C.Editor.ButtonLabelType,
-            toolbar: {
-              buttons: ['selector', 'share', 'approve', 'disapprove', 'specificity', 'bookmark', 'note'],
-              allowMultiParagraphSelection: false
-            },
-            disableEditing: true,
-            anchorPreview: false,
-            extensions: {
-              'selector': new DO.U.Editor.Note({action:'selector', label:'selector'}),
-              'share': new DO.U.Editor.Note({action:'share', label:'share'}),
-              'bookmark': new DO.U.Editor.Note({action:'bookmark', label:'bookmark'}),
-              'approve': new DO.U.Editor.Note({action:'approve', label:'approve'}),
-              'disapprove': new DO.U.Editor.Note({action:'disapprove', label:'disapprove'}),
-              'specificity': new DO.U.Editor.Note({action:'specificity', label:'specificity'}),
-              'note': new DO.U.Editor.Note({action:'article', label:'note'})
-            }
-          }
-        };
-
-        if('MathJax' in window) {
-          editorOptions.author.extensions['math'] = new DO.U.Editor.Button({action:'math', label:'math'});
-          editorOptions.author.toolbar.buttons.splice(7, 0, 'math');
-        }
-
-        if('MediumEditorTable' in window) {
-          editorOptions.author.extensions['table'] = new MediumEditorTable();
-          editorOptions.author.toolbar.buttons.splice(10, 0, 'table');
-        }
-
-        var eNodes = selector || selectArticleNode(document);
-        var eOptions = editorOptions[editorMode];
-        DO.C.User.Role = editorMode;
-        updateLocalStorageProfile(DO.C.User);
-
-        if (typeof MediumEditor !== 'undefined') {
-          DO.U.Editor.MediumEditor = new MediumEditor(eNodes, eOptions);
-          DO.C.EditorEnabled = true;
-
-          //XXX: MediumEditor is adding these and we don't really want them.
-          eNodes.removeAttribute('role');
-          eNodes.removeAttribute('aria-multiline');
-
-          if (e && e.target.closest('button.editor-enable')) {
-            DO.C.ContentEditable = true;
-            // document.addEventListener('click', DO.U.updateDocumentTitle);
-            DO.U.updateDocumentTitle();
-            var documentURL = DO.C.DocumentURL;
-
-            //FIXME: This is a horrible way of hacking MediumEditorTable
-            document.querySelectorAll('i.fa-table, i.fa-link, i.fa-picture-o').forEach(i => {
-              var icon = Icon[".fas.fa-table.fa-2x"].replace(/ fa\-2x/, '');
-
-              if (i.classList.contains('fa-link') > 0) {
-                icon = Icon[".fas.fa-link"];
-              }
-              else if (i.classList.contains('fa-image') > 0) {
-                icon = Icon[".fas.fa-image"];
-              }
-
-              i.parentNode.replaceChild(fragmentFromString(icon), i);
-            });
-
-            //XXX: Reconsider bringing this code back for primarily ScholarlyArticles?
-            // var documentAuthors = 'authors';
-            // var authors = document.getElementById(documentAuthors);
-            // var authorName = 'author-name';
-            // if (!authors) {
-            //   var authors = '<div class="do" id="' + documentAuthors + '"><dl id="' + authorName + '"><dt>Authors</dt></dl></div>';
-            //   insertDocumentLevelHTML(document, authors, { 'id': documentAuthors });
-            //   authors = document.getElementById(documentAuthors);
-            // }
-
-            var s = DO.C.Resource[documentURL].graph.node(rdf.namedNode(documentURL));
-
-            DO.C.ContributorRoles.forEach(contributorRole => {
-// console.log(contributorRole)
-              var contributorNodeId = 'document-' + contributorRole + 's';
-              var contributorNode = document.getElementById(contributorNodeId);
-              if (!contributorNode) {
-                var contributorTitle = contributorRole.charAt(0).toUpperCase() + contributorRole.slice(1) + 's';
-                contributorNode = '        <dl id="' + contributorNodeId + '"><dt>' + contributorTitle + '</dt></dl>';
-                insertDocumentLevelHTML(document, contributorNode, { 'id': contributorNodeId })
-                contributorNode = document.getElementById(contributorNodeId);
-              }
-
-              //User can add themselves as a contributor
-              if (DO.C.User.IRI && !s.out(ns.schema[contributorRole]).values.includes(DO.C.User.IRI)){
-                var contributorId;
-                var contributorName = DO.C.User.Name || DO.C.User.IRI;
-                if (DO.C.User.Name) {
-                  contributorId = generateAttributeId(null, DO.C.User.Name);
-                  if (document.getElementById(contributorId)) {
-                    contributorId = generateAttributeId(null, DO.C.User.Name, contributorRole);
-                  }
-                }
-                else {
-                  contributorId = generateAttributeId(null, DO.C.User.IRI);
-                }
-                contributorId = ' id="' + contributorId + '"';
-
-                var contributorInList = (DO.C.Resource[documentURL].rdftype.includes(ns.schema.ScholarlyArticle.value)) ?
-                  ' inlist="" rel="bibo:' + contributorRole + 'List" resource="' + DO.C.User.IRI + '"' : '';
-
-                var userHTML = '<dd class="do"' + contributorId + contributorInList + '><span about="" rel="schema:' + contributorRole + '">' + getAgentHTML({'avatarSize': 32}) + '</span><button class="add-' + contributorRole + '" contenteditable="false" title="Add ' + contributorName + ' as ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>';
-
-                contributorNode.insertAdjacentHTML('beforeend', userHTML);
-              }
-
-              //User can enter a contributor's WebID
-              contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="enter-' + contributorRole + '" contenteditable="false" title="Enter ' + contributorRole +'">' + Icon[".fas.fa-user-plus"] + '</button></dd>');
-
-              //User can invite a contributor from their contacts
-              contributorNode.insertAdjacentHTML('beforeend', '<dd class="do"><button class="invite-' + contributorRole + '" contenteditable="false" title="Invite ' + contributorRole +'">' + Icon[".fas.fa-bullhorn"] + '</button></dd>');
-
-              contributorNode = document.getElementById(contributorNodeId);
-              contributorNode.addEventListener('click', (e) => {
-                var button = e.target.closest('button.add-' + contributorRole);
-                if (button){
-                  var n = e.target.closest('.do');
-                  if (n) {
-                    n.classList.add('selected');
-                  }
-                  button.parentNode.removeChild(button);
-                }
-
-                button = e.target.closest('button.enter-' + contributorRole);
-                //TODO: This input field can behave like the one in js showUserIdentityInput for enableDisableButton to button.commit
-                if (button){
-                  n = e.target.closest('.do');
-                  n.insertAdjacentHTML('beforebegin', '<dd class="do" contenteditable="false"><input contenteditable="false" name="enter-' + contributorRole + '" placeholder="https://csarven.ca/#i" type="text" value="" /> <button class="commit-' + contributorRole + '" contenteditable="false" title="Commit ' + contributorRole + '">' + Icon[".fas.fa-plus"] + '</button></dd>');
-                }
-
-                button = e.target.closest('button.commit-' + contributorRole);
-                if (button){
-                  n = e.target.closest('.do');
-                  if (n) {
-                    n.classList.add('selected');
-
-                    var input = n.querySelector('input');
-                    var iri = input.value.trim();
-
-                    //TODO:
-                    // button.disabled = true;
-                    // button.parentNode.disabled = true;
-                    // button.querySelector('svg').classList.add('fa-spin');
-
-                    if (iri.startsWith('http')) {
-                      //TODO: Refactor. There is overlap with addShareResourceContactInput and getAgentHTML
-                      getResourceGraph(iri).then(s => {
-                        // var iri = s.iri().toString();
-                        // var id = encodeURIComponent(iri);
-
-                        var name = getAgentName(s) || iri;
-                        var img = getGraphImage(s);
-
-                        img = (img && img.length) ? '<img alt="" height="32" rel="schema:image" src="' + img + '" width="32" /> ' : '';
-                        var userHTML = fragmentFromString('<span about="" rel="schema:' + contributorRole + '"><span about="' + iri + '" typeof="schema:Person">' + img + '<a href="' + iri + '" rel="schema:url">' + name + '</a></span></span>');
-
-                        n.replaceChild(userHTML, input);
-                        button.parentNode.removeChild(button);
-                      });
-                    }
-                    else {
-                      input.focus();
-                    }
-                  }
-                }
-
-                if (e.target.closest('button.invite-' + contributorRole)) {
-                  DO.U.shareResource(e);
-                  e.target.removeAttribute('disabled');
-                }
-              });
-
-              //TODO: Show 'Remove' button for selected contributor (before exiting edit mode).
-
-              //TODO: Update getResourceInfo() so that DO.C.Resource[documentURL] can be used to check other contributors while still in edit.
-            })
-
-            var documentModified = 'document-modified';
-            var modified = document.getElementById(documentModified);
-            var lastModified = DO.C.Resource[DO.C.DocumentURL]?.headers?.['last-modified']?.['field-value'];
-            if(!modified && lastModified) {
-              lastModified = new Date(lastModified);
-              setDate(document, { 'id': 'document-modified', 'property': 'schema:dateModified', 'title': 'Modified', 'datetime': lastModified } );
-            }
-
-            var documentLanguage = 'document-language';
-            var language = document.getElementById(documentLanguage);
-            if(!language) {
-              var dl = '        <dl class="do" id="' + documentLanguage + '"><dt>Language</dt><dd><select contenteditable="false" name="language">' + getLanguageOptionsHTML({ 'selected': '' }) + '</select></dd></dl>';
-              insertDocumentLevelHTML(document, dl, { 'id': documentLanguage });
-
-              var dLangS = document.querySelector('#' + documentLanguage + ' select');
-              dLangS.addEventListener('change', (e) => {
-                dLangS.querySelectorAll('option').forEach(o => {
-                  o.removeAttribute('selected');
-                });
-                dLangS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
-              });
-            }
-
-            var documentLicense = 'document-license';
-            var license = document.getElementById(documentLicense);
-            if(!license) {
-              dl = '        <dl class="do" id="' + documentLicense + '"><dt>License</dt><dd><select contenteditable="false" name="license">' + getLicenseOptionsHTML({ 'selected': '' }) + '</select></dd></dl>';
-              insertDocumentLevelHTML(document, dl, { 'id': documentLicense });
-
-              var dLS = document.querySelector('#' + documentLicense + ' select');
-              dLS.addEventListener('change', (e) => {
-                dLS.querySelectorAll('option').forEach(o => {
-                  o.removeAttribute('selected');
-                });
-                dLS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
-              });
-            }
-
-            var documentType = 'document-type';
-            var type = document.getElementById(documentType);
-            if(!type) {
-              dl = '        <dl class="do" id="' + documentType + '"><dt>Document Type</dt><dd><select contenteditable="false" name="document-type">' + getResourceTypeOptionsHTML({ 'selected': '' }) + '</select></dd></dl>';
-              insertDocumentLevelHTML(document, dl, { 'id': documentType });
-
-              var dTypeS = document.querySelector('#' + documentType + ' select');
-              dTypeS.addEventListener('change', (e) => {
-                dTypeS.querySelectorAll('option').forEach(o => {
-                  o.removeAttribute('selected');
-                });
-                dTypeS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
-              });
-            }
-
-            var documentStatus = 'document-status';
-            var status = document.getElementById(documentStatus);
-            if(!status) {
-              dl = '        <dl class="do" id="' + documentStatus + '"><dt>Document Status</dt><dd><select contenteditable="false" name="status">' + getPublicationStatusOptionsHTML({ 'selected': '' }) + '</select></dd></dl>';
-              insertDocumentLevelHTML(document, dl, { 'id': documentStatus });
-
-              var dSS = document.querySelector('#' + documentStatus + ' select');
-              dSS.addEventListener('change', (e) => {
-                dSS.querySelectorAll('option').forEach(o => {
-                  o.removeAttribute('selected');
-                });
-                dSS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
-              });
-            }
-
-            if (getGraphTypes(s).includes(ns.doap.Specification.value)) {
-              var documentTestSuite = 'document-test-suite';
-              var testSuite = document.getElementById(documentTestSuite);
-              if (!testSuite) {
-                // <!--<button class="add-test-suite" contenteditable="false" title="Add test suite">' + Icon[".fas.fa-plus"] + '</button>-->
-                dl = '        <dl class="do" id="' + documentTestSuite + '"><dt>Test Suite</dt><dd><input contenteditable="false" name="test-suite" placeholder="https://example.net/test-suite" type="text" value="" /></dd></dl>';
-                insertDocumentLevelHTML(document, dl, { 'id': documentTestSuite });
-
-                //XXX: This is a workaround until we understand why the input value is not available in setEditSelections() where it is using `document.querySelector` to get the value fresh. The following catches the blur event and sets the input value back to itself, and that seems to be available setEditSelections().
-                var dTS = document.querySelector('#' + documentTestSuite + ' input');
-                dTS.addEventListener('blur', (e) => {
-                  dTS.setAttribute('value', dTS.value)
-                });
-              }
-            }
-
-            var inbox = getGraphInbox(s);
-            if (!inbox?.length) {
-              var documentInbox = 'document-inbox';
-              var inbox = document.getElementById(documentInbox);
-              if (!inbox) {
-                //XXX: <!--<button class="add-inbox" contenteditable="false" title="Add inbox">' + Icon[".fas.fa-plus"] + '</button>-->
-                dl = '        <dl class="do" id="' + documentInbox + '"><dt>Inbox</dt><dd><input contenteditable="false" name="inbox" placeholder="https://example.net/inbox/" type="text" value="" /></dd></dl>';
-                insertDocumentLevelHTML(document, dl, { 'id': documentInbox });
-
-                //XXX: Same as above comment about workaround for setEditSelections
-                var dI = document.querySelector('#' + documentInbox + ' input');
-                dI.addEventListener('blur', (e) => {
-                  dI.setAttribute('value', dI.value);
-                });
-              }
-            }
-
-            if (!s.out(ns.as.inReplyTo).values.length) {
-              var documentInReplyTo = 'document-in-reply-to';
-              var inReplyTo = document.getElementById(documentInReplyTo);
-              if (!inReplyTo) {
-                //XXX: <!--<button class="add-in-reply-to" contenteditable="false" title="Add in-reply-to">' + Icon[".fas.fa-plus"] + '</button>-->
-                dl = '        <dl class="do" id="' + documentInReplyTo + '"><dt>In Reply To</dt><dd><input contenteditable="false" name="in-reply-to" placeholder="https://example.net/article" type="text" value="" /></dd></dl>';
-                insertDocumentLevelHTML(document, dl, { 'id': documentInReplyTo });
-
-                //XXX: Same as above comment about workaround for setEditSelections
-                var dIRT = document.querySelector('#' + documentInReplyTo + ' input');
-                dIRT.addEventListener('blur', (e) => {
-                  dIRT.setAttribute('value', dI.value);
-                });
-              }
-            }
-          }
-          else if (e && e.target.closest('button.editor-disable')) {
-            setEditSelections();
-          }
-
-          //XXX: This should be perhaps limited to certain nodes?
-          document.querySelectorAll('.do').forEach(node => {
-            node.setAttribute('contenteditable', 'false');
-          })
-
-          return DO.U.Editor.MediumEditor;
-        }
-      },
-
-      Button: (function () {
-        if (typeof MediumEditor !== 'undefined') {
-          MediumEditor.extensions.button.prototype.defaults.unorderedlist.contentFA = Icon[".fas.fa-link-ul"];
-
-          MediumEditor.extensions.button.prototype.defaults.orderedlist.contentFA = Icon[".fas.fa-link-ol"];
-
-          MediumEditor.extensions.button.prototype.defaults.image.contentFA = Icon[".fas.fa-image"];
-
-          MediumEditor.extensions.button.prototype.defaults.pre.contentFA = Icon[".fas.fa-code"];
-
-          return MediumEditor.extensions.button.extend({
-            init: function () {
-              this.name = this.label;
-              // this.action = this.action;
-              this.aria = this.label;
-              this.tagNames = [this.action];
-              this.useQueryState = true;
-              this.contentDefault = '<b>' + this.label + '</b>';
-
-              switch(this.action) {
-                case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': this.contentFA = Icon[".fas.fa-header"] + parseInt(this.action.slice(-1)); break;
-
-                case 'em': this.contentFA = Icon[".fas.fa-italic"]; break;
-
-                case 'strong': this.contentFA = Icon[".fas.fa-bold"]; break;
-
-                case 'image': this.contentFA = Icon[".fas.fa-image"]; break;
-
-                case 'q': this.contentFA = Icon[".fas.fa-quote-right"]; break;
-
-                case 'math': this.contentFA = Icon[".fas.fa-calculator"]; break;
-                default: break;
-              }
-
-              this.button = this.createButton();
-              this.on(this.button, 'click', this.handleClick.bind(this));
-
-              //TODO: Listen to section hX changes and update section @id and span @class do.fragment
-            },
-
-            // getButton: function() {
-            //   console.log('DO.U.Editor.Button.Note.getButton()');
-            //   return this.button;
-            // },
-
-            handleClick: function(event) { //, editable
-        //console.log('DO.U.Editor.Button.handleClick()');
-// console.log(this);
-              event.preventDefault();
-              event.stopPropagation();
-
-              var action = this.getAction();
-              var tagNames = this.getTagNames();
-              var button = this.getButton();
-
-              if (this.isActive()) {
-                return this.base.execAction('removeFormat');
-              }
-              else {
-                var datetime = ' ' + DO.U.createAttributeDateTime(this.action);
-
-                this.base.selectedDocument = this.document;
-                this.base.selection = MediumEditor.selection.getSelectionHtml(this.base.selectedDocument);
-                //.replace(DO.C.Editor.regexEmptyHTMLTags, '');
-// console.log('this.base.selection:');
-// console.log(this.base.selection);
-
-                var selectedParentElement = this.base.getSelectedParentElement();
-// console.log('getSelectedParentElement:');
-// console.log(selectedParentElement);
-                var parentSection = MediumEditor.util.getClosestTag(selectedParentElement, 'section');
-// console.log(parentSection);
-
-                //XXX: DO NOT REMOVE. Saving the selection should be before inserting/updating HTML.
-                this.base.saveSelection();
-
-                switch(this.action) {
-                  case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
-                    //XXX: Which heading level are we at?
-                    var parentSectionHeading = '';
-                    for (var i = 0; i < parentSection.childNodes.length; i++) {
-                      parentSectionHeading = parentSection.childNodes[i].nodeName.toLowerCase();
-                      if(DO.C.Editor.headings.indexOf(parentSectionHeading) > 0) {
-// console.log(parentSectionHeading);
-                        break;
-                      }
-                    }
-                    var pSH = parseInt(parentSectionHeading.slice(-1));
-
-                    //XXX: Which heading level is the action?
-                    var cSH = parseInt(this.action.slice(-1));
-// console.log("parentH: " + pSH);
-// console.log("currentH: " + cSH);
-// console.log(cSH-pSH);
-
-                    var closePreviousSections = '';
-                    // if (cSH > pSH) {}
-                    for (i = 0; i <= (pSH-cSH); i++) {
-                      console.log("i: " + i);
-                      closePreviousSections += '</div></section>';
-                    }
-// console.log(closePreviousSections);
-// console.log(this.base.selection);
-// var doc = this.document;
-                    var selection = window.getSelection();
-// console.log(this.base.selection);
-// console.log(selection);
-
-                    if (selection.rangeCount) {
-                      // FIXME: Seem ununsed. Remove later. 
-                      // range = selection.getRangeAt(0);
-                      // parent = selectedParentElement;
-
-// console.log(range);
-                      //Section
-                      var sectionId = generateAttributeId(null, this.base.selection);
-                      var section = document.createElement('section');
-                      section.id = sectionId;
-                      section.setAttribute('rel', 'schema:hasPart');
-                      section.setAttribute('resource', '#' + sectionId);
-// console.log(section);
-
-
-                      //Heading
-                      var heading = document.createElement(tagNames[0]);
-                      heading.setAttribute('property', 'schema:name');
-                      heading.innerHTML = this.base.selection;
-// console.log(heading);
-// console.log(selection);
-
-
-                      var divDescription = parentSection.getElementsByTagName('div')[0];
-// console.log(divDescription);
-// console.log(divDescription.innerHTML);
-// console.log(divDescription.childNodes);
-// console.log(divDescription.length);
-// console.log(selectedParentElement);
-// console.log(selectedParentElement.childNodes);
-// console.log(selectedParentElement.lastChild);
-// console.log(selectedParentElement.lastChild.length);
-
-                      r = selection.getRangeAt(0);
-// console.log(r);
-// console.log(r.startContainer);
-// console.log(r.startOffset);
-// console.log(r.endOffset);
-                      //Remaining nodes
-                      var r = document.createRange();
-                      r.setStart(selection.focusNode, selection.focusOffset);
-                      r.setEnd(selectedParentElement.lastChild, selectedParentElement.lastChild.length);
-// console.log(r.commonAncestorContainer.nodeType);
-
-// console.log(r.startContainer);
-// console.log(r.endContainer);
-// console.log(selection.anchorNode);
-// selection.removeAllRanges(); //XXX: is this doing anything?
-// selection.addRange(r);
-
-// console.log(selection.anchorNode);
-                      var fragment = r.extractContents();
-// console.log(fragment);
-// console.log(selection);
-// r = selection.getRangeAt(0);
-// console.log(r);
-// console.log(r.startContainer);
-// console.log(r.startOffset);
-// console.log(r.endOffset);
-                      if (fragment.firstChild.nodeType === 3) {
-                        //TODO: trim only if there is one child which is a textnode
-                        // fragment.firstChild.nodeValue = fragment.firstChild.nodeValue.trim();
-
-// console.log(fragment);
-                        var sPE = selectedParentElement.nodeName.toLowerCase();
-                        switch(sPE) {
-                          case "p": default:
-                            var xSPE = document.createElement(sPE);
-                            xSPE.appendChild(fragment.cloneNode(true));
-                            fragment = fragmentFromString(xSPE.outerHTML);
-                            break;
-                          //TODO: Other cases?
-                        }
-                      }
-// console.log(fragment);
-// console.log(selection);
-
-                      r = selection.getRangeAt(0);
-// console.log(r);
-// console.log(r.startContainer);
-// console.log(r.startOffset);
-// console.log(r.endOffset);
-// var remainingNodes = document.createElement('div');
-// remainingNodes.appendChild(fragment.cloneNode(true));
-// console.log(remainingNodes);
-
-
-                      //Description
-                      var div = document.createElement('div');
-                      div.setAttribute('property', 'schema:description');
-                      div.appendChild(fragment.cloneNode(true));
-
-                      //Put it together
-                      section.appendChild(heading);
-                      section.appendChild(div);
-// console.log(range.startContainer);
-
-                      var selectionUpdated = document.createElement('div');
-                      selectionUpdated.appendChild(section);
-                      selectionUpdated = selectionUpdated.innerHTML;
-// console.log(selectionUpdated);
-// range.deleteContents();
-// MediumEditor.util.insertHTMLCommand(this.document, closePreviousSections);
-// MediumEditor.extensions.paste(closePreviousSections);
-
-                      //Sub-section
-                      if (cSH-pSH > 0) {
-                        MediumEditor.util.insertHTMLCommand(this.base.selectedDocument, selectionUpdated);
-
-                        // This doesn't seem to be needed anymore?
-                        // MediumEditor.selection.select(this.base.selectedDocument, heading, 0);
-                      }
-                      else {
-// console.log(selection);
-// console.log(parentSection);
-                        MediumEditor.selection.selectNode(parentSection, document);
-                        r = selection.getRangeAt(0);
-// console.log(r);
-// console.log(r.startOffset);
-// console.log(r.endOffset);
-
-
-                        //This selection is based off previous operations; handling remaining Nodes after the selection. So, this is not accurate per se.. the range might be accurate.
-                        selection = window.getSelection();
-// console.log(selection);
-                        r = selection.getRangeAt(0);
-// console.log(r);
-// console.log(r.startOffset);
-// console.log(r.endOffset);
-
-
-                        r = document.createRange();
-                        r.setStartAfter(parentSection);
-// console.log(r);
-                        r.setEndAfter(parentSection);
-// console.log(r);
-                        r.collapse(true);
-                        selection.removeAllRanges();
-                        selection.addRange(r);
-// console.log(selection);
-                        var foo = document.createElement('div');
-                        foo.appendChild(parentSection);
-                        parentSection = foo.innerHTML;
-// console.log(parentSection + selectionUpdated);
-                        MediumEditor.util.insertHTMLCommand(this.base.selectedDocument, parentSection + selectionUpdated);
-
-                        // MediumEditor.selection.select(this.base.selectedDocument, heading, 0);
-                        // parentSection.parentNode.insertBefore(section, parentSection.nextSibling);
-                      }
-                    }
-
-                    this.base.restoreSelection();
-                    this.base.checkSelection();
-                    break;
-
-                  case 'math':
-                    var QUEUE = window.MathJax.Hub.Queue;  // shorthand for the queue
-                    var math = null;                // the element jax for the math output.
-
-                    selection = this.base.selection;
-
-                    var selectionId = generateAttributeId();
-
-                    selectionUpdated = '<span id="' + selectionId + '">$$</span>';
-
-                    MediumEditor.util.insertHTMLCommand(this.base.selectedDocument, selectionUpdated);
-
-                    window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub, selectionId]);
-                    math = window.MathJax.Hub.getAllJax(selectionId)[0];
-                    window.MathJax.Hub.Queue(["Text", math, selection]);
-
-                    MediumEditor.selection.selectNode(document.getElementById(selectionId), document);
-                    break;
-
-                  //XXX: This is used for non-built-in buttons
-                  default:
-                    selectionUpdated = '<' + tagNames[0] + datetime + '>' + this.base.selection + '</' + tagNames[0] + '>';
-
-                    if (this.action == 'image') {
-                      var imgOptions = this.base.selection.split("|");
-
-                      var src = imgOptions[0];
-                      var alt = '';
-                      var width = '';
-                      var height = '';
-
-                      //https://example/foo.jpg|figure|480x320|Hello world
-                      switch (imgOptions.length) {
-                        case 1: default:
-                          src = imgOptions[0];
-                          break;
-
-                        case 2:
-                          alt = imgOptions[1];
-                          break;
-
-                        case 3:
-                          width = ' width="' + imgOptions[1] + '"';
-                          var widthHeight = imgOptions[1].split('x');
-
-                          if (widthHeight.length == 2) {
-                            width = ' width="' + widthHeight[0] + '"';
-                            height = ' height="' + widthHeight[1] + '"';
-                          }
-
-                          alt = imgOptions[2];
-                          break;
-
-                        case 4:
-                          var figure = imgOptions[1];
-                          //if imgOptions[1] == 'figure'
-
-                          width = ' width="' + imgOptions[2] + '"';
-                          widthHeight = imgOptions[2].split('x');
-
-                          if (widthHeight.length == 2) {
-                            width = ' width="' + widthHeight[0] + '"';
-                            height = ' height="' + widthHeight[1] + '"';
-                          }
-
-                          alt = imgOptions[3];
-                          break;
-                      }
-
-                      selectionUpdated = '<img alt="'+ alt +'"' + height + ' src="' + src + '"' + width + ' />';
-                      if (imgOptions.length == 4) {
-                        selectionUpdated = '<figure>' + selectionUpdated + '<figcaption>' + alt + '</figcaption></figure>';
-                      }
-                    }
-
-                    MediumEditor.util.insertHTMLCommand(this.base.selectedDocument, selectionUpdated);
-                    this.base.restoreSelection();
-                    this.base.checkSelection();
-
-                    break;
-                }
-
-                this.setActive();
-              }
-            }
-          });
-        }
-      })(),
-
-      //Adapted from MediumEditor's Anchor Form
-      Note: (function() {
-        if (typeof MediumEditor !== 'undefined') {
-          return MediumEditor.extensions.form.extend({
-            /* Textarea Form Options */
-
-            /* customClassOption: [string]  (previously options.anchorButton + options.anchorButtonClass)
-             * Custom class name the user can optionally have added to their created links (ie 'button').
-             * If passed as a non-empty string, a checkbox will be displayed allowing the user to choose
-             * whether to have the class added to the created link or not.
-             */
-            customClassOption: null,
-
-            /* customClassOptionText: [string]
-             * text to be shown in the checkbox when the __customClassOption__ is being used.
-             */
-            customClassOptionText: 'Button',
-
-            /* linkValidation: [boolean]  (previously options.checkLinkFormat)
-             * enables/disables check for common URL protocols on anchor links.
-             */
-            linkValidation: false,
-
-            /* placeholderText: [string]  (previously options.anchorInputPlaceholder)
-             * text to be shown as placeholder of the anchor input.
-             */
-            placeholderText: "What’s up?",
-
-            /* targetCheckbox: [boolean]  (previously options.anchorTarget)
-             * enables/disables displaying a "Open in new window" checkbox, which when checked
-             * changes the `target` attribute of the created link.
-             */
-            targetCheckbox: false,
-
-            /* targetCheckboxText: [string]  (previously options.anchorInputCheckboxLabel)
-             * text to be shown in the checkbox enabled via the __targetCheckbox__ option.
-             */
-            targetCheckboxText: 'Open in new window',
-
-            // Options for the Button base class
-            // name: this.name,
-            // action: 'createLink',
-            // aria: 'link',
-            // tagNames: ['a'],
-            // contentDefault: '<b>#</b>',
-            // contentFA: '<i class="fa fa-sticky-note"></i>',
-
-            init: function () {
-              this.name = this.label;
-              // this.action = this.action;
-              this.aria = this.label;
-              this.tagNames = [this.action];
-              this.useQueryState = true;
-              this.contentDefault = '<b>' + this.label + '</b>';
-              this.signInRequired = false;
-
-              switch(this.action) {
-                case 'cite': default:
-                  this.contentFA = Icon[".fas.fa-hashtag"];
-                  break;
-                case 'article':
-                  this.contentFA = Icon[".fas.fa-sticky-note"];
-                  this.signInRequired = true;
-                  break;
-                case 'note':
-                  this.contentFA = Icon[".fas.fa-sticky-note"];
-                  break;
-                case 'rdfa':
-                  this.contentFA = Icon[".fas.fa-rocket"];
-                  break;
-                case 'selector':
-                  this.contentFA = Icon[".fas.fa-anchor"];
-                  break;
-                case 'bookmark':
-                  this.contentFA = Icon[".fas.fa-bookmark"];
-                  this.signInRequired = true;
-                  break;
-                case 'share':
-                  this.contentFA = Icon[".fas.fa-bullhorn"];
-                  this.signInRequired = true;
-                  break;
-                case 'approve':
-                  this.contentFA = Icon[".fas.fa-thumbs-up"];
-                  this.signInRequired = true;
-                  break;
-                case 'disapprove':
-                  this.contentFA = Icon[".fas.fa-thumbs-down"];
-                  this.signInRequired = true;
-                  break;
-                case 'specificity':
-                  this.contentFA = Icon[".fas.fa-crosshairs"];
-                  this.signInRequired = true;
-                  break;
-                case 'sparkline':
-                  this.contentFA = Icon[".fas.fa-chart-line"];
-                  break;
-              }
-              MediumEditor.extensions.form.prototype.init.apply(this, arguments);
-
-        //TODO: Change this bind key
-        //      this.subscribe('editableKeydown', this.handleKeydown.bind(this));
-        //      this.on(this.button, 'click', this.handleClick.bind(this));
-            },
-
-            // Called when the button the toolbar is clicked
-            // Overrides ButtonExtension.handleClick
-            handleClick: function (event) {
-              event.preventDefault();
-              event.stopPropagation();
-              var _this = this;
-              var showAction = function() {
-                switch(_this.action) {
-                  default:
-                    var range = MediumEditor.selection.getSelectionRange(_this.document);
-
-                    if (range.startContainer.nodeName.toLowerCase() === 'a' ||
-                      range.endContainer.nodeName.toLowerCase() === 'a' ||
-                      MediumEditor.util.getClosestTag(MediumEditor.selection.getSelectedParentElement(range), 'a')) {
-                      return _this.execAction('unlink');
-                    }
-
-                    if (DO.U.Editor.MediumEditor.options.id == 'social' && _this.action == 'selector'){
-                      var opts = {
-                        license: 'https://creativecommons.org/licenses/by/4.0/',
-                        content: 'Liked'
-                      }
-                      _this.completeFormSave(opts);
-                    }
-                    else if (!_this.isDisplayed()) {
-                      _this.showForm();
-                    }
-                    break;
-
-                  case 'share':
-                    _this.base.restoreSelection();
-                    var resourceIRI = DO.C.DocumentURL;
-                    var node = _this.base.getSelectedParentElement().closest('[id]');
-                    resourceIRI = (node && node.id) ? resourceIRI + '#' + node.id : resourceIRI;
-                    _this.window.getSelection().removeAllRanges();
-                    _this.base.checkSelection();
-                    DO.U.shareResource(null, resourceIRI);
-                    break;
-                }
-              };
-
-              var updateAnnotationServiceForm = function() {
-                var annotationServices = document.querySelectorAll('.annotation-location-selection');
-                for (var i = 0; i < annotationServices.length; i++) {
-                  annotationServices[i].innerHTML = getAnnotationLocationHTML();
-                }
-              };
-
-              var updateAnnotationInboxForm = function() {
-                var annotationInbox = document.querySelectorAll('.annotation-inbox');
-                for (var i = 0; i < annotationInbox.length; i++) {
-                  annotationInbox[i].innerHTML = getAnnotationInboxLocationHTML();
-                }
-              };
-
-              updateAnnotationInboxForm();
-
-              return getLinkRelation(ns.oa.annotationService.value, null, getDocument()).then(
-                function(url) {
-                  DO.C.AnnotationService = url[0];
-                  updateAnnotationServiceForm();
-                  showAction();
-                },
-                function(reason) {
-                  if(_this.signInRequired && !DO.C.User.IRI) {
-                    showUserIdentityInput();
-                  }
-                  else {
-                    updateAnnotationServiceForm();
-                    showAction();
-                  }
-                }
-              );
-            },
-
-            // Called when user hits the defined shortcut (CTRL / COMMAND + K)
-            handleKeydown: function (event) {
-              if (MediumEditor.util.isKey(event, MediumEditor.util.keyCode.K) && MediumEditor.util.isMetaCtrlKey(event) && !event.shiftKey) {
-                this.handleClick(event);
-              }
-            },
-
-            // Called by medium-editor to append form to the toolbar
-            getForm: function () {
-              if (!this.form) {
-                this.form = this.createForm();
-              }
-              return this.form;
-            },
-
-            getTemplate: function () {
-              var tmpl = [];
-              switch(this.action) {
-                case 'rdfa':
-                  tmpl = [
-                  '<label for="rdfa-about">about</label><input id="rdfa-about" class="medium-editor-toolbar-input" placeholder="https://example.org/foo#bar" /><br/>',
-                  '<label for="rdfa-resource">resource</label><input id="rdfa-resource" class="medium-editor-toolbar-input" placeholder="https://example.net/baz" /><br/>',
-                  '<label for="rdfa-typeof">typeof</label><input id="rdfa-typeof" class="medium-editor-toolbar-input" placeholder="https://example.net/baz" /><br/>',
-                  '<label for="rdfa-rel">rel</label><input id="rdfa-rel" class="medium-editor-toolbar-input" placeholder="schema:url"><br/>',
-                  '<label for="rdfa-property">property</label><input id="rdfa-property" class="medium-editor-toolbar-input" placeholder="schema:name" /><br/>',
-                  '<label for="rdfa-href">href</label><input id="rdfa-href" class="medium-editor-toolbar-input" placeholder="https://example.net/baz" /><br/>',
-                  '<label for="rdfa-content">content</label><input id="rdfa-content" class="medium-editor-toolbar-input" placeholder="Baz" /><br/>',
-                  '<label for="rdfa-language">language</label><input id="rdfa-language" class="medium-editor-toolbar-input" placeholder="en" /><br/>',
-                  '<label for="rdfa-datatype">datatype</label><input id="rdfa-datatype" class="medium-editor-toolbar-input" placeholder="https://example.net/baz" /><br/>'
-                  ];
-                  break;
-                case 'article':
-                  tmpl = [
-                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
-                  '<textarea id="article-content" name="content" cols="20" rows="5" class="medium-editor-toolbar-textarea" placeholder="', this.placeholderText, '"></textarea>',
-                  '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
-                  '<select id="article-license" name="license" class="medium-editor-toolbar-select">',
-                  getLicenseOptionsHTML(),
-                  '</select>',
-                  '<span class="annotation-location-selection">' + getAnnotationLocationHTML() + '</span>',
-                  '<span class="annotation-inbox">' + getAnnotationInboxLocationHTML() + '</span>'
-                  ];
-                  break;
-                case 'note':
-                  tmpl = [
-                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
-                  '<textarea id="article-content" name="content" cols="20" rows="1" class="medium-editor-toolbar-textarea" placeholder="', this.placeholderText, '"></textarea>',
-                  '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
-                  '<select id="article-license" name="license" class="medium-editor-toolbar-select">',
-                  getLicenseOptionsHTML(),
-                  '</select>'
-                  ];
-                  break;
-                case 'approve':
-                  tmpl = [
-                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
-                  '<textarea id="approve-content" name="content" cols="20" rows="2" class="medium-editor-toolbar-textarea" placeholder="Strong point? Convincing argument?"></textarea>',
-                  '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
-                  '<select id="approve-license" name="license" class="medium-editor-toolbar-select">',
-                  getLicenseOptionsHTML(),
-                  '</select>',
-                  '<span class="annotation-location-selection">' + getAnnotationLocationHTML() + '</span>',
-                  '<span class="annotation-inbox">' + getAnnotationInboxLocationHTML() + '</span>'
-                  ];
-                  break;
-                case 'disapprove':
-                  tmpl = [
-                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
-                  '<textarea id="disapprove-content" name="content" cols="20" rows="2" class="medium-editor-toolbar-textarea" placeholder="Weak point? Error? Inaccurate?"></textarea>',
-                  '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
-                  '<select id="disapprove-license" name="license" class="medium-editor-toolbar-select">',
-                  getLicenseOptionsHTML(),
-                  '</select>',
-                  '<span class="annotation-location-selection">' + getAnnotationLocationHTML() + '</span>',
-                  '<span class="annotation-inbox">' + getAnnotationInboxLocationHTML() + '</span>'
-                  ];
-                  break;
-                case 'specificity':
-                  tmpl = [
-                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
-                  '<textarea id="specificity-content" name="content" cols="20" rows="2" class="medium-editor-toolbar-textarea" placeholder="Citation or specificity needed?"></textarea>',
-                  '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
-                  '<select id="specificity-license" name="license" class="medium-editor-toolbar-select">',
-                  getLicenseOptionsHTML(),
-                  '</select>',
-                  '<span class="annotation-location-selection">' + getAnnotationLocationHTML() + '</span>',
-                  '<span class="annotation-inbox">' + getAnnotationInboxLocationHTML() + '</span>'
-                  ];
-                  break;
-                case 'cite':
-                  tmpl = [
-                  '<input type="text" name="specref-search" value="" id="specref-search" class="medium-editor-toolbar-input" placeholder="Enter terms to search for specifications" />',
-                  '<input type="submit" name="specref-search-submit" value="Search" id="specref-search-submit" />',
-                  '<div class="specref-search-results"></div>',
-                  '<input type="radio" name="citation-type" value="ref-footnote" id="ref-footnote" /> <label for="ref-footnote">Footnote</label>',
-                  '<input type="radio" name="citation-type" value="ref-reference" id="ref-reference" /> <label for="ref-reference">Reference</label>',
-                  '<select id="citation-relation" name="citation-relation" class="medium-editor-toolbar-select">',
-                  getCitationOptionsHTML(),
-                  '</select>',
-                  '<input type="text" name="citation-url" value="" id="citation-url" class="medium-editor-toolbar-input" placeholder="http://example.org/article#results" />',
-                  '<textarea id="citation-content" cols="20" rows="1" class="medium-editor-toolbar-textarea" placeholder="', this.placeholderText, '"></textarea>',
-                  '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
-                  ];
-                  break;
-                case 'bookmark':
-                  tmpl = [
-                  '<label for="bookmark-tagging">Tags</label> <input id="bookmark-tagging" class="medium-editor-toolbar-input" placeholder="Separate tags with commas" /><br/>',
-                  '<textarea id="bookmark-content" name="content" cols="20" rows="2" class="medium-editor-toolbar-textarea" placeholder="Description"></textarea>',
-                  '<select id="article-language" name="language" class="medium-editor-toolbar-select">', getLanguageOptionsHTML(), '</select>',
-                  '<select id="bookmark-license" name="license" class="medium-editor-toolbar-select">',
-                  getLicenseOptionsHTML(),
-                  '</select>'
-                  ];
-                  break;
-                case 'sparkline':
-                  tmpl = [
-                  '<input type="text" name="sparkline-search" value="" id="sparkline-search" class="medium-editor-toolbar-input" placeholder="Enter search terms" /><br/>',
-                  '<input type="hidden" name="sparkline-selection-dataset" value="" id="sparkline-selection-dataset" />',
-                  '<input type="hidden" name="sparkline-selection-refarea" value="" id="sparkline-selection-refarea" />'
-                  ];
-                  break;
-                default:
-                  tmpl = [
-                  '<textarea cols="20" rows="1" class="medium-editor-toolbar-textarea" placeholder="', this.placeholderText, '"></textarea>'
-                  ];
-                  break;
-              }
-
-              tmpl.push(
-                '<a href="#" class="medium-editor-toolbar-save" title="Save">',
-                this.getEditorOption('buttonLabels') === 'fontawesome' ? Icon[".fas.fa-check"] : this.formSaveLabel,
-                '</a>'
-              );
-
-              tmpl.push(
-                '<a href="#" class="medium-editor-toolbar-close" title="Close">',
-                this.getEditorOption('buttonLabels') === 'fontawesome' ? Icon[".fas.fa-times"] : this.formCloseLabel,
-                '</a>'
-              );
-
-              // both of these options are slightly moot with the ability to
-              // override the various form buildup/serialize functions.
-
-              if (this.targetCheckbox) {
-                // fixme: ideally, this targetCheckboxText would be a formLabel too,
-                // figure out how to deprecate? also consider `fa-` icon default implcations.
-                tmpl.push(
-                  '<div class="medium-editor-toolbar-form-row">',
-                  '<input type="checkbox" class="medium-editor-toolbar-textarea-target">',
-                  '<label>',
-                  this.targetCheckboxText,
-                  '</label>',
-                  '</div>'
-                );
-              }
-
-              if (this.customClassOption) {
-                // fixme: expose this `Button` text as a formLabel property, too
-                // and provide similar access to a `fa-` icon default.
-                tmpl.push(
-                  '<div class="medium-editor-toolbar-form-row">',
-                  '<input type="checkbox" class="medium-editor-toolbar-textarea-button">',
-                  '<label>',
-                  this.customClassOptionText,
-                  '</label>',
-                  '</div>'
-                );
-              }
-
-              return tmpl.join('');
-
-            },
-
-            // Used by medium-editor when the default toolbar is to be displayed
-            isDisplayed: function () {
-              return this.getForm().style.display === 'block';
-            },
-
-            hideForm: function () {
-              this.getForm().style.display = 'none';
-              this.getInput().value = '';
-            },
-
-            showForm: function (opts) {
-              var _this = this;
-              var input = this.getInput(),
-                targetCheckbox = this.getAnchorTargetCheckbox(),
-                buttonCheckbox = this.getAnchorButtonCheckbox();
-
-              opts = opts || { url: '' };
-              // TODO: This is for backwards compatability
-              // We don't need to support the 'string' argument in 6.0.0
-              if (typeof opts === 'string') {
-                opts = {
-                  url: opts
-                };
-              }
-
-              var initialSelectedParentElement = this.base.getSelectedParentElement();
-              var initialSelectionState = MediumEditor.selection.exportSelection(initialSelectedParentElement, this.document);
-
-              //XXX: Get this before getForm.
-              var selection = MediumEditor.selection.getSelectionHtml(this.document).trim();
-              this.base.saveSelection();
-              this.hideToolbarDefaultActions();
-              var form = this.getForm();
-              form.style.display = 'block';
-              this.setToolbarPosition();
-
-              input.value = opts.url;
-
-              switch(this.action) {
-                case 'rdfa':
-                  input.about.focus();
-                  break;
-                case 'article': case 'note': case 'approve': case 'disapprove': case 'specificity':
-                  input.content.focus();
-                  break;
-                case 'cite':
-                  input.search.focus();
-                  input.search.value = selection;
-
-                  var specrefSearchResults = document.querySelector('.specref-search-results');
-                  if(specrefSearchResults) {
-                    specrefSearchResults.innerHTML = '';
-                  }
-
-                  var specref = document.querySelector('#specref-search-submit');
-                  specref.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-// console.log(e);
-
-                    var keyword = input.search.value.trim();
-                    var url = 'https://api.specref.org/search-refs?q=' + keyword;
-                    var headers = {'Accept': 'application/json'};
-                    var options = {'noCredentials': true};
-
-                    getResource(url, headers, options).then(response => {
-                      // console.log(response);
-                      return response.text();
-                    }).then(data => {
-                      data = JSON.parse(data);
-// console.log(data);
-
-                      var searchResultsHTML = '';
-                      var searchResultsItems = [];
-
-                      var href, title, publisher, date, status;
-
-                      //TODO: Clean input data
-
-                      Object.keys(data).forEach(key => {
-// console.log(data[key])
-                        if ('href' in data[key] &&
-                            !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
-
-                          //fugly WG21
-                            (!('publisher' in data[key]) || ((data[key].publisher.toLowerCase() != 'wg21') || ((data[key].href.startsWith('https://wg21.link/n') || data[key].href.startsWith('https://wg21.link/p') || data[key].href.startsWith('https://wg21.link/std')) && !data[key].href.endsWith('.yaml') && !data[key].href.endsWith('/issue') && !data[key].href.endsWith('/github') && !data[key].href.endsWith('/paper'))))
-
-                            ) {
-
-                          href = data[key].href;
-                          title = data[key].title || href;
-                          publisher = data[key].publisher || '';
-                          date = data[key].date || '';
-                          status = data[key].status || '';
-
-                          if (publisher) {
-                            publisher = '. ' + publisher;
-                          }
-                          if (date) {
-                            date = '. ' + date;
-                          }
-                          if (status) {
-                            status = '. ' + status;
-                          }
-
-                          searchResultsItems.push('<li><input type="radio" name="specref-item" value="' + key + '" id="ref-' + key + '" /> <label for="ref-' + key + '"><a href="' + href + '" target="_blank">' + title + '</a>' + publisher + date + status + '</label></li>');
-                        }
-                      });
-
-                      searchResultsHTML = '<ul>' + searchResultsItems.join('') + '</ul>';
-
-                      if (searchResultsItems) {
-                        specrefSearchResults = document.querySelector('.specref-search-results');
-                        if(specrefSearchResults) {
-                          specrefSearchResults.innerHTML = searchResultsHTML;
-                        }
-
-                        //XXX: Assigning 'change' action to ul because it gets removed when there is a new search result / replaced. Perhaps it'd be nicer (but more expensive?) to destroy/create .specref-search-results node?
-                        specrefSearchResults.querySelector('ul').addEventListener('change', (e) => {
-                          var checkedCheckbox = e.target.closest('input');
-                          if (checkedCheckbox) {
-// console.log(e.target);
-                            document.querySelector('#citation-url').value = data[checkedCheckbox.value].href;
-                          }
-                        });
-                      }
-                    });
-
-                  });
-
-                  input.url.focus();
-                  document.querySelector('.medium-editor-toolbar-form input[name="citation-type"]').checked = true;
-                  break;
-                case 'sparkline':
-                  input.search.focus();
-                  input.search.value = selection;
-
-                  var inputSearch = function(e){
-                    if(e.which == 13) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      _this.base.restoreSelection();
-                      MediumEditor.util.insertHTMLCommand(document, e.target.value);
-                      var selection = { start: initialSelectionState.start, end: (initialSelectionState.start + e.target.value.length) };
-                      MediumEditor.selection.importSelection(selection, initialSelectedParentElement, document);
-                      _this.base.checkSelection();
-                      e.target.setAttribute('data-event-keyup-enter', true);
-                      _this.showForm();
-                      return;
-                    }
-                  }
-                  if(!input.search.getAttribute('data-event-keyup-enter')) {
-                    input.search.addEventListener('keyup', inputSearch, false);
-                  }
-
-                  var sparqlEndpoint = 'http://worldbank.270a.info/';
-                  var resourceType = '<http://purl.org/linked-data/cube#DataSet>';
-                  var sparklineGraphId = 'sparkline-graph';
-                  var resultContainerId = 'sparkline-select';
-                  //TODO: This should be from user's preference?
-                  var lang = 'en';
-
-                  //TODO: What's the best way for user input? ' of '
-                  var textInputA = selection.split(' of ')[0];
-                  var textInputB = selection.substr(selection.indexOf(' of ') + 4);
-
-                  if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
-                    Object.keys(DO.C.RefAreas).forEach(key => {
-                      if(DO.C.RefAreas[key].toLowerCase() == textInputB.toLowerCase()) {
-                        textInputB = key;
-                      }
-                    });
-                  }
-
-                  var sG = document.getElementById(sparklineGraphId);
-                  if(sG) {
-                    sG.parentNode.removeChild(sG);
-                  }
-
-                  if(!DO.C.RefAreas[textInputB.toUpperCase()]) {
-                    var refAreas;
-                    Object.keys(DO.C.RefAreas).forEach(key => {
-                      refAreas += '<option value="' + key + '">' + key + ' - ' + DO.C.RefAreas[key] + '</option>';
-                    });
-                    form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '">`' + textInputB + '` is not available. Try: ' + '<select name="refAreas"><option>Select a reference area</option>' + refAreas + '</select></div>');
-                    var rA = document.querySelector('#' + sparklineGraphId + ' select[name="refAreas"]');
-                    rA.addEventListener('change', (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      textInputB = e.target.value;
-                      input.search.value = textInputA + ' of ' + textInputB;
-                      form.querySelector('#sparkline-selection-dataset').value = textInputA;
-                      form.querySelector('#sparkline-selection-refarea').value = textInputB;
-
-                      _this.base.restoreSelection();
-                      MediumEditor.util.insertHTMLCommand(document, input.search.value);
-                      var selection = { start: initialSelectionState.start, end: (initialSelectionState.start + input.search.value.length) };
-                      MediumEditor.selection.importSelection(selection, initialSelectedParentElement, document);
-                      _this.base.checkSelection();
-                      _this.showForm();
-                    });
-                    return;
-                  }
-
-                  var options = {};
-                  options.filter = {
-                    dimensionProperty: 'sdmx-dimension:refArea',
-                    dimensionRefAreaNotation: textInputB
-                  };
-                  options.optional = { prefLabels: ["dcterms:title"] };
-
-                  var queryURL = DO.U.SPARQLQueryURL.getResourcesOfTypeWithLabel(sparqlEndpoint, resourceType, textInputA.toLowerCase(), options);
-
-                  queryURL = getProxyableIRI(queryURL);
-
-                  form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', '<div id="' + sparklineGraphId + '"></div>' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
-                  sG = document.getElementById(sparklineGraphId);
-
-                  getResourceGraph(queryURL)
-                    .then(g => {
-                      sG.removeAttribute('class');
-                      var triples = sortGraphTriples(g, { sortBy: 'object' });
-                      return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
-                    })
-                    .then(listHTML => {
-                      sG.innerHTML = listHTML;
-                      form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
-                    })
-                    .then(x => {
-                      var rC = document.getElementById(resultContainerId);
-                      rC.addEventListener('change', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        var sparkline = sG.querySelectorAll('.sparkline, .sparkline-info');
-                        for (var i = 0; i < sparkline.length; i++) {
-                          sparkline[i].parentNode.removeChild(sparkline[i]);
-                        }
-                        form.querySelector('.medium-editor-toolbar-save').insertAdjacentHTML('beforebegin', Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]);
-
-                        var dataset = e.target.value;
-                        var title = e.target.querySelector('*[value="' + e.target.value + '"]').textContent.trim();
-                        //XXX: Should this replace the initial search term?
-                        form.querySelector('#sparkline-selection-dataset').value = title;
-                        form.querySelector('#sparkline-selection-refarea').value = textInputB.toUpperCase();
-
-                        var refArea = textInputB.toUpperCase();
-                        var paramDimension = "\n\
-  ?propertyRefArea rdfs:subPropertyOf* sdmx-dimension:refArea .\n\
-  ?observation ?propertyRefArea [ skos:notation '" + refArea + "' ] .";
-
-// console.log(dataset);
-// console.log(refArea);
-                        var queryURL = DO.U.SPARQLQueryURL.getObservationsWithDimension(sparqlEndpoint, dataset, paramDimension);
-// console.log(queryURL);
-                        queryURL = getProxyableIRI(queryURL);
-
-                        getResourceGraph(queryURL)
-                          .then(g => {
-                            var triples = sortGraphTriples(g, { sortBy: 'object' });
-// console.log(triples);
-                            if (triples.length) {
-                              var observations = {};
-                              triples.forEach(t => {
-                                var s = t.subject.value;
-                                var p = t.predicate.value;
-                                var o = t.object.value;
-                                observations[s] = observations[s] || {};
-                                observations[s][p] = o;
-                              });
-// console.log(observations);
-                              var list = [], item;
-                              Object.keys(observations).forEach(key => {
-                                item = {};
-                                observations[key][ns.qb.Observation.value] = key;
-                                item[key] = observations[key];
-                                list.push(item[key]);
-                              });
-                              var sortByKey = ns['sdmx-dimension'].refPeriod;
-                              list.sort(function (a, b) {
-                                return a[sortByKey].toLowerCase().localeCompare(b[sortByKey].toLowerCase());
-                              });
-// console.log(list);
-                              var options = {
-                                url: dataset,
-                                title: title
-                              };
-                              var sparkline = DO.U.getSparkline(list, options);
-                              sG.insertAdjacentHTML('beforeend', '<span class="sparkline">' + sparkline + '</span> <span class="sparkline-info">' + triples.length + ' observations</span>');
-                                form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
-                            }
-                            else {
-                              //This shouldn't happen.
-                              sG.insertAdjacentHTML('beforeend', '<span class="sparkline-info">0 observations. Select another.</span>');
-                            }
-                          });
-                      });
-                    });
-                  break;
-                case 'bookmark':
-                  input.content.focus();
-                  break;
-                default:
-                  input.focus();
-                  break;
-              }
-
-              // If we have a target checkbox, we want it to be checked/unchecked
-              // based on whether the existing link has target=_blank
-              if (targetCheckbox) {
-                targetCheckbox.checked = opts.target === '_blank';
-              }
-
-              // If we have a custom class checkbox, we want it to be checked/unchecked
-              // based on whether an existing link already has the class
-              if (buttonCheckbox) {
-                var classList = opts.buttonClass ? opts.buttonClass.split(' ') : [];
-                buttonCheckbox.checked = (classList.indexOf(this.customClassOption) !== -1);
-              }
-            },
-
-            // Called by core when tearing down medium-editor (destroy)
-            destroy: function () {
-              if (!this.form) {
-                return false;
-              }
-
-              if (this.form.parentNode) {
-                this.form.parentNode.removeChild(this.form);
-              }
-
-              delete this.form;
-            },
-
-            // core methods
-
-            getFormOpts: function () {
-              // no notion of private functions? wanted `_getFormOpts`
-              var targetCheckbox = this.getAnchorTargetCheckbox(),
-                buttonCheckbox = this.getAnchorButtonCheckbox();
-              var opts = {};
-
-              switch(this.action) {
-                case 'rdfa':
-                  opts.about = this.getInput().about.value;
-                  opts.rel = this.getInput().rel.value;
-                  opts.href = this.getInput().href.value;
-                  opts.typeOf = this.getInput().typeOf.value;
-                  opts.resource = this.getInput().resource.value;
-                  opts.property = this.getInput().property.value;
-                  opts.content = this.getInput().content.value;
-                  opts.datatype = this.getInput().datatype.value;
-                  opts.language = this.getInput().language.value;
-                  break;
-                case 'article': case 'approve': case 'disapprove': case 'specificity':
-                  opts.content = this.getInput().content.value;
-                  var aLS = this.getInput().annotationLocationService;
-                  DO.C.User.UI['annotationLocationService'] = { checked: false }
-                  if(aLS) {
-                    DO.C.User.UI.annotationLocationService.checked = opts.annotationLocationService = aLS.checked;
-                  }
-                  var aLPS = this.getInput().annotationLocationPersonalStorage;
-                  DO.C.User.UI['annotationLocationPersonalStorage'] = { checked: false }
-                  if(aLPS) {
-                    DO.C.User.UI.annotationLocationPersonalStorage.checked = opts.annotationLocationPersonalStorage = aLPS.checked;
-                  }
-                  var aIL = this.getInput().annotationInboxLocation;
-                  DO.C.User.UI['annotationInboxLocation'] = { checked: false }
-                  if(aIL) {
-                    DO.C.User.UI.annotationInboxLocation.checked = opts.annotationInboxLocation = aIL.checked;
-                  }
-                  opts.tagging = this.getInput().tagging.value;
-                  opts.language = this.getInput().language.value;
-                  opts.license = this.getInput().license.value;
-                  break;
-                case 'note':
-                  opts.content = this.getInput().content.value;
-                  opts.tagging = this.getInput().tagging.value;
-                  opts.language = this.getInput().language.value;
-                  opts.license = this.getInput().license.value;
-                  break;
-                case 'cite':
-                  opts.search = this.getInput().search.value;
-                  opts.citationType = this.getInput().citationType.value;
-                  opts.citationRelation = this.getInput().citationRelation.value;
-                  opts.url = this.getInput().url.value;
-                  opts.content = this.getInput().content.value;
-                  opts.language = this.getInput().language.value;
-                  break;
-                case 'bookmark':
-                  opts.content = this.getInput().content.value;
-                  opts.tagging = this.getInput().tagging.value;
-                  opts.language = this.getInput().language.value;
-                  opts.license = this.getInput().license.value;
-                  break;
-                case 'sparkline':
-                  opts.search = this.getInput().search.value;
-                  opts.select = this.getInput().select.value;
-                  opts.sparkline = this.getInput().sparkline.innerHTML;
-                  opts.selectionDataSet = this.getInput().selectionDataSet.value;
-                  opts.selectionRefArea = this.getInput().selectionRefArea.value;
-                  break;
-                default:
-                  opts.url = this.getInput().value;
-                  break;
-
-              }
-
-              if (typeof opts.language !== 'undefined') {
-                DO.C.User.UI['Language'] = opts.language;
-              }
-              if (typeof opts.license !== 'undefined') {
-                DO.C.User.UI['License'] = opts.license;
-              }
-
-              updateLocalStorageProfile(DO.C.User);
-
-              opts.target = '_self';
-              if (targetCheckbox && targetCheckbox.checked) {
-                opts.target = '_blank';
-              }
-
-              if (buttonCheckbox && buttonCheckbox.checked) {
-                opts.buttonClass = this.customClassOption;
-              }
-
-              Object.keys(opts).forEach(key => {
-                if(typeof opts[key] === 'string') {
-                  opts[key] = opts[key].trim();
-                }
-              });
-
-              return opts;
-            },
-
-            doFormSave: function () {
-              var opts = this.getFormOpts();
-              this.completeFormSave(opts);
-            },
-
-            completeFormSave: function (opts) {
-              var _this = this;
-// console.log(this.base)
-// console.log(opts);
-// console.log('completeFormSave() with this.action: ' + this.action);
-              this.base.restoreSelection();
-              var range = MediumEditor.selection.getSelectionRange(this.document);
-              var selectedParentElement = this.base.getSelectedParentElement();
-// console.log('getSelectedParentElement:');
-// console.log(selectedParentElement);
-
-              //Mark the text which the note was left for (with reference to the note?)
-              this.base.selectedDocument = this.document;
-              this.base.selection = MediumEditor.selection.getSelectionHtml(this.base.selectedDocument); //.replace(DO.C.Editor.regexEmptyHTMLTags, '');
-// console.log('this.base.selection:');
-// console.log(this.base.selection);
- 
-              var exact = this.base.selection;
-              var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, this.document);
-              var start = selectionState.start;
-              var end = selectionState.end;
-              var prefixStart = Math.max(0, start - DO.C.ContextLength);
-// console.log('pS ' + prefixStart);
-              var prefix = selectedParentElement.textContent.substr(prefixStart, start - prefixStart);
-// console.log('-' + prefix + '-');
-              prefix = escapeCharacters(prefix);
-
-              var suffixEnd = Math.min(selectedParentElement.textContent.length, end + DO.C.ContextLength);
-// console.log('sE ' + suffixEnd);
-              var suffix = selectedParentElement.textContent.substr(end, suffixEnd - end);
-// console.log('-' + suffix + '-');
-              suffix = escapeCharacters(suffix);
-
-              //Annotating an annotation
-              //FIXME: A bit hacky - should use RDF
-              var annotationInbox = selectedParentElement.closest('.do[typeof="oa:Annotation"]');
-              if (annotationInbox) {
-                annotationInbox = annotationInbox.querySelector('[rel="ldp:inbox"]');
-                if (annotationInbox) {
-                  annotationInbox = annotationInbox.href || annotationInbox.getAttribute('resource')
-                  annotationInbox = decodeURIComponent(annotationInbox);
-                }
-              }
-
-              var datetime = getDateTimeISO();
-              var id = generateAttributeId();
-              var refId = 'r-' + id;
-              // var noteId = 'i-' + id;
-
-              var resourceIRI = DO.C.DocumentURL;
-              var containerIRI = window.location.href;
-
-              var selectorIRI = resourceIRI + '#selector(type=TextQuoteSelector,prefix=' + encodeURIComponent(prefix) + ',exact=' + encodeURIComponent(exact) + ',suffix=' + encodeURIComponent(suffix) +')';
-
-              var contentType = 'text/html';
-              var noteIRI, noteURL;
-              var profile;
-              var options = {};
-              var annotationDistribution = [] , aLS = {};
-
-              var activityTypeMatched = false;
-              var activityIndex = DO.C.ActionActivityIndex[_this.action];
-
-              function isDuplicateLocation(annotationDistribution, containerIRI) {
-                return Object.keys(annotationDistribution).some(
-                  item => annotationDistribution[item].containerIRI == containerIRI
-                );
-              }
-
-              //Use if (activityIndex) when all _this.action values are taken into account e.g., `note` in author mode
-              if (_this.action !== 'selector') {
-                //XXX: Use TypeIndex location as canonical if available, otherwise storage. Note how noteIRI is treated later
-                if((opts.annotationLocationPersonalStorage && DO.C.User.TypeIndex) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.TypeIndex)) {
-
-                  //TODO: Preferring publicTypeIndex for now. Refactor this when the UI allows user to decide whether to have it public or private.
-
-                  var publicTypeIndexes = DO.C.User.TypeIndex[ns.solid.publicTypeIndex.value];
-                  var privateTypeIndexes = DO.C.User.TypeIndex[ns.solid.privateTypeIndex.value];
-
-                  if (publicTypeIndexes) {
-                    var publicTIValues = Object.values(publicTypeIndexes);
-  // console.log(publicTIValues)
-                    publicTIValues.forEach(ti => {
-                      //XXX: For now, we are only sending the annotation to one location that's already matched
-                      if (activityTypeMatched) return;
-
-                      var forClass = ti[ns.solid.forClass.value];
-                      var instanceContainer = ti[ns.solid.instanceContainer.value];
-                      var instance = ti[ns.solid.instance.value];
-
-                      if (activityIndex?.includes(forClass)) {
-                        if (instanceContainer) {
-                          activityTypeMatched = true;
-
-                          containerIRI = instanceContainer;
-
-                          fromContentType = 'text/html';
-                          // contentType = 'text/html';
-                          contentType = fromContentType;
-          
-                          noteURL = noteIRI = containerIRI + id;
-                          contextProfile = {
-                            // 'subjectURI': noteIRI,
-                          };
-                          aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
-
-                          annotationDistribution.push(aLS);
-                        }
-                        //TODO: Not handling instance yet.
-                      }
-                    })
-
-                  }
-                  else if (privateTypeIndexes) {
-
-                  }
-                }
-
-                if ((opts.annotationLocationPersonalStorage && DO.C.User.Outbox) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Outbox)) {
-                  containerIRI = DO.C.User.Outbox[0];
-
-                  var fromContentType = 'text/html';
-                  // contentType = 'application/ld+json';
-                  contentType = fromContentType;
-
-                  noteURL = noteIRI = containerIRI + id;
-                  var contextProfile = {
-                    '@context': [
-                      'https://www.w3.org/ns/activitystreams',
-                      { 'oa': 'http://www.w3.org/ns/oa#', 'schema': 'http://schema.org/' }
-                    ],
-                    // 'subjectURI': noteIRI,
-                    'profile': 'https://www.w3.org/ns/activitystreams'
-                  };
-                  aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
-                  if (typeof DO.C.User.Storage === 'undefined' && !activityTypeMatched) {
-                    aLS['canonical'] = true;
-                  }
-
-                  aLS = Object.assign(aLS, contextProfile)
-
-                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
-                    annotationDistribution.push(aLS);
-                  }
-                }
-
-                if (!activityTypeMatched && ((opts.annotationLocationPersonalStorage && DO.C.User.Storage) || (!opts.annotationLocationPersonalStorage && !opts.annotationLocationService && DO.C.User.Storage))) {
-                  containerIRI = DO.C.User.Storage[0];
-
-                  fromContentType = 'text/html';
-                  // contentType = 'text/html';
-                  contentType = fromContentType;
-
-                  noteURL = noteIRI = containerIRI + id;
-                  contextProfile = {
-                    // 'subjectURI': noteIRI,
-                  };
-                  aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
-
-                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
-                    annotationDistribution.push(aLS);
-                  }
-                }
-
-                if (opts.annotationLocationService && typeof DO.C.AnnotationService !== 'undefined') {
-                  containerIRI = DO.C.AnnotationService;
-                  fromContentType = 'text/html';
-                  // contentType = 'application/ld+json';
-                  contentType = fromContentType;
-
-                  contextProfile = {
-                    '@context': [
-                      'http://www.w3.org/ns/anno.jsonld',
-                      { 'as': 'https://www.w3.org/ns/activitystreams#', 'schema': 'http://schema.org/' }
-                    ],
-                    // 'subjectURI': noteIRI,
-                    'profile': 'http://www.w3.org/ns/anno.jsonld'
-                  };
-
-                  if (!opts.annotationLocationPersonalStorage && opts.annotationLocationService) {
-                    noteURL = noteIRI = containerIRI + id;
-                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true,'annotationInbox': annotationInbox };
-                  }
-                  else if (opts.annotationLocationPersonalStorage) {
-                    noteURL = containerIRI + id;
-                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'annotationInbox': annotationInbox };
-                  }
-                  else {
-                    noteURL = noteIRI = containerIRI + id;
-                    aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
-                  }
-
-                  aLS = Object.assign(aLS, contextProfile)
-
-                  if (!isDuplicateLocation(annotationDistribution, containerIRI)) {
-                    annotationDistribution.push(aLS);
-                  }
-                }
-              }//if (_this.action !== 'selector') {
-
-// console.log(annotationDistribution);
-
-              //XXX: Defaulting to id but overwritten by motivation symbol
-              var refLabel = id;
-
-              var parentNodeWithId = selectedParentElement.closest('[id]');
-
-              var targetIRI = (parentNodeWithId) ? resourceIRI + '#' + parentNodeWithId.id : resourceIRI;
-              var documentURL = resourceIRI;
-              var latestVersion = DO.C.Resource[documentURL].graph.out(ns.rel['latest-version']).values[0];
-              if (latestVersion) {
-                resourceIRI = latestVersion;
-                targetIRI = (parentNodeWithId) ? latestVersion + '#' + parentNodeWithId.id : latestVersion;
-                options['targetInMemento'] = true;
-              }
-// console.log(latestVersion)
-// console.log(resourceIRI)
-// console.log(targetIRI)
-
-              var targetLanguage = getNodeLanguage(parentNodeWithId);
-              var selectionLanguage = getNodeLanguage(selectedParentElement);
-// console.log(targetLanguage)
-// console.log(selectionLanguage)
-
-              //Role/Capability for Authors/Editors
-              var ref = '', refType = ''; //TODO: reference types. UI needs input
-              //TODO: replace refId and noteIRI IRIs
-
-              //This class is added if it is only for display purposes e.g., loading an external annotation for view, but do not want to save it later on (as it will be stripped when 'do' is found)
-              var doClass = '';
-
-              //TODO: oa:TimeState's datetime should equal to hasSource value. Same for oa:HttpRequestState's rdfs:value
-              // <span about="[this:#' + refId + ']" rel="oa:hasState">(timeState: <time typeof="oa:TimeState" datetime="' + datetime +'" datatype="xsd:dateTime"property="oa:sourceDate">' + datetime + '</time>)</span>\n\
-
-              var noteData = {};
-              var note = '';
-              var language = opts.language;
-              var license = opts.license;
-              var rights = '';
-              var motivatedBy = 'oa:replying';
-
-              var createNoteData = function(annotation) {
-                var id = annotation.id;
-                var note = '';
-                var mode = '';
-
-                if (annotation && 'profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
-                  mode = 'object'
-                }
-                else {
-                  mode = 'write'
-                }
-
-                switch(_this.action) {
-                  case 'sparkline':
-                    var figureIRI = generateAttributeId(null, opts.selectionDataSet);
-                    ref = '<span rel="schema:hasPart" resource="#figure-' + figureIRI + '">\n\
-                    <a href="' + opts.select + '" property="schema:name" rel="prov:wasDerivedFrom" resource="' + opts.select + '" typeof="qb:DataSet">' + opts.selectionDataSet + '</a> [' + escapeCharacters(DO.C.RefAreas[opts.selectionRefArea]) + ']\n\
-                    <span class="sparkline" rel="schema:image" resource="#' + figureIRI + '">' + opts.sparkline + '</span></span>';
-                    break;
-
-                  //External Note
-                  case 'article': case 'approve': case 'disapprove': case 'specificity':
-                    if (_this.action === 'approve' || _this.action === 'disapprove') {
-                      motivatedBy = 'oa:assessing';
-                    }
-                    if (_this.action === 'specificity') {
-                      motivatedBy = 'oa:questioning';
-                    }
-                    if (_this.action !== 'article') {
-                      refLabel = DO.U.getReferenceLabel(motivatedBy);
-                    }
-
-                    ref = _this.base.selection;
-
-                    noteData = {
-                      "type": _this.action,
-                      "mode": mode,
-                      "motivatedByIRI": motivatedBy,
-                      "id": id,
-                      "canonical": 'urn:uuid:' + id,
-                      "refId": refId,
-                      "refLabel": refLabel,
-                      // "iri": noteIRI, //e.g., https://example.org/path/to/article
-                      "creator": {},
-                      "datetime": datetime,
-                      "target": {
-                        "iri": targetIRI,
-                        "source": resourceIRI,
-                        "selector": {
-                          "exact": exact,
-                          "prefix": prefix,
-                          "suffix": suffix,
-                          "language": selectionLanguage
-                        },
-                        "language": targetLanguage
-                        //TODO: state
-                      }
-                    };
-
-                    var bodyObject = {
-                      "value": opts.content
-                    };
-
-                    if (language) {
-                      noteData["language"] = language;
-                      bodyObject["language"] = language;
-                    }
-                    if (license) {
-                      noteData["rights"] = noteData["license"] = license;
-                      bodyObject["rights"] = bodyObject["license"] = license;
-                    }
-
-                    noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
-
-                    if (DO.C.User.IRI) {
-                      noteData.creator["iri"] = DO.C.User.IRI;
-                    }
-                    if (DO.C.User.Name) {
-                      noteData.creator["name"] = DO.C.User.Name;
-                    }
-                    noteData.creator["image"] = DO.C.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
-                    if (DO.C.User.URL) {
-                      noteData.creator["url"] = DO.C.User.URL;
-                    }
-                    if (opts.annotationInboxLocation && DO.C.User.TypeIndex && DO.C.User.TypeIndex[ns.as.Announce.value]) {
-                      noteData.inbox = DO.C.User.TypeIndex[ns.as.Announce.value];
-                    }
-
-                    // note = DO.U.createNoteDataHTML(noteData);
-                    break;
-
-                  //Internal Note
-                  case 'note':
-                    motivatedBy = "oa:commenting";
-                    refLabel = DO.U.getReferenceLabel(motivatedBy);
-                    var docRefType = '<sup class="ref-comment"><a rel="cito:isCitedBy" href="#' + id + '">' + refLabel + '</a></sup>';
-                    var noteType = 'note';
-                    noteData = {
-                      "type": noteType,
-                      "mode": "read",
-                      "motivatedByIRI": motivatedBy,
-                      "id": id,
-                      "refId": refId,
-                      "refLabel": refLabel,
-                      // "iri": noteIRI, //e.g., https://example.org/path/to/article
-                      "creator": {},
-                      "datetime": datetime,
-                      "target": {
-                        "iri": targetIRI,
-                        "source": resourceIRI,
-                        "selector": {
-                          "exact": exact,
-                          "prefix": prefix,
-                          "suffix": suffix,
-                          "language": selectionLanguage
-                        },
-                        "language": targetLanguage
-                        //TODO: state
-                      }
-                    };
-
-                    var bodyObject = {
-                      "purpose": "describing",
-                      "value": opts.content
-                    };
-
-                    if (language) {
-                      noteData["language"] = language;
-                      bodyObject["language"] = language;
-                    }
-                    if (license) {
-                      noteData["rights"] = noteData["license"] = license;
-                      bodyObject["rights"] = bodyObject["license"] = license;
-                    }
-
-                    noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
-
-                    if (DO.C.User.IRI) {
-                      noteData.creator["iri"] = DO.C.User.IRI;
-                    }
-                    if (DO.C.User.Name) {
-                      noteData.creator["name"] = DO.C.User.Name;
-                    }
-                    noteData.creator["image"] = DO.C.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
-                    if (DO.C.User.URL) {
-                      noteData.creator["url"] = DO.C.User.URL;
-                    }
-
-                    // note = DO.U.createNoteDataHTML(noteData);
-
-                    ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType);
-                    break;
-
-                  case 'cite': //footnote reference
-                    switch(opts.citationType) {
-                      case 'ref-footnote': default:
-                        motivatedBy = "oa:describing";
-                        refLabel = DO.U.getReferenceLabel(motivatedBy);
-                        docRefType = '<sup class="' + opts.citationType + '"><a rel="cito:isCitedBy" href="#' + id + '">' + refLabel + '</a></sup>';
-                        noteData = {
-                          "type": opts.citationType,
-                          "mode": mode,
-                          "motivatedByIRI": motivatedBy,
-                          "id": id,
-                          "refId": refId,
-                          "refLabel": refLabel,
-                          // "iri": noteIRI,
-                          "datetime": datetime,
-                          "citationURL": opts.url
-                        };
-
-                        var bodyObject = {
-                          "value": opts.content
-                        };
-
-                        if (language) {
-                          noteData["language"] = language;
-                          bodyObject["language"] = language;
-                        }
-                        if (license) {
-                          noteData["rights"] = noteData["license"] = license;
-                          bodyObject["rights"] = bodyObject["license"] = license;
-                        }
-
-                        noteData["body"] = [bodyObject];
-
-                        // note = DO.U.createNoteDataHTML(noteData);
-                        break;
-
-                      case 'ref-reference':
-                        motivatedBy = 'oa:linking';
-                        refLabel = DO.U.getReferenceLabel('oa:linking');
-                        docRefType = '<span class="' + opts.citationType + '">' + DO.C.RefType[DO.C.DocRefType].InlineOpen + '<a href="#' + id + '">' + refLabel + '</a>' + DO.C.RefType[DO.C.DocRefType].InlineClose + '</span>';
-                        break;
-                    }
-
-                    ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType);
-                    break;
-                  // case 'reference':
-                  //   ref = '<span class="ref" about="[this:#' + refId + ']" typeof="dctypes:Text"><span id="'+ refId +'" property="schema:description">' + this.base.selection + '</span> <span class="ref-reference">' + DO.C.RefType[DO.C.DocRefType].InlineOpen + '<a rel="cito:isCitedBy" href="#' + id + '">' + refLabel + '</a>' + DO.C.RefType[DO.C.DocRefType].InlineClose + '</span></span>';
-  //                  break;
-
-                  case 'rdfa':
-                    //TODO: inlist, prefix
-                    //TODO: lang/xmlllang
-                    noteData = {
-                      about: opts.about,
-                      typeOf: opts.typeOf,
-                      rel: opts.rel,
-                      href: opts.href,
-                      resource: opts.resource,
-                      property: opts.property,
-                      content: opts.content,
-                      datatype: opts.datatype,
-                      lang: opts.language,
-                      textContent: _this.base.selection
-                    };
-                    ref = createRDFaHTML(noteData, 'expanded');
-                    break;
-
-                  case 'bookmark':
-                    noteType = 'bookmark';
-                    motivatedBy = "oa:bookmarking";
-                    refLabel = DO.U.getReferenceLabel(motivatedBy);
-                    docRefType = '';
-                    noteData = {
-                      "type": noteType,
-                      "mode": mode,
-                      "motivatedByIRI": motivatedBy,
-                      "id": id,
-                      "canonical": 'urn:uuid:' + id,
-                      "refId": refId,
-                      "refLabel": refLabel,
-                      // "iri": noteIRI, //e.g., https://example.org/path/to/article
-                      "creator": {},
-                      "datetime": datetime,
-                      "target": {
-                        "iri": targetIRI,
-                        "source": resourceIRI,
-                        "selector": {
-                          "exact": exact,
-                          "prefix": prefix,
-                          "suffix": suffix,
-                          "language": selectionLanguage
-                        },
-                        "language": targetLanguage
-                        //TODO: state
-                      }
-                    };
-
-                    var bodyObject = {
-                      "purpose": "describing",
-                      "value": opts.content
-                    };
-
-                    if (language) {
-                      noteData["language"] = language;
-                      bodyObject["language"] = language;
-                    }
-                    if (license) {
-                      noteData["rights"] = noteData["license"] = license;
-                      bodyObject["rights"] = bodyObject["license"] = license;
-                    }
-
-                    noteData["body"] = [bodyObject].concat(DO.U.tagsToBodyObjects(opts.tagging));
-
-                    if (DO.C.User.IRI) {
-                      noteData.creator["iri"] = DO.C.User.IRI;
-                    }
-                    if (DO.C.User.Name) {
-                      noteData.creator["name"] = DO.C.User.Name;
-                    }
-                    noteData.creator["image"] = DO.C.User.Image || generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
-                    if (DO.C.User.URL) {
-                      noteData.creator["url"] = DO.C.User.URL;
-                    }
-
-                    // note = DO.U.createNoteDataHTML(noteData);
-                    ref = DO.U.getTextQuoteHTML(refId, motivatedBy, exact, docRefType, { 'do': true });
-                    break;
-                }
-
-                var selectionUpdated = ref;
-                MediumEditor.util.insertHTMLCommand(_this.base.selectedDocument, selectionUpdated);
-
-                return noteData;
-              }
-
-              var createActivityData = function(annotation, options = {}) {
-// console.log(annotation, options)
-                var noteIRI = (options.relativeObject) ? '#' + id : annotation['noteIRI'];
-
-                var notificationStatements = '    <dl about="' + noteIRI + '">\n\
-  <dt>Object type</dt><dd><a about="' + noteIRI + '" typeof="oa:Annotation" href="' + ns.oa.Annotation.value + '">Annotation</a></dd>\n\
-  <dt>Motivation</dt><dd><a href="' + DO.C.Prefixes[annotation.motivatedByIRI.split(':')[0]] + annotation.motivatedByIRI.split(':')[1] + '" property="oa:motivation">' + annotation.motivatedByIRI.split(':')[1] + '</a></dd>\n\
-</dl>\n\
-';
-
-                var notificationData = {
-                  "slug": id,
-                  "license": opts.license,
-                  "statements": notificationStatements
-                };
-// console.log(_this.action)
-
-                if (options.announce) {
-                  notificationData['type'] = ['as:Announce'];
-                  notificationData['object'] = noteIRI;
-                  notificationData['inReplyTo'] = targetIRI;
-                }
-                else {
-                  switch(_this.action) {
-                    default: case 'article': case 'specificity':
-                      notificationData['type'] = ['as:Create'];
-                      notificationData['object'] = noteIRI;
-                      notificationData['inReplyTo'] = targetIRI;
-                      break;
-                    case 'approve':
-                      notificationData['type'] = ['as:Like'];
-                      notificationData['object'] = targetIRI;
-                      notificationData['context'] = noteIRI;
-                      break;
-                    case 'disapprove':
-                      notificationData['type'] = ['as:Dislike'];
-                      notificationData['object'] = targetIRI;
-                      notificationData['context'] = noteIRI;
-                      break;
-                    case 'bookmark':
-                      notificationData['type'] = ['as:Add'];
-                      notificationData['object'] = noteIRI;
-                      notificationData['target'] = annotation['containerIRI'];
-                      break;
-                  }
-                }
-
-// console.log(notificationData);
-                return notificationData;
-              }
-
-              var positionActivity = function(annotation, options) {
-                if (!annotation['canonical']) {
-                  return Promise.resolve();
-                }
-
-                if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
-                  return DO.U.showActivities(annotation['noteIRI'])
-                    .catch((error) => {
-                      console.log('Error showing activities:', error)
-                      return Promise.resolve()
-                    })
-                }
-                else {
-// console.log(options)
-                  return DO.U.showActivities(annotation[ 'noteIRI' ], options)
-                    .catch((error) => {
-                      console.log('Error showing activities:', error)
-                      return Promise.resolve()
-                    })
-                }
-              }
-
-              var sendNotification = function(annotation, options) {
-                if (!annotation['canonical']) {
-                  return Promise.resolve();
-                }
-
-                var inboxPromise;
-
-                if (annotation.annotationInbox) {
-                  inboxPromise = Promise.resolve([annotation.annotationInbox])
-                }
-                else {
-                  if ('inbox' in DO.C.Resource[documentURL] && DO.C.Resource[documentURL].inbox.length) {
-                    inboxPromise = Promise.resolve(DO.C.Resource[documentURL].inbox)
-                  }
-                  else {
-                    inboxPromise =
-                      getLinkRelation(ns.ldp.inbox.value, documentURL)
-                        .catch(() => {
-                          return getLinkRelationFromRDF(ns.as.inbox.value, documentURL);
-                        });
-                  }
-                }
-
-                return inboxPromise
-                  .catch(error => {
-                    // console.log('Error fetching ldp:inbox and as:inbox endpoint:', error)
-                    throw error
-                  })
-                  .then(inboxes => {
-                    // TODO: resourceIRI for getLinkRelation should be the
-                    // closest IRI (not necessarily the document).
-// console.log(inboxes)
-                    if (inboxes.length) {
-                      var notificationData = createActivityData(annotation, { 'announce': true });
-
-                      notificationData['inbox'] = inboxes[0];
-
-                      // notificationData['type'] = ['as:Announce'];
-// console.log(annotation)
-// console.log(notificationData)
-                      return notifyInbox(notificationData)
-                        .catch(error => {
-                          console.log('Error notifying the inbox:', error)
-                        })
-                    }
-                  })
-              }
-// console.log(annotationDistribution)
-              switch(this.action) {
-                case 'article': case 'approve': case 'disapprove': case 'specificity': case 'bookmark':
-                  annotationDistribution.forEach(annotation => {
-                    var data = '';
-
-                    var noteData = createNoteData(annotation);
-                    annotation['motivatedByIRI'] = noteData['motivatedByIRI']
-
-                    if ('profile' in annotation && annotation.profile == 'https://www.w3.org/ns/activitystreams') {
-                      var notificationData = createActivityData(annotation, { 'relativeObject': true });
-                      notificationData['statements'] = DO.U.createNoteDataHTML(noteData);
-                      note = createActivityHTML(notificationData);
-                    }
-                    else {
-                      note = DO.U.createNoteDataHTML(noteData);
-                    }
-                    data = createHTML('', note);
-// console.log(noteData)
-// console.log(note)
-// console.log(data)
-// console.log(annotation)
-
-                    postActivity(annotation['containerIRI'], id, data, annotation)
-                      .catch(error => {
-                        // console.log('Error serializing annotation:', error)
-                        // console.log(error)
-                        throw error  // re-throw, break out of promise chain
-                      })
-
-                      .then(response => {
-                        var location = response.headers.get('Location')
-
-                        if (location) {
-                          location = getAbsoluteIRI(annotation['containerIRI'], location)
-                          annotation['noteIRI'] = annotation['noteURL'] = location
-                        }
-
-// console.log(annotation, options)
-                        return positionActivity(annotation, options)
-                       })
-
-                      .then(function() {
-                        if (this.action != 'bookmark') {
-                          return sendNotification(annotation, options)
-                        }
-                      })
-
-                      .catch(e => {  // catch-all
-                        // suppress the error, it was already logged to the console above
-                        // nothing else needs to be done, the loop will proceed
-                        // to the next annotation
-                      })
-                  })
-                  break;
-
-                case 'note':
-                  noteData = createNoteData({'id': id})
-                  note = DO.U.createNoteDataHTML(noteData);
-                  // var nES = selectedParentElement.nextElementSibling;
-                  var asideNote = '\n\
-<aside class="note">\n\
-'+ note + '\n\
-</aside>';
-                  var asideNode = fragmentFromString(asideNote);
-                  var parentSection = getClosestSectionNode(selectedParentElement);
-                  parentSection.appendChild(asideNode);
-
-                  DO.U.positionNote(refId, id);
-                  break;
-
-                case 'selector':
-                  window.history.replaceState({}, null, selectorIRI);
-
-                  var message = 'Copy URL from address bar.';
-                  message = {
-                    'content': message,
-                    'type': 'info',
-                    'timer': 3000
-                  }
-                  addMessageToLog(message, Config.MessageLog);
-                  showActionMessage(document.documentElement, message);
-                  // TODO: Perhaps use something like setCopyToClipboard instead. Use as `encodeURI(selectorIRI)` as input.
-                  break;
-
-                case 'cite': //footnote reference
-                  //TODO: Refactor this what's in positionInteraction
-
-                  noteData = createNoteData({'id': id})
-                  note = DO.U.createNoteDataHTML(noteData);
-
-                  switch(opts.citationType) {
-                    case 'ref-footnote': default:
-                      var nES = selectedParentElement.nextElementSibling;
-                      asideNote = '\n\
-<aside class="note">\n\
-'+ note + '\n\
-</aside>';
-                      asideNode = fragmentFromString(asideNote);
-                      parentSection = getClosestSectionNode(selectedParentElement);
-                      parentSection.appendChild(asideNode);
-
-                      DO.U.positionNote(refId, id);
-                      break;
-
-                    case 'ref-reference':
-                      options = opts;
-                      opts.url = opts.url.trim(); //XXX: Perhaps use escapeCharacters()?
-                      options['citationId'] = opts.url;
-                      options['refId'] = refId;
-
-                      //TODO: offline mode
-                      DO.U.getCitation(opts.url, options).then(citationGraph => {
-                        var citationURI = opts.url;
-// console.log(citationGraph)
-// console.log(citationGraph.toString())
-// console.log(options.citationId)
-// console.log( getProxyableIRI(options.citationId))
-                        if (isValidISBN(opts.url)) {
-                          citationURI = citationGraph.term.value;
-                          // options.citationId = citationURI;
-                        }
-                        else if(opts.url.match(/^10\.\d+\//)) {
-                          citationURI = 'http://dx.doi.org/' + opts.url;
-                          // options.citationId = citationURI;
-                        }
-                        //FIXME: subjectIRI shouldn't be set here. Bug in RDFaProcessor (see also SimpleRDF ES5/6). See also: https://github.com/dokieli/dokieli/issues/132
-
-                        citationURI = citationURI.replace(/(https?:\/\/(dx\.)?doi\.org\/)/i, 'http://dx.doi.org/');
-
-                        //XXX: I don't know what this is going on about...
-                        // else if (stripFragmentFromString(options.citationId) !==  getProxyableIRI(options.citationId)) {
-                        //   citationURI = currentLocation();
-                        // }
-
-                        var citation = DO.U.getCitationHTML(citationGraph, citationURI, options);
-
-                        //TODO: references nodes, e.g., references, normative-references, informative-references
-                        var references = document.querySelector('#references');
-                        var referencesList = references?.querySelector('dl, ol, ul') || references;
-
-                        buildReferences(referencesList, id, citation);
-
-                        options['showRobustLinksDecoration'] = true;
-                        var node = document.querySelector('[id="' + id + '"] a[about]');
-
-                        // var robustLink = DO.U.createRobustLink(citationURI, node, options);
-
-// console.log(citationURI, citation, options)
-                        var s = citationGraph.node(rdf.namedNode(citationURI));
-                        var inboxes = getGraphInbox(s);
-                        if (!inboxes) {
-                          s = citationGraph.node(rdf.namedNode(stripFragmentFromString(citationURI)));
-                        }
-                        inboxes = getGraphInbox(s);
-
-                        if (!inboxes) {
-                          s = citationGraph.node(rdf.namedNode(options.citationId));
-                        }
-                        else {
-                          var inboxURL = inboxes[0];
-
-                          var citedBy = location.href.split(location.search||location.hash||/[?#]/)[0] + '#' + options.refId;
-
-                          var notificationStatements = '    <dl about="' + citedBy + '">\n\
-      <dt>Action</dt><dd>Citation</dd>\n\
-      <dt>Cited by</dt><dd><a href="' + citedBy + '">' + citedBy + '</a></dd>\n\
-      <dt>Citation type</dt><dd><a href="' + options.url + '">' + DO.C.Citation[options.citationRelation] + '</a></dd>\n\
-      <dt>Cites</dt><dd><a href="' + options.url + '" property="' + options.citationRelation + '">' + options.url + '</a></dd>\n\
-    </dl>\n\
-';
-
-                          var notificationData = {
-                            "type": ['as:Announce'],
-                            "inbox": inboxURL,
-                            "object": citedBy,
-                            "target": options.url,
-                            "statements": notificationStatements
-                          };
-
-                          notifyInbox(notificationData)
-                            // .then(
-                            //   function(s){
-                            //     console.log('Sent notification to ' + inboxURL);
-                            // });
-                        }
-                      });
-                      break;
-                  }
-                  break;
-
-                case 'rdfa':
-                  //This only updates the DOM. Nothing further. The 'id' is not used.
-                  noteData = createNoteData({'id': id});
-                  break;
-              }
-
-              this.window.getSelection().removeAllRanges();
-              this.base.checkSelection();
-            },
-
-            checkLinkFormat: function (value) {
-              var re = /^(https?|ftps?|rtmpt?):\/\/|mailto:/;
-              return (re.test(value) ? '' : 'http://') + value;
-            },
-
-            doFormCancel: function () {
-              this.base.restoreSelection();
-              this.base.checkSelection();
-            },
-
-            // form creation and event handling
-            attachFormEvents: function (form) {
-              var close = form.querySelector('.medium-editor-toolbar-close'),
-                save = form.querySelector('.medium-editor-toolbar-save');
-
-              this.on(form, 'click', this.handleFormClick.bind(this));
-              this.on(close, 'click', this.handleCloseClick.bind(this));
-              this.on(save, 'click', this.handleSaveClick.bind(this), true);
-            },
-
-            createForm: function () {
-              var form = this.document.createElement('div');
-
-              // Anchor Form (div)
-              form.className = 'medium-editor-toolbar-form';
-              //FIXME
-              form.id = 'medium-editor-toolbar-form-textarea-' + this.getEditorId();
-              form.innerHTML = this.getTemplate();
-              this.attachFormEvents(form);
-
-              return form;
-            },
-
-            getInput: function () {
-              var r = {};
-              switch(this.action) {
-                case 'rdfa':
-                  r.about = this.getForm().querySelector('#rdfa-about.medium-editor-toolbar-input');
-                  r.rel = this.getForm().querySelector('#rdfa-rel.medium-editor-toolbar-input');
-                  r.href = this.getForm().querySelector('#rdfa-href.medium-editor-toolbar-input');
-                  r.typeOf = this.getForm().querySelector('#rdfa-typeof.medium-editor-toolbar-input');
-                  r.resource = this.getForm().querySelector('#rdfa-resource.medium-editor-toolbar-input');
-                  r.property = this.getForm().querySelector('#rdfa-property.medium-editor-toolbar-input');
-                  r.content = this.getForm().querySelector('#rdfa-content.medium-editor-toolbar-input');
-                  r.datatype = this.getForm().querySelector('#rdfa-datatype.medium-editor-toolbar-input');
-                  r.language = this.getForm().querySelector('#rdfa-language.medium-editor-toolbar-input');
-                  break;
-                case 'article':
-                  r.content = this.getForm().querySelector('#article-content.medium-editor-toolbar-textarea');
-                  r.annotationLocationService = this.getForm().querySelector('#annotation-location-service');
-                  r.annotationLocationPersonalStorage = this.getForm().querySelector('#annotation-location-personal-storage');
-                  r.annotationInboxLocation = this.getForm().querySelector('#annotation-inbox');
-                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
-                  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
-                  r.license = this.getForm().querySelector('#article-license.medium-editor-toolbar-select');
-                  break;
-                case 'note':
-                  r.content = this.getForm().querySelector('#article-content.medium-editor-toolbar-textarea');
-                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
-                  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
-                  r.license = this.getForm().querySelector('#article-license.medium-editor-toolbar-select');
-                  break;
-                case 'approve':
-                  r.content = this.getForm().querySelector('#approve-content.medium-editor-toolbar-textarea');
-                  r.annotationLocationService = this.getForm().querySelector('#annotation-location-service');
-                  r.annotationLocationPersonalStorage = this.getForm().querySelector('#annotation-location-personal-storage');
-                  r.annotationInboxLocation = this.getForm().querySelector('#annotation-inbox');
-                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
-                  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
-                  r.license = this.getForm().querySelector('#approve-license.medium-editor-toolbar-select');
-                  break;
-                case 'disapprove':
-                  r.content = this.getForm().querySelector('#disapprove-content.medium-editor-toolbar-textarea');
-                  r.annotationLocationService = this.getForm().querySelector('#annotation-location-service');
-                  r.annotationLocationPersonalStorage = this.getForm().querySelector('#annotation-location-personal-storage');
-                  r.annotationInboxLocation = this.getForm().querySelector('#annotation-inbox');
-                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
-                  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
-                  r.license = this.getForm().querySelector('#disapprove-license.medium-editor-toolbar-select');
-                  break;
-                case 'specificity':
-                  r.content = this.getForm().querySelector('#specificity-content.medium-editor-toolbar-textarea');
-                  r.annotationLocationService = this.getForm().querySelector('#annotation-location-service');
-                  r.annotationLocationPersonalStorage = this.getForm().querySelector('#annotation-location-personal-storage');
-                  r.annotationInboxLocation = this.getForm().querySelector('#annotation-inbox');
-                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
-                  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
-                  r.license = this.getForm().querySelector('#specificity-license.medium-editor-toolbar-select');
-                  break;
-                case 'cite':
-                  r.search = this.getForm().querySelector('#specref-search.medium-editor-toolbar-input');
-                  r.select = this.getForm().querySelector('input[name="specref-item"]:checked');
-                  r.citationType = this.getForm().querySelector('input[name="citation-type"]:checked');
-                  r.citationRelation = this.getForm().querySelector('#citation-relation.medium-editor-toolbar-select');
-                  r.url = this.getForm().querySelector('#citation-url.medium-editor-toolbar-input');
-                  r.content = this.getForm().querySelector('#citation-content.medium-editor-toolbar-textarea');
-                  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
-                  break;
-                case 'bookmark':
-                  r.content = this.getForm().querySelector('#bookmark-content.medium-editor-toolbar-textarea');
-                  r.tagging = this.getForm().querySelector('#bookmark-tagging.medium-editor-toolbar-input');
-                  r.language = this.getForm().querySelector('#article-language.medium-editor-toolbar-select');
-                  r.license = this.getForm().querySelector('#bookmark-license.medium-editor-toolbar-select');
-                  break;
-                case 'sparkline':
-                  r.search = this.getForm().querySelector('#sparkline-search.medium-editor-toolbar-input');
-                  r.select = this.getForm().querySelector('#sparkline-select');
-                  r.sparkline = this.getForm().querySelector('#sparkline-graph .sparkline');
-                  r.selectionDataSet = this.getForm().querySelector('#sparkline-selection-dataset');
-                  r.selectionRefArea = this.getForm().querySelector('#sparkline-selection-refarea');
-                  break;
-
-                default:
-                  r = this.getForm().querySelector('textarea.medium-editor-toolbar-textarea');
-                  break;
-              }
-
-              return r;
-            },
-
-            getAnchorTargetCheckbox: function () {
-              return this.getForm().querySelector('.medium-editor-toolbar-textarea-target');
-            },
-
-            getAnchorButtonCheckbox: function () {
-              return this.getForm().querySelector('.medium-editor-toolbar-textarea-button');
-            },
-
-            handleTextboxKeyup: function (event) {
-              // For ENTER -> create the anchor
-              if (event.keyCode === MediumEditor.util.keyCode.ENTER) {
-                event.preventDefault();
-                this.doFormSave();
-                return;
-              }
-
-              // For ESCAPE -> close the form
-              if (event.keyCode === MediumEditor.util.keyCode.ESCAPE) {
-                event.preventDefault();
-                this.doFormCancel();
-              }
-            },
-
-            handleFormClick: function (event) {
-              // make sure not to hide form when clicking inside the form
-              event.stopPropagation();
-            },
-
-            handleSaveClick: function (event) {
-              // Clicking Save -> create the anchor
-              event.preventDefault();
-              this.doFormSave();
-            },
-
-            handleCloseClick: function (event) {
-              // Click Close -> close the form
-              event.preventDefault();
-              this.doFormCancel();
-            }
-          });
-        }
-      })()
-
-    } //DO.U.Editor
   } //DO.U
 }; //DO
 

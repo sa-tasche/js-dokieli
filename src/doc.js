@@ -2,16 +2,16 @@
 
 import Config from './config.js'
 import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex } from './util.js'
-import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath } from './uri.js'
+import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
-import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox } from './graph.js'
-import { createRDFaHTML, Icon } from './template.js'
+import { getResourceGraph, sortGraphTriples, getGraphContributors, getGraphAuthors, getGraphEditors, getGraphPerformers, getGraphPublishers, getGraphLabel, getGraphEmail, getGraphTitle, getGraphConceptLabel, getGraphPublished, getGraphUpdated, getGraphDescription, getGraphLicense, getGraphRights, getGraphFromData, getGraphAudience, getGraphTypes, getGraphLanguage, getGraphInbox, getUserLabelOrIRI } from './graph.js'
 import LinkHeader from "http-link-header";
 import DOMPurify from 'dompurify';
 import { micromark as marked } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
+import { Icon } from './ui/icons.js';
 
 const ns = Config.ns;
 
@@ -72,6 +72,18 @@ function domToString (node, options) {
 function dumpNode (node, options, skipAttributes, voidElements, noEsc) {
   options = options || Config.DOMNormalisation
   var out = ''
+// console.log(node)
+//   const wrapper = node.querySelector(options.removeWrapperSelector);
+
+//   if (wrapper) {
+//     const parent = wrapper.parentNode;
+
+//     while (wrapper.firstChild) {
+//       parent.insertBefore(wrapper.firstChild, wrapper);
+//     }
+
+//     parent.removeChild(wrapper);
+//   }
 
   if (typeof node.nodeType === 'undefined') return out
 
@@ -533,6 +545,332 @@ function createActivityHTML(o) {
   return data
 }
 
+
+function createNoteDataHTML(n) {
+// console.log(n);
+  var created = '';
+  var lang = '', xmlLang = '', language = '';
+  var license = '';
+  var rights = '';
+  var creator = '', authors = '', creatorImage = '', creatorNameIRI = '', creatorURLNameIRI = '';
+  var hasTarget = '', annotationTextSelector = '', target = '';
+  var inbox = '';
+  var heading, hX;
+  var aAbout = '', aPrefix = '';
+  var noteType = '';
+  var body = '';
+  var buttonDelete = '';
+  var note = '';
+  var targetLabel = '';
+  var bodyAltLabel = '';
+  var articleClass = '';
+  var prefixes = ' prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns# schema: http://schema.org/ dcterms: http://purl.org/dc/terms/ oa: http://www.w3.org/ns/oa# as: https://www.w3.org/ns/activitystreams# ldp: http://www.w3.org/ns/ldp#"';
+
+  var canonicalId = n.canonical || 'urn:uuid:' + generateUUID();
+
+  var motivatedByIRI = n.motivatedByIRI || '';
+  var motivatedByLabel = '';
+
+  motivatedByIRI = getPrefixedNameFromIRI(motivatedByIRI);
+
+  switch(motivatedByIRI) {
+    case 'oa:replying': default:
+      motivatedByIRI = 'oa:replying';
+      motivatedByLabel = 'replies';
+      targetLabel = 'In reply to';
+      bodyAltLabel = 'Replied';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'oa:assessing':
+      motivatedByLabel = 'reviews';
+      targetLabel = 'Review of';
+      bodyAltLabel = 'Reviewed';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'oa:questioning':
+      motivatedByLabel = 'questions';
+      targetLabel = 'Questions';
+      bodyAltLabel = 'Questioned';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'oa:describing':
+      motivatedByLabel = 'describes';
+      targetLabel = 'Describes';
+      bodyAltLabel = 'Described'
+      aAbout = '#' + n.id;
+      break;
+    case 'oa:commenting':
+      motivatedByLabel = 'comments';
+      targetLabel = 'Comments on';
+      bodyAltLabel = 'Commented';
+      aAbout = '#' + n.id;
+      break;
+    case 'oa:bookmarking': case 'bookmark:Bookmark':
+      motivatedByLabel = 'bookmarks';
+      targetLabel = 'Bookmarked';
+      bodyAltLabel = 'Bookmarked';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'as:Like':
+      motivatedByLabel = 'Liked';
+      targetLabel = 'Like of';
+      bodyAltLabel = 'Liked';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+    case 'as:Dislike':
+      motivatedByLabel = 'Disliked';
+      targetLabel = 'Dislike of';
+      bodyAltLabel = 'Disliked';
+      aAbout = ('mode' in n && n.mode == 'object') ? '#' + n.id : '';
+      aPrefix = prefixes;
+      break;
+  }
+
+  switch(n.mode) {
+    default: case 'read':
+      hX = 3;
+      if ('creator' in n && 'iri' in n.creator && n.creator.iri == Config.User.IRI) {
+        buttonDelete = '<button class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>' ;
+      }
+      articleClass = (motivatedByIRI == 'oa:commenting') ? '': ' class="do"';
+      aAbout = ('iri' in n) ? n.iri : aAbout;
+      break;
+    case 'write':
+      hX = 1;
+      break;
+    case 'object':
+      hX = 2;
+      break;
+  }
+
+  var creatorName = '';
+  var creatorIRI = '#' + generateAttributeId();
+  // creatorNameIRI = Config.SecretAgentNames[Math.floor(Math.random() * Config.SecretAgentNames.length)];
+
+  if ('creator' in n) {
+    if('iri' in n.creator) {
+      creatorIRI = n.creator.iri;
+    }
+
+    creatorName = creatorIRI;
+
+    if('name' in n.creator) {
+      creatorName = n.creator.name;
+      creatorNameIRI = '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
+    }
+    else {
+      creatorName = getUserLabelOrIRI(creatorIRI);
+      creatorNameIRI = (creatorName == creatorIRI) ? creatorName : '<span about="' + creatorIRI + '" property="schema:name">' + creatorName + '</span>';
+    }
+
+    var img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+    if ('image' in n.creator) {
+      img = (n.mode == 'read') ? getProxyableIRI(n.creator.image) : n.creator.image;
+    }
+    else if (Config.User.Image && (creatorIRI == Config.User.IRI || Config.User.SameAs.includes(creatorIRI))) {
+      img = (n.mode == 'read') ? getProxyableIRI(Config.User.Image) : Config.User.Image;
+    }
+    else {
+      img = (Config.User.Contacts && Config.User.Contacts[creatorIRI] && Config.User.Contacts[creatorIRI].Image) ? Config.User.Contacts[creatorIRI].Image : img;
+    }
+    creatorImage = '<img alt="" height="48" rel="schema:image" src="' + img + '" width="48" /> ';
+
+    creatorURLNameIRI = ('url' in n.creator) ? '<a href="' + n.creator.url + '" rel="schema:url">' + creatorNameIRI + '</a>' : '<a href="' + creatorIRI + '">' + creatorNameIRI + '</a>';
+
+    creator = '<span about="' + creatorIRI + '" typeof="schema:Person">' + creatorImage + creatorURLNameIRI + '</span>';
+
+    authors = '<dl class="author-name"><dt>Authors</dt><dd><span rel="dcterms:creator">' + creator + '</span></dd></dl>';
+  }
+
+  heading = '<h' + hX + ' property="schema:name">' + creatorName + ' <span rel="oa:motivatedBy" resource="' + motivatedByIRI + '">' + motivatedByLabel + '</span></h' + hX + '>';
+
+  if ('inbox' in n && typeof n.inbox !== 'undefined') {
+    inbox = '<dl class="inbox"><dt>Notifications Inbox</dt><dd><a href="' + n.inbox + '" rel="ldp:inbox">' + n.inbox + '</a></dd></dl>';
+  }
+
+  if ('datetime' in n && typeof n.datetime !== 'undefined'){
+    var time = '<time datetime="' + n.datetime + '" datatype="xsd:dateTime" property="dcterms:created" content="' + n.datetime + '">' + n.datetime.substr(0,19).replace('T', ' ') + '</time>';
+    var timeLinked = ('iri' in n) ? '<a href="' + n.iri + '">' + time + '</a>' : time;
+    created = '<dl class="created"><dt>Created</dt><dd>' + timeLinked + '</dd></dl>';
+  }
+
+  if (n.language) {
+    language = createLanguageHTML(n.language, {property:'dcterms:language', label:'Language'});
+    lang = ' lang="' +  n.language + '"';
+    xmlLang = ' xml:lang="' +  n.language + '"';
+  }
+  if (n.license) {
+    license = createLicenseHTML(n.license, {rel:'schema:license', label:'License'});
+  }
+  if (n.rights) {
+    rights = createRightsHTML(n.rights, {rel:'dcterms:rights', label:'Rights'});
+  }
+
+  //TODO: Differentiate language, license, rights on Annotation from Body
+  switch(n.type) {
+    case 'comment': case 'note': case 'bookmark': case 'approve': case 'disapprove': case 'specificity':
+      if (typeof n.target !== 'undefined' || typeof n.inReplyTo !== 'undefined') { //note, annotation, reply
+        //FIXME: Could resourceIRI be a fragment URI or *make sure* it is the document URL without the fragment?
+        //TODO: Use n.target.iri?
+// console.log(n)
+        if (typeof n.body !== 'undefined') {
+          var tagsArray = [];
+
+          n.body = Array.isArray(n.body) ? n.body : [n.body];
+          n.body.forEach(bodyItem => {
+            var bodyLanguage = createLanguageHTML(bodyItem.language, {property:'dcterms:language', label:'Language'}) || language;
+            var bodyLicense = createLicenseHTML(bodyItem.license, {rel:'schema:license', label:'License'}) || license;
+            var bodyRights = createRightsHTML(bodyItem.rights, {rel:'dcterms:rights', label:'Rights'}) || rights;
+            var bodyValue = bodyItem.value || bodyAltLabel;
+            // var bodyValue = bodyItem.value || '';
+            // var bodyFormat = bodyItem.format ? bodyItem.format : 'rdf:HTML';
+
+            if (bodyItem.purpose) {
+              if (bodyItem.purpose == "describing" || bodyItem.purpose == ns.oa.describing.value) {
+                body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name" rel="oa:hasPurpose" resource="oa:describing">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
+              }
+              if (bodyItem.purpose == "tagging" || bodyItem.purpose == ns.oa.tagging.value) {
+                tagsArray.push(bodyValue);
+              }
+            }
+            else {
+              body += '<section id="note-' + n.id + '" rel="oa:hasBody" resource="#note-' + n.id + '"><h' + (hX+1) + ' property="schema:name">Note</h' + (hX+1) + '>' + bodyLanguage + bodyLicense + bodyRights + '<div datatype="rdf:HTML"' + lang + ' property="rdf:value schema:description" resource="#note-' + n.id + '" typeof="oa:TextualBody"' + xmlLang + '>' + bodyValue + '</div></section>';
+            }
+          });
+
+          if (tagsArray.length) {
+            tagsArray = tagsArray
+              .map(tag => escapeCharacters(tag.trim()))
+              .filter(tag => tag.length);
+            tagsArray = uniqueArray(tagsArray.sort());
+
+            var tags = tagsArray.map(tag => '<li about="#tag-' + n.id + '-' + generateAttributeId(null, tag) + '" typeof="oa:TextualBody" property="rdf:value" rel="oa:hasPurpose" resource="oa:tagging">' + tag + '</li>').join('');
+
+            body += '<dl id="tags-' + n.id + '" class="tags"><dt>Tags</dt><dd><ul rel="oa:hasBody">' + tags + '</ul></dd></dl>';
+          }
+        }
+        else if (n.bodyValue !== 'undefined') {
+          body += '<p property="oa:bodyValue">' + n.bodyValue + '</p>';
+        }
+// console.log(body)
+        var targetIRI = '';
+        var targetRelation = 'oa:hasTarget';
+        if (typeof n.target !== 'undefined' && 'iri' in n.target) {
+          targetIRI = n.target.iri;
+          var targetIRIFragment = getFragmentFromString(n.target.iri);
+          //TODO: Handle when there is no fragment
+          //TODO: Languages should be whatever is target's (not necessarily 'en')
+          if (typeof n.target.selector !== 'undefined') {
+            var selectionLanguage = ('language' in n.target.selector && n.target.selector.language) ? n.target.selector.language : '';
+
+            annotationTextSelector = '<div rel="oa:hasSelector" resource="#fragment-selector" typeof="oa:FragmentSelector"><dl class="conformsto"><dt>Fragment selector conforms to</dt><dd><a content="' + targetIRIFragment + '" lang="" property="rdf:value" rel="dcterms:conformsTo" href="https://tools.ietf.org/html/rfc3987" xml:lang="">RFC 3987</a></dd></dl><dl rel="oa:refinedBy" resource="#text-quote-selector" typeof="oa:TextQuoteSelector"><dt>Refined by</dt><dd><span lang="' + selectionLanguage + '" property="oa:prefix" xml:lang="' + selectionLanguage + '">' + n.target.selector.prefix + '</span><mark lang="' + selectionLanguage + '" property="oa:exact" xml:lang="' + selectionLanguage + '">' + n.target.selector.exact + '</mark><span lang="' + selectionLanguage + '" property="oa:suffix" xml:lang="' + selectionLanguage + '">' + n.target.selector.suffix + '</span></dd></dl></div>';
+          }
+        }
+        else if(typeof n.inReplyTo !== 'undefined' && 'iri' in n.inReplyTo) {
+          targetIRI = n.inReplyTo.iri;
+          targetRelation = ('rel' in n.inReplyTo) ? n.inReplyTo.rel : 'as:inReplyTo';
+          // TODO: pass document title and maybe author so they can be displayed on the reply too.
+        }
+
+        hasTarget = '<a href="' + targetIRI + '" rel="' + targetRelation + '">' + targetLabel + '</a>';
+        if (typeof n.target !== 'undefined' && typeof n.target.source !== 'undefined') {
+          hasTarget += ' (<a about="' + n.target.iri + '" href="' + n.target.source +'" rel="oa:hasSource" typeof="oa:SpecificResource">part of</a>)';
+        }
+
+        var targetLanguage = (typeof n.target !== 'undefined' && 'language' in n.target && n.target.language.length) ? '<dl><dt>Language</dt><dd><span lang="" property="dcterms:language" xml:lang="">' + n.target.language + '</span></dd></dl>': '';
+
+        target ='<dl class="target"><dt>' + hasTarget + '</dt>';
+        if (typeof n.target !== 'undefined' && typeof n.target.selector !== 'undefined') {
+          target += '<dd><blockquote about="' + targetIRI + '" cite="' + targetIRI + '">' + targetLanguage + annotationTextSelector + '</blockquote></dd>';
+        }
+        target += '</dl>';
+
+        target += '<dl class="renderedvia"><dt>Rendered via</dt><dd><a about="' + targetIRI + '" href="https://dokie.li/" rel="oa:renderedVia">dokieli</a></dd></dl>';
+
+        var canonical = '<dl class="canonical"><dt>Canonical</dt><dd rel="oa:canonical" resource="' + canonicalId + '">' + canonicalId + '</dd></dl>';
+
+        note = '<article about="' + aAbout + '" id="' + n.id + '" typeof="oa:Annotation' + noteType + '"' + aPrefix + articleClass + '>'+buttonDelete+'\n\
+' + heading + '\n\
+' + authors + '\n\
+' + created + '\n\
+' + language + '\n\
+' + license + '\n\
+' + rights + '\n\
+' + inbox + '\n\
+' + canonical + '\n\
+' + target + '\n\
+' + body + '\n\
+</article>';
+      }
+      break;
+
+    case 'ref-footnote':
+      var citationURL = (typeof n.citationURL !== 'undefined' && n.citationURL != '') ? '<a href="' + n.citationURL + '" rel="rdfs:seeAlso">' + n.citationURL + '</a>' : '';
+      var bodyValue = (n.body && n.body.length) ? n.body[0].value : '';
+      body = (bodyValue) ? ((citationURL) ? ', ' + bodyValue : bodyValue) : '';
+
+      note = '\n\
+<dl about="#' + n.id +'" id="' + n.id +'" typeof="oa:Annotation">\n\
+<dt><a href="#' + n.refId + '" rel="oa:hasTarget">' + n.refLabel + '</a><span rel="oa:motivation" resource="' + motivatedByIRI + '"></span></dt>\n\
+<dd rel="oa:hasBody" resource="#n-' + n.id + '"><div datatype="rdf:HTML" property="rdf:value" resource="#n-' + n.id + '" typeof="oa:TextualBody">' + citationURL + body + '</div></dd>\n\
+</dl>\n\
+';
+      break;
+
+    case 'ref-citation':
+      heading = '<h' + hX + '>Citation</h' + hX + '>';
+
+      var citingEntityLabel = ('citingEntityLabel' in n.citation) ? n.citation.citingEntityLabel : n.citation.citingEntity;
+      var citationCharacterizationLabel = Config.Citation[n.citation.citationCharacterization] || n.citation.citationCharacterization;
+      var citedEntityLabel = ('citedEntityLabel' in n.citation) ? n.citation.citedEntityLabel : n.citation.citedEntity;
+
+      var citation = '\n\
+<dl about="' + n.citation.citingEntity + '">\n\
+<dt>Cited by</dt><dd><a href="' + n.citation.citingEntity + '">' + citingEntityLabel + '</a></dd>\n\
+<dt>Citation type</dt><dd><a href="' + n.citation.citationCharacterization + '">' + citationCharacterizationLabel+ '</a></dd>\n\
+<dt>Cites</dt><dd><a href="' + n.citation.citedEntity + '" rel="' + n.citation.citationCharacterization + '">' + citedEntityLabel + '</a></dd>\n\
+</dl>\n\
+';
+
+      note = '<article about="' + aAbout + '" id="' + n.id + '" prefixes="cito: http://purl.org/spart/cito/"' + articleClass + '>\n\
+' + heading + '\n\
+' + citation + '\n\
+</article>';
+      break;
+
+    default:
+      console.log(`XXX: noteData ${n} with "${n.type}" type not implemented yet`);
+      break;
+  }
+
+  return note;
+}
+
+function tagsToBodyObjects(string) {
+  var bodyObjects = [];
+
+  let tagsArray = string
+    .split(',')
+    .map(tag => escapeCharacters(tag.trim()))
+    .filter(tag => tag.length);
+
+  tagsArray = uniqueArray(tagsArray.sort());
+
+  tagsArray.forEach(tag => {
+    bodyObjects.push({
+      "purpose": "tagging",
+      "value": tag
+    })
+  })
+
+  return bodyObjects;
+}
+
 function getClosestSectionNode(node) {
   return node.closest('section') || node.closest('div') || node.closest('article') || node.closest('main') || node.closest('body');
 }
@@ -549,16 +887,10 @@ function removeSelectorFromNode(node, selector) {
 }
 
 function getNodeLanguage(node) {
-  node = node || getDocumentContentNode(document);
+  node = node ?? getDocumentContentNode(document);
 
-  var lang = '';
-  var closestLang = node.closest('[lang], [xml\\:lang]');
-
-  if (closestLang) {
-    lang = closestLang.getAttribute('lang') || closestLang.getAttributeNS('', 'xml:lang');
-  }
-
-  return lang;
+  const closestLangNode = node.closest('[lang], [xml\\:lang]');
+  return closestLangNode?.getAttribute('lang') || closestLangNode?.getAttributeNS('', 'xml:lang') || '';
 }
 
 function addMessageToLog(message, log, options = {}) {
@@ -588,7 +920,7 @@ function showActionMessage(node, message, options = {}) {
 
   var aside = node.querySelector('#document-action-message');
   if (!aside) {
-    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on">' + DO.C.Button.Close + '<h2>Messages</h2><ul></ul></aside>'));
+    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on">' + Config.Button.Close + '<h2>Messages</h2><ul></ul></aside>'));
   }
   node.querySelector('#document-action-message > h2 + ul').insertAdjacentHTML('afterbegin', messageItem);
 
@@ -918,6 +1250,7 @@ function getRDFaPrefixHTML(prefixes){
   return Object.keys(prefixes).map(i => { return i + ': ' + prefixes[i]; }).join(' ');
 }
 
+//TODO: Consider if/how setDocumentRelation and createDefinitionListHTML
 function setDocumentRelation(rootNode, data, options) {
   rootNode = rootNode || document;
   if (!data || !options) { return; }
@@ -1152,6 +1485,10 @@ function getButtonDisabledHTML(id) {
   }
 
   return html;
+}
+
+function isButtonDisabled(id) {
+  return !Config.ButtonStates[id];
 }
 
 function getGraphContributorsRole(g, options) {
@@ -1485,7 +1822,7 @@ function getResourceSupplementalInfo (documentURL, options) {
     const previousResponseDateHeaderValue = previousResponse?.get('date');
     const previousResponseDate = previousResponseDateHeaderValue ? new Date(previousResponseDateHeaderValue) : null;
 
-    if(!previousResponse || !previousResponseDateHeaderValue || (previousResponseDate && (currentDate.getTime() - previousResponseDate.getTime() > DO.C.RequestCheck.Timer))) {
+    if(!previousResponse || !previousResponseDateHeaderValue || (previousResponseDate && (currentDate.getTime() - previousResponseDate.getTime() > Config.RequestCheck.Timer))) {
       options.reuse = false;
     }
   }
@@ -1839,16 +2176,16 @@ function updateFeatureStatesOfResourceInfo(info) {
     })
   }
   // else {
-  //   if ((Config.User.Storage && DO.C.User.Storage.length > 0) ||
-  //       (Config.User.Outbox && DO.C.User.Outbox.length > 0) ||
-  //       (Config.User.Knows && DO.C.User.Knows.length > 0) ||
-  //       (Config.User.Contacts && Object.keys(DO.C.User.Contacts).length > 0)) {
+  //   if ((Config.User.Storage && Config.User.Storage.length > 0) ||
+  //       (Config.User.Outbox && Config.User.Outbox.length > 0) ||
+  //       (Config.User.Knows && Config.User.Knows.length > 0) ||
+  //       (Config.User.Contacts && Object.keys(Config.User.Contacts).length > 0)) {
   //         Config.ButtonStates['resource-notifications'] = true;
   //   }
   // }
 
   //XXX: This relies on `wac-allow` HTTP header. What to do if no `wac-allow`?
-  var writeAccessMode = accessModeAllowed(DO.C.DocumentURL, 'write');
+  var writeAccessMode = accessModeAllowed(Config.DocumentURL, 'write');
   writeRequiredFeatures.forEach(feature => {
     Config.ButtonStates[feature] = writeAccessMode;
   })
@@ -1889,13 +2226,13 @@ function updateFeatureStatesOfResourceInfo(info) {
 }
 
 function accessModeAllowed (documentURL, mode) {
-  documentURL = documentURL || DO.C.DocumentURL;
+  documentURL = documentURL || Config.DocumentURL;
 
   var allowedMode = false;
 
-  if ('headers' in DO.C.Resource[documentURL] && 'wac-allow' in DO.C.Resource[documentURL]['headers'] && 'permissionGroup' in DO.C.Resource[documentURL]['headers']['wac-allow']) {
-    if (('user' in DO.C.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && DO.C.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['user'].includes(mode))
-      || ('public' in DO.C.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && DO.C.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['public'].includes(mode))) {
+  if ('headers' in Config.Resource[documentURL] && 'wac-allow' in Config.Resource[documentURL]['headers'] && 'permissionGroup' in Config.Resource[documentURL]['headers']['wac-allow']) {
+    if (('user' in Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['user'].includes(mode))
+      || ('public' in Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['public'].includes(mode))) {
       allowedMode = true;
     }
   }
@@ -2427,35 +2764,159 @@ function createLicenseRightsHTML(iri, options = {}) {
   return html;
 }
 
-function createLanguageHTML(language, options = {}) {
-  if (!language) return '';
-  
-  var html = '';
-  var property = (options && options.language) ? options.language : 'dcterms:language';
-  var label = (options && options.label) ? options.label : 'Language';
+//TODO: Consider if/how setDocumentRelation and createDefinitionListHTML
+//TODO: Extend with data.resource, data.datatype
+function createDefinitionListHTML(data, options = {}) {
+  // console.log(data, options)
+  if (!data || !options) { return; }
 
-  var name = Config.Languages[language] || language;
-  html = '<dl class="' + label.toLowerCase() + '"><dt>' + label + '</dt><dd>';
-  html += '<span content="' + language + '" lang="" property="' + property + '" xml:lang="">' + name + '</span>';
-  html += '</dd></dl>';
+  var id = (options.id) ? ` id="${options.id}"` : '';
+  var title = options.title || options.id;
+  var classAttribute = (options.class) ? ` class="${options.class}"` : ` class="${title.toLowerCase()}"`;
+
+  var dds = [];
+
+  data.forEach(d => {
+    var prefix = d.prefix ? ` prefix="${d.prefix}"`: '';
+    var lang = d.lang !== undefined ? ` lang="${d.lang}"` : '';
+    var xmlLang = d.xmlLang !== undefined ? ` xml:lang="${d.xmlLang}"` : '';
+    var resource = d.resource ? ` resource="${d.resource}"`: '';
+    var content = d.content ? ` content="${d.content}"`: '';
+    var datatype = d.datatype ? ` datatype="${d.datatype}"`: '';
+    var typeOf = d.typeOf ? ` typeof="${d.typeOf}"`: '';
+
+    //d.href is required, d.resource is optional.
+
+    ///XXX: This can be further developed
+    if (d.child) {
+      var childTypeOf = d.child.typeOf ? ` typeof="${d.child.typeOf}"` : '';
+      var childResource = d.child.resource ? ` resource="${d.child.resource}"` : '';
+
+      dds.push(`
+        <dd>
+          <span${content}${datatype}${lang}${prefix} rel="${d.rel}"${resource}${typeOf}${xmlLang}>
+            <span rel="${d.child.rel}"${childResource}${childTypeOf}>${d.child.textContent}</span>
+          </span>
+        </dd>
+      `);
+    }
+    else if (d.rel && d.property) {
+      dds.push(`<dd><a href="${d.href}"${content}"${lang} property="${d.property}" rel="${d.rel}${resource}${xmlLang}>${d.textContent || d.href}</a></dd>`);
+    }
+    else if (d.rel) {
+      dds.push(`<dd><a href="${d.href}"${prefix} rel="${d.rel}"${resource}>${d.textContent || d.href}</dd>`);
+    }
+    else if (d.property) {
+      dds.push(`<dd><span${content}${datatype}${lang}${prefix} property="${d.property}"${xmlLang}>${d.textContent}</span></dd>`);
+    }
+  });
+
+  var html = `
+    <dl${classAttribute}${id}>
+      <dt>${title}</dt>
+      ${dds.join('\n')}
+    </dl>`;
+
+  // console.log(html);
 
   return html;
 }
 
-function getAnnotationInboxLocationHTML() {
+// function createLanguageHTML(language, options = {}) {
+//   if (!language) return '';
+
+//   var id = (options.id) ? ` id="${options.id}"` : '';
+//   var property = options.language || 'dcterms:language';
+//   var label = options.label || 'Language';
+//   var name = Config.Languages[language] || language;
+
+//   var html = `
+//     <dl class="${label.toLowerCase()}"${id}>
+//       <dt>${label}</dt>
+//       <dd><span content="${language}" lang="" property="${property}" xml:lang="">${name}</span></dd>
+//     </dl>`;
+
+//   return html;
+// }
+
+
+function createLanguageHTML(language, options = {}) {
+  if (!language) return '';
+
+  var property = options.property || 'dcterms:language';
+  var content = language;
+  var textContent = Config.Languages[language] || language;
+  options['title'] = options.label || 'Language';
+
+  return createDefinitionListHTML([{ property, content, textContent, lang: '', xmlLang: '' }], options);
+}
+
+function createInboxHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'inbox';
+  options['title'] = 'Inbox';
+
+  return createDefinitionListHTML([{'href': url, 'rel': 'ldp:inbox'}], options);
+}
+
+function createInReplyToHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'in-reply-to';
+  options['title'] = 'In reply to';
+
+  return createDefinitionListHTML([{'href': url, 'rel': 'as:inReplyTo'}], options);
+}
+
+function createPublicationStatusHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'publication-status';
+  var textContent = Config.PublicationStatus[url].name || url;
+  options['title'] = 'Status';
+
+  return createDefinitionListHTML(
+    [
+      {
+        prefix: 'pso: http://purl.org/spar/pso/',
+        rel: 'pso:holdsStatusInTime',
+        resource: '#' + generateAttributeId(),
+        child: {
+          rel: 'pso:withStatus', resource: url, typeOf: 'pso:PublicationStatus', textContent
+        }
+      }
+    ],
+    options
+  );
+}
+
+function createResourceTypeHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'resource-type';
+  var textContent = Config.ResourceType[url].name || url;
+  options['title'] = 'Type';
+
+  return createDefinitionListHTML([{'href': url, 'rel': 'rdf:type', textContent}], options);
+}
+
+function getAnnotationInboxLocationHTML(action) {
   var s = '', inputs = [], checked = '';
+
   if (Config.User.TypeIndex && Config.User.TypeIndex[ns.as.Announce.value]) {
     if (Config.User.UI && Config.User.UI['annotationInboxLocation'] && Config.User.UI.annotationInboxLocation['checked']) {
       checked = ' checked="checked"';
     }
-    s = '<input type="checkbox" id="annotation-inbox" name="annotation-inbox"' + checked + ' /><label for="annotation-inbox">Inbox</label>';
+    s = `<input type="checkbox" id="${action}-annotation-inbox" name="${action}-annotation-inbox"${checked} /><label for="annotation-inbox">Inbox</label>`;
   }
 
   return s;
 }
 
-function getAnnotationLocationHTML() {
+function getAnnotationLocationHTML(action) {
   var s = '', inputs = [], checked = '';
+
   if(typeof Config.AnnotationService !== 'undefined') {
     if (Config.User.Storage && Config.User.Storage.length > 0 || Config.User.Outbox && Config.User.Outbox.length > 0) {
       if (Config.User.UI && Config.User.UI['annotationLocationService'] && Config.User.UI.annotationLocationService['checked']) {
@@ -2466,39 +2927,20 @@ function getAnnotationLocationHTML() {
       checked = ' checked="checked" disabled="disabled"';
     }
 
-    inputs.push('<input type="checkbox" id="annotation-location-service" name="annotation-location-service"' + checked + ' /><label for="annotation-location-service">Annotation service</label>');
+    inputs.push(`<input type="checkbox" id="${action}-annotation-location-service" name="${action}-annotation-location-service"${checked} /><label for="annotation-location-service">Annotation service</label>`);
   }
 
   checked = ' checked="checked"';
+
   if(Config.User.Storage && Config.User.Storage.length > 0 || Config.User.Outbox && Config.User.Outbox.length > 0) {
     if (Config.User.UI && Config.User.UI['annotationLocationPersonalStorage'] && !Config.User.UI.annotationLocationPersonalStorage['checked']) {
         checked = '';
     }
 
-    inputs.push('<input type="checkbox" id="annotation-location-personal-storage" name="annotation-location-personal-storage"' + checked + ' /><label for="annotation-location-personal-storage">Personal storage</label>');
+    inputs.push(`<input type="checkbox" id="${action}-annotation-location-personal-storage" name="${action}-annotation-location-personal-storage"${checked} /><label for="annotation-location-personal-storage">Personal storage</label>`);
   }
+
   s = 'Store at: ' + inputs.join('');
-  return s;
-}
-
-function getResourceTypeOptionsHTML(options) {
-  options = options || {};
-  var s = '', selectedType = '';
-
-  if ('selected' in options) {
-    selectedType = options.selected;
-    if (selectedType == '') {
-      s += '<option selected="selected" value="">Choose a document type</option>';
-    }
-  }
-  else {
-    selectedType = 'http://schema.org/Article';
-  }
-
-  Object.keys(Config.ResourceType).forEach(iri => {
-    var selected = (iri == selectedType) ? ' selected="selected"' : '';
-    s += '<option value="' + iri + '" title="' + Config.ResourceType[iri].description  + '"' + selected + '>' + Config.ResourceType[iri].name  + '</option>';
-  });
 
   return s;
 }
@@ -2521,6 +2963,28 @@ function getPublicationStatusOptionsHTML(options) {
     var selected = (iri == selectedIRI) ? ' selected="selected"' : '';
     s += '<option value="' + iri + '" title="' + Config.PublicationStatus[iri].description  + '"' + selected + '>' + Config.PublicationStatus[iri].name  + '</option>';
   })
+
+  return s;
+}
+
+function getResourceTypeOptionsHTML(options) {
+  options = options || {};
+  var s = '', selectedType = '';
+
+  if ('selected' in options) {
+    selectedType = options.selected;
+    if (selectedType == '') {
+      s += '<option selected="selected" value="">Choose a resource type</option>';
+    }
+  }
+  else {
+    selectedType = 'http://schema.org/Article';
+  }
+
+  Object.keys(Config.ResourceType).forEach(iri => {
+    var selected = (iri == selectedType) ? ' selected="selected"' : '';
+    s += '<option value="' + iri + '" title="' + Config.ResourceType[iri].description  + '"' + selected + '>' + Config.ResourceType[iri].name  + '</option>';
+  });
 
   return s;
 }
@@ -2814,6 +3278,102 @@ function parseMarkdown(data, options) {
   return html;
 }
 
+function getReferenceLabel(motivatedBy) {
+  motivatedBy = motivatedBy || '';
+  //TODO: uriToPrefix
+  motivatedBy = (motivatedBy.length && motivatedBy.slice(0, 4) == 'http' && motivatedBy.indexOf('#') > -1) ? 'oa:' + motivatedBy.substr(motivatedBy.lastIndexOf('#') + 1) : motivatedBy;
+
+  return Config.MotivationSign[motivatedBy] || '#';
+}
+
+function createRDFaMarkObject(r, mode) {
+  let about = r['about'];
+  let resource = r['resource'];
+  let typeOf = r['typeof'];
+  let rel = r['rel'];
+  let property = r['property'];
+  let href = r['href'];
+  let content = r['content'];
+  let lang = r['lang'];
+  let datatype = r['datatype'];
+
+  let id = generateAttributeId();
+
+  about = about || '#' + id;
+
+  //TODO: Figure out how to use user's preferred vocabulary. Huh?
+  property = property || 'rdfs:label';
+
+  let xmlLang = lang;
+  datatype = lang ? undefined : datatype;
+
+  let element = ('datatype' in r && r.datatype == 'xsd:dateTime') ? 'time' : ((href == '') ? 'span' : 'a');
+
+  let attrs = { id, about, resource, 'typeof': typeOf, rel, property, href, content, lang, 'xml:lang': xmlLang, datatype };
+
+  return { element, attrs }
+}
+
+function createRDFaHTML(r, mode) {
+  var s = '', about = '', property = '', rel = '', resource = '', href = '', content = '', langDatatype = '', typeOf = '', idValue = '', id = '';
+
+  if ('rel' in r && r.rel != '') {
+    rel = ' rel="' + r.rel + '"';
+  }
+
+  if ('href' in r && r.href != '') {
+    href = ' href="' + r.href + '"';
+  }
+
+  if (mode == 'expanded') {
+    idValue = generateAttributeId();
+    id = ' id="' + idValue + '"';
+
+    if ('about' in r && r.about != '') {
+      about = ' about="' + r.about + '"';
+    }
+    else {
+      about = ' about="#' + idValue + '"';
+    }
+
+    if ('property' in r && r.property != '') {
+      property = ' property="' + r.property + '"';
+    }
+    else {
+      //TODO: Figure out how to use user's preferred vocabulary.
+      property = ' property="rdfs:label"';
+    }
+
+    if ('resource' in r && r.resource != '') {
+      resource = ' resource="' + r.resource + '"';
+    }
+
+    if ('content' in r && r.content != '') {
+      content = ' content="' + r.content + '"';
+    }
+
+    if ('lang' in r && r.lang != '') {
+      langDatatype = ' lang="' + r.lang + '" xml:lang="' + r.lang + '"';
+    }
+    else {
+      if ('datatype' in r && r.datatype != '') {
+        langDatatype = ' datatype="' + r.datatype + '"';
+      }
+    }
+
+    if ('typeOf' in r && r.typeOf != '') {
+      typeOf = ' typeof="' + r.typeOf + '"';
+    }
+  }
+
+  var element = ('datatype' in r && r.datatype == 'xsd:dateTime') ? 'time' : ((href == '') ? 'span' : 'a');
+  var textContent = r.textContent || r.href || '';
+
+  s = '<' + element + about + content + href + id + langDatatype + property + rel + resource + typeOf + '>' + textContent + '</' + element + '>';
+
+  return s;
+}
+
 export {
   escapeCharacters,
   cleanEscapeCharacters,
@@ -2878,6 +3438,10 @@ export {
   createLanguageHTML,
   createLicenseHTML,
   createRightsHTML,
+  createPublicationStatusHTML,
+  createResourceTypeHTML,
+  createInboxHTML,
+  createInReplyToHTML,
   getAnnotationInboxLocationHTML,
   getAnnotationLocationHTML,
   getResourceTypeOptionsHTML,
@@ -2892,5 +3456,12 @@ export {
   serializeTableToText,
   serializeTableSectionToText,
   focusNote,
-  parseMarkdown
+  parseMarkdown,
+  getReferenceLabel,
+  createNoteDataHTML,
+  tagsToBodyObjects,
+  createRDFaHTML,
+  createRDFaMarkObject,
+  createDefinitionListHTML,
+  isButtonDisabled
 }
