@@ -25,7 +25,7 @@ export default {
       DO.U.showFragment();
       DO.U.initCopyToClipboard();
       DO.U.setDocumentMode();
-      DO.Editor.init();
+      DO.U.initEditor();
       DO.U.initMath();
       DO.U.initSlideshow();
     }
@@ -86,7 +86,14 @@ export default {
     mode: 'social',
     ButtonLabelType: 'fontawesome',
     DisableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-disable', buttonTextContent: 'Edit', buttonTitle: 'Disable editor', iconSize: 'fa-2x' }),
-    EnableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' })
+    EnableEditorButton: getButtonHTML({ button: 'cursor', buttonClass: 'editor-enable', buttonTextContent: 'Edit', buttonTitle: 'Enable editor', iconSize: 'fa-2x' }),
+    Placeholder: {
+      h1: 'Title',
+      h2: 'Section title',
+      h3: 'Sub-section title',
+      h4: 'Sub-sub-section title',
+      p: 'Cogito, ergo sum.'
+    },
   },
   Button: {
     Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
@@ -133,14 +140,6 @@ export default {
     'skipClassWithValue': '',
     'skipEscapingDataBlockTypes': ['text/turtle', 'application/ld+json', 'application/activity+json', 'application/n-triples', 'application/trig', 'text/n3'],
     'removeWrapperSelector': '.ProseMirror'
-  },
-
-  Placeholder: {
-    h1: 'Title',
-    h2: 'Section title',
-    h3: 'Sub-section title',
-    h4: 'Sub-sub-section title',
-    p: 'Cogito, ergo sum.'
   },
 
   ArticleNodeSelectors: [

@@ -18,7 +18,7 @@ const ns = Config.ns;
 
 export class Editor {
   constructor(mode, node) {
-    this.mode = mode || Config.mode;
+    this.mode = mode || Config.Editor.mode;
     //TODO: Look into replacing document.body with selectArticleNode(document) so that main > article, article, or body is used?
     // if body is used, take care to filter out do elements at this point
     // TODO: When choosing the editor node, we need to filter out these items from the content of the editor node. we also need to restore the body to its original form WITH the do elements.
@@ -29,12 +29,12 @@ export class Editor {
 
     this.hasRunTextQuoteSelector = false;
 
-    this.placeholder = Config.Placeholder;
+    this.placeholder = Config.Editor.Placeholder;
   }
 
   // Initialize editor and toolbar based on the default editor mode
   init(mode, node) {
-    this.mode = mode || this.mode;
+    this.mode = mode || Config.Editor.mode || this.mode;
     this.node = node || this.node;
 
     switch (this.mode) {
@@ -89,10 +89,10 @@ export class Editor {
     // this.setEditorDataItems(e);
   }
 
-  // replaceContent(mode, content) {
-  //   this.destroyEditor(content);
-  //   this.init(mode);
-  // }
+  replaceContent(mode, content) {
+    this.destroyEditor(content);
+    this.init(mode);
+  }
 
   setTemplate(mode, options) {
     switch(options.template) {
@@ -129,11 +129,11 @@ export class Editor {
   }
 
   replaceSelectionWithFragment(fragment){
-    console.log(this)
+    // console.log(this)
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
-    console.log('mode',this.mode)
-    console.log('toolbar',toolbarView)
-    console.log(toolbarView?.replaceSelectionWithFragment)
+    // console.log('mode',this.mode)
+    // console.log('toolbar',toolbarView)
+    // console.log(toolbarView?.replaceSelectionWithFragment)
     return toolbarView?.replaceSelectionWithFragment(fragment)
   }
 
@@ -153,7 +153,7 @@ export class Editor {
       view(editorView) {
         // Create new class to hold editor and internal state such as editorView, HTML DOM elements, commands
 
-        console.log(editorView);
+        // console.log(editorView);
 
         //TODO: 'math', 'sparkline',
         this.authorToolbarView = new AuthorToolbar('author', ['p', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'a', 'img', 'ol', 'ul', 'pre', 'code', 'blockquote', 'q', 'semantics', 'citation', 'note'], editorView);
@@ -191,8 +191,7 @@ export class Editor {
 
   destroyEditor(content) {
     if (this.editorView) {
-      console.log(this.editorView.state.doc.content);
-      const content = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
+      const newContent = content ?? DOMSerializer.fromSchema(schema).serializeFragment(this.editorView.state.doc.content);
       // console.log(content)
       // const serializer = DOMSerializer.fromSchema(schema);
       // const htmlString = new XMLSerializer().serializeToString(fragment);
@@ -207,22 +206,22 @@ export class Editor {
       //TODO: Create a new function that normalises, e.g., clean up PM related stuff, handle other non-PM but dokieli stuff
       //TODO: dokieli menu is currently outside of body, but it should be in body. Clone the menu, add it back into the body after replaceChildren
 
-      document.body.replaceChildren(content);
+      document.body.replaceChildren(newContent);
 
 
       // document.body.insertAdjacentHTML('afterbegin', content);
       // document.body.replaceChildren(new DOMParser().parseFromString(content, "text/html").body);
 
-      console.log("Editor destroyed. Mode:", this.mode);
+      // console.log("Editor destroyed. Mode:", this.mode);
     }
   }
 
   createSocialToolbar() {
     // Create and initialize the SocialToolbar only when in social mode
-    console.log("creating social toolbar")
+    // console.log("creating social toolbar")
     this.socialToolbarView = new SocialToolbar('social', ['share', 'approve', 'disapprove', 'specificity', 'bookmark', 'comment']);
     document.body.appendChild(this.socialToolbarView.dom); // idk why this is needed? or is it not?
-    console.log("SocialToolbar created. Mode:", this.mode);
+    // console.log("SocialToolbar created. Mode:", this.mode);
   }
   
 
@@ -230,7 +229,7 @@ export class Editor {
     if (this.socialToolbarView) {
       this.socialToolbarView.destroy();
       this.socialToolbarView = null;
-      console.log("SocialToolbar destroyed. Mode:", this.mode);
+      // console.log("SocialToolbar destroyed. Mode:", this.mode);
     }
   }
 

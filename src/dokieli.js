@@ -36,8 +36,6 @@ if (typeof window.DO === 'undefined'){
 DO = {
   C: Config,
 
-  Editor: new Editor("social"),
-
   U: {
     getItemsList: function(url, options) {
       url = url || currentLocation();
@@ -1512,6 +1510,11 @@ DO = {
 
     getContentNode: function(node) {
       return getDocumentContentNode(document);
+    },
+
+    initEditor: function() {
+      DO['Editor'] = new Editor();
+      DO.Editor.init();
     },
 
     setDocumentURL: function(url) {
@@ -7061,6 +7064,7 @@ console.log(response)
             var requestAccess = '';
             var linkHeaders;
             var inboxURL;
+            // TODO: error.response could be undefined, handle this case (error UI)
             var link = error.response.headers.get('Link');
             if (link) {
               linkHeaders = LinkHeader.parse(link);
