@@ -1454,7 +1454,8 @@ header:first-child li a {
 
 /*XXX: ProseMirror hack*/
 figcaption > p:only-child,
-li > p:only-child {
+li > p:only-child,
+dd > p:only-child {
   margin: 0;
   display:inline;
 }

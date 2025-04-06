@@ -193,8 +193,13 @@ font-size:1em !important;
 z-index:2147483647;
 }
 .editor-toolbar svg.fas,
-.editor-toolbar svg.far {
-vertical-align: bottom;
+.editor-toolbar svg.far,
+.editor-slashmenu li svg.fas,
+.editor-slashmenu li svg.far {
+width: 1.25em;
+height: 1.25em;
+display: flex;
+align-self: center;
 }
 .editor-form svg.fas,
 .editor-form svg.far,
@@ -209,10 +214,7 @@ dl svg.fas.fa-2x,
 dl svg.fas-fa-2x {
 vertical-align: bottom;
 }
-.editor-slashmenu li svg.fas,
-.editor-slashmenu li svg.far {
-height:auto;
-}
+
 
 i.fas, i.far, i.fab {
 background-repeat:no-repeat;
@@ -430,7 +432,8 @@ border-radius: 5px;
 padding: 0.75em;
 }
 aside.do input[type="text"] {
-width: calc(100% - 14em);padding: 0.75em;
+width: calc(100% - 14em);
+padding: 0.75em;
 margin: 0.5em;
 }
 
@@ -531,7 +534,7 @@ overflow:auto;
 vertical-align:middle;
 }
 #share-resource-search-contacts {
-width: 100%;
+/* width: 100%; */
 }
 
 #share-resource > div h3 {
@@ -805,6 +808,10 @@ aside.note .canonical {
 display:none;
 }
 
+aside.note > dl dt {
+display:block;
+}
+
 #document-notifications section,
 #document-notifications article.do dl,
 #document-notifications article.do dl *,
@@ -814,6 +821,10 @@ aside.note dl * {
 padding:0;
 margin:0;
 width:auto;
+}
+
+aside.note > dl dd {
+margin-left:1em;
 }
 
 #document-notifications section {
@@ -1692,16 +1703,17 @@ line-height:1;
 padding:0.25em;
 z-index:2147483647;
 hyphens:initial;
-background-color: #080;
 }
+
 aside.do button + button {
-margin-left:1em;
+margin-left:1em !important;
 }
 button.delete {
-background-color:#FF0000;
+background-color:#FF0000 !important;
 }
-button.cancel {
-background-color:#FFFFFF;
+button.cancel,
+.editor-form-cancel {
+background-color:#FFFFFF !important;
 color:#000 !important;
 border: 1px solid rgba(0, 0, 0, 0.35) !important;
 }
@@ -1721,7 +1733,9 @@ button.delete:hover {
 fill: #080 !important;
 transition: fill 0.3s;
 }
-aside.do button {
+aside.do button:not(:has(svg)),
+.editor-form:not(.editor-slashmenu) button {
+background-color: #080;
 align-items: center;
 border-radius: .25rem;
 box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
@@ -1735,9 +1749,22 @@ color: #fff;
 border:none;
 transition: opacity 0.3s;
 }
-aside.do button:hover:not(.toggle) {
+aside.do button:hover:not(.toggle),
+.editor-form:not(.editor-slashmenu) button:hover:not(.toggle)  {
 opacity: 0.8;
 }
+
+.editor-slashmenu > :not(form) button {
+  background-color:transparent;
+  border:none;
+  cursor: pointer;
+  width: 100%;
+  }
+  .editor-slashmenu li:hover {
+    /* background-color:#ddd; */
+    border:none;
+    cursor: pointer;
+    }
 button.copy-to-clipboard {
 display:block;
 margin:-2.5em 0 2.5em auto;
@@ -2208,7 +2235,6 @@ border-color: transparent transparent transparent #009000 !important;
   }
   span {
   margin: 0 !important;
-  font-size: 0.8em;
   display: flex;
   align-items: center;
   }
@@ -2227,6 +2253,40 @@ border-color: transparent transparent transparent #009000 !important;
 }
 
 /* styles for specific popups */
+
+#editor-form-q fieldset {
+  display: grid;
+  grid-template-columns: auto auto auto auto;
+  grid-template-rows: auto auto auto;
+  grid-gap: 0.5em;
+  border: none;
+  padding-block: 0;
+  
+  grid-template-areas: 
+    "legend legend legend legend"
+    "label1 input1 input1 input1"
+    ". . button1 button2";
+
+  legend {
+    grid-area: legend;
+  }
+
+  label:nth-of-type(1) {
+    grid-area: label1;
+  }
+
+  input:nth-of-type(1) {
+    grid-area: input1;
+  }
+
+  button:nth-of-type(1) {
+    grid-area: button1;
+  }
+  button:nth-of-type(2) {
+    grid-area: button2;
+  }
+ }
+
 
 #editor-form-semantics fieldset {
   display: grid;
@@ -2337,14 +2397,16 @@ span {
 
   figure.img-preview {
     grid-area: img-preview;
-    display: flex;
     align-items: center;
     justify-content: center;
-    height: 150px;
     background-color: #f0f0f0;
-    min-height:10em;
-    border:3px dashed #aaa;
+    /* min-height:10em;
+    border:3px dashed #aaa; */
     border-radius:0.5em;
+
+    ol {
+      list-style: none;
+    }
   }
 
   label[for="img-file"] {
@@ -2490,7 +2552,7 @@ span {
 
 .editor-slashmenu li {
   list-style: none;
-  padding:0.5em 0.5em 0.5em 0;
+  padding:0;
 }
 
 .editor-slashmenu li button span {
@@ -2501,6 +2563,7 @@ span {
 
 .editor-slashmenu li button {
   display: flex !important;
+  padding:0.5em 0.5em 0.5em 0;
 }
 
 
@@ -2525,8 +2588,8 @@ width:65%;
 display:block;
 }
 .editor-form button {
-background-color:transparent;
-border:none;
+/* background-color:transparent; */
+/* border:none; */
 }
 div.specref-search-results {
 border-bottom:1px solid #ccc;
@@ -2545,7 +2608,6 @@ font-weight:normal !important;
 .editor-form .info {
 font-weight: normal;
 margin: 0.5em 0 0 0;
-font-size: small;
 }
 
 label:has(+ [required]):after {
@@ -2698,13 +2760,14 @@ max-width:none;
     color:#333;
     content: attr(data-placeholder) !important;
     font-style: italic;
-
     position: absolute;
     left: 0;
     top: 0;
-    /* white-space: pre; */
-    /* padding: inherit;
-    margin: inherit; */
+  }
+
+  [class~="do-new"] h1:has(br:only-child):after {
+    width:100%;
+    text-align:center;
   }
 
   [class~="do-new"] h1[data-placeholder]:has(br),
@@ -2892,8 +2955,8 @@ h1 + div p:first-child {
   display: table; }
 
 .editor-form .img-preview {
-min-height:10em;
-border:3px dashed #aaa;
+/* min-height:10em;
+border:3px dashed #aaa; */
 border-radius:0.5em;
 }
 .editor-form .img-preview p {
