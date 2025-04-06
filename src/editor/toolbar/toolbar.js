@@ -243,7 +243,7 @@ export class ToolbarView {
     this.ul = document.createElement('ul');
     this.ul.classList.add('editor-form-actions');
     this.dom.appendChild(this.ul);
-    this.documentBody.appendChild(this.dom);
+    document.body.appendChild(this.dom);
 
     this.initializeButtons(this.buttons)
   }
@@ -585,8 +585,8 @@ export function annotateFormControls(options) {
       <span class="annotation-location-selection">${getAnnotationLocationHTML(options.button)}</span>
       <span class="annotation-inbox">${getAnnotationInboxLocationHTML(options.button)}</span>
 
-      ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Post', buttonTextContent: 'Post', buttonType: 'submit' })}
-      ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
+      <button class="editor-form-submit" title="Post" type="submit">Post</button>
+      <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
     </fieldset>
   `
 }

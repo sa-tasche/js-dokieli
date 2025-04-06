@@ -85,8 +85,8 @@ export class AuthorToolbar extends ToolbarView {
           </dl>
           <label for="a-href">URL</label> <input class="editor-form-input" id="a-href" name="a-href" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
           <label for="a-title">Title</label> <input class="editor-form-input" id="a-title" name="a-title" placeholder="Add advisory information for the tooltip." type="text" />
-          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
-          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
+      <button class="editor-form-submit" title="Save" type="submit">Save</button>
+      <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
         </fieldset>
       `,
 
@@ -94,8 +94,8 @@ export class AuthorToolbar extends ToolbarView {
         <fieldset>
           <legend>Add the source of the blockquote</legend>
           <label for="blockquote-cite">URL</label> <input class="editor-form-input" id="blockquote-cite" name="blockquote-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
-          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
         </fieldset>
       `,
 
@@ -103,24 +103,23 @@ export class AuthorToolbar extends ToolbarView {
         <fieldset>
           <legend>Add the source of the quote</legend>
           <label for="q-cite">URL</label> <input class="editor-form-input" id="q-cite" name="q-cite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
-          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
-          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
         </fieldset>
       `,
 
-      // TODO: captions
       // TODO: draggable area in this widget
       //TODO: browse storage
       img: (options) => `
         <fieldset>
           <legend>Add an image with a description</legend>
-          <figure class="img-preview"><p>Drag an image here</p></figure>
+          <figure class="img-preview"></figure>
           <label for="img-file">Upload</label> <input class="editor-form-input" id="img-file" name="img-file" type="file" />
-          <label for="img-src">URL</label> <input class="editor-form-input" id="img-src" name="img-src" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
+          <label for="img-src">URL</label> <input class="editor-form-input" id="img-src" name="img-src" type="url" value="" />
           <label for="img-alt">Description</label> <input class="editor-form-input" id="img-alt" name="img-alt" placeholder="Describe the image for people who are blind or have low vision." type="text" value="" />
           <label for="img-figcaption">Caption</label> <input class="editor-form-input" id="img-figcaption" name="img-figcaption" placeholder="A caption or legend for the figure." type="text" value="" />
-          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
-          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
         </fieldset>
       `,
 
@@ -139,8 +138,8 @@ export class AuthorToolbar extends ToolbarView {
           <textarea class="editor-form-textarea" cols="20" id="citation-content" name="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
           <label for="citation-language">Language</label>
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
-          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
-          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
           <div class="specref-search-results"></div>
         </fieldset>
       `,
@@ -157,8 +156,8 @@ export class AuthorToolbar extends ToolbarView {
           <label for="semantics-content">content</label> <input class="editor-form-input" id="semantics-content" name="semantics-content" placeholder="Enter content, e.g., 'Baz'" type="text" value="" />
           <label for="semantics-lang">lang</label> <input class="editor-form-input" name="semantics-lang" id="semantics-lang" placeholder="Enter language code, e.g., en" type="text" value="" />
           <label for="semantics-datatype">datatype</label> <input class="editor-form-input" name="semantics-datatype" id="semantics-datatype" placeholder="Enter URL, e.g., https://example.net/qux" type="text" value="" />
-          ${getButtonHTML({ button: 'submit', buttonClass: 'editor-form-submit', buttonTitle: 'Save', buttonTextContent: 'Save', buttonType: 'submit' })}
-          ${getButtonHTML({ button: 'cancel', buttonClass: 'editor-form-cancel', buttonTitle: 'Cancel', buttonTextContent: 'Cancel', buttonType: 'button' })}
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
         </fieldset>
       `
 
@@ -273,10 +272,11 @@ TODO:
 
 
   replaceSelectionWithFragment(fragment) {
+    console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
-    
-    let node = DOMParser.fromSchema(schema).parseSlice(fragment, { preserveWhitespace: true });
+    // parseSlice(fragment, { preserveWhitespace: true })
+    let node = DOMParser.fromSchema(schema).parseSlice(fragment);
   
     let tr = state.tr.replaceSelection(node);
     console.log(tr)
@@ -292,6 +292,8 @@ TODO:
   
     let node = DOMParser.fromSchema(schema).parse(fragment);
   
+console.log(node)
+
     let tr = state.tr.insert(endPos, node);
   
     dispatch(tr);
@@ -354,9 +356,18 @@ TODO:
   populateFormImg(button, node, state) {
     const fileInput = node.querySelector('[name="img-file"]');
     const altInput = node.querySelector('[name="img-alt"]');
+    let srcInput = node.querySelector('[name="img-src"]');
 
     // TODO: prepopulate alt from selection
-    altInput.value = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
+    var selectedText = state.doc.textBetween(state.selection.from, state.selection.to, "\n");
+
+    try {
+      const selectedURL = new URL(selectedText);
+      srcInput.value = selectedText;
+    }
+    catch(e) {
+      altInput.value = selectedText;
+    }
 
     fileInput.addEventListener("change", async (e) => {
       const preview = node.querySelector('.img-preview');
@@ -366,7 +377,7 @@ TODO:
       const previewImageNode = preview.querySelector('img[src]');
 
       if (previewImageNode) {
-        const srcInput = node.querySelector('[name="img-src"]');
+        srcInput = node.querySelector('[name="img-src"]');
         srcInput.value = previewImageNode.src;
       }
     });
@@ -944,7 +955,7 @@ function getClosestSectionNodeEndPos(view) {
     let parentNode = view.state.doc.nodeAt(parentPos);
 
     while (parentNode) {
-      console.log("parentNode", parentNode)
+      // console.log("parentNode", parentNode)
 
       var parentNodeName = parentNode.type.name.toLowerCase();
 
