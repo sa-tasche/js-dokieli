@@ -816,7 +816,7 @@ function createNoteDataHTML(n) {
 
       note = '\n\
 <dl about="#' + n.id +'" id="' + n.id +'" typeof="oa:Annotation">\n\
-<dt><a href="#' + n.refId + '" rel="oa:hasTarget">' + n.refLabel + '</a><meta rel="oa:motivation" resource="' + motivatedByIRI + '" /></dt>\n\
+<dt><a href="#' + n.refId + '" rel="oa:hasTarget">' + n.refLabel + '</a><span rel="oa:motivation" resource="' + motivatedByIRI + '"></span></dt>\n\
 <dd rel="oa:hasBody" resource="#n-' + n.id + '"><div datatype="rdf:HTML" property="rdf:value" resource="#n-' + n.id + '" typeof="oa:TextualBody">' + citationURL + body + '</div></dd>\n\
 </dl>\n\
 ';
@@ -886,7 +886,9 @@ function removeSelectorFromNode(node, selector) {
   return clone;
 }
 
-function getNodeLanguage(node = getDocumentContentNode(document)) {
+function getNodeLanguage(node) {
+  node = node ?? getDocumentContentNode(document);
+
   const closestLangNode = node.closest('[lang], [xml\\:lang]');
   return closestLangNode?.getAttribute('lang') || closestLangNode?.getAttributeNS('', 'xml:lang') || '';
 }
