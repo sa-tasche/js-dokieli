@@ -257,7 +257,7 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "hr", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["hr", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM(node) { return ["hr", { ...node.attrs.originalAttributes }]; },
   },
   object: {
     group: "block",
