@@ -1311,7 +1311,9 @@ header:first-child li a {
 #home #get-involved h2,
 #home #introduction h2,
 #home #features h2 {
-  display: none;
+  height: 0;
+  overflow: hidden;
+  position: absolute;
 }
 
 #home #get-involved {
