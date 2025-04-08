@@ -1706,6 +1706,8 @@ function getResourceInfo(data, options) {
 
   Config['Resource'] = Config['Resource'] || {};
   Config['Resource'][documentURL] = Config['Resource'][documentURL] || {};
+  Config['Resource'][documentURL]['data'] = data;
+  Config['Resource'][documentURL]['contentType'] = options.contentType;
 
   var promises = [];
 
