@@ -946,6 +946,10 @@ function showActionMessage(node, message, options = {}) {
   return id;
 }
 
+function hasNonWhitespaceText (node) {
+  return !!node.textContent.trim();
+}
+
 function selectArticleNode(node) {
   var x = node.querySelectorAll(Config.ArticleNodeSelectors.join(','));
   return (x && x.length > 0) ? x[x.length - 1] : getDocumentContentNode(document);
@@ -3465,5 +3469,6 @@ export {
   createRDFaHTML,
   createRDFaMarkObject,
   createDefinitionListHTML,
-  isButtonDisabled
+  isButtonDisabled,
+  hasNonWhitespaceText
 }

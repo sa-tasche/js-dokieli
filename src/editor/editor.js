@@ -7,7 +7,7 @@ import { keymapPlugin } from "./toolbar/author/keymap.js";
 import { AuthorToolbar } from "./toolbar/author/author.js";
 import { SocialToolbar } from "./toolbar/social/social.js";
 import Config from "./../config.js";
-import { addMessageToLog, getAgentHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML, insertDocumentLevelHTML, selectArticleNode, setDate, setEditSelections, showActionMessage } from "../doc.js";
+import { addMessageToLog, getAgentHTML, getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOptionsHTML, getResourceTypeOptionsHTML, insertDocumentLevelHTML, selectArticleNode, setDate, setEditSelections, showActionMessage, hasNonWhitespaceText } from "../doc.js";
 import { getAgentName, getGraphImage, getGraphInbox, getGraphTypes, getResourceGraph } from "../graph.js";
 import { fragmentFromString, generateAttributeId } from "../util.js";
 import { updateLocalStorageProfile } from "../storage.js";
@@ -142,10 +142,6 @@ export class Editor {
     return toolbarView?.insertFragmentInNode(fragment, parentNode)
   }
 
-  hasNonWhitespaceText = (node) => {
-    return !!node.textContent.trim();
-  }
-
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
     const editorToolbarPlugin = new Plugin({
@@ -177,7 +173,7 @@ export class Editor {
       state,
       editable: () => true,
       attributes: {
-        class: `${this.hasNonWhitespaceText(state.doc) ? '' : 'do-new'}`,
+        class: `${hasNonWhitespaceText(state.doc) ? '' : 'do-new'}`,
         // "data-placeholder": state.doc.childCount === 0 ? placeholderText : "",
         // "data-placeholder": `${hasNonWhitespaceText(state.doc) ? '' : 'Hello World'}`,
       }
