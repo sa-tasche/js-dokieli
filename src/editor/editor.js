@@ -33,9 +33,16 @@ export class Editor {
   }
 
   // Initialize editor and toolbar based on the default editor mode
-  init(mode, node) {
+  init(mode, node, options) {
     this.mode = mode || Config.Editor.mode || this.mode;
     this.node = node || this.node;
+
+
+    if (options?.template === 'new') {
+      DO.Editor['new'] = true;
+      this.setTemplate(mode, options);
+      this.node = this.node.querySelector('article');
+    }
 
     switch (this.mode) {
       case 'author':
@@ -74,7 +81,7 @@ export class Editor {
 
     let node = document.body;
 
-    if (options?.template === 'new' ) {
+    if (options?.template === 'new') {
       DO.Editor['new'] = true;
       this.setTemplate(mode, options);
       node = node.querySelector('article');
