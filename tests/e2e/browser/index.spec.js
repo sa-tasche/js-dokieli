@@ -54,11 +54,6 @@ test("clicking on the sign in button displays sign in modal", async ({
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
-
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
-
   const signinbtn = page.locator("[class=signin-user]");
   await signinbtn.click();
   const signinmodal = page.locator("[id=user-identity-input]");
@@ -77,17 +72,13 @@ test("clicking on the reply button displays reply modal", async ({
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
 
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
-
   const replyBtn = page.locator("[class=resource-reply]");
   await replyBtn.click();
   const replyModal = page.locator("[id=reply-to-resource]");
   await expect(replyModal).toBeVisible();
 });
 
-test("clicking on the new button displays create new document modal", async ({
+test("clicking on the new button displays creates new document", async ({
   page,
   isMobile,
 }) => {
@@ -98,10 +89,6 @@ test("clicking on the new button displays create new document modal", async ({
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
-
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
 
   const newBtn = page.locator("[class=resource-new]");
   await newBtn.click();
@@ -121,10 +108,6 @@ test("clicking on the open button displays open document modal", async ({
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
 
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
-
   const openBtw = page.locator("[class=resource-open]");
   await openBtw.click();
   const openModal = page.locator("[id=open-document]");
@@ -143,10 +126,6 @@ test("clicking on the save-as button displays save-as modal", async ({
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
 
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
-
   const saveAsBtw = page.locator("[class=resource-save-as]");
   await saveAsBtw.click();
   const saveAsModal = page.locator("[id=save-as-document]");
@@ -164,10 +143,6 @@ test("clicking on the memento button displays additional buttons", async ({
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
-
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
 
   const mementoBtw = page.locator("[class=resource-memento]");
   await mementoBtw.click();
@@ -195,13 +170,9 @@ test("clicking on the edit button button enables author mode", async ({
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
 
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
-
   const editBtw = page.locator("[class=editor-enable]");
   await editBtw.click();
-  const documentEditor = page.locator("[class=medium-editor-element]");
+  const documentEditor = page.locator("[class=ProseMirror]");
   await expect(documentEditor).toHaveAttribute("contenteditable", "true");
 });
 
@@ -216,10 +187,6 @@ test("clicking on the source button displays source modal", async ({
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
-
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
 
   const sourceBtn = page.locator("[class=resource-source]");
   await sourceBtn.click();
@@ -238,10 +205,6 @@ test("clicking on the embed button embed data modal", async ({
   const menu = page.locator("[id=document-menu]");
   await expect(menu).toBeVisible();
   await expect(page.locator(".close")).toBeVisible();
-
-  if (isMobile) {
-    await page.locator(".close").click();
-  }
 
   const embedBtn = page.locator("[class=embed-data-meta]");
   await embedBtn.click();
