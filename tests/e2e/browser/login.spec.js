@@ -1,5 +1,6 @@
 import { test, expect } from "./fixtures";
 
+test.skip("Skipping the entire file temporarily because it relies on authn which is currently broken due to breaking changes in the test server we are using");
 test.beforeEach(async ({ auth }) => {
   await auth.login();
 });
