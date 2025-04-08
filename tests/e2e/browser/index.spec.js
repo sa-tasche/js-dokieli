@@ -105,8 +105,8 @@ test("clicking on the new button displays create new document modal", async ({
 
   const newBtn = page.locator("[class=resource-new]");
   await newBtn.click();
-  const newModal = page.locator("[id=create-new-document]");
-  await expect(newModal).toBeVisible();
+  const newDoc = page.locator(".do-new");
+  await expect(newDoc).toBeEditable();
 });
 
 test("clicking on the open button displays open document modal", async ({
