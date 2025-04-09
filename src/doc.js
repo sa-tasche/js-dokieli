@@ -39,7 +39,9 @@ function cleanEscapeCharacters(string) {
 }
 
 function fixBrokenHTML(html) {
-  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)></\\1>|<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)/>', 'g');
+//  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)></\\1>|<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^>]*)/>', 'g');
+
+  var pattern = new RegExp('<(' + Config.DOMNormalisation.voidElements.join('|') + ')([^<>]*?)?><\/\\1>', 'g');
 
   var fixedHtml = html.replace(pattern, '<$1$2/>');
 
@@ -289,7 +291,7 @@ function createFeedXML(feed, options) {
       return `${p1}="${isAbsolute ? p3 : (p3.startsWith('/') ? origin : url) + '/' + p3}"`;
     });
 // console.log(description)
-
+    
     description = escapeCharacters(fixBrokenHTML(description));
 
     var published = '';
