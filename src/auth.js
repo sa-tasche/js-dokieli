@@ -95,10 +95,6 @@ async function showUserSigninSignout (node) {
           updateFeatureStatesOfResourceInfo(resourceInfo);
           updateDocumentDoButtonStates();
         });
-
-        // var ra = documentMenu.querySelector('.resource-notifications');
-        // ra.disabled = true;
-        // ra.innerHTML = Icon[".fas.fa-bolt.fa-2x"] + 'Notifications';
       }
     });
 
@@ -380,7 +376,7 @@ function afterSignIn () {
     .then(results => {
       var uI = document.getElementById('user-info')
       if (uI) {
-        uI.innerHTML = getUserSignedInHTML()
+        uI.replaceChildren(fragmentFromString(getUserSignedInHTML()))
       }
 
       showGeneralMessages();
