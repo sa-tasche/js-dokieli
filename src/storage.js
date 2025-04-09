@@ -1,7 +1,7 @@
 'use strict'
 
 import Config from './config.js';
-import { getDateTimeISO, generateUUID, getHash } from './util.js';
+import { getDateTimeISO, generateUUID, getHash, fragmentFromString } from './util.js';
 import { getDocument, updateMutableResource } from './doc.js';
 
 
@@ -15,7 +15,7 @@ function enableLocalStorage(key) {
   Config.UseLocalStorage = true;
   var o = localStorage.getItem(key);
   try {
-    document.documentElement.innerHTML = JSON.parse(o).object.content;
+    document.documentElement.replaceChildren(fragmentFromString(JSON.parse(o).object.content));
     Config.init();
   } catch(e){
     // Ignore errors
