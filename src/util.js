@@ -1,5 +1,7 @@
 "use strict";
 
+import DOMPurify from 'dompurify';
+
 function uniqueArray(a) {
   return Array.from(new Set(a));
 }
@@ -50,6 +52,7 @@ function sleep(ms) {
 }
 
 function fragmentFromString(strHTML) {
+  strHTML = DOMPurify.sanitize(strHTML);
   return document.createRange().createContextualFragment(strHTML);
 }
 
