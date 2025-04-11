@@ -62,12 +62,9 @@ test.describe("new page", () => {
     };
 
     const getPlaceholderText = async (element) => {
-      return element.evaluate((el) => {
-        const style = window.getComputedStyle(el, "::after");
-        return style.content;
-      });
+      return element.evaluate(el => el.getAttribute("data-placeholder"));
     };
-
+    
     expect(await isVisible(h1)).toBe(true);
     expect(await getPlaceholderText(h1)).toContain("Title");
 
@@ -159,10 +156,7 @@ test.describe("via new button", () => {
     };
 
     const getPlaceholderText = async (element) => {
-      return element.evaluate((el) => {
-        const style = window.getComputedStyle(el, "::after");
-        return style.content;
-      });
+      return element.evaluate(el => el.getAttribute("data-placeholder"));
     };
 
     expect(await isVisible(h1)).toBe(true);
