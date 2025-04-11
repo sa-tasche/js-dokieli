@@ -84,6 +84,14 @@ test.describe("social mode", () => {
     // TODO: this forced me to increase timeout - find a better way
     for (let i = 0; i < count; i++) {
       const button = buttons.nth(i);
+      const signInPopup = page.locator("#user-identity-input");
+      const signInPopupVisible = await signInPopup.isVisible();
+
+      // workaround for sign in popup blocking clicks but we actually need to postpone that popup
+      if (signInPopupVisible) {   
+        const closeButton = page.locator(".close");
+        await closeButton.click();
+      }
 
       const title = await button.getAttribute("title");
 
@@ -179,6 +187,15 @@ test.describe("author mode", () => {
 
       const id = await button.getAttribute("id");
       const buttonName = id?.split("editor-button-")[1];
+      const signInPopup = page.locator("#user-identity-input");
+      const signInPopupVisible = await signInPopup.isVisible();
+
+      // workaround for sign in popup blocking clicks but we actually need to postpone that popup
+      if (signInPopupVisible) {   
+        const closeButton = page.locator(".close");
+        await closeButton.click();
+      }
+
 
       if (!buttonName || !buttonsWithPopups.includes(buttonName)) {
         continue; // skip buttons that do not have popups
