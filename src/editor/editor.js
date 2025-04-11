@@ -89,6 +89,7 @@ export class Editor {
 
     updateLocalStorageProfile(Config.User);
 
+// Do not EVER pass options passed to toggleEditor onto this call to init - template option breaks everything. TODO look into this
     this.init(mode, node);
     this.showEditorModeActionMessage(e, mode);
     Config.EditorEnabled = (mode === 'author');
@@ -112,12 +113,22 @@ export class Editor {
   setTemplateNew(mode, options) {
     //Start with empty body. Reuse <head>, <html> will have its lang/xml:lang, <body> will have prefix.
     // Add initial nodes h1, p with no content.
-    document.body.replaceChildren(fragmentFromString(`<main><article><h1 data-placeholder="${this.placeholder.h1}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-placeholder="${this.placeholder.p}"></p></div></article></main>`));
+    // Update head > title to 'Untitled'. Make sure to have Save update head > title with h1 value (if specified).
+    const titleElement = document.querySelector('head title');
+    if (titleElement) {
+      titleElement.textContent = 'Untitled';
+    } else {
+      const newTitle = document.createElement('title');
+      newTitle.textContent = 'Untitled';
+      document.head.appendChild(newTitle);
+    }
+    // TODO: Remove aria-label when content is updated
+    document.body.replaceChildren(fragmentFromString(`<main><article><h1 aria-label="Add a title" data-placeholder="${this.placeholder.h1}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-placeholder="${this.placeholder.p}"></p></div></article></main>`));
 
     // If the initial nodes have no content, show placeholder text, else remove placeholder text.
 
     /*
-    Update head > title to 'Untitled'. Make sure to have Save update head > title with h1 value (if specified).
+    
     Set flag e.g. Config.Editor.New = true
     Update Save function to check this flag. If New = true, ask where to save.
     Immutable, Version button states should be disabled/false
