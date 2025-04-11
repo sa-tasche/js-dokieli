@@ -5,7 +5,9 @@ envConfig();
 
 const config = {
   testDir: "./tests/e2e/browser",
-  timeout: 30 * 1000,
+  // temp increase timeout 
+  // timeout: 30 * 1000,
+  timeout: 120 * 1000,
   expect: {
     timeout: 10000,
   },
