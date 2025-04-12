@@ -1,6 +1,8 @@
 "use strict";
 
 import DOMPurify from 'dompurify';
+// explicitly importing crypto for tests
+import crypto from 'crypto';
 
 function uniqueArray(a) {
   return Array.from(new Set(a));
