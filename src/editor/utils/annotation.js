@@ -1,7 +1,5 @@
-import { Plugin, TextSelection, NodeSelection, EditorState } from "prosemirror-state"
-import { replaceSelectionWithDOMFragment, docSelectionToHtml } from "./dom.js";
 import { getRandomUUID, fragmentFromString } from "./../../util.js";
-import { createRDFaHTML, escapeCharacters, tagsToBodyObjects } from "./../../doc.js";
+import { createRDFaHTML, tagsToBodyObjects } from "./../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
 
