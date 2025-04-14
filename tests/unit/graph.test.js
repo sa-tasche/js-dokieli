@@ -22,9 +22,8 @@ describe("graph", () => {
 
       setupMockFetch({
         "http://example.com/nonexistent-resource": {
-          ok: false,
-          status: 404,
-          statusText: "Not Found",
+          ok: true,
+          data: null,
         },
       });
 
