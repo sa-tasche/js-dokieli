@@ -7,6 +7,9 @@ module.exports = (env) => {
 
   return {
     resolve: {
+      alias: {
+        'src': path.resolve(__dirname, 'src'),
+      },
       modules: ["node_modules", "src/"],
       fallback: {
         fs: false,

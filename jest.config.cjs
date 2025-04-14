@@ -11,4 +11,7 @@ module.exports = {
   testEnvironment: "jsdom",
   modulePathIgnorePatterns: ["e2e"],
   setupFiles: ["<rootDir>/test-setup.js"],
+  moduleNameMapper: {
+    '^src/(.*)$': '<rootDir>/src/$1',
+  },
 };
