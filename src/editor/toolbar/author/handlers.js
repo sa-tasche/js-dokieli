@@ -1,11 +1,10 @@
 import { schema } from "../../schema/base.js"
-import { createNoteData, getSelectedParentElement, getTextQuoteHTML, restoreSelection } from "../../utils/annotation.js";
+import { createNoteData, getSelectedParentElement, restoreSelection } from "../../utils/annotation.js";
 import { toggleBlockquote } from "../../utils/dom.js";
-import { getRandomUUID, getFormValues, isValidISBN } from "../../../util.js"
+import { getFormValues, isValidISBN } from "../../../util.js"
 import { fragmentFromString } from "../../../util.js"
-import { getResource } from "../../../fetcher.js";
 import { getFormActionData } from "../social/handlers.js";
-import { buildReferences, createNoteDataHTML, createRDFaMarkObject, getClosestSectionNode } from "../../../doc.js";
+import { buildReferences, createNoteDataHTML, createRDFaMarkObject } from "../../../doc.js";
 import { stripFragmentFromString } from "../../../uri.js";
 import { getGraphInbox } from "../../../graph.js";
 import { notifyInbox } from "../../../inbox.js";
