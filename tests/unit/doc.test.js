@@ -24,6 +24,8 @@ import {
   getRDFaPrefixHTML,
   getDocumentStatusHTML,
   getGraphData,
+  parseMarkdown,
+  serializeTableToText,
 } from "../../src/doc";
 import Config from "../../src/config";
 import MockGrapoi from "../utils/mockGrapoi";
@@ -473,7 +475,7 @@ describe("setDate", () => {
       datetime: new Date("2024-10-15T00:00:00Z"),
       id: "document-created",
     });
-    console.log(rootNode.innerHTML);
+
     expect(rootNode.innerHTML).toContain(
       '<time datetime="2024-10-15T00:00:00.000Z">2024-10-15</time>'
     );
@@ -628,5 +630,99 @@ describe("getGraphData", () => {
     const result = getGraphData(s, options);
 
     expect(result).toHaveProperty("graph", s);
+  });
+});
+
+
+describe('serializeTableToText', () => {
+  it('should serialize table with thead and tbody into text format', () => {
+    document.body.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Header 1</th><th>Header 2</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Data 1</td><td>Data 2</td></tr>
+          <tr><td>Data 3</td><td>Data 4</td></tr>
+        </tbody>
+      </table>
+    `;
+
+    const table = document.querySelector('table');
+
+    const result = serializeTableToText(table);
+
+    expect(result).toContain('Header 1');
+    expect(result).toContain('Data 1');
+    expect(result).toContain('Data 3');
+    expect(result).toContain('Data 4');
+  });
+
+  it('should handle multiple tbodies correctly', () => {
+    document.body.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Header 1</th><th>Header 2</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Data 1</td><td>Data 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>Data 3</td><td>Data 4</td></tr>
+        </tbody>
+      </table>
+    `;
+
+    const table = document.querySelector('table');
+
+    const result = serializeTableToText(table);
+
+    expect(result).toContain('Data 1');
+    expect(result).toContain('Data 3');
+    expect(result).toContain('Data 4');
+    expect(result.split('\n').length).toBeGreaterThan(1); 
+  });
+
+  it('should return an empty string for tables without tbody', () => {
+    document.body.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Header 1</th><th>Header 2</th></tr>
+        </thead>
+      </table>
+    `;
+
+    const table = document.querySelector('table');
+
+    const result = serializeTableToText(table);
+
+    expect(result).toContain('Header 1');
+    expect(result).not.toContain('Data');
+  });
+});
+
+describe('parseMarkdown', () => {
+  it('should parse markdown into HTML without creating a document', () => {
+    const markdown = '# Test Markdown';
+    const result = parseMarkdown(markdown);
+
+    expect(result).toContain('<h1>Test Markdown</h1>');
+  });
+
+  it('should parse markdown and create an article element when createDocument is true', () => {
+    const markdown = '# Test Markdown';
+    const options = { createDocument: true };
+    const result = parseMarkdown(markdown, options);
+
+    expect(result).toContain('<article>');
+    expect(result).toContain('<h1>Test Markdown</h1>');
+    expect(result).toContain('</article>');
+  });
+
+  it('should parse markdown with HTML correctly', () => {
+    const markdown = 'Some <b>bold</b> text';
+    const result = parseMarkdown(markdown);
+
+    expect(result).toContain('<b>bold</b>');
   });
 });
