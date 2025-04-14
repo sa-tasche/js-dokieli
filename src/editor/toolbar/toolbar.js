@@ -207,7 +207,10 @@ export class ToolbarView {
 
   getFormHandlers() {
     return [];
-}
+  }
+  getFormLegends() {
+    return {};
+  }
 
   bindFormHandlers() {
     this.getFormHandlers().forEach(handler => {
@@ -434,6 +437,7 @@ export class ToolbarView {
       })
       .catch(reason => {
         //TODO signinRequired
+        // this check should be on the submit handler
         if (this.signInRequired(action) && !Config.User.IRI) {
           showUserIdentityInput();
         }
