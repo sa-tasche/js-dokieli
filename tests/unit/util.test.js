@@ -1,4 +1,4 @@
-import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash, findPreviousDateTime } from "../../src/util";
+import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash, findPreviousDateTime, isValidISBN } from "../../src/util";
 
 describe("util", () => {
   describe("uniqueArray", () => {
@@ -114,5 +114,82 @@ describe("util", () => {
         "3bb12eda3c298db5de25597f54d924f2e17e78a26ad8953ed8218ee682f0bbbe9021e2f3009d152c911bf1f25ec683a902714166767afbd8e5bd0fb0124ecb8a"
       );
     });
+  });
+});
+
+
+describe('isValidISBN', () => {
+  it('should return true for a valid ISBN-10', () => {
+    const isbn = '123-456-7890'; 
+    const result = isValidISBN(isbn);
+    expect(result).toBe(true);
+  });
+
+  it('should return true for a valid ISBN-13', () => {
+    const isbn = '978-1234567890'; 
+    const result = isValidISBN(isbn);
+    expect(result).toBe(true);
+  });
+
+  it('should return false for an invalid ISBN', () => {
+    const isbn = '1234567'; 
+    const result = isValidISBN(isbn);
+    expect(result).toBe(false);
+  });
+
+  it('should return false for a string with letters or other invalid characters', () => {
+    const isbn = '978-123ABC-7890'; 
+    const result = isValidISBN(isbn);
+    expect(result).toBe(false);
+  });
+
+  it('should return false for an empty string', () => {
+    const isbn = ''; 
+    const result = isValidISBN(isbn);
+    expect(result).toBe(false);
+  });
+});
+
+describe('findPreviousDateTime', () => {
+  it('should return the previous valid date-time before the check time', () => {
+    const times = ['2025-04-01T10:00:00', '2025-04-01T12:00:00', '2025-04-01T14:00:00'];
+    const checkTime = '2025-04-01T13:00:00';
+    const result = findPreviousDateTime(times, checkTime);
+    expect(result).toBe('2025-04-01T12:00:00');
+  });
+
+  it('should return null if there is no valid previous date-time', () => {
+    const times = ['2025-04-01T10:00:00', '2025-04-01T12:00:00'];
+    const checkTime = '2025-04-01T09:00:00'; 
+    const result = findPreviousDateTime(times, checkTime);
+    expect(result).toBeNull();
+  });
+
+  it('should return the last date-time if checkTime is later than all times', () => {
+    const times = ['2025-04-01T10:00:00', '2025-04-01T12:00:00', '2025-04-01T14:00:00'];
+    const checkTime = '2025-04-01T15:00:00';
+    const result = findPreviousDateTime(times, checkTime);
+    expect(result).toBe('2025-04-01T14:00:00');
+  });
+
+  it('should handle an empty array of times', () => {
+    const times = [];
+    const checkTime = '2025-04-01T10:00:00';
+    const result = findPreviousDateTime(times, checkTime);
+    expect(result).toBeNull();
+  });
+
+  it('should handle duplicate date-times in the array', () => {
+    const times = ['2025-04-01T10:00:00', '2025-04-01T10:00:00', '2025-04-01T12:00:00'];
+    const checkTime = '2025-04-01T11:00:00';
+    const result = findPreviousDateTime(times, checkTime);
+    expect(result).toBe('2025-04-01T10:00:00'); 
+  });
+
+  it('should correctly handle ISO string format times', () => {
+    const times = ['2025-04-01T10:00:00Z', '2025-04-01T12:00:00Z', '2025-04-01T14:00:00Z'];
+    const checkTime = '2025-04-01T13:00:00Z';
+    const result = findPreviousDateTime(times, checkTime);
+    expect(result).toBe('2025-04-01T12:00:00Z');
   });
 });
