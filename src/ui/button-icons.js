@@ -249,11 +249,11 @@ export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonTitle
   }
 
   const className = buttonClass ? ` class="${buttonClass}"` : '';
-  const title = ` title="${buttonTitle || buttonIcons[button].title}"`;
+  const title = ` title="${buttonTitle || buttonIcons[button]?.title}"`;
   const disabled = buttonDisabled ? ` disabled=""` : '';
   const type = buttonType ? ` type="${buttonType}"` : '';
-  const textContent = buttonTextContent || buttonIcons[button].textContent;
-  let icon = buttonIcons[button].icon;
+  const textContent = buttonTextContent || buttonIcons[button]?.textContent;
+  let icon = buttonIcons[button]?.icon;
 
   if (iconSize) {
     let parser = new DOMParser();
