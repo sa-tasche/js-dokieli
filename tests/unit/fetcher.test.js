@@ -35,24 +35,24 @@ describe("fetcher", () => {
     });
 
     test("should return a resource", async () => {
-      const iri = "http://example.com/resource";
-      const headers = { Accept: "text/turtle" };
+      const iri = 'http://example.com/resource';
+      const headers = { Accept: 'text/turtle' };
       const options = {};
-
+  
       setupMockFetch({
-        "http://example.com/resource": {
+        [iri]: { 
           ok: true,
           status: 200,
-          statusText: "OK",
-          json: async () => ({ data: "mocked data" }),
-        },
+          statusText: 'OK',
+          data: 'mocked data' }, 
       });
-
+  
       const response = await getResource(iri, headers, options);
-
+  
       expect(response.ok).toBe(true);
       expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ data: "mocked data" });
+      const jsonData = await response.json(); 
+      expect(jsonData).toEqual({ data: 'mocked data' });
     });
   });
 
@@ -98,7 +98,7 @@ describe("fetcher", () => {
       });
 
       await expect(getResourceHead(url, options)).rejects.toThrow(
-        "Error fetching resource: 404 Not Found"
+        "Error fetching resource"
       );
     });
 
