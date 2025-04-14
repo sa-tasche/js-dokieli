@@ -8,10 +8,11 @@ import { getAgentHTML, showActionMessage, showGeneralMessages, getResourceSupple
 import { Icon } from './ui/icons.js'
 import { getResourceGraph, getAgentName, getGraphImage, getAgentURL, getAgentPreferredProxy, getAgentPreferredPolicy, getAgentPreferredPolicyRule, setPreferredPolicyInfo, getAgentDelegates, getAgentKnows, getAgentFollowing, getAgentStorage, getAgentOutbox, getAgentInbox, getAgentPreferencesFile, getAgentPublicTypeIndex, getAgentPrivateTypeIndex, getAgentTypeIndex, getAgentSupplementalInfo, getAgentSeeAlso, getAgentPreferencesInfo, getAgentLiked, getAgentOccupations, getAgentPublications, getAgentMade } from './graph.js'
 import { removeLocalStorageAuthClient, removeLocalStorageDocument, removeLocalStorageProfile, updateLocalStorageProfile } from './storage.js'
-import solidAuth, { logout, popupLogin } from 'solid-auth-client'
+import solidAuth from 'solid-auth-client'
 import { getButtonHTML } from './ui/button-icons.js';
 
 const ns = Config.ns;
+const { logout, popupLogin } = solidAuth;
 
 // const { OIDCWebClient } = require('@trust/oidc-web')
 
