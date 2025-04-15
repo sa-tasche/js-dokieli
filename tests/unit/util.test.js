@@ -223,7 +223,7 @@ describe('parseISODuration', () => {
     expect(parseISODuration('P0D')).toBe('0s');
   });
 
-  it('throw error on invalid format', () => {
+  it('should throw error on invalid format', () => {
     expect(() => parseISODuration('P1Y1M1D1H1M1S')).toThrow('Invalid ISO 8601 duration format');
   });
 });
