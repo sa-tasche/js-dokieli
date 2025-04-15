@@ -264,6 +264,9 @@ function findPreviousDateTime(times, checkTime) {
 
 //TODO: Check browser support for Temporal.Duration, in particular `PT`, e.g., PT17S
 function parseISODuration(duration) {
+  if (!/^P(?:\d+[YMD])*(?:T(?:\d+[HMS])*)?$/.test(duration)) {
+    throw new Error('Invalid ISO 8601 duration format');
+  }
   const regex = /P(?:([\d.]+)Y)?(?:([\d.]+)M)?(?:([\d.]+)D)?(?:T(?:([\d.]+)H)?(?:([\d.]+)M)?(?:([\d.]+)S)?)?/;
   const matches = duration.match(regex);
 
@@ -271,9 +274,9 @@ function parseISODuration(duration) {
 
   const parts = [];
   if (years) parts.push(`${years}y`);
-  if (months) parts.push(`${months}m}`);
+  if (months) parts.push(`${months}m`);
   if (days) parts.push(`${days}d`);
-  if (hours) parts.push(`${hours}h}`);
+  if (hours) parts.push(`${hours}h`);
   if (minutes) parts.push(`${minutes}m`);
   if (seconds) parts.push(`${seconds}s`);
 

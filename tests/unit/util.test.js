@@ -1,4 +1,4 @@
-import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash, findPreviousDateTime, isValidISBN } from "../../src/util";
+import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash, findPreviousDateTime, isValidISBN, parseISODuration } from "../../src/util";
 
 describe("util", () => {
   describe("uniqueArray", () => {
@@ -191,5 +191,39 @@ describe('findPreviousDateTime', () => {
     const checkTime = '2025-04-01T13:00:00Z';
     const result = findPreviousDateTime(times, checkTime);
     expect(result).toBe('2025-04-01T12:00:00Z');
+  });
+});
+
+describe('parseISODuration', () => {
+  it('should correctly parse a duration with only years', () => {
+    expect(parseISODuration('P2Y')).toBe('2y');
+  });
+
+  it('should correctly parse a duration with only months', () => {
+    expect(parseISODuration('P5M')).toBe('5m');
+  });
+
+  it('should correctly parse a duration with only days', () => {
+    expect(parseISODuration('P3D')).toBe('3d');
+  });
+
+  it('should correctly parse a duration with years, months, and days', () => {
+    expect(parseISODuration('P1Y2M3D')).toBe('1y, 2m, 3d');
+  });
+
+  it('should correctly parse a duration with hours, minutes, and seconds', () => {
+    expect(parseISODuration('PT1H30M45S')).toBe('1h, 30m, 45s');
+  });
+
+  it('should correctly parse a duration with all components (years, months, days, hours, minutes, seconds)', () => {
+    expect(parseISODuration('P1Y2M3DT4H5M6S')).toBe('1y, 2m, 3d, 4h, 5m, 6s');
+  });
+
+  it('should return "0s" for an empty duration', () => {
+    expect(parseISODuration('P0D')).toBe('0s');
+  });
+
+  it('throw error on invalid format', () => {
+    expect(() => parseISODuration('P1Y1M1D1H1M1S')).toThrow('Invalid ISO 8601 duration format');
   });
 });
