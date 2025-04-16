@@ -232,7 +232,12 @@ export class Editor {
       //TODO: Create a new function that normalises, e.g., clean up PM related stuff, handle other non-PM but dokieli stuff
       //TODO: dokieli menu is currently outside of body, but it should be in body. Clone the menu, add it back into the body after replaceChildren
 
+      // Restore body content and original nodes
       document.body.replaceChildren(newContent);
+
+      this.restrictedNodes.forEach(node => {
+        document.body.appendChild(node);
+      });
 
 
       // document.body.insertAdjacentHTML('afterbegin', content);
