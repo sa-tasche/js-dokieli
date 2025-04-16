@@ -1513,6 +1513,7 @@ function buttonInfo() {
           const videoEncodingFormat = videoObjectGraph.out(ns.schema.encodingFormat).value;
           const videoDuration = videoObjectGraph.out(ns.schema.duration).value;
           const videoDurationLabel = parseISODuration(videoDuration);
+          const videoThumbnailUrl = videoObjectGraph.out(ns.schema.thumbnailUrl).value;
 
           // console.log(title, description, videoObject, videoContentUrl, videoEncodingFormat, videoDuration)
 
@@ -1522,6 +1523,8 @@ function buttonInfo() {
               let duration = '';
               let encodingFormat = '';
               let comma = (videoDuration && videoEncodingFormat) ? `, ` : '';
+              let thumbnailUrl = '';
+              let videoPoster = '';
 
               if (videoDuration || videoEncodingFormat) {
                 if (videoDuration) {
@@ -1532,14 +1535,19 @@ function buttonInfo() {
                   encodingFormat = `<span lang="" property="schema:encodingFormat" xml:lang="">${videoEncodingFormat}</span>`;
                 }
 
+                if (videoThumbnailUrl) {
+                  thumbnailUrl = ` (<a href="${videoThumbnailUrl}">poster</a>)`;
+                  videoPoster = ` poster="${videoThumbnailUrl}"`;
+                }
+
                 figcaption = `
-                  <figcaption><a href="${videoContentUrl}">Video</a> of in dokieli [${duration}${comma}${encodingFormat}]</figcaption>
+                  <figcaption><a href="${videoContentUrl}">Video</a>${thumbnailUrl} of in dokieli [${duration}${comma}${encodingFormat}]</figcaption>
                 `;
               }
 
               video = `
                 <figure about="${videoObject}" id="figure-dokieli-notifications" rel="schema:video" resource="#figure-dokieli-notifications">
-                  <video controls="controls" crossorigin="anonymous" preload="none" resource="${videoObject}" typeof="schema:VideoObject" width="800">
+                  <video controls="controls" crossorigin="anonymous"${videoPoster} preload="none" resource="${videoObject}" typeof="schema:VideoObject" width="800">
                     <source rel="schema:contentUrl" src="${videoContentUrl}" />
                   </video>
                   ${figcaption}
