@@ -2485,22 +2485,20 @@ span {
 
 #editor-form-citation fieldset {
   display: grid;
-  grid-template-columns: repeat(4, auto);
-  grid-template-rows: repeat(10, auto);
+  grid-template-columns: repeat(6, auto); 
+  grid-template-rows: repeat(8, auto);
   grid-gap: 0.5em;
   border: none;
   padding-block: 0;
   grid-template-areas:
-  "legend legend legend legend"
-  "label1 label1 label1 label1"
-  "input1 input1 input1 input2"
-  "input3 label2 input4 label3"
-  "select1 select1 label4 input5"
-  "textarea textarea textarea textarea"
-  "label5 label5 label5 label5"
-  "select2 select2 select2 . "
-  "results results results results"
-  ". . button1 button2";
+  "legend legend legend legend legend legend"
+  "label1 input1 input1 input1 input1 input2"
+  "results results results results results results"
+  "input3 label2 . input4 label3 ."
+  "select1 select1 . . label4 input5"
+  "textarea textarea textarea textarea textarea textarea"
+  "label5 select2 . . . . "
+  ". . . . button1 button2";
 
 
   legend {
@@ -2542,7 +2540,7 @@ span {
   input:nth-of-type(6) {
     grid-area: input6;
   }
-  label:nth-of-type(2) {
+  label:nth-of-type(1) {
     grid-area: label1
   }
 
