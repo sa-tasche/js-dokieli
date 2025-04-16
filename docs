@@ -586,7 +586,7 @@
                         <video controls="controls" crossorigin="anonymous" poster="https://dokie.li/media/images/dokieli-notifications.jpg" preload="none" resource="#figure-dokieli-notifications" typeof="schema:VideoObject" width="800">
                           <source rel="schema:contentUrl" src="https://dokie.li/media/video/dokieli-notifications.webm" type="video/webm" />
                         </video>
-                        <figcaption><a href="https://dokie.li/media/video/dokieli-notifications.webm">Video</a> of notifications in dokieli [<time datatype="xsd:duration" datetime="PT17S" property="schema:duration">15s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
+                        <figcaption><a href="https://dokie.li/media/video/dokieli-notifications.webm">Video</a> (<a href="https://dokie.li/media/images/dokieli-notifications.jpg" rel="schema:thumbnailUrl">poster</a>) of notifications in dokieli [<time datatype="xsd:duration" datetime="PT15S" property="schema:duration">15s</time>, <span lang="" property="schema:encodingFormat" xml:lang="">WebM</span>]</figcaption>
                       </figure>
                     </dd>
 
