@@ -703,6 +703,9 @@ max-height:max-content;
 #document-notifications details {
 font-weight:normal;
 }
+#document-notifications details video {
+max-width: 100%;
+}
 
 #document-notifications > div > ul.activities {
 overflow-y: auto;
