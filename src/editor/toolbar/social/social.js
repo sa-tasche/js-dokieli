@@ -25,14 +25,6 @@ export class SocialToolbar extends ToolbarView {
     }
   }
 
-  isSelectionInDoNode() {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return false;
-    const range = selection.getRangeAt(0);
-    const selectedParentElement = getSelectedParentElement(range);
-    return selectedParentElement.closest('.do');
-  }
-
   getToolbarButtonClickHandlers() {
     return {
       share: shareButtonHandler

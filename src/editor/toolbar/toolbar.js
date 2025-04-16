@@ -1,7 +1,7 @@
 import { schema } from "../schema/base.js"
 import { buttonIcons, getButtonHTML } from "../../ui/button-icons.js"
 import { getAnnotationInboxLocationHTML, getAnnotationLocationHTML, getDocument, getDocumentContentNode, getLanguageOptionsHTML, getLicenseOptionsHTML, getReferenceLabel } from "../../doc.js";
-import { getTextQuoteHTML, cloneSelection, restoreSelection, setSelection } from "../utils/annotation.js";
+import { getTextQuoteHTML, cloneSelection, restoreSelection, setSelection, getSelectedParentElement } from "../utils/annotation.js";
 import { escapeRegExp, matchAllIndex, fragmentFromString } from "../../util.js";
 import { showUserIdentityInput } from "../../auth.js";
 import { getLinkRelation } from "../../graph.js";
@@ -286,6 +286,15 @@ export class ToolbarView {
     return;
   }
 
+
+  isSelectionInDoNode() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return false;
+    const range = selection.getRangeAt(0);
+    const selectedParentElement = getSelectedParentElement(range);
+    return selectedParentElement.closest('.do');
+  }
+  
   // Called when there is a state change, e.g., added something to the DOM or selection change.
   update(view) {
     return;

@@ -10,6 +10,7 @@ import { escapeCharacters, getCitationOptionsHTML, getLanguageOptionsHTML } from
 import { getResource } from "../../../fetcher.js"
 import { fragmentFromString } from "../../../util.js"
 import Config from "../../../config.js";
+import { getSelectedParentElement } from "../../utils/annotation.js"
 
 const ns = Config.ns;
 
@@ -45,19 +46,6 @@ export class AuthorToolbar extends ToolbarView {
     ];
   }
 
-  isSelectionInDoNode() {
-    const { selection } = this.editorView.state;
-    let $from = selection.$from;
-  
-    for (let depth = $from.depth; depth >= 0; depth--) {
-      const node = $from.node(depth);
-      if (node.attrs.originalAttributes?.class && (node.attrs.originalAttributes?.class == "do" ||  node.attrs.originalAttributes?.class.includes('do'))) {
-        return true;
-      }
-    }
-  
-    return false;
-  }
   getToolbarCommands() {
     const toolbarCommands = {
       p: setBlockType(schema.nodes.p),
