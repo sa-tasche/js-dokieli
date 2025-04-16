@@ -294,7 +294,9 @@ export class ToolbarView {
   // check for selection changes to position toolbar and attach event listeners to the popups, which need to have the latest selection
   selectionUpdate(view) {
     // const handleSelectionEnd = () => {
-
+      if (this.isSelectionInDoNode()) {
+        return;
+      }
 
       const selection = window.getSelection();
       const isSelection = selection && !selection.isCollapsed;

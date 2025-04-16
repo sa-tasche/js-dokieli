@@ -804,7 +804,7 @@ DO = {
 
 
       if (selector == '#graph-view' && !document.getElementById('graph-view')) {
-        document.documentElement.appendChild(fragmentFromString('<aside id="graph-view" class="do on">' + DO.C.Button.Close + '<h2>Graph view</h2></aside>'));
+        document.body.appendChild(fragmentFromString('<aside id="graph-view" class="do on">' + DO.C.Button.Close + '<h2>Graph view</h2></aside>'));
       }
 
       var svg = d3.select(selector).append('svg')
@@ -1568,7 +1568,7 @@ DO = {
         }
         addMessageToLog(message, Config.MessageLog);
         message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>';
-        showActionMessage(document.documentElement, message);
+        showActionMessage(document.body, message);
 
         DO.U.openResource(open);
 
@@ -1611,7 +1611,7 @@ DO = {
           }
           addMessageToLog(message, Config.MessageLog);
           message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + ' ' + message.content + '</span>';
-          showActionMessage(document.documentElement, message);
+          showActionMessage(document.body, message);
 
           DO.U.showGraph(urls, '#graph-view', options);
 
@@ -1759,7 +1759,7 @@ DO = {
 
 
     showDocumentInfo: function() {
-      document.documentElement.appendChild(fragmentFromString('<menu id="document-menu" class="do"><button class="show" title="Open menu">' + Icon[".fas.fa-bars"] + '</button><header></header><div></div><footer><dl><dt>About</dt><dd id="about-dokieli"><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><a href="https://dokie.li/" target="_blank">dokieli</a> is an ' + Icon[".fab.fa-osi"] + ' <a href="https://github.com/dokieli/dokieli" target="_blank">open source</a> project. There is ' + Icon[".fas.fa-flask"] + ' <a href="https://dokie.li/docs" target="_blank">documentation</a> and public ' + Icon[".fas.fa-comments"] + ' <a href="https://matrix.to/#/%23dokieli:matrix.org" target="_blank">chat</a>. Made with fun.</dd></dl></footer></menu>'));
+      document.body.appendChild(fragmentFromString('<menu id="document-menu" class="do"><button class="show" title="Open menu">' + Icon[".fas.fa-bars"] + '</button><header></header><div></div><footer><dl><dt>About</dt><dd id="about-dokieli"><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><a href="https://dokie.li/" target="_blank">dokieli</a> is an ' + Icon[".fab.fa-osi"] + ' <a href="https://github.com/dokieli/dokieli" target="_blank">open source</a> project. There is ' + Icon[".fas.fa-flask"] + ' <a href="https://dokie.li/docs" target="_blank">documentation</a> and public ' + Icon[".fas.fa-comments"] + ' <a href="https://matrix.to/#/%23dokieli:matrix.org" target="_blank">chat</a>. Made with fun.</dd></dl></footer></menu>'));
       document.querySelector('#document-menu').addEventListener('click', (e) => {
         var button = e.target.closest('button');
         if(button){
@@ -1825,7 +1825,6 @@ DO = {
     hideDocumentMenu: function(e) {
       // document.removeEventListener('click', DO.U.eventLeaveDocumentMenu);
 
-      var body = getDocumentContentNode(document);
       var dMenu = document.querySelector('#document-menu.do');
       var dMenuButton = dMenu.querySelector('button');
 
@@ -1896,7 +1895,7 @@ DO = {
 
       var stylesheets = document.querySelectorAll('head link[rel~="stylesheet"][title]:not([href$="dokieli.css"])');
 
-      var s = '<section id="document-views" class="do"><h2>Views</h2>' + Icon[".fas.fa-magic"] + '<ul>';
+      var s = '<section id="document-views"><h2>Views</h2>' + Icon[".fas.fa-magic"] + '<ul>';
       if (DO.C.GraphViewerAvailable) {
         s += '<li><button class="resource-visualise" title="Change to graph view">Graph</button></li>';
       }
@@ -1918,14 +1917,14 @@ DO = {
       s += '</ul></section>';
       node.insertAdjacentHTML('beforeend', s);
 
-      var viewButtons = document.querySelectorAll('#document-views.do button:not([class~="resource-visualise"])');
+      var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');
       for (let i = 0; i < viewButtons.length; i++) {
         viewButtons[i].removeEventListener('click', DO.U.initCurrentStylesheet);
         viewButtons[i].addEventListener('click', DO.U.initCurrentStylesheet);
       }
 
       if(DO.C.GraphViewerAvailable) {
-        document.querySelector('#document-views.do').addEventListener('click', (e) => {
+        document.querySelector('#document-views').addEventListener('click', (e) => {
           if (e.target.closest('.resource-visualise')) {
             if(document.querySelector('#graph-view')) { return; }
 
@@ -1933,7 +1932,7 @@ DO = {
               e.target.disabled = true;
             }
 
-            document.documentElement.appendChild(fragmentFromString('<aside id="graph-view" class="do on">' + DO.C.Button.Close + '<h2>Graph view</h2></aside>'));
+            document.body.appendChild(fragmentFromString('<aside id="graph-view" class="do on">' + DO.C.Button.Close + '<h2>Graph view</h2></aside>'));
 
             var graphView = document.getElementById('graph-view');
             graphView.addEventListener('click', (e) => {
@@ -1980,7 +1979,7 @@ DO = {
 
       DO.U.updateSelectedStylesheets(stylesheets, selected);
 
-      var bd = document.querySelectorAll('#document-views.do button');
+      var bd = document.querySelectorAll('#document-views button');
       for(var j = 0; j < bd.length; j++) {
         bd[j].disabled = (e && e.target && (e.target.textContent == bd[j].textContent)) ? true : false;
       }
@@ -2090,7 +2089,7 @@ DO = {
         <div id="embed-data-trig"><textarea placeholder="Enter data in TriG" name="meta-trig" cols="80" rows="24">' + ((scriptCurrentData['meta-trig']) ? scriptCurrentData['meta-trig'].content : '') + '</textarea><button class="save" title="Embed data into document">Save</button></div>\n\
         </aside>';
 
-        document.documentElement.appendChild(fragmentFromString(embedMenu));
+        document.body.appendChild(fragmentFromString(embedMenu));
         document.querySelector('#embed-data-turtle textarea').focus();
         var a = document.querySelectorAll('#embed-data-entry nav a');
         for(let i = 0; i < a.length; i++) {
@@ -2255,7 +2254,7 @@ DO = {
           // <tr><th>Lines</th><td>' + count.lines + '</td></tr>\n\
           // <tr><th>A4 Pages</th><td>' + count.pages.A4 + '</td></tr>\n\
           // <tr><th>US Letter</th><td>' + count.pages.USLetter + '</td></tr>\n\
-      var html = '<section id="document-metadata" class="do"><table>\n\
+      var html = '<section id="document-metadata"><table>\n\
         <caption>Document Metadata</caption>\n\
         <tbody>\n\
           ' + data + '\n\
@@ -2483,7 +2482,7 @@ DO = {
         documentItems.parentNode.removeChild(documentItems);
       }
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="document-items" class="do on">' + DO.C.Button.Close + '</aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="document-items" class="do on">' + DO.C.Button.Close + '</aside>'));
       documentItems = document.getElementById('document-items');
 
       var articleNode = selectArticleNode(document);
@@ -2512,7 +2511,7 @@ DO = {
       var contextNode = selectArticleNode(document);
       var checked = (contextNode.classList.contains('highlight-structure')) ? 'checked="checked"' : '';
 
-      var html = `<section id="highlight-data" class="do"><h2>Highlight Data</h2><ul><li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" ${checked}/> <label for="highlight-structured-data">Structure</label></li></ul></section>`;
+      var html = `<section id="highlight-data"><h2>Highlight Data</h2><ul><li><input id="highlight-structured-data" name="highlight-structured-data" type="checkbox" ${checked}/> <label for="highlight-structured-data">Structure</label></li></ul></section>`;
 
       node.insertAdjacentHTML('beforeend', html);
 
@@ -2556,7 +2555,7 @@ DO = {
       });
 
       if (s.length) {
-        node.insertAdjacentHTML('beforeend', '<section id="list-of-stuff" class="do"><h2>List of Stuff</h2><ul>' + s.join('') + '</ul></section>');
+        node.insertAdjacentHTML('beforeend', '<section id="list-of-stuff"><h2>List of Stuff</h2><ul>' + s.join('') + '</ul></section>');
 
         if (DO.C.EditorEnabled) {
           document.getElementById('list-of-stuff').addEventListener('click', (e) => {
@@ -2589,7 +2588,7 @@ DO = {
 
       if (!node) { return; }
 
-      var toc = '<section id="table-of-contents-i" class="do"' + sortable + '><h2>' + DO.C.ListOfStuff['table-of-contents'].label + '</h2><ol class="toc' + sortable + '">';
+      var toc = '<section id="table-of-contents-i"' + sortable + '><h2>' + DO.C.ListOfStuff['table-of-contents'].label + '</h2><ol class="toc' + sortable + '">';
       toc += DO.U.getListOfSections(sections, {'sortable': DO.C.SortableList});
       toc += '</ol></section>';
 
@@ -3258,7 +3257,7 @@ console.log(reason);
 
       var robustLinks = selector || document.querySelectorAll('cite > a[href^="http"][data-versionurl][data-versiondate]');
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="robustify-links" class="do on">' + DO.C.Button.Close + '<h2>Robustify Links</h2><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links">Robustify</button></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="robustify-links" class="do on">' + DO.C.Button.Close + '<h2>Robustify Links</h2><div id="robustify-links-input"><p><input id="robustify-links-select-all" type="checkbox" value="true"/><label for="robustify-links-select-all">Select all</label></p><p><input id="robustify-links-reuse" type="checkbox" value="true" checked="checked"/><label for="robustify-links-reuse">Reuse Robustifed</label></p><ul id="robustify-links-list"></ul></div><button class="robustify" title="Robustify Links">Robustify</button></aside>'));
 
       //TODO: Move unique list of existing RL's to DO.C.Resource?
       var robustLinksUnique = {};
@@ -3444,7 +3443,7 @@ console.log(reason);
                 'type': 'success'
               }
               addMessageToLog(message, Config.MessageLog);
-              showActionMessage(document.documentElement, message);
+              showActionMessage(document.body, message);
             }
 
             if (options.showRobustLinksDecoration) {
@@ -3696,7 +3695,7 @@ console.log(reason);
     //Derived from saveAsDocument
     generateFeed: function generateFeed (e) {
       e.target.disabled = true;
-      document.documentElement.appendChild(fragmentFromString('<aside id="generate-feed" class="do on">' + DO.C.Button.Close + '<h2>Generate Feed</h2></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="generate-feed" class="do on">' + DO.C.Button.Close + '<h2>Generate Feed</h2></aside>'));
 
       var generateFeed = document.getElementById('generate-feed');
       generateFeed.addEventListener('click', (e) => {
@@ -3943,7 +3942,7 @@ console.log(reason);
 
       var buttonDisabled = '';
 
-      var s = '<section id="document-do" class="do"><h2>Do</h2><ul>';
+      var s = '<section id="document-do"><h2>Do</h2><ul>';
 
       // s += '<li><button class="resource-share"' + getButtonDisabledHTML('resource-share') + ' title="Share resource">' + Icon[".fas.fa-bullhorn.fa-2x"] + 'Share</button></li>';
       s += `${getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonDisabled: isButtonDisabled('resource-share'), buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' })}`;
@@ -4109,7 +4108,7 @@ console.log(reason);
         messageLog = '<p>No messages.</p>';
       }
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="message-log" class="do on">' + DO.C.Button.Close + '<h2>Message Log</h2><div>' + messageLog + '</div></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="message-log" class="do on">' + DO.C.Button.Close + '<h2>Message Log</h2><div>' + messageLog + '</div></aside>'));
 
       document.querySelector('#message-log button.close').addEventListener('click', (e) => {
         document.querySelector('button.message-log').removeAttribute('disabled');
@@ -4122,7 +4121,7 @@ console.log(reason);
 
       e.target.closest('button').disabled = true
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + '<h2>Delete Document</h2><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete">Cancel</button><button class="delete" title="Delete document">Delete</button></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + '<h2>Delete Document</h2><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete">Cancel</button><button class="delete" title="Delete document">Delete</button></aside>'));
 
       document.querySelector('#delete-document').addEventListener('click', (e) => {
         e.preventDefault();
@@ -4181,7 +4180,7 @@ console.log(reason);
                     'timer': 10000
                   }
                   addMessageToLog(message, Config.MessageLog);
-                  showActionMessage(document.documentElement, message);
+                  showActionMessage(document.body, message);
 
                   // throw error;
                   // return Promise.reject({});
@@ -4214,7 +4213,7 @@ console.log(reason);
                     'timer': 3000
                   }
                   addMessageToLog(message, Config.MessageLog);
-                  showActionMessage(document.documentElement, message);
+                  showActionMessage(document.body, message);
 
                   var buttonD = e.target.closest('button.delete')
                   if (buttonD) {
@@ -4271,7 +4270,7 @@ console.log(reason);
 
       e.target.closest('button').disabled = true
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="reply-to-resource" class="do on">' + DO.C.Button.Close + '<h2>Reply to this</h2><div id="reply-to-resource-input"><p>Reply to <code>' +
+      document.body.appendChild(fragmentFromString('<aside id="reply-to-resource" class="do on">' + DO.C.Button.Close + '<h2>Reply to this</h2><div id="reply-to-resource-input"><p>Reply to <code>' +
         iri +'</code></p><ul><li><p><label for="reply-to-resource-note">Quick reply (plain text note)</label></p><p><textarea id="reply-to-resource-note" rows="10" cols="40" name="reply-to-resource-note" placeholder="Great article!"></textarea></p></li><li><label for="reply-to-resource-language">Language</label> <select id="reply-to-resource-language" name="reply-to-resource-language">' +
         getLanguageOptionsHTML() + '</select></li><li><label for="reply-to-resource-license">License</label> <select id="reply-to-resource-license" name="reply-to-resource-license">' +
         getLicenseOptionsHTML() + '</select></li></ul></div>'))
@@ -4539,7 +4538,7 @@ console.log(reason);
         </aside>
       `;
 
-      document.documentElement.appendChild(fragmentFromString(shareResourceHTML));
+      document.body.appendChild(fragmentFromString(shareResourceHTML));
 
       var clipboardInput = document.querySelector('#share-resource-clipboard');
       var clipboardButton = document.querySelector('#share-resource-clipboard + button.copy-to-clipboard');
@@ -5860,7 +5859,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             'timer': 3000
           }
           addMessageToLog(message, Config.MessageLog);
-          showActionMessage(document.documentElement, message);
+          showActionMessage(document.body, message);
 
           // return Promise.resolve(data);
         // }
@@ -6197,7 +6196,7 @@ console.log(response)
       action = action || 'write';
 
       var browserHTML = '<aside id="resource-browser-' + id + '" class="do on">' + DO.C.Button.Close + '<h2>Resource Browser</h2></aside>';
-      document.documentElement.appendChild(fragmentFromString(browserHTML));
+      document.body.appendChild(fragmentFromString(browserHTML));
 
       DO.U.setupResourceBrowser(document.getElementById('resource-browser-' + id), id, action);
       document.getElementById('resource-browser-' + id).insertAdjacentHTML('beforeend', '<p><samp id="' + id + '-' + action + '"></samp></p>');
@@ -6222,7 +6221,7 @@ console.log(response)
       if(typeof e !== 'undefined') {
         e.target.disabled = true;
       }
-      document.documentElement.appendChild(fragmentFromString('<aside id="open-document" class="do on">' + DO.C.Button.Close + '<h2>Open Document</h2><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" /></p></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="open-document" class="do on">' + DO.C.Button.Close + '<h2>Open Document</h2><p><label for="open-local-file">Open local file</label> <input type="file" id="open-local-file" name="open-local-file" /></p></aside>'));
 
       var id = 'location-open-document';
       var action = 'read';
@@ -6275,7 +6274,7 @@ console.log(response)
         }
         addMessageToLog(message, Config.MessageLog);
         message.content = '<span class="progress">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + message.content + '</span>';
-        showActionMessage(document.documentElement, message);
+        showActionMessage(document.body, message);
 
         return getResource(iri, headers, options)
           .catch(error => {
@@ -6293,7 +6292,7 @@ console.log(response)
             }
             addMessageToLog(message, Config.MessageLog);
             message.content = '<span class="progress">' + Icon[".fas.fa-times-circle.fa-fw"] + message.content + '</span>';
-            showActionMessage(document.documentElement, message);
+            showActionMessage(document.body, message);
 
             throw error
           })
@@ -6353,7 +6352,7 @@ console.log(response)
                   'timer': 3000
                 }
                 addMessageToLog(message, Config.MessageLog);
-                showActionMessage(document.documentElement, message);
+                showActionMessage(document.body, message);
               })
           })
       }
@@ -6551,7 +6550,7 @@ console.log(response)
                   'timer': 3000,
                 }
                 addMessageToLog(message, Config.MessageLog);
-                showActionMessage(document.documentElement, message);
+                showActionMessage(document.body, message);
 
                 var w = document.getElementById(id);
                 window.history.replaceState(null, null, '#' + id);
@@ -6684,7 +6683,7 @@ console.log(response)
     //XXX: To be deprecated. Formerly used for createNewDocument 
     createNewDocumentSaveAs: function(e) {
       e.target.disabled = true
-      document.documentElement.appendChild(fragmentFromString('<aside id="create-new-document" class="do on">' + DO.C.Button.Close + '<h2>Create New Document</h2></aside>'))
+      document.body.appendChild(fragmentFromString('<aside id="create-new-document" class="do on">' + DO.C.Button.Close + '<h2>Create New Document</h2></aside>'))
 
       var newDocument = document.getElementById('create-new-document')
       newDocument.addEventListener('click', e => {
@@ -6794,7 +6793,7 @@ console.log(response)
         e.target.closest('button').disabled = true;
       }
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="save-as-document" class="do on">' + DO.C.Button.Close + '<h2>Save As Document</h2></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="save-as-document" class="do on">' + DO.C.Button.Close + '<h2>Save As Document</h2></aside>'));
 
       var saveAsDocument = document.getElementById('save-as-document');
       saveAsDocument.addEventListener('click', (e) => {
@@ -7199,7 +7198,7 @@ console.log(response)
 
       var buttonDisabled = (document.location.protocol === 'file:') ? ' disabled="disabled"' : '';
 
-      document.documentElement.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + '<h2>Source</h2><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
+      document.body.appendChild(fragmentFromString('<aside id="source-view" class="do on">' + DO.C.Button.Close + '<h2>Source</h2><textarea id="source-edit" rows="24" cols="80"></textarea><p><button class="update"'+ buttonDisabled + ' title="Update source">Update</button></p></aside>'));
       var sourceBox = document.getElementById('source-view');
       var input = document.getElementById('source-edit');
       input.value = getDocument();
@@ -8595,8 +8594,8 @@ WHERE {\n\
       //<div class="actions"><a href="/docs#resource-activities" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
 
       //TEMP buttonRel/Resource
-      var aside = `<aside class="do" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['resource-notifications'] })}</h2><div><div class="info"></div><ul class="activities"></ul></div></aside>`;
-      contextNode.insertAdjacentHTML('beforeend', aside);
+      var aside = `<aside class="do" contenteditable="false" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['resource-notifications'] })}</h2><div><div class="info"></div><ul class="activities"></ul></div></aside>`;
+      document.body.insertAdjacentHTML('beforeend', aside);
       aside = document.getElementById('document-notifications');
 
       if (options.includeButtonMore) {

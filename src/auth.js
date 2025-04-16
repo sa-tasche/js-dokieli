@@ -123,7 +123,7 @@ function showUserIdentityInput (e) {
   // }
   code += '</aside>';
 
-  document.documentElement.appendChild(fragmentFromString(code))
+  document.body.appendChild(fragmentFromString(code))
 
   var buttonSignIn = document.querySelector('#user-identity-input button.signin')
   if (! Config.User.WebIdDelegate)

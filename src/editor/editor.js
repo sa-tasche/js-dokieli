@@ -22,7 +22,9 @@ export class Editor {
     //TODO: Look into replacing document.body with selectArticleNode(document) so that main > article, article, or body is used?
     // if body is used, take care to filter out do elements at this point
     // TODO: When choosing the editor node, we need to filter out these items from the content of the editor node. we also need to restore the body to its original form WITH the do elements.
+    this.restrictedNodes = [];
     this.node = node || document.body;
+
     this.editorView = null;
     this.socialToolbarView = null;
     this.authorToolbarView = this.editorView?.pluginViews[0];
@@ -72,7 +74,7 @@ export class Editor {
         'type': 'info'
       }
       addMessageToLog(message, Config.MessageLog);
-      showActionMessage(document.documentElement, message);
+      showActionMessage(document.body, message);
     }
   }
 
@@ -162,6 +164,13 @@ export class Editor {
 
   //Creating a ProseMirror editor view at a specified this.node
   createEditor(options) {
+    this.restrictedNodes = Array.from(document.body.querySelectorAll('.do'));
+    this.restrictedNodes.forEach(node => {
+      if (node.parentNode) {
+        node.parentNode.removeChild(node);
+      }
+    });
+
     const editorToolbarPlugin = new Plugin({
       // this editorView is passed onto the Plugin - not this.editorView
       view(editorView) {
@@ -197,6 +206,9 @@ export class Editor {
       }
      });
 
+     this.restrictedNodes.forEach(node => {
+      document.body.appendChild(node);
+    });
 
     // console.log(this.editorView.state.doc)
     // console.log(hasNonWhitespaceText(state.doc))

@@ -904,10 +904,11 @@ function addMessageToLog(message, log, options = {}) {
 function handleActionMessage(resolved, rejected) {
   if (resolved) {
     const { response, message } = resolved;
-    showActionMessage(document.documentElement, message);
-  } else if (rejected) {
+    showActionMessage(document.body, message);
+  }
+  else if (rejected) {
     const { error, message } = rejected;
-    showActionMessage(document.documentElement, message);
+    showActionMessage(document.body, message);
   }
 }
 
@@ -1310,7 +1311,7 @@ function showTimeMap(node, url) {
       if (!node) {
         node = document.getElementById(elementId);
         if(!node) {
-          document.documentElement.appendChild(fragmentFromString('<aside id="' + elementId + '" class="do on"><h2>Memento</h2>' + Config.Button.Close + '<dl><dt>TimeMap</dt><dd><a href="' + url + '">' + url + '</a></dd></dl></aside>'));
+          document.body.appendChild(fragmentFromString('<aside id="' + elementId + '" class="do on"><h2>Memento</h2>' + Config.Button.Close + '<dl><dt>TimeMap</dt><dd><a href="' + url + '">' + url + '</a></dd></dl></aside>'));
           node = document.getElementById(elementId);
         }
       }
@@ -3263,7 +3264,7 @@ function showResourceAudienceAgentOccupations() {
           }
 
           addMessageToLog(message, Config.MessageLog);
-          showActionMessage(document.documentElement, message);
+          showActionMessage(document.body, message);
         }
       });
   }
@@ -3299,7 +3300,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
             'timer': 3000
           }
           addMessageToLog(message, Config.MessageLog);
-          showActionMessage(document.documentElement, message);
+          showActionMessage(document.body, message);
         })
         .catch(error => {
           var message = 'Failed to copy text to clipboard.';
@@ -3309,7 +3310,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
             'timer': 3000
           }
           addMessageToLog(message, Config.MessageLog);
-          showActionMessage(document.documentElement, message);
+          showActionMessage(document.body, message);
         });
     }
   });
