@@ -434,7 +434,8 @@ console.log(node)
   
           Object.keys(data).forEach(key => {
             // console.log(data[key])
-            if ('href' in data[key] &&
+            if (typeof data[key] === 'object' && !Array.isArray(data[key]) &&
+                'href' in data[key] &&
                 !('aliasOf' in data[key]) && !('versionOf' in data[key]) &&
     
               //fugly WG21
