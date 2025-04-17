@@ -2610,7 +2610,6 @@ width:65%;
 /*used with default theme*/
 .toolbar-arrow-under:after {
   border-color: #333 transparent transparent transparent; 
-  top: 50px;
   border-width: 8px 8px 0 8px;
 }
 
@@ -3012,7 +3011,6 @@ height:auto;
   display: none; }
 .toolbar-arrow-under:after {
   border-color: #242424 transparent transparent transparent;
-  top: 50px;
  }
 
 .toolbar-arrow-over:before {
