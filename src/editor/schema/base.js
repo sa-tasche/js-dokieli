@@ -260,6 +260,7 @@ let customNodes = {
     toDOM(node) { return ["hr", { ...node.attrs.originalAttributes }]; },
   },
   object: {
+    content: "block+",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "object", getAttrs(node){ return getAttributes(node); }}],
