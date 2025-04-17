@@ -216,7 +216,7 @@ let customNodes = {
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "source", getAttrs(node){ return getAttributes(node); }}],
-    toDOM(node) { return ["source", { ...node.attrs.originalAttributes }, 0]; },
+    toDOM(node) { return ["source", { ...node.attrs.originalAttributes }]; },
   },
   track: {
     content: "inline*",
