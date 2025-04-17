@@ -91,11 +91,11 @@ body {
   /*width:100%;*/
 }
 
-body header:first-of-type {
+body.do-site header:first-of-type {
   text-align: center;
 }
 
-body header:first-of-type {
+body.do-site header:first-of-type {
   margin-top: 2em;
 }
 
@@ -606,8 +606,8 @@ dl+hr:before {
   content: "\2042";
 }
 
-body header:first-of-type,
-body footer:first-of-type {
+body.do-site header:first-of-type,
+body.do-site footer:first-of-type {
   overflow: hidden;
   padding-top: 1em;
   padding-bottom: 1em;
@@ -616,28 +616,28 @@ body footer:first-of-type {
   margin-top: 2em;
 }
 
-body footer:first-of-type>* {
+body.do-site footer:first-of-type>* {
   max-width: 50em;
   margin: 0 auto;
 }
 
-body header:first-of-type a,
-body footer:first-of-type a,
-body footer:first-of-type a:hover {
+body.do-site header:first-of-type a,
+body.do-site footer:first-of-type a,
+body.do-site footer:first-of-type a:hover {
   color: inherit;
   border-bottom-color: #080;
 }
 
-body header:first-of-type a:hover,
-body footer:first-of-type a:hover {
+body.do-site header:first-of-type a:hover,
+body.do-site footer:first-of-type a:hover {
   background-color: transparent;
 }
 
-body footer:first-of-type a:visited {
+body.do-site footer:first-of-type a:visited {
   color: #fff;
 }
 
-body footer:first-of-type h2 {
+body.do-site footer:first-of-type h2 {
   margin-top: 1em;
 }
 
@@ -1224,8 +1224,8 @@ margin-bottom:0;
 #home #features,
 #home #get-involved,
 /* #home #supporters, */
-body header:first-of-type,
-body footer:first-of-type {
+body.do-site header:first-of-type,
+body.do-site footer:first-of-type {
   padding: 1em 0.25em;
   margin-top: 0;
   margin-bottom:0;
@@ -1252,17 +1252,17 @@ body footer:first-of-type {
   content: "";
 }
 
-body header:first-of-type {
+body.do-site header:first-of-type {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-body header:first-of-type {
+body.do-site header:first-of-type {
   padding:0.5em 1em;
 }
 
-body header:first-of-type address a {
+body.do-site header:first-of-type address a {
   display: block;
   font-size: 2em;
   font-weight: bold;
@@ -1271,22 +1271,22 @@ body header:first-of-type address a {
   line-height: 1;
 }
 
-body header:first-of-type address a img {
+body.do-site header:first-of-type address a img {
 vertical-align: middle;
 }
 
-body header:first-of-type address span {
+body.do-site header:first-of-type address span {
 margin-left:0.25em;
 }
 body.do-site header:first-of-type address span {
 display: none;
 }
 
-body header:first-of-type nav {
+body.do-site header:first-of-type nav {
 margin-right:4.5em;
 }
 
-body header:first-of-type ul {
+body.do-site header:first-of-type ul {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1294,13 +1294,13 @@ body header:first-of-type ul {
   gap: 2em;
 }
 
-body header:first-of-type li {
+body.do-site header:first-of-type li {
   display: inline;
 }
-body header:first-of-type li:before {
+body.do-site header:first-of-type li:before {
   content: "";
 }
-body header:first-of-type li a {
+body.do-site header:first-of-type li a {
   text-decoration: none;
 }
 
