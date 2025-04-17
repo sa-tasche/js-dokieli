@@ -475,6 +475,17 @@ function skolem(data, options) {
   return data;
 }
 
+function* filterQuads(quads, options) {
+  for (const q of quads) {
+    if (
+      ('subjects' in options.filter && options.filter.subjects.includes(q.subject.value)) ||
+      ('predicates' in options.filter && options.filter.predicates.includes(q.predicate.value))
+    ) {
+      yield q;
+    }
+  }
+}
+
 function transformJsonldContextURLScheme(data) {
   if (typeof data["@context"] === "string") {
     data["@context"] = data["@context"].replace(/^http:/, 'https:');
@@ -1684,5 +1695,6 @@ export {
   getAccessSubjects,
   getAuthorizationsMatching,
   getUserLabelOrIRI,
-  getRDFParser
+  getRDFParser,
+  filterQuads
 }
