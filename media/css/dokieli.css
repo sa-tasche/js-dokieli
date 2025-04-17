@@ -1565,10 +1565,15 @@ display:block;
 padding:0.75em 1em;
 outline:none;
 }
+.tabs nav ul li a,
+.tabs nav ul li a:hover {
+border-bottom-width:3px;
+}
 .tabs nav ul li.selected a {
 text-decoration:none;
 color:#000000;
 background-color:#ffffff;
+border-bottom-color:inherit;
 }
 .tabs > div,
 .tabs > figure {
@@ -1587,6 +1592,7 @@ padding:0.75em 1em;
 display:block;
 border:2px solid #cccccc;
 width:94% !important;
+margin-inline:0;
 }
 
 #list-of-stuff label {
