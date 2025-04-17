@@ -267,8 +267,6 @@ let customNodes = {
     toDOM(node) { return ["object", { ...node.attrs.originalAttributes }, 0]; },
   },
 
-  //TODO: table, caption, thead, tbody, tfoot, tr, th, td
-
   //TODO: math
   svg: {
     content: "block+",
@@ -382,7 +380,77 @@ let customNodes = {
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "textarea", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["textarea", { ...node.attrs.originalAttributes }, 0]; },
-  }
+  },
+
+  table: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "table", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["table", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  thead: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "thead", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["thead", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  tbody: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "tbody", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["tbody", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  tfoot: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "tfoot", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["tfoot", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  caption: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "caption", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["caption", { ...node.attrs.originalAttributes }, 0]; }
+  },
+  tr: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "tr", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["tr", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  th: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "th", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["th", { ...node.attrs.originalAttributes }, 0]; }
+  },
+  td: {
+    content: "inline*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "td", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["td", { ...node.attrs.originalAttributes }, 0]; }
+  },
+  colgroup: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "colgroup", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["colgroup", { ...node.attrs.originalAttributes }, 0]; },
+  },
+  col: {
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "col", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["col", { ...node.attrs.originalAttributes }]; },
+  },
 };
 
 const customMarks = {};
