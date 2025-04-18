@@ -425,7 +425,7 @@ let customNodes = {
     toDOM(node) { return ["tr", { ...node.attrs.originalAttributes }, 0]; },
   },
   th: {
-    content: "inline*",
+    content: "block*",
     group: "block",
     attrs: { originalAttributes: { default: {} } },
     parseDOM: [{ tag: "th", getAttrs(node){ return getAttributes(node); }}],
