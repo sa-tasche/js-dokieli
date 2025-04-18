@@ -1459,11 +1459,13 @@ DO = {
                 }
               })
 
-              var g = rdf.grapoi({ dataset });
+              if (options.filter) {
+                var g = rdf.grapoi({ dataset });
 
-              const quads = filterQuads(g.out().quads(), options);
+                const quads = filterQuads(g.out().quads(), options);
 
-              dataset = rdf.dataset(quads);
+                dataset = rdf.dataset(quads);
+              }
 
               options['contentType'] = 'text/turtle';
               options['resources'] = resources;
