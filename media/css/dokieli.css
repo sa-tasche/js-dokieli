@@ -325,6 +325,26 @@ html > .do {
 font-family:sans-serif;
 }
 
+
+/*XXX: ProseMirror inserts p for certain block groups (below). In the markup, these tags might only include inline or text content, and so the schema wraps them with p but that is cumbersome and messes up the UI. The styles here at least try to make the p look inline.*/
+figcaption > p:only-child,
+li > p:only-child,
+dd > p:only-child,
+th > p:only-child,
+td > p:only-child,
+caption > p:only-child {
+display:inline !important;
+padding:0 !important;
+}
+
+/* figcaption > p:first-of-type:nth-of-type(1):not(:only-child),
+li > p:first-of-type:nth-of-type(1):not(:only-child) {
+  margin-top: 0;
+} */
+
+
+
+
 dl.info dt,
 dl.info dd {
 display: inline;
@@ -665,6 +685,7 @@ border-radius: 50%;
 border:1px solid rgba(0, 0, 0, 0.35);
 background-color: #fff;
 transition: box-shadow 0.3s;
+font-size:1.2em;
 }
 
 #document-notifications button.toggle:hover {

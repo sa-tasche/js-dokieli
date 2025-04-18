@@ -1454,19 +1454,6 @@ margin-right:4.5em;
   display: none;
 }
 
-/*XXX: ProseMirror hack*/
-figcaption > p:only-child,
-li > p:only-child,
-dd > p:only-child {
-  margin: 0;
-  display:inline;
-}
-
-figcaption > p:first-of-type:nth-of-type(1):not(:only-child),
-li > p:first-of-type:nth-of-type(1):not(:only-child) {
-  margin-top: 0;
-}
-
 /*
 1600px = 1000px = 1200px = 800px
 100em  = 62.5em = 75em   = 50em
