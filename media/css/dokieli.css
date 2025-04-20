@@ -332,9 +332,17 @@ li > p:only-child,
 dd > p:only-child,
 th > p:only-child,
 td > p:only-child,
-caption > p:only-child {
+caption > p:only-child,
+figcaption > p:only-child,
+li > p:only-child a,
+dd > p:only-child a,
+th > p:only-child a,
+td > p:only-child a,
+caption > p:only-child a {
 display:inline !important;
 padding:0 !important;
+margin:0 !important;
+float:none !important;
 }
 
 /* figcaption > p:first-of-type:nth-of-type(1):not(:only-child),
