@@ -173,6 +173,7 @@ We would also like to express our gratitude to the following individuals for the
 * [Andrei Vlad Sambra](https://github.com/deiu)
 * [Ben Companjen](https://github.com/bencomp)
 * [Benjamin Young](https://github.com/bigbluehat)
+* [Christoph Braun](https://github.com/uvdsl)
 * [Gerben Treora](https://github.com/treora)
 * [Henry Story](https://github.com/bblfish)
 * [Herbert Van de Sompel](https://github.com/hvdsomp)
