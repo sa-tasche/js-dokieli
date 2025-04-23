@@ -13,31 +13,56 @@ export class Auth {
       await this.page.locator(".close").click();
     }
 
-    const signinbtn = "button.signin-user"; 
+    const signinbtn = "button.signin-user";
     await this.page.waitForSelector(signinbtn);
     await this.page.click(signinbtn);
 
-    const providerPopupButton = "button.signin-oidc"
-    await this.page.waitForSelector(providerPopupButton);
-    await this.page.click(providerPopupButton);
+    await this.page.fill('input[id="webid"]', process.env.WEBID);
+    await this.page.click('button[class="signin"]');
 
-    
-    const popup = await this.page.waitForEvent("popup");
-    const idpLoginButton = "button.idp > span.label:has-text('Log in with custom provider')";
- 
+    await this.page.waitForURL(
+      "https://solidcommunity.net/.account/login/password/"
+    );
+    await this.page.waitForSelector("input#email");
 
-    await popup.waitForSelector(idpLoginButton);
+    await this.page.fill("#email", process.env.LOGIN_ID);
+    await this.page.fill("#password", process.env.LOGIN_PASSWORD);
+    await this.page.click("button[type=submit]");
 
-    await expect(popup.locator(idpLoginButton)).toBeEnabled();
-    await popup.locator(idpLoginButton).click();
-    await popup.fill("input[type=url]", process.env.IDP);
-    await popup.click("button[type=submit]");
+    // click login btn
+    await this.page.waitForSelector("button[type=submit]");
+    await this.page.click("button[type=submit]");
 
-    await popup.waitForSelector("input#username");
+    // await redirect to consent page
+    await this.page.waitForURL("https://solidcommunity.net/.account/");
+    await this.page.waitForURL(
+      "https://solidcommunity.net/.account/oidc/consent/"
+    );
 
-    await popup.fill("#username", process.env.LOGIN_ID);
-    await popup.fill("#password", process.env.LOGIN_PASSWORD);
-    await popup.click("#login");
+    // click authorize btn
+    await this.page.waitForSelector("button[type=submit]");
+    await this.page.click("button[type=submit]");
+
+    // wait to redirect to homepage
+    await this.page.waitForURL("http://localhost:3000/");
+
+
+    // Listen for console messages to make sure we are logged in
+    await this.page.on("console", async (msg) => {
+      if (
+        msg
+          .text()
+          .includes(process.env.WEBID)
+      ) {
+
+        await this.page.locator("#document-menu button").click();
+
+        await this.page.waitForSelector("button.signout-user");
+        await expect(this.page.locator("button.signout-user")).toBeVisible();
+      }
+    });
+
+
   }
 }
 
