@@ -3,12 +3,17 @@ import {
   setAcceptRDFTypes,
   getResourceHead,
   getResourceOptions,
-} from "../../src/fetcher";
+} from "src/fetcher";
 import { setupMockFetch, resetMockFetch, mockFetch } from "../utils/mockFetch";
+import { Session } from "@uvdsl/solid-oidc-client-browser";
+import Config from "src/config";
+
+Config['Session'] = new Session();
 
 describe("fetcher", () => {
   beforeEach(() => {
     jest.spyOn(global, "fetch").mockImplementation(mockFetch);
+    // jest.spyOn(Session, "authFetch").mockImplementation(mockFetch);
   });
 
   afterEach(() => {

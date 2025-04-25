@@ -2,8 +2,10 @@ import { getResourceGraph } from "../../src/graph";
 import { setupMockFetch, resetMockFetch, mockFetch } from "../utils/mockFetch";
 import MockGrapoi from "../utils/mockGrapoi";
 import Config from "../../src/config";
+import { Session } from "@uvdsl/solid-oidc-client-browser";
 
 const ns = Config.ns;
+Config['Session'] = new Session();
 
 describe("graph", () => {
   describe("getResourceGraph", () => {
