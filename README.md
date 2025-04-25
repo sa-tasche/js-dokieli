@@ -9,6 +9,7 @@ Welcome! Check out the:
 * [Documentation](https://dokie.li/docs)
 * [Contributing Guide](CONTRIBUTING.md)
 * [Code of Conduct](CODE-OF-CONDUCT.md)
+* [Security Policy](SECURITY.md)
 
 ## Use
 
