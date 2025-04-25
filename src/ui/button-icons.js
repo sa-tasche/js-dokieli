@@ -243,6 +243,10 @@ export const buttonIcons = {
   info: {
     title: 'info',
     icon: Icon[".fas.fa-circle-info"]
+  },
+  'test-suite': {
+    title: 'Test suite',
+    icon: Icon[".fas.fa-vial-circle-check"]
   }
 }
 
