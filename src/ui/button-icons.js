@@ -253,7 +253,7 @@ export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonRel, 
   }
 
   const className = buttonClass ? ` class="${buttonClass}"` : '';
-  const title = ` title="${buttonTitle || buttonIcons[button]?.title}"`;
+  const title = ` title="${buttonTitle || buttonIcons[button]?.title || button }"`;
   const disabled = buttonDisabled ? ` disabled=""` : '';
   const type = buttonType ? ` type="${buttonType}"` : '';
   const textContent = buttonTextContent || buttonIcons[button]?.textContent;
