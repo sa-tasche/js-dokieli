@@ -2,7 +2,7 @@ import { getLanguageOptionsHTML, getLicenseOptionsHTML, getPublicationStatusOpti
 import { Icon } from "../../ui/icons.js";
 import { fragmentFromString } from "../../util.js";
 import { getButtonHTML } from "../../ui/button-icons.js";
-import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType } from "./handlers.js";
+import { formHandlerLanguage, formHandlerLicense, formHandlerInbox, formHandlerInReplyTo, formHandlerPublicationStatus, formHandlerResourceType, formHandlerTestSuite } from "./handlers.js";
 import { TextSelection } from "prosemirror-state";
 import { DOMParser } from "prosemirror-model";
 
@@ -22,9 +22,10 @@ export class SlashMenu {
       'in-reply-to': 'In reply to',
       'publication-status': 'Status',
       'resource-type': 'Type',
+      'test-suite': 'Test suite'
     }
 
-    this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type'].map(button => ({
+    this.slashMenuButtons = ['language', 'license', 'inbox', 'in-reply-to', 'publication-status', 'resource-type', 'test-suite'].map(button => ({
       button,
       dom: () => fragmentFromString(getButtonHTML({ button, buttonTextContent: slashMenuButtonLabels[button]} )).firstChild,
     }));
@@ -37,6 +38,7 @@ export class SlashMenu {
     this.formHandlerInReplyTo = formHandlerInReplyTo.bind(this);
     this.formHandlerPublicationStatus = formHandlerPublicationStatus.bind(this);
     this.formHandlerResourceType = formHandlerResourceType.bind(this);
+    this.formHandlerTestSuite = formHandlerTestSuite.bind(this);
 
     //TODO: Create formValidationHandlers to handle `input` and `invalid` event handlers. Move oninput/oninvalid out of form's inline HTML
     this.formEventListeners = {
@@ -46,6 +48,7 @@ export class SlashMenu {
       'in-reply-to': [ { event: 'submit', callback: this.formHandlerInReplyTo }, { event: 'click', callback: (e) => this.formClickHandler(e, 'in-reply-to') } ],
       'publication-status': [ { event: 'submit', callback: this.formHandlerPublicationStatus }, { event: 'click', callback: (e) => this.formClickHandler(e, 'publication-status') } ],
       'resource-type': [ { event: 'submit', callback: this.formHandlerResourceType }, { event: 'click', callback: (e) => this.formClickHandler(e, 'resource-type') } ],
+      'test-suite': [ { event: 'submit', callback: this.formHandlerTestSuite }, { event: 'click', callback: (e) => this.formClickHandler(e, 'test-suite') } ],
     }
 
     document.body.appendChild(this.menuContainer);
@@ -116,6 +119,7 @@ export class SlashMenu {
       'in-reply-to': this.createInReplyToWidgetHTML(),
       'publication-status': this.createPublicationStatusWidgetHTML(),
       'resource-type': this.createResourceTypeWidgetHTML(),
+      'test-suite': this.createTestSuiteWidgetHTML()
     }
 
     const popup = fragmentFromString(`<form class="editor-form editor-form-active">${popupContent[button]}</form>`);
@@ -163,6 +167,7 @@ export class SlashMenu {
         </div>
       </fieldset>
     `;
+
     return html;
   }
 
@@ -211,6 +216,21 @@ export class SlashMenu {
     return html;
   }
 
+  createTestSuiteWidgetHTML() {
+    var html = `
+      <fieldset>
+        <legend>Add a test suite</legend>
+        <label for="test-suite">Test suite</label> <input class="editor-form-input" contenteditable="false" name="test-suite" placeholder="https://example.net/test-suite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        <div>
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+        </div>
+      </fieldset>
+    `;
+
+    return html;
+  }
+
   openPopup(popup, button) {
     this.menuContainer.replaceChildren();
     this.menuContainer.appendChild(popup);
@@ -227,7 +247,6 @@ export class SlashMenu {
     this.menuContainer.style.padding = 0;
   }
 
-  // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. and 3. for the specific case of the slash menu i need to update the selection so that it includes (and replaces) the slash
   // this function is duplicated from the Author toolbar. The reason is that 1. the editor instance is not accessible from everywhere (although that could be solved) and 2. the toolbar might not be initialized when we trigger this menu yet. it might be better to keep this somewhere common to every menu/toolbar using the author mode functions (prosemirror transactions) and re-use. and 3. for the specific case of the slash menu i need to update the selection so that it includes (and replaces) the slash
   replaceSelectionWithFragment(fragment) {
     const { state, dispatch } = this.editorView;

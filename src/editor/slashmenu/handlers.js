@@ -1,4 +1,4 @@
-import { createLanguageHTML, createLicenseHTML, createInboxHTML, createInReplyToHTML, createPublicationStatusHTML, createResourceTypeHTML } from "../../doc.js";
+import { createLanguageHTML, createLicenseHTML, createInboxHTML, createInReplyToHTML, createPublicationStatusHTML, createResourceTypeHTML, createTestSuiteHTML } from "../../doc.js";
 import { getFormValues, fragmentFromString } from "../../util.js";
 
 export function formHandlerLanguage(e) {
@@ -86,6 +86,21 @@ export function formHandlerResourceType(e) {
   const options = {};
 
   const htmlString = createResourceTypeHTML(resourceType, options);
+
+  this.replaceSelectionWithFragment(fragmentFromString(htmlString));
+  this.hideMenu()
+}
+
+export function formHandlerTestSuite(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const formValues = getFormValues(e.target);
+  // console.log(formValues);
+  const testSuite = formValues['test-suite'];
+  const options = {};
+
+  const htmlString = createTestSuiteHTML(testSuite, options);
 
   this.replaceSelectionWithFragment(fragmentFromString(htmlString));
   this.hideMenu()

@@ -3043,6 +3043,15 @@ function createResourceTypeHTML(url, options = {}) {
   return createDefinitionListHTML([{'href': url, 'rel': 'rdf:type', textContent}], options);
 }
 
+function createTestSuiteHTML(url, options = {}) {
+  if (!url) return '';
+
+  options['class'] = options.class || 'test-suite';
+  options['title'] = 'Test Suite';
+
+  return createDefinitionListHTML([{'href': url, 'rel': 'spec:testSuite'}], options);
+}
+
 function getAnnotationInboxLocationHTML(action) {
   var s = '', inputs = [], checked = '';
 
@@ -3585,6 +3594,7 @@ export {
   createResourceTypeHTML,
   createInboxHTML,
   createInReplyToHTML,
+  createTestSuiteHTML,
   getAnnotationInboxLocationHTML,
   getAnnotationLocationHTML,
   getResourceTypeOptionsHTML,
