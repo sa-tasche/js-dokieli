@@ -67,23 +67,29 @@ describe("fetcher", () => {
 
       const result = setAcceptRDFTypes(options);
 
-      // FIXME: removing markdown but needs to be restored somehow and update test
       expect(result).toEqual(
         "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,application/rdf+xml"
       );
     });
 
-    test("should return the correct accept types with existing options", () => {
-      const options = {
-        headers: {
-          Accept: "application/json",
-        },
+    test("should return the correct accept types with options", () => {
+      const excludeMarkupOptions = {
+        excludeMarkup: true
       };
 
-      const result = setAcceptRDFTypes(options);
+      const defaultExcludeMarkupOptions = {
+        excludeMarkup: false
+      };
 
-      // FIXME: removing markdown but needs to be restored somehow and update test
-      expect(result).toEqual(
+
+      const resultWithExclude = setAcceptRDFTypes(excludeMarkupOptions);
+      const resultDefaultWithoutExclude = setAcceptRDFTypes(defaultExcludeMarkupOptions);
+
+      expect(resultWithExclude).toEqual(
+        "text/turtle,application/ld+json,application/activity+json,application/rdf+xml"
+      );
+
+      expect(resultDefaultWithoutExclude).toEqual(
         "text/turtle,application/ld+json,application/activity+json,text/html;q=0.9,image/svg+xml;q=0.9,application/rdf+xml"
       );
     });

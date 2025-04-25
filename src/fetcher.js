@@ -12,9 +12,11 @@ function authFetch(url, options) {
 
 function setAcceptRDFTypes(options = {}) {
   const excludeMarkup = options.excludeMarkup || false;
-  
+
+  //Filter RDF media types by optionally excluding markup media types
   return Config.MediaTypes.RDF.filter(i => !excludeMarkup || Config.MediaTypes.Markup.indexOf(i) === -1)
     .map(i => {
+      //Set query values
       return Config.MediaTypes.Markup.indexOf(i) > -1 ? `${i};q=0.9` : i;
     })
     .join(',');
