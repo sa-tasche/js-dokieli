@@ -2831,7 +2831,6 @@ max-width:none;
 
   [class~="do-new"] h1:has(br:only-child):after {
     width:100%;
-    text-align:center;
   }
 
   [class~="do-new"] h1[data-placeholder]:has(br),
