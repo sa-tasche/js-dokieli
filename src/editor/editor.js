@@ -134,6 +134,9 @@ export class Editor {
 
     document.body.appendChild(documentMenu);
 
+    document.body.removeAttribute('id');
+    document.body.removeAttribute('class');
+
     // If the initial nodes have no content, show placeholder text, else remove placeholder text.
 
     /*
