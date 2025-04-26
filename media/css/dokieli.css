@@ -192,6 +192,7 @@ font-size:1em !important;
 }
 #document-editor.editor-toolbar {
 z-index:2147483647;
+max-width:calc(100% - 2em);
 }
 .editor-toolbar svg.fas,
 .editor-toolbar svg.far,
@@ -2883,7 +2884,9 @@ h1 + div p:first-child {
     display: flex;
     flex-wrap: nowrap;
     margin: 0;
-    padding: 0; }
+    padding: 0;
+    overflow-x: auto;
+  }
   .editor-toolbar .editor-form-actions li {
     float: left;
     list-style: none;
