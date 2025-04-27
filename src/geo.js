@@ -59,8 +59,9 @@ function generateGeoView(data) {
     titleElement.textContent = '';
   }
 
-  //XXX: This (tmpl) is not really being used in the return;
-  tmpl.documentElement.setHTMLUnsafe(domSanitize(document.documentElement.getHTML()));
+  //XXX: This (tmpl) is not really being used in the return?
+  //XXX: Should this use domSanitize?
+  tmpl.documentElement.setHTMLUnsafe(document.documentElement.getHTML());
 
   mapNode = document.querySelector('[typeof="schema:Map"]');
   var mapOptions = {
