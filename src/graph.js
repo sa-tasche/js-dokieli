@@ -11,15 +11,15 @@ import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from
 import LinkHeader from "http-link-header";
 
 const ns = Config.ns;
+const localhostUUID = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d';
 
 //https://github.com/rdfjs-base/io
 // https://github.com/rdfjs-base/formats/
 
 function getGraphFromData (data, options = {}) {
-
   options['contentType'] = options.contentType || 'text/turtle';
   if (!('subjectURI' in options)) {
-    options['subjectURI'] = 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d'
+    options['subjectURI'] = localhostUUID;
   }
 // console.log(options)
   var baseIRI = options.subjectURI
@@ -371,21 +371,8 @@ function serializeGraph (g, options = {}) {
   try {
     var quads = g.out().quads();
 
-    // console.log(Array.from(quads))
-
-    // if (options?.subjectURI == 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d') {
-    //   for (let quad of Array.from(quads)) {
-    //     quad.subject.value = quad.subject.value.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
-    //     quad.subject.value = quad.object.value.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
-    //   }
-    // }
-
-    // console.log(Array.from(quads))
-
     return streamToString(rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true }).import(Readable.from(quads), { compact: true, prettyPrint: true })).then((data) => {
-      // if (options?.subjectURI == 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d') {
-      return data.replace(new RegExp(escapeRegExp('http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d', 'g'), ''));
-      // }
+      return data.replace(new RegExp(escapeRegExp(localhostUUID, 'g'), ''));
     });
   }
   catch(e) {
@@ -408,7 +395,7 @@ function serializeGraph (g, options = {}) {
 
 function applyParserSerializerFixes(data, contentType) {
   // FIXME: FUGLY because parser defaults to localhost. Using UUID to minimise conflict
-  data = data.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
+  data = data.replace(new RegExp(escapeRegExp(localhostUUID, 'g'), ''));
 
   switch(contentType) {
     case 'text/turtle':
