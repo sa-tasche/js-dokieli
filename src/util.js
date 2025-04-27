@@ -99,9 +99,9 @@ function generateUUID(inputString) {
     return uuid;
   }
   else {
-    const uuid = crypto.randomUUID();
+    const uuid = window.crypto.randomUUID();
     const array = new Uint8Array(1);
-    crypto.getRandomValues(array);
+    window.crypto.getRandomValues(array);
     const randomLetter = String.fromCharCode(97 + (array[0] % 6)); // Start with a-f
     return randomLetter + uuid.slice(1);
   }
