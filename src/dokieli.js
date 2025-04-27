@@ -1489,14 +1489,8 @@ DO = {
     },
 
     urlParam: function(name) {
-      //FIXME
-      var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-      if (results===null){
-         return null;
-      }
-      else{
-         return results[1] || 0;
-      }
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
     },
 
     initAuth: function() {
@@ -1583,7 +1577,7 @@ DO = {
       }
 
       if (DO.C.GraphViewerAvailable) {
-        var searchParams = new URLSearchParams(document.location.search);
+        var searchParams = new URLSearchParams(window.location.search);
         var graphs = searchParams.getAll('graph');
 
         var urls = graphs.map(url => {
