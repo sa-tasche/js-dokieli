@@ -1,4 +1,4 @@
-import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash, findPreviousDateTime, isValidISBN, parseISODuration } from "../../src/util";
+import { uniqueArray, getDateTimeISO, removeChildren, escapeRegExp, generateUUID, generateAttributeId, hashCode, fragmentFromString, getHash, findPreviousDateTime, isValidISBN, parseISODuration, matchAllIndex } from "../../src/util";
 
 describe("util", () => {
   describe("uniqueArray", () => {
@@ -225,5 +225,51 @@ describe('parseISODuration', () => {
 
   it('should throw error on invalid format', () => {
     expect(() => parseISODuration('P1Y1M1D1H1M1S')).toThrow('Invalid ISO 8601 duration format');
+  });
+});
+
+
+describe('matchAllIndex', () => {
+  it('should return all matches with index and input', () => {
+    const str = 'abc 123 abc 456';
+    const regex = /abc/g;
+    const result = matchAllIndex(str, regex);
+
+    expect(result).toEqual([
+      expect.objectContaining({ 0: 'abc', index: 0, input: str }),
+      expect.objectContaining({ 0: 'abc', index: 8, input: str })
+    ]);
+  });
+
+  it('should return null if no matches are found', () => {
+    const str = 'no matches here';
+    const regex = /abc/g;
+    const result = matchAllIndex(str, regex);
+
+    expect(result).toBeNull();
+  });
+
+  it('should work with capturing groups', () => {
+    const str = 'foo1 bar2 foo3';
+    const regex = /(foo)(\d)/g;
+    const result = matchAllIndex(str, regex);
+
+    expect(result).toEqual([
+      expect.objectContaining({ 0: 'foo1', 1: 'foo', 2: '1', index: 0, input: str }),
+      expect.objectContaining({ 0: 'foo3', 1: 'foo', 2: '3', index: 10, input: str })
+    ]);
+  });
+
+  it('should return an empty array if string is empty', () => {
+    const str = '';
+    const regex = /./g;
+    const result = matchAllIndex(str, regex);
+
+    expect(result).toBeNull();
+  });
+
+  test('should throw error for a vulnerable regex (mixed quantifiers)', () => {
+    const regex = /.*a.*b.*c.*d.*e.*/;
+    expect(() => matchAllIndex('abababababab', regex)).toThrowError('Regular expression is potentially vulnerable to ReDoS attack');
   });
 });
