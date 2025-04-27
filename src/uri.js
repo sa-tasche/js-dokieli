@@ -162,7 +162,7 @@ function generateDataURI(mediaType, encoding, data) {
 
 
 function getPrefixedNameFromIRI(iri) {
-  var match = iri.match(/(.*[#/])(.+)$/);
+  var match = iri.match(/(.*?[#/])([^/#]+)$/);
 
   if (match) {
     var ns = match[1];
