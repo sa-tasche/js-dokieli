@@ -5,7 +5,7 @@ import { RdfaParser } from "rdfa-streaming-parser";
 import { Readable } from "readable-stream";
 import Config from './config.js'
 import { stripFragmentFromString, getProxyableIRI, getBaseURL, getPathURL, getAbsoluteIRI, getParentURLPath } from './uri.js'
-import { domSanitize, uniqueArray } from './util.js'
+import { domSanitize, escapeRegExp, uniqueArray } from './util.js'
 import { parseMarkdown } from "./doc.js";
 import { setAcceptRDFTypes, getResource, getResourceHead, currentLocation } from './fetcher.js'
 import LinkHeader from "http-link-header";
@@ -262,6 +262,26 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
       }
     })
     .then(data => {
+      const replacements = {
+        'http://www.w3.org/ns/oa#autoDirection': 'auto',
+        'http://www.w3.org/ns/oa#cachedSource': 'cached',
+        'http://www.w3.org/ns/oa#hasBody': 'body',
+        'http://www.w3.org/ns/oa#hasEndSelector': 'endSelector',
+        'http://www.w3.org/ns/oa#hasPurpose': 'purpose',
+        'http://www.w3.org/ns/oa#hasScope': 'scope',
+        'http://www.w3.org/ns/oa#hasSelector': 'selector',
+        'http://www.w3.org/ns/oa#hasSource': 'source',
+        'http://www.w3.org/ns/oa#hasStartSelector': 'startSelector',
+        'http://www.w3.org/ns/oa#hasTarget': 'target',
+        'http://www.w3.org/ns/oa#ltrDirection': 'ltr',
+        'http://www.w3.org/ns/oa#motivatedBy': 'motivation',
+        'http://www.w3.org/ns/oa#rtlDirection': 'rtl',
+        'http://www.w3.org/ns/oa#styledBy': 'stylesheet',
+        '"oa:': '"',
+        '"as:': '"',
+        '"schema:': '"'
+      };
+
       switch (toContentType) {
         default:
           break;
@@ -283,37 +303,21 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
               var replace = '';
 
               if (typeof c === 'string') {
+                for (const [pattern, replacement] of Object.entries(replacements)) {
+                  data = data.replace(new RegExp(escapeRegExp(pattern), 'g'), replacement);
+                }
+
                 switch(c) {
                   case 'http://www.w3.org/ns/anno.jsonld':
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#autoDirection', 'g'), 'auto')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#cachedSource', 'g'), 'cached')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#hasBody', 'g'), 'body')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#hasEndSelector', 'g'), 'endSelector')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#hasPurpose', 'g'), 'purpose')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#hasScope', 'g'), 'scope')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#hasSelector', 'g'), 'selector')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#hasSource', 'g'), 'source')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#hasStartSelector', 'g'), 'startSelector')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#hasTarget', 'g'), 'target')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#ltrDirection', 'g'), 'ltr')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#motivatedBy', 'g'), 'motivation')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#rtlDirection', 'g'), 'rtl')
-                    data = data.replace(new RegExp('http://www.w3.org/ns/oa#styledBy', 'g'), 'stylesheet')
-
-                    data = data.replace(new RegExp('"oa:', 'g'), '"')
 
                     search = 'http://www.w3.org/ns/oa#'
                     break
 
                   case 'https://www.w3.org/ns/activitystreams':
-                    data = data.replace(new RegExp('"as:', 'g'), '"')
-
                     search = 'https://www.w3.org/ns/activitystreams#'
                     break
 
                   case 'http://schema.org/':
-                    data = data.replace(new RegExp('"schema:', 'g'), '"')
-
                     search = 'http://schema.org/'
                     break
                 }
@@ -359,6 +363,7 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
       return data
     })
 }
+
 
 function streamToString (stream) {
   const chunks = [];
