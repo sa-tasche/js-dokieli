@@ -48,6 +48,10 @@ function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function escapeRDFLiteral(str) {
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -337,6 +341,7 @@ export {
   convertToISO8601Duration,
   removeChildren,
   escapeRegExp,
+  escapeRDFLiteral,
   sleep,
   fragmentFromString,
   generateUUID,
