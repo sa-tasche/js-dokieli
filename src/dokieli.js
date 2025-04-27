@@ -11,7 +11,7 @@ import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessag
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, getAbsoluteIRI, generateDataURI, getMediaTypeURIs, getPrefixedNameFromIRI } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, serializeGraph, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getLinkRelationFromRDF, sortGraphTriples, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphInbox, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads } from './graph.js'
 import { notifyInbox, sendNotifications, postActivity } from './inbox.js'
-import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject } from './util.js'
+import { uniqueArray, fragmentFromString, hashCode, generateAttributeId, escapeRegExp, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, matchAllIndex, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, setContactInfo, getSubjectInfo, restoreSession } from './auth.js'
@@ -5968,7 +5968,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       var createButton = document.querySelector('#' + id + '-create-container button.insert');
 
       input.addEventListener('keyup', (e) => {
-        var containerLabel = input.value.trim();
+        var containerLabel = domSanitize(input.value.trim());
 
         if (containerLabel.length) {
           createButton.removeAttribute('disabled');
@@ -5982,8 +5982,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         //FIXME: Escaping containerLabel and containerURL (request-target) can be better.
 
         var patch = {};
-        var containerLabel = input.value.trim();
-        var insertG = '<> <' + ns.dcterms.title.value +  '> """' + containerLabel.replace(/"/g, '\\"') + '""" .';
+        var containerLabel = domSanitize(input.value.trim());
+        var insertG = '<> <' + ns.dcterms.title.value +  '> """' + escapeRDFLiteral(containerLabel) + '""" .';
         patch = { 'insert': insertG };
 
         containerLabel = containerLabel.endsWith('/') ? containerLabel.slice(0, -1) : containerLabel;
