@@ -279,7 +279,10 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
         'http://www.w3.org/ns/oa#styledBy': 'stylesheet',
         '"oa:': '"',
         '"as:': '"',
-        '"schema:': '"'
+        '"schema:': '"',
+        'http://www.w3.org/ns/oa#': '',
+        'https://www.w3.org/ns/activitystreams#': '',
+        'http://schema.org/': ''
       };
 
       switch (toContentType) {
@@ -306,44 +309,29 @@ function XXXOLDserializeData (data, fromContentType, toContentType, options) {
                 for (const [pattern, replacement] of Object.entries(replacements)) {
                   data = data.replace(new RegExp(escapeRegExp(pattern), 'g'), replacement);
                 }
-
-                switch(c) {
-                  case 'http://www.w3.org/ns/anno.jsonld':
-
-                    search = 'http://www.w3.org/ns/oa#'
-                    break
-
-                  case 'https://www.w3.org/ns/activitystreams':
-                    search = 'https://www.w3.org/ns/activitystreams#'
-                    break
-
-                  case 'http://schema.org/':
-                    search = 'http://schema.org/'
-                    break
-                }
               }
               else {
                 replace = Object.keys(c)[0];
 
                 switch(replace) {
                   case 'oa':
-                    search = 'http://www.w3.org/ns/oa#'
+                    search = 'http://www\\.w3\\.org/ns/oa#'
                     break
 
                   case 'as':
-                    search = 'https://www.w3.org/ns/activitystreams#'
+                    search = 'https://www\\.w3\\.org/ns/activitystreams#'
                     break
 
                   case 'schema':
-                    search = 'http://schema.org/'
+                    search = 'http://schema\\.org/'
                     break
                 }
 
+                //XXX: I don't understand this:
                 replace = replace + ':'
               }
 
               data = data.replace(new RegExp(search, 'g'), replace)
-
             })
 
             data = JSON.parse(data)
@@ -396,7 +384,7 @@ function serializeGraph (g, options = {}) {
 
     return streamToString(rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true }).import(Readable.from(quads), { compact: true, prettyPrint: true })).then((data) => {
       // if (options?.subjectURI == 'http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d') {
-      return data.replace(/http:\/\/localhost\/d79351f4-cdb8-4228-b24f-3e9ac74a840d/g, '');
+      return data.replace(new RegExp(escapeRegExp('http://localhost/d79351f4-cdb8-4228-b24f-3e9ac74a840d', 'g'), ''));
       // }
     });
   }
