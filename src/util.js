@@ -57,11 +57,6 @@ function fragmentFromString(strHTML) {
 }
 
 function generateUUID(inputString) {
-  var lut = [];
-  for (var i = 0; i < 256; i++) {
-    lut[i] = (i < 16 ? "0" : "") + i.toString(16);
-  }
-
   // Simple FNV-1a hash function to generate a deterministic 32-bit integer hash for each part
   function fnv1aHash(str, seed = 2166136261) {
     let hash = seed;
@@ -72,54 +67,40 @@ function generateUUID(inputString) {
     return hash >>> 0; // Ensure unsigned 32-bit integer
   }
 
-  // Generate a UUID from four 32-bit numbers
-  function formatUUID(d0, d1, d2, d3) {
-    let uuid = (
-      lut[d0 & 0xff] +
-      lut[(d0 >> 8) & 0xff] +
-      lut[(d0 >> 16) & 0xff] +
-      lut[(d0 >> 24) & 0xff] +
-      "-" +
-      lut[d1 & 0xff] +
-      lut[(d1 >> 8) & 0xff] +
-      "-" +
-      lut[((d1 >> 16) & 0x0f) | 0x40] +
-      lut[(d1 >> 24) & 0xff] +
-      "-" +
-      lut[(d2 & 0x3f) | 0x80] +
-      lut[(d2 >> 8) & 0xff] +
-      "-" +
-      lut[(d2 >> 16) & 0xff] +
-      lut[(d2 >> 24) & 0xff] +
-      lut[d3 & 0xff] +
-      lut[(d3 >> 8) & 0xff] +
-      lut[(d3 >> 16) & 0xff] +
-      lut[(d3 >> 24) & 0xff]
-    );
-
-    // Ensure the UUID starts with a letter (a-f) if it's deterministic
-    if (inputString && /^[0-9]/.test(uuid[0])) {
-      uuid = 'a' + uuid.slice(1);
-    }
-
-    return uuid;
-  }
-
-  // Generate deterministic UUID if inputString is provided
   if (inputString) {
+    // Generate deterministic UUID using FNV-1a hash
     const d0 = fnv1aHash(inputString, 2166136261);
     const d1 = fnv1aHash(inputString, 2166136261 ^ 0xdeadbeef);
     const d2 = fnv1aHash(inputString, 2166136261 ^ 0xcafebabe);
     const d3 = fnv1aHash(inputString, 2166136261 ^ 0x8badf00d);
-    return formatUUID(d0, d1, d2, d3);
-  }
 
-  // Otherwise, generate random UUID
-  const d0 = (Math.random() * 0xffffffff) | 0;
-  const d1 = (Math.random() * 0xffffffff) | 0;
-  const d2 = (Math.random() * 0xffffffff) | 0;
-  const d3 = (Math.random() * 0xffffffff) | 0;
-  return formatUUID(d0, d1, d2, d3);
+    const hex = (
+      d0.toString(16).padStart(8, '0') +
+      d1.toString(16).padStart(8, '0') +
+      d2.toString(16).padStart(8, '0') +
+      d3.toString(16).padStart(8, '0')
+    );
+
+    // Ensure UUID version (4) and variant (8, 9, a, or b)
+    let uuid = hex.substring(0, 8) + '-' +
+               hex.substring(8, 12) + '-' +
+               '4' + hex.substring(13, 16) + '-' + // Set version to 4
+               ((parseInt(hex[16], 16) & 0x3f) | 0x80).toString(16) + // Set variant to 10xxxxxx
+               hex.substring(17, 20) + '-' +
+               hex.substring(20, 32);
+
+    // Optionally, ensure the UUID starts with 'a' if needed
+    uuid = 'a' + uuid.slice(1);
+
+    return uuid;
+  }
+  else {
+    const uuid = crypto.randomUUID();
+    const array = new Uint8Array(1);
+    crypto.getRandomValues(array);
+    const randomLetter = String.fromCharCode(97 + (array[0] % 6)); // Start with a-f
+    return randomLetter + uuid.slice(1);
+  }
 }
 
 function generateId(prefix, string, suffix) {
@@ -172,15 +153,6 @@ function getHash(message, algo = "SHA-256") {
     }
     return hexCodes.join("");
   });
-}
-
-//TODO: Consolidate with generateUUID() and related.
-function getRandomUUID() {
-  const uuid = crypto.randomUUID();
-  const array = new Uint8Array(1);
-  crypto.getRandomValues(array);
-  const randomLetter = String.fromCharCode(97 + (array[0] % 6)); // random letter from a-f
-  return randomLetter + uuid.slice(1);
 }
 
 function hashCode(s) {
@@ -373,7 +345,6 @@ export {
   getHash,
   getRandomIndex,
   hashCode,
-  getRandomUUID,
   sortToLower,
   matchAllIndex,
   isValidISBN,

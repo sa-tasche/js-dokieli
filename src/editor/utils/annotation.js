@@ -1,4 +1,4 @@
-import { getRandomUUID, fragmentFromString } from "./../../util.js";
+import { fragmentFromString, generateUUID } from "./../../util.js";
 import { createRDFaHTML, tagsToBodyObjects } from "./../../doc.js";
 import { Icon } from "../../ui/icons.js";
 import Config from "../../config.js";
@@ -22,7 +22,7 @@ export function getTextQuoteHTML(refId, motivatedBy, selectedContent, docRefType
   if (typeof selectedContent !== "string") { throw new Error(`getTextQuoteHTML: selectedContent is of type ${typeof selectedContent}`) }
   if (!selectedContent.length) { throw new Error(`getTextQuoteHTML: selectedContent is empty`) }
 
-  refId = refId || getRandomUUID();
+  refId = refId || generateUUID();
   motivatedBy = motivatedBy || 'oa:replying';
   docRefType = docRefType || '';
   options = options || {};

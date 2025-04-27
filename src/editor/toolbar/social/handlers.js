@@ -1,6 +1,6 @@
 import { schema } from "../../schema/base.js"
 import { getTextQuoteHTML, getSelectedParentElement, restoreSelection, getInboxOfClosestNodeWithSelector, createNoteData} from "../../utils/annotation.js";
-import { getRandomUUID, getFormValues, kebabToCamel, generateAttributeId, getDateTimeISO } from "../../../util.js"
+import { getFormValues, kebabToCamel, generateAttributeId, getDateTimeISO } from "../../../util.js"
 import { createActivityHTML, createHTML, createNoteDataHTML, getNodeLanguage, getReferenceLabel } from "../../../doc.js"
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
