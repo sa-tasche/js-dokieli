@@ -1,7 +1,7 @@
 'use strict'
 
 import Config from './config.js'
-import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize } from './util.js'
+import { getDateTimeISO, fragmentFromString, generateAttributeId, uniqueArray, generateUUID, matchAllIndex, parseISODuration, domSanitize, getRandomIndex } from './util.js'
 import { getAbsoluteIRI, getBaseURL, stripFragmentFromString, getFragmentFromString, getURLLastPath, getPrefixedNameFromIRI, generateDataURI, getProxyableIRI } from './uri.js'
 import { getResource, getResourceHead, deleteResource, processSave, patchResourceWithAcceptPatch } from './fetcher.js'
 import rdf from "rdf-ext";
@@ -2837,8 +2837,8 @@ function getTestDescriptionReviewStatusHTML() {
 }
 
 function getAgentHTML(options = {}) {
-  let userName = Config.SecretAgentNames[Math.floor(Math.random() * Config.SecretAgentNames.length)]
-  
+  let userName = Config.SecretAgentNames[getRandomIndex(Config.SecretAgentNames.length)];
+
   if (Config.User.Name) {
     // XXX: We have the IRI already
     userName = '<span about="' + Config.User.IRI + '" property="schema:name">' +
@@ -2850,9 +2850,9 @@ function getAgentHTML(options = {}) {
   if (!('omitImage' in options && options.omitImage) && 'Image' in Config.User && typeof Config.User.Image !== 'undefined' && Config.User.Image.length > 0) {
     userImage = getResourceImageHTML(Config.User.Image, options) + ' '
   }
-  
+
   let user = ''
-  
+
   if ('IRI' in Config.User && Config.User.IRI !== null && Config.User.IRI.length > 0) {
     user = '<span about="' + Config.User.IRI + '" typeof="schema:Person">' +
     userImage + '<a rel="schema:url" href="' + Config.User.IRI + '"> ' +
@@ -2860,7 +2860,7 @@ function getAgentHTML(options = {}) {
   } else {
     user = '<span typeof="schema:Person">' + userName + '</span>'
   }
-  
+
   return user
 }
 

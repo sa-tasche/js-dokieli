@@ -192,6 +192,12 @@ function hashCode(s) {
   return hash;
 }
 
+function getRandomIndex(length) {
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  return array[0] % length;
+}
+
 function domSanitize(strHTML, options = {}) {
   // ALLOW_UNKNOWN_PROTOCOLS is needed for namespaced attribute values that DOMPurify mistakenly interpret as an unknown protocol protocol; it will allow mailto: but strip out others it does not recognize
   const cleanHTML = DOMPurify.sanitize(strHTML, {
@@ -363,6 +369,7 @@ export {
   generateAttributeId,
   generateId,
   getHash,
+  getRandomIndex,
   hashCode,
   getRandomUUID,
   sortToLower,
