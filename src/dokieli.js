@@ -5983,7 +5983,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
         var patch = {};
         var containerLabel = input.value.trim();
-        var insertG = '<> <' + ns.dcterms.title.value +  '> """' + containerLabel.replace(/"/g, '\"') + '""" .';
+        var insertG = '<> <' + ns.dcterms.title.value +  '> """' + containerLabel.replace(/"/g, '\\"') + '""" .';
         patch = { 'insert': insertG };
 
         containerLabel = containerLabel.endsWith('/') ? containerLabel.slice(0, -1) : containerLabel;
