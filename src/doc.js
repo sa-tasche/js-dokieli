@@ -651,7 +651,6 @@ function createNoteDataHTML(n) {
 
   var creatorName = '';
   var creatorIRI = '#' + generateAttributeId();
-  // creatorNameIRI = Config.SecretAgentNames[Math.floor(Math.random() * Config.SecretAgentNames.length)];
 
   if ('creator' in n) {
     if('iri' in n.creator) {
@@ -3254,7 +3253,6 @@ function showResourceAudienceAgentOccupations() {
 
             var label = iri;
             if (skosLabels.length) {
-              // label = skosLabels[Math.floor(Math.random() * skosLabels.length)];
               label = skosLabels[0];
               Config.Resource[iri]['labels'] = skosLabels;
             }
