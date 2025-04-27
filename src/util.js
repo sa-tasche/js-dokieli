@@ -246,12 +246,40 @@ function kebabToCamel(str) {
   return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
 }
 
+function isReDoSVulnerable(regex) {
+  const regexStr = regex.toString();
+
+  const vulnerablePatterns = [
+    /(\*|\+|\{.*\})\s?\1/,  
+    /([a-zA-Z0-9])\1{2,}/,  
+    /.*a.*b.*c.*d.*e.*/  
+  ];
+
+  for (let pattern of vulnerablePatterns) {
+    if (pattern.test(regexStr)) {
+      return true;
+    }
+  }
+
+  return false; 
+}
+
+
 
 function matchAllIndex(string, regexp) {
   // const matches = Array.from(string.matchAll(regexp));
   // return matches.map(match => ({ match: match[0], index: match.index }));
 
   const matches = [];
+
+  if (!regexp.global) {
+    const globalRegexp = new RegExp(regexp.source, `${regexp.flags}g`);
+    regexp = globalRegexp;
+  }
+
+  if (isReDoSVulnerable(regexp)) {
+    throw new Error('Regular expression is potentially vulnerable to ReDoS attack');
+  }
   
   for (const match of string.matchAll(regexp)) {
     const arr = [...match]; // Convert the match to an array
