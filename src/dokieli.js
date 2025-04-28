@@ -3969,8 +3969,8 @@ console.log(reason);
       s += `${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data (Turtle, JSON-LD, TriG)', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}`;
 
       if (DO.C.Resource[documentURL]['odrl'] && DO.C.Resource[documentURL]['odrl']['prohibitionAssignee'] == DO.C.User.IRI &&
-        ((DO.C.Resource[documentURL]['odrl']['prohibitionActions'] && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].indexOf('http://www.w3.org/ns/odrl/2/print') > -1) ||
-        (DO.C.Resource[documentURL]['odrl']['permissionActions'] && DO.C.Resource[documentURL]['odrl']['permissionActions'].indexOf('http://www.w3.org/ns/odrl/2/print') > -1))) {
+        ((DO.C.Resource[documentURL]['odrl']['prohibitionActions'] && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].includes('http://www.w3.org/ns/odrl/2/print')) ||
+        (DO.C.Resource[documentURL]['odrl']['permissionActions'] && DO.C.Resource[documentURL]['odrl']['permissionActions'].includes('http://www.w3.org/ns/odrl/2/print')))) {
         // s += '<li><button class="resource-print"' + getButtonDisabledHTML('resource-print') + ' title="Print document">' + Icon[".fas.fa-print.fa-2x"] + 'Print</button></li>';
         s += `${getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonDisabled: getButtonDisabledHTML('resource-print'), buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' })}`;
       }
@@ -5375,7 +5375,11 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           var policyDetails = [];
 
           var types = getGraphTypes(policy);
-          var indexPolicy = types.indexOf(ns.odrl.Offer.value) || types.indexOf(ns.odrl.Agreement.value);
+
+          var indexPolicy = types.findIndex(t => 
+            t === ns.odrl.Offer.value || t === ns.odrl.Agreement.value
+          );
+
           if (indexPolicy >= 0) {
             var rule = types[indexPolicy];
             //XXX: Label derived from URI.
