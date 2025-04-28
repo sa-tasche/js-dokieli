@@ -249,10 +249,6 @@ export class Editor {
         document.body.appendChild(node);
       });
 
-
-      // document.body.insertAdjacentHTML('afterbegin', content);
-      // document.body.replaceChildren(new DOMParser().parseFromString(content, "text/html").body);
-
       // console.log("Editor destroyed. Mode:", this.mode);
     }
   }

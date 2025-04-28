@@ -213,12 +213,15 @@ function getDocument (cn, options) {
   return s
 }
 
-function getDocumentNodeFromString(s, options) {
+function getDocumentNodeFromString(data, options) {
   options = options || {};
   options['contentType'] = options.contentType || 'text/html';
 
   var parser = new DOMParser();
-  var parsedDoc = parser.parseFromString(s, options.contentType);
+  if (options.contentType == 'text/xml') {
+    data = data.replace(/<!DOCTYPE[^>]*>/i, '');
+  }
+  var parsedDoc = parser.parseFromString(data, options.contentType);
   return parsedDoc.documentElement;
 }
 

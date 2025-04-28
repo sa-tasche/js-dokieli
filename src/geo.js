@@ -28,6 +28,7 @@ function generateGeoView(data) {
   var tmpl = document.implementation.createHTMLDocument('template');
 
   var parser = new DOMParser();
+  data = data.replace(/<!DOCTYPE[^>]*>/i, '');
   var rootNode = parser.parseFromString(data, "text/xml");
   var contextNode = rootNode;
 
