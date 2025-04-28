@@ -99,9 +99,9 @@ function generateUUID(inputString) {
     return uuid;
   }
   else {
-    const uuid = window.crypto.randomUUID();
+    const uuid = crypto.randomUUID();
     const array = new Uint8Array(1);
-    window.crypto.getRandomValues(array);
+    crypto.getRandomValues(array);
     const randomLetter = String.fromCharCode(97 + (array[0] % 6)); // Start with a-f
     return randomLetter + uuid.slice(1);
   }
@@ -145,7 +145,7 @@ function getFormValues(form) {
 
 function getHash(message, algo = "SHA-256") {
   var buffer = new TextEncoder("utf-8").encode(message);
-  return window.crypto.subtle.digest(algo, buffer).then(function (hash) {
+  return crypto.subtle.digest(algo, buffer).then(function (hash) {
     var hexCodes = [];
     var view = new DataView(hash);
     for (var i = 0; i < view.byteLength; i += 4) {
@@ -172,7 +172,7 @@ function hashCode(s) {
 
 function getRandomIndex(length) {
   const array = new Uint32Array(1);
-  window.crypto.getRandomValues(array);
+  crypto.getRandomValues(array);
   return array[0] % length;
 }
 
