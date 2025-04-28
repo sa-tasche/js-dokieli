@@ -920,7 +920,7 @@ function showActionMessage(node, message, options = {}) {
   message['type'] = ('type' in message) ? message.type : 'info';
 
   var id = generateAttributeId();
-  var messageItem = '<li id="' + id  + '" class="' + message.type + '">' + message.content + '</li>';
+  var messageItem = domSanitize('<li id="' + id  + '" class="' + message.type + '">' + message.content + '</li>');
 
   var aside = node.querySelector('#document-action-message');
   if (!aside) {
@@ -964,6 +964,7 @@ function selectArticleNode(node) {
 function insertDocumentLevelHTML(rootNode, h, options) {
   rootNode = rootNode || document;
   options = options || {};
+  h = domSanitize(h);
 
   options['id'] = ('id' in options) ? options.id : Config.DocumentItems[Config.DocumentItems.length-1];
 
@@ -1270,7 +1271,7 @@ function setDocumentRelation(rootNode, data, options) {
   var dd;
 
   data.forEach(d => {
-    var documentRelation = '<dd>' + createRDFaHTML(d) + '</dd>';
+    var documentRelation = domSanitize('<dd>' + createRDFaHTML(d) + '</dd>');
 
     if (dl) {
       if (Config.DocumentItems.indexOf(options.id) > -1) {
