@@ -8595,7 +8595,7 @@ WHERE {\n\
 
       var datetime = noteData.datetime ? noteData.datetime : '1900-01-01T00:00:00.000Z';
 
-            var li = '<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>';
+      var li = domSanitize('<li data-datetime="' + datetime + '"><blockquote cite="' + noteDataIRI + '">'+ note + '</blockquote></li>');
 // console.log(li);
       var aside = document.getElementById('document-notifications');
 
