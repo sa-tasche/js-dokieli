@@ -273,23 +273,6 @@ function matchAllIndex(string, regexp) {
   }
   
   return matches.length ? matches : null;
-
-  //XXX: This used to be String.protocol.matchAll from https://web.archive.org/web/20180407184826/http://cwestblog.com/2013/02/26/javascript-string-prototype-matchall/ and returns an Array, but it is being repurposed. Firefox Nightly 66.0a1 (around 2018-12-24) started to support String.prototype.matchAll and returns an RegExp String Iterator. Changing it to matchAllIndex to not conflict
-
-  // // if (!String.prototype.matchAll) {
-  //   // String.prototype.matchAll = function(regexp) {
-  //     var matches = [];
-  //     // this.replace(regexp, function() {
-  //     string.replace(regexp, o => {
-  //       var arr = ([]).slice.call(arguments, 0);
-  //       var extras = arr.splice(-2);
-  //       arr.index = extras[0];
-  //       arr.input = extras[1];
-  //       matches.push(arr);
-  //     });
-  //     return matches.length ? matches : null;
-  //   // };
-  // // }
 }
 
 function isValidISBN (str) {
