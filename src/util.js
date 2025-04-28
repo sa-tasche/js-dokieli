@@ -1,6 +1,4 @@
 import DOMPurify from 'dompurify';
-// explicitly importing crypto for tests
-import crypto from 'crypto';
 import { rdfaAttributes } from 'src/editor/schema/base';
 
 function uniqueArray(a) {
