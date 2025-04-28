@@ -2245,7 +2245,7 @@ DO = {
         </tbody>\n\
       </table></section>';
 
-      node.insertAdjacentHTML('beforeend', html);
+      node.insertAdjacentHTML('beforeend', domSanitize(html));
     },
 
     contentCount: function contentCount (node) {
@@ -2420,7 +2420,7 @@ DO = {
     },
 
     showDocumentCommunicationOptions: function(node) {
-      var html = [];
+      var communicationOptionsHTML = [];
 
       var documentURL = DO.C.DocumentURL;
 
@@ -2431,24 +2431,21 @@ DO = {
         else {
           var db = DO.C.Resource[documentURL].headers.linkHeaders.rel('describedby');
 
-          var missingResource = db.filter(relationItem => { return !DO.C.Resource[relationItem.uri]; });
-
-          if (missingResource == undefined) {
+          if (!db.every(relationItem => DO.C.Resource[relationItem.uri]?.graph !== undefined)) {
             window.setTimeout(waitUntil, 250);
           }
           else {
             db.forEach(relationItem => {
               if (DO.C.Resource[relationItem.uri]?.graph !== undefined) {
-                html.push(DO.U.getCommunicationOptions(DO.C.Resource[relationItem.uri].graph, { 'subjectURI': documentURL }));
+                communicationOptionsHTML.push(DO.U.getCommunicationOptions(DO.C.Resource[relationItem.uri].graph, { 'subjectURI': documentURL }));
               }
             });
 
-            if (html.length) {
-              node.insertAdjacentHTML('beforeend', html);
-
+            communicationOptionsHTML.forEach(html => {
+              node.insertAdjacentHTML('beforeend', domSanitize(html));
               var nodes = document.querySelectorAll('#' + node.id + ' [id^="notification-subscriptions-"]');
               DO.U.buttonSubscribeNotificationChannel(nodes, documentURL);
-            }
+            });
           }
         }
       }
@@ -5290,7 +5287,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                       var odrlPolicies = DO.U.getODRLPolicies(g);
                       var communicationOptions = DO.U.getCommunicationOptions(g);
 
-                      sD.insertAdjacentHTML('beforeend', '<div id="' + id + '-storage-description">' + storageLocation + selfDescription + contactInformation + persistencePolicy + odrlPolicies + communicationOptions + '</div>');
+                      sD.insertAdjacentHTML('beforeend', domSanitize('<div id="' + id + '-storage-description">' + storageLocation + selfDescription + contactInformation + persistencePolicy + odrlPolicies + communicationOptions + '</div>'));
 
                       var subscriptionsId = id + '-storage-description-details';
                       var topicResource = s.term.value;
