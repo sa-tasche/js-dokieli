@@ -6,7 +6,7 @@ describe('Editor.setTemplateNew', () => {
   let editor;
 
   beforeEach(() => {
-    document.body.innerHTML = '<head><title>Old</title></head><body></body>';
+    document.body.innerHTML = '<head><title>Old</title></head><body><div id="document-menu"></div></body>';
     editor = new Editor('author', document.body);
   });
 
