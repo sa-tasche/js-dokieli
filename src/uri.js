@@ -41,9 +41,16 @@ function getAbsoluteIRI(base, location) {
 function getProxyableIRI(url, options = {}) {
   var pIRI = stripFragmentFromString(url);
 
-  if ((typeof document !== 'undefined' && document.location.protocol === 'https:' && pIRI.slice(0, 5).toLowerCase() === 'http:') || 'forceProxy' in options) {
-    var proxyURL = getProxyURL(options);
-    pIRI = (proxyURL) ? proxyURL + encodeURIComponent(pIRI) : pIRI;
+  try {
+    pIRI = new URL(pIRI).href;
+
+    if ((typeof document !== 'undefined' && document.location.protocol === 'https:' && pIRI.slice(0, 5).toLowerCase() === 'http:') || 'forceProxy' in options) {
+      var proxyURL = getProxyURL(options);
+      pIRI = (proxyURL) ? proxyURL + encodeURIComponent(pIRI) : pIRI;
+    }
+  }
+  catch (error) {
+    throw new Error("Invalid URL provided: " + error);
   }
 
   return pIRI;
