@@ -5199,7 +5199,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
               var channelType = DO.C.Resource[topicResource]['subscription'][subscription]['channelType'];
 
               var data = {
-                "type": channelType,
+                "type": channelType[0],
                 "topic": topicResource
               };
 
@@ -5642,9 +5642,10 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
     //doap:implements <https://solidproject.org/TR/2022/notification-protocol-20221231#subscription-client-subscription-request>
     subscribeToNotificationChannel: function(url, data) {
-      if (data.type.includes(ns.notify.WebSocketChannel2023.value)) {
+      switch(data.type){
         //doap:implements <https://solidproject.org/TR/websocket-channel-2023>
-        return DO.U.subscribeToWebSocketChannel(url, data);
+        case ns.notify.WebSocketChannel2023.value:
+          return DO.U.subscribeToWebSocketChannel(url, data);
       }
     },
 
@@ -5658,7 +5659,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       switch (options.contentType) {
         case 'text/turtle':
-          data = '<> a <' + ns.notify[d.type].value  + '> ;\n\
+          data = '<> a <' + d.type  + '> ;\n\
   <http://www.w3.org/ns/solid/notifications#topic> <' + d.topic + '> .';
           break;
 
@@ -5748,6 +5749,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       var rD = (contentType == 'application/ld+json') ? response.json() : response.text();
 
       return rD.then(data => {
+// console.log(data)
         // return getGraphFromData(data, options).then
         switch (contentType) {
           case 'text/turtle':
@@ -5758,7 +5760,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
               if (d.topic != data.topic) {
                 console.log('TODO: topic requested != response');
               }
-
+// console.log(d.type, data)
               //TODO d.type == 'LDNChannel2023' && data.sender
               if ((d.type == 'WebSocketChannel2023' || d.type == ns.notify.WebSocketChannel2023.value) && data.receiveFrom) {
                 return Promise.resolve(data);
@@ -5848,8 +5850,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 // console.log(data)
           var protocols = [data.type];
 // protocols = ['solid-0.1'];
-
-          var ws = new WebSocket(url, protocols);
+// console.log(url, protocols)
+          var ws = new WebSocket(url);
           var message;
 
           ws.onopen = function() {
