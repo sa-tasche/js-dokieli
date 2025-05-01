@@ -5642,10 +5642,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
     //doap:implements <https://solidproject.org/TR/2022/notification-protocol-20221231#subscription-client-subscription-request>
     subscribeToNotificationChannel: function(url, data) {
-      switch(data.type){
+      if (data.type.includes(ns.notify.WebSocketChannel2023.value)) {
         //doap:implements <https://solidproject.org/TR/websocket-channel-2023>
-        case ns.notify.WebSocketChannel2023.value:
-          return DO.U.subscribeToWebSocketChannel(url, data);
+        return DO.U.subscribeToWebSocketChannel(url, data);
       }
     },
 
