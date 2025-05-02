@@ -6500,21 +6500,18 @@ console.log(response)
       return image + name + published + summary + tags;
     },
 
-    spawnDokieli: async function(documentNode, data, contentType, iri, options){
-      options =  options || {};
-
+    spawnDokieli: async function(documentNode, data, contentType, iri, options = {}){
         var tmpl = document.implementation.createHTMLDocument('template');
 // console.log(tmpl);
 
         switch(contentType){
           case 'text/html': case 'application/xhtml+xml':
-            //TODO: Remoe scripts, keep styles?
-            //tmpl.documentElement.appendChild(fragmentFromString(domSanitize(data)));
-            tmpl.documentElement.setHTMLUnsafe(domSanitize(data));
+            tmpl.documentElement.setHTMLUnsafe(data);
+            tmpl.body.setHTMLUnsafe(domSanitize(tmpl.body.getHTML()));
             break;
 
           case 'application/gpx+xml':
-// console.log(data)
+            // console.log(data)
             tmpl = await generateGeoView(data)
             // FIXME: Tested with generateGeoView returning a Promise but somehow
             .then(i => {
@@ -6536,7 +6533,8 @@ console.log(response)
               }
 
               return i;
-            })
+            });
+
             break;
 
           default:
@@ -6552,50 +6550,32 @@ console.log(response)
             break;
         }
 
-// console.log(tmpl);
+        var hasDokieliBasicCss = false;
 
-        var documentHasDokieli = tmpl.querySelectorAll('head script[src$="/dokieli.js"]');
-// console.log(documentHasDokieli);
-// console.log(documentHasDokieli.length)
-        if (documentHasDokieli.length == 0) {
-          if (!DO.C.WebExtension) {
-            tmpl.querySelectorAll('head link[rel~="stylesheet"]').forEach(e => {
-              e.setAttribute('disabled', 'disabled');
-              e.classList.add('do');
-            })
-          }
-
-          var doFiles = [];
           if (options.defaultStylesheet) {
-            doFiles.push('basic.css');
-          }
-          doFiles = doFiles.concat(['dokieli.css', 'dokieli.js']);
+            hasDokieliBasicCss = !!document.querySelectorAll('head link[rel~="stylesheet"][href="https://dokie.li/media/css/basic.css"]');
 
-          doFiles.forEach(i => {
-// console.log(i);
-            var media = i.endsWith('.css') ? tmpl.querySelectorAll('head link[rel~="stylesheet"][href$="/' + i + '"]') : tmpl.querySelectorAll('head script[src$="/' + i + '"]');
-// console.log(media);
-// console.log(media.length)
-            if (media.length == 0) {
-              switch(i) {
-                case 'dokieli.css': case 'basic.css':
-                  tmpl.querySelector('head').insertAdjacentHTML('beforeend', '<link href="https://dokie.li/media/css/' + i + '" media="all" rel="stylesheet" />');
-                  break;
-                case 'dokieli.js':
-                  tmpl.querySelector('head').insertAdjacentHTML('beforeend', '<script src="https://dokie.li/scripts/' + i + '"></script>')
-                  break;
+            document.querySelectorAll('head link[rel~="stylesheet"][href]').forEach(e => {
+              let node = new URL(e.href, iri);
+              let href = node.href;
+
+              // TODO: process.env.NODE_ENV === 'development' check relative vs absolute URL in prod
+              if (href != 'https://dokie.li/media/css/basic.css') {
+                e.setAttribute('disabled', 'disabled');
+                e.classList.add('do');
               }
+            })
+
+            if (!hasDokieliBasicCss) {
+              document.querySelector('head').insertAdjacentHTML('beforeend', '<link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" />');
             }
-// console.log(tmpl)
-          });
+          }
 
           if (options.init === true) {
             tmpl.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
             //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
             // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
             // nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
-            documentNode.documentElement.removeAttribute('id');
-            documentNode.documentElement.removeAttribute('class');
           }
           else {
             var baseElements = tmpl.querySelectorAll('head base');
@@ -6603,8 +6583,8 @@ console.log(response)
               baseElement.remove();
             });
           }
-        }
-        else if (contentType == 'application/gpx+xml') {
+
+        if (contentType == 'application/gpx+xml') {
           options['init'] = false;
 
           //XXX: Should this be taken care by updating the document.documentElement and then running DO.C.init(iri) ? If I'm asking, then probably yes.
@@ -6616,40 +6596,19 @@ console.log(response)
           DO.U.hideDocumentMenu();
         }
         else if (!iri.startsWith('file:') && options.init) {
-          window.open(iri, '_blank');
+          // window.open(iri, '_blank');
+
+          document.documentElement.replaceChild(tmpl.body.cloneNode(true), document.body);
+          // DO.U.hideDocumentMenu();
           return;
         }
 
-        if (options.init === true) {
-          documentNode.documentElement.setHTMLUnsafe(domSanitize(tmpl.documentElement.getHTML()));
-          documentNode.documentElement.querySelectorAll('head link[rel~="stylesheet"][disabled][class~="do"]').forEach(e => {
-            e.removeAttribute('disabled');
-            e.classList.remove('do');
-            if (e.classList.length == 0) { e.removeAttribute('class'); }
-          });
 
-// console.log(document.location.protocol);
-          if (!iri.startsWith('file:')){
-            var iriHost = iri.split('//')[1].split('/')[0];
-            var iriProtocol = iri.split('//')[0];
-// console.log(iriHost);
-// console.log(iriProtocol);
-            if (documentNode.location.protocol == iriProtocol && documentNode.location.host == iriHost) {
-              try {
-                history.pushState(null, null, iri);
-              }
-              catch(e) { console.log('Cannot change pushState due to cross-origin.'); }
-            }
-          }
-
-          DO.C.init(iri);
-        }
-
+//XXX: This is used in cases options.init is false or undefined
         return tmpl.documentElement.cloneNode(true);
-//       }
-//       else {
+
 // console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
-//       }
+
     },
 
     createNewDocument: function(e) {
@@ -7040,7 +6999,8 @@ console.log(response)
             )
 
             if (DO.Editor['new']) {
-              DO.Editor.replaceContent('author', fragmentFromString(html));
+              //XXX: Commenting this out for now, not sure what this was supposed to fix
+              // DO.Editor.replaceContent('author', fragmentFromString(html));
               DO.Editor['new'] = false;
 
               var urlObject = new URL(url);
