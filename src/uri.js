@@ -169,23 +169,28 @@ function generateDataURI(mediaType, encoding, data) {
 
 
 function getPrefixedNameFromIRI(iri) {
-  var match = iri.match(/(.*?[#/])([^/#]+)$/);
+  const hashIndex = iri.lastIndexOf('#');
+  const slashIndex = iri.lastIndexOf('/');
+  const sepIndex = Math.max(hashIndex, slashIndex);
 
-  if (match) {
-    var ns = match[1];
-    var localPart = match[2];
+  if (sepIndex === -1) {
+    return iri;
+  }
 
-    var prefix = Object.keys(Config.Prefixes).find(key => {
-      return Config.Prefixes[key] === ns;
-    });
+  const ns = iri.slice(0, sepIndex + 1);
+  const localPart = iri.slice(sepIndex + 1);
 
-    if (prefix) {
-      return prefix + ":" + localPart;
-    }
+  const prefix = Object.keys(Config.Prefixes).find(key => {
+    return Config.Prefixes[key] === ns;
+  });
+
+  if (prefix) {
+    return `${prefix}:${localPart}`;
   }
 
   return iri;
 }
+
 
 function getMediaTypeURIs(mediaTypes) {
   mediaTypes = Array.isArray(mediaTypes) ? mediaTypes : [mediaTypes];
