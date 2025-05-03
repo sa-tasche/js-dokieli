@@ -240,12 +240,14 @@ function getDocumentContentNode(node) {
 }
 
 function createHTML(title, main, options) {
-  title = title || '';
+  title = domSanitize(title) || '';
+  main = domSanitize(main);
   options = options || {};
   var prefix = ('prefixes' in options && Object.keys(options.prefixes).length > 0) ? ' prefix="' + getRDFaPrefixHTML(options.prefixes) + '"' : '';
   var lang = options.lang || 'en';
   lang = ' lang="' + lang + '" xml:lang="' + lang + '"';
   lang = ('omitLang' in options) ? '' : lang;
+  lang = domSanitize(lang);
 
   return '<!DOCTYPE html>\n\
 <html' + lang + ' xmlns="http://www.w3.org/1999/xhtml">\n\

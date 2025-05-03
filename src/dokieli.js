@@ -2570,7 +2570,7 @@ DO = {
       toc += DO.U.getListOfSections(sections, {'sortable': DO.C.SortableList});
       toc += '</ol></section>';
 
-      node.insertAdjacentHTML('beforeend', toc);
+      node.insertAdjacentHTML('beforeend', domSanitize(toc));
     },
 
 
@@ -4749,6 +4749,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     //TODO: Revisit this function and addShareResourceContactInput to generalise.
     addAccessSubjectItem: function(node, s, url) {
       var iri = s?.term.value || url;
+      iri = domSanitize(iri);
 
       var id = encodeURIComponent(iri);
       var name = s ? getAgentName(s) || iri : iri;
