@@ -6501,18 +6501,18 @@ console.log(response)
     },
 
     spawnDokieli: async function(documentNode, data, contentType, iri, options = {}){
-        var tmpl = document.implementation.createHTMLDocument('template');
-// console.log(tmpl);
+      var tmpl = document.implementation.createHTMLDocument('template');
+      // console.log(tmpl);
 
-        switch(contentType){
-          case 'text/html': case 'application/xhtml+xml':
-            tmpl.documentElement.setHTMLUnsafe(data);
-            tmpl.body.setHTMLUnsafe(domSanitize(tmpl.body.getHTML()));
-            break;
+      switch(contentType){
+        case 'text/html': case 'application/xhtml+xml':
+          tmpl.documentElement.setHTMLUnsafe(data);
+          tmpl.body.setHTMLUnsafe(domSanitize(tmpl.body.getHTML()));
+          break;
 
-          case 'application/gpx+xml':
-            // console.log(data)
-            tmpl = await generateGeoView(data)
+        case 'application/gpx+xml':
+          // console.log(data)
+          tmpl = await generateGeoView(data)
             // FIXME: Tested with generateGeoView returning a Promise but somehow
             .then(i => {
               var id = 'geo';
@@ -6535,103 +6535,102 @@ console.log(response)
               return i;
             });
 
-            break;
+          break;
 
-          default:
-            data = escapeCharacters(data)
-            // console.log(data)
-            var iframe = document.createElement('iframe');
-            // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
-            iframe.srcdoc = '<pre>' + data + '</pre>';
-            iframe.width = '1280'; iframe.height = '720';
-            var dl = fragmentFromString('<dl><dt><a href="' + iri + '" target="_blank">' + iri + '</a></dt><dd></dd></dl>');
-            dl.querySelector('dd').appendChild(iframe);
-            tmpl.documentElement.appendChild(dl);
-            break;
-        }
+        default:
+          data = escapeCharacters(data)
+          // console.log(data)
+          var iframe = document.createElement('iframe');
+          // <pre type=&quot;' + contentType + '&quot; -- nice but `type` is undefined attribute for `pre`.at the moment. Create issue in WHATWG for fun/profit?
+          iframe.srcdoc = '<pre>' + data + '</pre>';
+          iframe.width = '1280'; iframe.height = '720';
+          var dl = fragmentFromString('<dl><dt><a href="' + iri + '" target="_blank">' + iri + '</a></dt><dd></dd></dl>');
+          dl.querySelector('dd').appendChild(iframe);
+          tmpl.documentElement.appendChild(dl);
 
-          if (options.defaultStylesheet) {
-            var documentCss = document.querySelectorAll('head link[rel~="stylesheet"][href]');
+          break;
+      }
 
-            let hasDokieliCss = false;
+      if (options.defaultStylesheet) {
+        var documentCss = document.querySelectorAll('head link[rel~="stylesheet"][href]');
 
-            documentCss.forEach(node => {
-              const href = node.href;
-              const isBasicCss = href === 'https://dokie.li/media/css/basic.css';
-              const isDokieliCss = href === 'https://dokie.li/media/css/dokieli.css';
+        let hasDokieliCss = false;
 
-              node.setAttribute('href', href);
+        documentCss.forEach(node => {
+          const href = node.href;
+          const isBasicCss = href === 'https://dokie.li/media/css/basic.css';
+          const isDokieliCss = href === 'https://dokie.li/media/css/dokieli.css';
 
-              if (!isBasicCss && !isDokieliCss) {
-                node.setAttribute('disabled', 'disabled');
-                node.classList.add('do');
-              }
-              else {
-                node.setAttribute('rel', 'stylesheet');
-                hasDokieliCss = true;
-              }
-            });
+          node.setAttribute('href', href);
 
-            if (!hasDokieliCss) {
-              document.querySelector('head').insertAdjacentHTML('beforeend', `
-                <link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
-                <link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" />`);
-            }
-          }
-
-          var documentScript = document.querySelectorAll('head script[src]');
-          documentScript.forEach(node => {
-            node.setAttribute('src', node.src);
-          })
-
-          if (options.init === true) {
-            document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
-            //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
-            // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
-            // nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
+          if (!isBasicCss && !isDokieliCss) {
+            node.setAttribute('disabled', 'disabled');
+            node.classList.add('do');
           }
           else {
-            var baseElements = dicument.querySelectorAll('head base');
-            baseElements.forEach(baseElement => {
-              baseElement.remove();
-            });
+            node.setAttribute('rel', 'stylesheet');
+            hasDokieliCss = true;
           }
+        });
 
-        if (contentType == 'application/gpx+xml') {
-          options['init'] = false;
-
-          //XXX: Should this be taken care by updating the document.documentElement and then running DO.C.init(iri) ? If I'm asking, then probably yes.
-          var asideOpenDocument = document.getElementById('open-document');
-          if (asideOpenDocument) {
-            asideOpenDocument.parentNode.removeChild(asideOpenDocument);
-          }
-          document.querySelector('#document-do .resource-open').disabled = false;
-          DO.U.hideDocumentMenu();
+        if (!hasDokieliCss) {
+          document.querySelector('head').insertAdjacentHTML('beforeend', `
+            <link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
+            <link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" />`);
         }
-        else if (!iri.startsWith('file:') && options.init) {
-          // window.open(iri, '_blank');
+      }
 
-          //TODO: Which approach?
-          // var restrictedNodes = Array.from(document.body.querySelectorAll('.do:not(.copy-to-clipboard):not(.robustlinks):not(.ref):not(.delete):not(#document-action-message)'));
-          // var restrictedNodes = [document.getElementById('document-menu'), document.getElementById('document-editor'), document.getElementById('document-action-message')];
-          // restrictedNodes.forEach(node => {
-          //   tmpl.body.appendChild(node);
-          // });
+      var documentScript = document.querySelectorAll('head script[src]');
+      documentScript.forEach(node => {
+        node.setAttribute('src', node.src);
+      })
 
-          document.documentElement.replaceChild(tmpl.body.cloneNode(true), document.body);
-          DO.U.showDocumentInfo();
-          DO.U.initEditor();
+      if (options.init === true) {
+        document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
+        //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
+        // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
+        // nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
+      }
+      else {
+        var baseElements = dicument.querySelectorAll('head base');
+        baseElements.forEach(baseElement => {
+          baseElement.remove();
+        });
+      }
 
-          // DO.U.hideDocumentMenu();
-          return;
+      if (contentType == 'application/gpx+xml') {
+        options['init'] = false;
+
+        //XXX: Should this be taken care by updating the document.documentElement and then running DO.C.init(iri) ? If I'm asking, then probably yes.
+        var asideOpenDocument = document.getElementById('open-document');
+        if (asideOpenDocument) {
+          asideOpenDocument.parentNode.removeChild(asideOpenDocument);
         }
+        document.querySelector('#document-do .resource-open').disabled = false;
+        DO.U.hideDocumentMenu();
+      }
+      else if (!iri.startsWith('file:') && options.init) {
+        // window.open(iri, '_blank');
 
+        //TODO: Which approach?
+        // var restrictedNodes = Array.from(document.body.querySelectorAll('.do:not(.copy-to-clipboard):not(.robustlinks):not(.ref):not(.delete):not(#document-action-message)'));
+        // var restrictedNodes = [document.getElementById('document-menu'), document.getElementById('document-editor'), document.getElementById('document-action-message')];
+        // restrictedNodes.forEach(node => {
+        //   tmpl.body.appendChild(node);
+        // });
 
-//XXX: This is used in cases options.init is false or undefined
-        return tmpl.documentElement.cloneNode(true);
+        document.documentElement.replaceChild(tmpl.body.cloneNode(true), document.body);
+        DO.U.showDocumentInfo();
+        DO.U.initEditor();
 
-// console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
+        // DO.U.hideDocumentMenu();
+        return;
+      }
 
+      //XXX: This is used in cases options.init is false or undefined
+      return tmpl.documentElement.cloneNode(true);
+
+      // console.log('//TODO: Handle server returning wrong or unknown Response/Content-Type for the Request/Accept');
     },
 
     createNewDocument: function(e) {
