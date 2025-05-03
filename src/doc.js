@@ -1878,7 +1878,9 @@ function getResourceInfo(data, options) {
       }
 
       for (var key in info) {
-        Config['Resource'][documentURL][key] = info[key];
+        if (Object.hasOwn(info, key) && key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
+            Config['Resource'][documentURL][key] = info[key];
+        }
       }
 
       return info;
