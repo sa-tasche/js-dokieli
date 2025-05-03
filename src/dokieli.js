@@ -1537,7 +1537,7 @@ DO = {
     setDocumentMode: function(mode) {
       Config.Editor.mode = mode || Config.Editor.mode;
 
-      var style = DO.U.urlParam('style');
+      var style = domSanitize(DO.U.urlParam('style'));
 
       if (style) {
         var title = style.lastIndexOf('/');
@@ -1554,7 +1554,7 @@ DO = {
         DO.U.updateSelectedStylesheets(stylesheets, title);
       }
 
-      var open = DO.U.urlParam('open');
+      var open = domSanitize(DO.U.urlParam('open'));
       if (open) {
         open = decodeURIComponent(open);
 
@@ -1578,6 +1578,7 @@ DO = {
         var graphs = searchParams.getAll('graph');
 
         var urls = graphs.map(url => {
+          url = domSanitize(url);
           // var iri = decodeURIComponent(g);
 
           //TODO: Need a way to handle potential proxy use eg. https://dokie.li/?graph=https://dokie.li/proxy?uri=https://example.org/
@@ -1895,7 +1896,7 @@ DO = {
       }
 
       s += '</ul></section>';
-      node.insertAdjacentHTML('beforeend', s);
+      node.insertAdjacentHTML('beforeend', domSanitize(s));
 
       var viewButtons = document.querySelectorAll('#document-views button:not([class~="resource-visualise"])');
       for (let i = 0; i < viewButtons.length; i++) {
@@ -2325,7 +2326,7 @@ DO = {
           var ic = loC.querySelector('#include-concepts');
           if (ic) { ic.parentNode.removeChild(ic); }
 
-          loC.querySelector('div').insertAdjacentHTML('beforeend', html);
+          loC.querySelector('div').insertAdjacentHTML('beforeend', domSanitize(html));
 
           // insertDocumentLevelHTML(document, html, { 'id': id });
 
@@ -3963,8 +3964,8 @@ console.log(reason);
       s += `${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data (Turtle, JSON-LD, TriG)', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}`;
 
       if (DO.C.Resource[documentURL]['odrl'] && DO.C.Resource[documentURL]['odrl']['prohibitionAssignee'] == DO.C.User.IRI &&
-        ((DO.C.Resource[documentURL]['odrl']['prohibitionActions'] && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].includes('http://www.w3.org/ns/odrl/2/print')) ||
-        (DO.C.Resource[documentURL]['odrl']['permissionActions'] && DO.C.Resource[documentURL]['odrl']['permissionActions'].includes('http://www.w3.org/ns/odrl/2/print')))) {
+        ((Array.isArray(DO.C.Resource[documentURL]['odrl']['prohibitionActions']) && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')) ||
+        (Array.isArray(DO.C.Resource[documentURL]['odrl']['permissionActions']) && DO.C.Resource[documentURL]['odrl']['permissionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')))) {
         // s += '<li><button class="resource-print"' + getButtonDisabledHTML('resource-print') + ' title="Print document">' + Icon[".fas.fa-print.fa-2x"] + 'Print</button></li>';
         s += `${getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonDisabled: getButtonDisabledHTML('resource-print'), buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' })}`;
       }
@@ -6022,8 +6023,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     showErrorResponseMessage(node, response, context) {
       var statusCode = ('status' in response) ? response.status : 0;
       statusCode = (typeof statusCode === 'string') ? parseInt(response.slice(-3)) : statusCode;
-// console.log(statusCode)
-console.log(response)
+      // console.log(statusCode);
+      console.log(response);
+
       var msgs = node.querySelectorAll('.response-message');
       for(var i = 0; i < msgs.length; i++){
         msgs[i].parentNode.removeChild(msgs[i]);
@@ -6071,12 +6073,14 @@ console.log(response)
           break;
       }
 
-      node.insertAdjacentHTML('beforeend', '<div class="response-message"><p class="error">' + msg + '</p></div>');
+      node.insertAdjacentHTML('beforeend', '<div class="response-message"><p class="error">' + domSanitize(msg) + '</p></div>');
     },
 
     setupResourceBrowser: function(parent, id, action){
       id = id || 'browser-location';
+      id = domSanitize(id);
       action = action || 'write';
+      action = domSanitize(action);
 
       var createContainerButton = '';
       var createContainerDiv = '';
@@ -6171,7 +6175,9 @@ console.log(response)
 
     showResourceBrowser: function(id, action) {
       id = id || 'location-' + generateAttributeId();
+      id = domSanitize(id);
       action = action || 'write';
+      action = domSanitize(id);
 
       var browserHTML = '<aside id="resource-browser-' + id + '" class="do on">' + DO.C.Button.Close + '<h2>Resource Browser</h2></aside>';
       document.body.appendChild(fragmentFromString(browserHTML));
@@ -6501,6 +6507,8 @@ console.log(response)
     },
 
     spawnDokieli: async function(documentNode, data, contentType, iri, options = {}){
+      iri = domSanitize(iri);
+
       var tmpl = document.implementation.createHTMLDocument('template');
       // console.log(tmpl);
 
@@ -6657,6 +6665,7 @@ console.log(response)
       DO.U.setupResourceBrowser(newDocument, id, action)
       document.getElementById(id).insertAdjacentHTML('afterbegin', '<p>Choose a location to save your new article.</p>')
       var baseURLSelection = (document.location.protocol == 'file:') ? '' : DO.U.getBaseURLSelection()
+      baseURLSelection = domSanitize(baseURLSelection);
 
       newDocument.insertAdjacentHTML('beforeend', baseURLSelection +
         '<p>Your new document will be saved at <samp id="' + id + '-' + action +
@@ -6741,7 +6750,7 @@ console.log(response)
 
             newDocument.insertAdjacentHTML('beforeend',
               '<div class="response-message"><p class="error">' +
-              'Could not create new document: ' + message + '</p>'
+              'Could not create new document: ' + domSanitize(message) + '</p>'
             )
           })
       })
@@ -7012,6 +7021,7 @@ console.log(response)
             progress.parentNode.removeChild(progress)
 
             let url = response.url || storageIRI
+            url = domSanitize(url);
 
             var documentMode = (DO.C.WebExtension) ? '' : '?author=true'
 
@@ -7085,9 +7095,9 @@ console.log(response)
                 break
             }
 
-            saveAsDocument.insertAdjacentHTML('beforeend',
+            saveAsDocument.insertAdjacentHTML('beforeend', domSanitize(
               '<div class="response-message"><p class="error">' +
-              'Unable to save: ' + message + '</p>' + requestAccess + '</div>'
+              'Unable to save: ' + message + '</p>' + requestAccess + '</div>')
             )
 
             if (DO.C.User.IRI && requestAccess) {
@@ -7100,9 +7110,9 @@ console.log(response)
 
                 e.target.disabled = true;
                 var responseMessage = e.target.parentNode;
-                responseMessage.insertAdjacentHTML('beforeend',
+                responseMessage.insertAdjacentHTML('beforeend', domSanitize(
                   '<span class="progress" data-to="' + inboxURL +
-                  '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>')
+                  '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</span>'))
 
                 var notificationStatements = `<dl about="` + objectId + `" prefix="acl: http://www.w3.org/ns/auth/acl#">
   <dt>Object type</dt><dd><a about="` + objectId + `" href="` + ns.acl.Authorization.value + `" typeof="acl:Authorization">Authorization</a></dd>
