@@ -6528,7 +6528,7 @@ console.log(response)
                 showActionMessage(document.body, message);
 
                 var w = document.getElementById(id);
-                window.history.replaceState(null, null, '#' + id);
+                window.history.pushState(null, null, '#' + id);
                 w.scrollIntoView();
               }
 
@@ -6550,35 +6550,48 @@ console.log(response)
             break;
         }
 
-        var hasDokieliBasicCss = false;
-
           if (options.defaultStylesheet) {
-            hasDokieliBasicCss = !!document.querySelectorAll('head link[rel~="stylesheet"][href="https://dokie.li/media/css/basic.css"]');
+            var documentCss = document.querySelectorAll('head link[rel~="stylesheet"][href]');
 
-            document.querySelectorAll('head link[rel~="stylesheet"][href]').forEach(e => {
-              let node = new URL(e.href, iri);
-              let href = node.href;
+            let hasDokieliCss = false;
 
-              // TODO: process.env.NODE_ENV === 'development' check relative vs absolute URL in prod
-              if (href != 'https://dokie.li/media/css/basic.css') {
-                e.setAttribute('disabled', 'disabled');
-                e.classList.add('do');
+            documentCss.forEach(node => {
+              const href = node.href;
+              const isBasicCss = href === 'https://dokie.li/media/css/basic.css';
+              const isDokieliCss = href === 'https://dokie.li/media/css/dokieli.css';
+
+              node.setAttribute('href', href);
+
+              if (!isBasicCss && !isDokieliCss) {
+                node.setAttribute('disabled', 'disabled');
+                node.classList.add('do');
               }
-            })
+              else {
+                node.setAttribute('rel', 'stylesheet');
+                hasDokieliCss = true;
+              }
+            });
 
-            if (!hasDokieliBasicCss) {
-              document.querySelector('head').insertAdjacentHTML('beforeend', '<link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" />');
+            if (!hasDokieliCss) {
+              document.querySelector('head').insertAdjacentHTML('beforeend', `
+                <link href="https://dokie.li/media/css/basic.css" media="all" rel="stylesheet" title="Basic" />
+                <link href="https://dokie.li/media/css/dokieli.css" media="all" rel="stylesheet" />`);
             }
           }
 
+          var documentScript = document.querySelectorAll('head script[src]');
+          documentScript.forEach(node => {
+            node.setAttribute('src', node.src);
+          })
+
           if (options.init === true) {
-            tmpl.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
+            document.querySelector('head').insertAdjacentHTML('afterbegin', '<base href="' + iri + '" />');
             //TODO: Setting the base URL with `base` seems to work correctly, i.e., link base is opened document's URL, and simpler than updating some of the elements' href/src/data attributes. Which approach may be better depends on actions afterwards, e.g., Save As (perhaps other features as well) may need to remove the base and go with the user selection.
             // var nodes = tmpl.querySelectorAll('head link, [src], object[data]');
             // nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': 'base-url-absolute', 'iri': iri});
           }
           else {
-            var baseElements = tmpl.querySelectorAll('head base');
+            var baseElements = dicument.querySelectorAll('head base');
             baseElements.forEach(baseElement => {
               baseElement.remove();
             });
@@ -6598,7 +6611,17 @@ console.log(response)
         else if (!iri.startsWith('file:') && options.init) {
           // window.open(iri, '_blank');
 
+          //TODO: Which approach?
+          // var restrictedNodes = Array.from(document.body.querySelectorAll('.do:not(.copy-to-clipboard):not(.robustlinks):not(.ref):not(.delete):not(#document-action-message)'));
+          // var restrictedNodes = [document.getElementById('document-menu'), document.getElementById('document-editor'), document.getElementById('document-action-message')];
+          // restrictedNodes.forEach(node => {
+          //   tmpl.body.appendChild(node);
+          // });
+
           document.documentElement.replaceChild(tmpl.body.cloneNode(true), document.body);
+          DO.U.showDocumentInfo();
+          DO.U.initEditor();
+
           // DO.U.hideDocumentMenu();
           return;
         }
