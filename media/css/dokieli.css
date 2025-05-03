@@ -778,7 +778,12 @@ align-self: center;
 padding: 0.5em;
 }
 #document-notifications article button.delete {
+background-color:initial !important;
+border:none !important;
+position: absolute;
+top:0;
 right:1em;
+font-size:1em;
 }
 
 
