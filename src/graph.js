@@ -1256,11 +1256,22 @@ function getGraphImage (s) {
         return false;
       }
     });
-    return image;
   }
   else {
-    return s.out(ns.foaf.img).values[0] || s.out(ns.schema.image).values[0] || s.out(ns.vcard.photo).values[0] || s.out(ns.vcard.hasPhoto).values[0] || s.out(ns.sioc.avatar).values[0] || s.out(ns.foaf.depiction).values[0] || undefined
+    image = s.out(ns.foaf.img).values[0] || s.out(ns.schema.image).values[0] || s.out(ns.vcard.photo).values[0] || s.out(ns.vcard.hasPhoto).values[0] || s.out(ns.sioc.avatar).values[0] || s.out(ns.foaf.depiction).values[0] || undefined
   }
+
+  if (typeof image !== 'undefined') {
+    try {
+      image = new URL(image).href;
+      return image;
+    }
+    catch {
+      return undefined;
+    }
+  }
+
+  return image;
 }
 
 function getGraphEmail(s) {
