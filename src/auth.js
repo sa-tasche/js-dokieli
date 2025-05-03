@@ -220,7 +220,7 @@ function submitSignIn (url) {
 
   const idp = Config.User.OIDCIssuer;
 
-  const redirect_uri = window.location.href;
+  const redirect_uri = window.location.href.split('#')[0];
 
   // Redirects away from dokieli :( but hopefully only briefly :)
   Config['Session'].login(idp, redirect_uri);
