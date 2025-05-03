@@ -3854,28 +3854,16 @@ console.log(reason);
       var iri = DO.C.DocumentURL;
 
       var li = [];
-      // li.push('<li><button class="create-version"' + getButtonDisabledHTML('create-version') +
-        // ' title="Version this article">' + Icon[".fas.fa-code-branch.fa-2x"] + 'Version</button></li>');
       li.push(`<li>${getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonDisabled: isButtonDisabled('create-version'), buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x' })}</li>`);
 
-      // li.push('<li><button class="create-immutable"' + getButtonDisabledHTML('create-immutable') +
-        // ' title="Make this article immutable and version it">' + Icon[".far.fa-snowflake.fa-2x"] + 'Immutable</button></li>');
       li.push(`<li>${getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonDisabled: isButtonDisabled('create-immutable'), buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x' })}</li>`);
 
-      // li.push('<li><button class="robustify-links"' + getButtonDisabledHTML('robustify-links') +
-      //   ' title="Robustify Links">' + Icon[".fas.fa-link.fa-2x"] + 'Robustify Links</button></li>');
       li.push(`<li>${getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonDisabled: isButtonDisabled('robustify-links'), buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify Links', iconSize: 'fa-2x' })}</li>`);
 
-      // li.push('<li><button class="snapshot-internet-archive"' + getButtonDisabledHTML('snapshot-internet-archive') +
-      //   ' title="Capture with Internet Archive">' + Icon[".fas.fa-archive.fa-2x"] + 'Internet Archive</button></li>');
       li.push(`<li>${getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonDisabled: isButtonDisabled('snapshot-internet-archive'), buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Internet Archive', iconSize: 'fa-2x' })}</li>`);
 
-      // li.push('<li><button class="generate-feed"' + getButtonDisabledHTML('generate-feed') +
-      //   ' title="Generate Web feed">' + Icon[".fas.fa-rss.fa-2x"] + 'Feed</button></li>');
       li.push(`<li>${getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonDisabled: isButtonDisabled('generate-feed'), buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' })}</li>`);
 
-      // li.push('<li><button class="export-as-html"' + getButtonDisabledHTML('export-as-html') +
-      //   ' title="Export and save to file">' + Icon[".fas.fa-external-link-alt.fa-2x"] + 'Export</button></li>');
       li.push(`<li>${getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonDisabled: isButtonDisabled('export-as-html'), buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' })}</li>`);
 
       e.target.closest('button').insertAdjacentHTML('afterend', '<ul id="memento-items" class="on">' + li.join('') + '</ul>');
@@ -3923,30 +3911,20 @@ console.log(reason);
 
       var s = '<section id="document-do"><h2>Do</h2><ul>';
 
-      // s += '<li><button class="resource-share"' + getButtonDisabledHTML('resource-share') + ' title="Share resource">' + Icon[".fas.fa-bullhorn.fa-2x"] + 'Share</button></li>';
       s += `${getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonDisabled: isButtonDisabled('resource-share'), buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' })}`;
 
-      // s += '<li><button class="resource-reply" title="Reply">' + Icon[".fas.fa-reply.fa-2x"] + 'Reply</button></li>';
       s += `<li>${getButtonHTML({ button: 'in-reply-to', buttonClass: 'resource-reply', buttonTitle: 'Reply', buttonTextContent: 'Reply', iconSize: 'fa-2x' })}</li>`;
 
-      // var activitiesIcon = Icon[".fas.fa-bolt.fa-2x"];
-      // s += '<li><button class="resource-notifications"' + buttonDisabled +
-      //   ' title="Show notifications">' + activitiesIcon + 'Notifications</button></li>';
       s += `<li>${getButtonHTML({ button: 'activities', buttonClass: 'resource-notifications', buttonTitle: 'Show notifications', buttonTextContent: 'Notifications', iconSize: 'fa-2x' })}</li>`;
 
-      // s += '<li><button class="resource-new" title="Create new article">' + Icon[".far.fa-lightbulb.fa-2x"] + 'New</button></li>';
       s += `<li>${getButtonHTML({ button: 'new', buttonClass: 'resource-new', buttonTitle: 'Create new article', buttonTextContent: 'New', iconSize: 'fa-2x' })}</li>`;
 
-      // s += '<li><button class="resource-open" title="Open article">' + Icon[".fas.fa-coffee.fa-2x"] + 'Open</button></li>';
       s += `<li>${getButtonHTML({ button: 'open', buttonClass: 'resource-open', buttonTitle: 'Open article', buttonTextContent: 'Open', iconSize: 'fa-2x' })}</li>`;
 
-      // s += '<li><button class="resource-save" title="Save article">' + Icon[".fas.fa-life-ring.fa-2x"] + 'Save</button></li>';
       s += `<li>${getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: 'Save', iconSize: 'fa-2x' })}</li>`;
 
-      // s += '<li><button class="resource-save-as"' + getButtonDisabledHTML('resource-save-as') + ' title="Save as article">' + Icon[".far.fa-paper-plane.fa-2x"] + 'Save As</button></li>';
       s += `${getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonDisabled: isButtonDisabled('resource-save-as'), buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' })}`;
 
-      // s += '<li><button class="resource-memento" title="Memento article">' + Icon[".far.fa-clock.fa-2x"] + 'Memento</button></li>';
       s += `${getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x' })}`;
 
       //TODO: Use DO.C.Editor.mode and getButtonHTML instead
@@ -3957,26 +3935,18 @@ console.log(reason);
         s += '<li>' + editFile + '</li>';
       }
 
-      // s += '<li><button class="resource-source" title="Edit article source code">' + Icon[".fas.fa-code.fa-2x"] + 'Source</button></li>';
       s += `${getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' })}`;
 
-      // s += '<li><button class="embed-data-meta" title="Embed structured data (Turtle, JSON-LD, TriG)">' + Icon [".fas.fa-table.fa-2x"] + 'Embed Data</button></li>';
       s += `${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data (Turtle, JSON-LD, TriG)', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}`;
 
       if (DO.C.Resource[documentURL]['odrl'] && DO.C.Resource[documentURL]['odrl']['prohibitionAssignee'] == DO.C.User.IRI &&
         ((Array.isArray(DO.C.Resource[documentURL]['odrl']['prohibitionActions']) && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')) ||
         (Array.isArray(DO.C.Resource[documentURL]['odrl']['permissionActions']) && DO.C.Resource[documentURL]['odrl']['permissionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')))) {
-        // s += '<li><button class="resource-print"' + getButtonDisabledHTML('resource-print') + ' title="Print document">' + Icon[".fas.fa-print.fa-2x"] + 'Print</button></li>';
         s += `${getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonDisabled: getButtonDisabledHTML('resource-print'), buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' })}`;
       }
 
-      // var trashIcon = getDocumentNodeFromString(Icon[".fas.fa-trash-alt"], {'contentType': 'image/svg+xml'})
-      // trashIcon.classList.add('fa-2x');
-      // trashIcon = trashIcon.outerHTML;
-      // s += '<li><button class="resource-delete" title="Delete article">' + trashIcon + 'Delete</button></li>';
       s += `${getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x' })}`;
 
-      // s += '<li><button class="message-log" title="Show message log">' + Icon [".fas.fa-scroll.fa-2x"] + 'Messages</button></li>';
       s += `${getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' })}`;
 
       s += '</ul></section>';
