@@ -451,6 +451,14 @@ let customNodes = {
     parseDOM: [{ tag: "col", getAttrs(node){ return getAttributes(node); }}],
     toDOM(node) { return ["col", { ...node.attrs.originalAttributes }]; },
   },
+
+  canvas: {
+    content: "block*",
+    group: "block",
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: "canvas", getAttrs(node){ return getAttributes(node); }}],
+    toDOM(node) { return ["canvas", { ...node.attrs.originalAttributes }, 0]; }
+  },
 };
 
 const customMarks = {};
