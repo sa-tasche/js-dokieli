@@ -5042,7 +5042,13 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     },
 
     nextLevelButton: function(button, url, id, action) {
+      url = domSanitize(url);
+      id = domSanitize(id);
+      action = domSanitize(action);
+
+      //Action is for features that need to show a samp URL, e.g., save as URL (before submitting). The open feature doesn't have samp.
       var actionNode = document.getElementById(id + '-' + action);
+
       //TODO: Some refactoring needed because it is radio only. For now this function is not called for inputType=checkbox
       var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
 
@@ -5051,7 +5057,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           var headers;
           headers = {'Accept': 'text/turtle, application/ld+json'};
           getResourceGraph(url, headers).then(g => {
-              actionNode.textContent = (action == 'write') ? url + generateAttributeId() : url;
+              if (actionNode) {
+                actionNode.textContent = (action == 'write') ? url + generateAttributeId() : url;
+              }
               return DO.U.generateBrowserList(g, url, id, action);
             },
             function(reason){
@@ -5066,7 +5074,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           var alreadyChecked = button.parentNode.querySelector('input[type="radio"]').checked;
           var radios = button.parentNode.parentNode.querySelectorAll('input[checked="true"]');
 
-          actionNode.textContent =  url;
+          if (actionNode) {
+            actionNode.textContent =  url;
+          }
 
           for(var i = 0; i < radios.length; i++){
             radios[i].removeAttribute('checked');
