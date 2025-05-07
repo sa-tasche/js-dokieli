@@ -4474,7 +4474,7 @@ console.log(reason);
 
       var shareResourceHTML = `
         <aside id="share-resource" class="do on">${DO.C.Button.Close}
-          <h2>Share ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Open', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-share'] })}</h2>
+          <h2>Share ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Share', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-share'] })}</h2>
           
           <div class="info"></div>
 
