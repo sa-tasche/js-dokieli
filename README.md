@@ -180,6 +180,7 @@ We would also like to express our gratitude to the following individuals for the
 * [Herbert Van de Sompel](https://github.com/hvdsomp)
 * [Kingsley Idehen](https://github.com/kidehen)
 * [Melvin Carvalho](https://github.com/melvincarvalho)
+* [Patrick Hochstenbach](https://github.com/phochste)
 * [Ruben Verborgh](https://github.com/RubenVerborgh)
 * [Sandro Hawke](https://github.com/sandhawke)
 * [Thomas Bergwinkl](https://github.com/bergos)
