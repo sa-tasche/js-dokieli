@@ -3691,7 +3691,7 @@ console.log(reason);
     //Derived from saveAsDocument
     generateFeed: function generateFeed (e) {
       e.target.disabled = true;
-      document.body.appendChild(fragmentFromString('<aside id="generate-feed" class="do on">' + DO.C.Button.Close + '<h2>Generate Feed</h2></aside>'));
+      document.body.appendChild(fragmentFromString(`<aside id="generate-feed" class="do on">${DO.C.Button.Close}<h2>Generate Feed ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Generate Feed', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-generate-feed'] })}</h2><div class="info"></div></aside>`));
 
       var generateFeed = document.getElementById('generate-feed');
       generateFeed.addEventListener('click', (e) => {
@@ -4090,6 +4090,8 @@ console.log(reason);
       document.body.appendChild(fragmentFromString('<aside id="delete-document" class="do on">' + DO.C.Button.Close + `<h2>Delete ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Delete', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-delete'] })}</h2>` + '<div class="info"></div><div><p>Are you sure you want to delete the following document?</p><p><code>' + url  +'</code></p></div><button class="cancel" title="Cancel delete">Cancel</button><button class="delete" title="Delete document">Delete</button></aside>'));
 
       document.querySelector('#delete-document').addEventListener('click', (e) => {
+        if (e.target.closest('button.info')) { return; }
+
         e.preventDefault();
         e.stopPropagation();
 
