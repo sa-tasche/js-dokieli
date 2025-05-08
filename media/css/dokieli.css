@@ -460,6 +460,7 @@ box-shadow:0.25em 0.25em 0.25em rgba(0,0,0,0.1);
 max-width:45em;
 width:90%;
 padding:2em;
+color:#000;
 }
 menu.do.on {
 border-left:1px solid #ccc;
@@ -474,6 +475,14 @@ transform:translate(-50%, 0);
 aside.do.on a {
 word-wrap:break-word;
 }
+aside.do.on label {
+  color: #000;
+}
+aside.do.on label[for]:has(~ input[disabled]),
+aside.do.on input[disabled] ~ label[for] {
+  color: #777;
+}
+
 aside.do.on:not([id="document-items"]) label {
 min-width:5%;
 display:inline-block;
