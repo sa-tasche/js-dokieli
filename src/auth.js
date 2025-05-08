@@ -17,7 +17,7 @@ export async function restoreSession() {
 }
 
 function getUserSignedInHTML() {
-  return getAgentHTML() + getButtonHTML({ button: 'signout', buttonClass: 'signout-user', buttonTitle: 'Live long and prosper"' });
+  return getAgentHTML() + getButtonHTML({ button: 'signout', buttonClass: 'signout-user', buttonTitle: 'Live long and prosper' });
 }
 
 async function showUserSigninSignout (node) {
@@ -201,9 +201,9 @@ function submitSignIn (url) {
       }
 
       signInWithOIDC()
-      .catch(e => {
-        showActionMessage(document.body, { timer: null, content: e.message, type: 'info' });
-      })
+        .catch(e => {
+          showActionMessage(document.body, { timer: null, content: e.message, type: 'info' });
+        })
 
       // afterSetUserInfo()
     })
