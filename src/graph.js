@@ -1091,7 +1091,6 @@ function getAgentPreferredPolicy (s) {
 //TODO: undefined?
 function getAgentOIDCIssuer (s) {
   let idp = s.out(ns.solid.oidcIssuer)?.values[0] || undefined;
-  idp = idp && idp.endsWith("/") ? idp.substring(0, idp.length - 1) : idp;
 
   return idp;
 }
