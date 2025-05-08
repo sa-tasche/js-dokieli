@@ -4526,7 +4526,7 @@ console.log(reason);
 
       var hasAccessModeControl = accessModeAllowed(documentURL, 'control');
       if (hasAccessModeControl) {
-        var h2 = document.querySelector('#share-resource h2');
+        var info = document.querySelector('#share-resource > .info');
 
         var shareResourcePermissions = `
           <div id="share-resource-permissions">
@@ -4544,7 +4544,7 @@ console.log(reason);
               </ul>
             </div>
           </div>`;
-        h2.insertAdjacentHTML('afterend', shareResourcePermissions);
+        info.insertAdjacentHTML('afterend', shareResourcePermissions);
 
         var accessPermissionsNode = document.getElementById('share-resource-permissions');
         var accessPermissionFetchingIndicator = accessPermissionsNode.querySelector('.progress');
