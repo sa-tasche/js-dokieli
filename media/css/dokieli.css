@@ -639,7 +639,7 @@ border-bottom:1px solid #ccc;
 #share-resource-permissions > ul {
 width:60%;
 }
-#share-resource-permissions li {
+#share-resource-permissions .permissions li {
 height:3em;
 }
 #share-resource-permissions > ul li select,

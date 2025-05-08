@@ -4534,7 +4534,7 @@ console.log(reason);
 
             <span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Checking access permissions.</span>
 
-            <ul>
+            <ul class="permissions">
             </ul>
 
             <div class="autocomplete">
