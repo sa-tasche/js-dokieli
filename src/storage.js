@@ -211,7 +211,15 @@ function updateLocalStorageProfile(User) {
   }
 
   if (U.Contacts) {
-    U.Contacts = {}
+    Object.keys(U.Contacts).forEach(key => {
+      contact = U.Contacts[key];
+      if (contact.Graph) {
+        delete contact.Graph
+      }
+      if (contact.Preferences && contact.Preferences.graph) {
+        delete contact.Preferences.graph
+      }
+    })
   }
 
   var object = {

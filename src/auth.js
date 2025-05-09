@@ -24,38 +24,24 @@ async function showUserSigninSignout (node) {
   //TODO: Check 
   var webId = Config['Session'].isActive ? Config['Session'].webId : null;
 
+  console.log(webId, Config.User.IRI, Config.Session)
 
-  // was LoggedId with new OIDC WebID
+  // was LoggedIn with new OIDC WebID
   if (webId && (webId != Config.User.IRI || !Config.User.IRI)) {
+    //Sets Config.User based on webId
      await setUserInfo(webId)
           .then(() => {
             afterSetUserInfo()
           })
   }
-  // was LoggedOut as OIDC
-  if (!webId && Config.User.IRI && Config['Session']?.isActive) {
-    removeLocalStorageProfile()
-
-    Config.User = {
-      IRI: null,
-      Role: 'social',
-      UI: {}
-    }
-
-    var buttonDeletes = document.querySelectorAll('aside.do blockquote[cite] article button.delete');
-    buttonDeletes.forEach(button => {
-      button.parentNode.removeChild(button);
-    })
-
-    removeChildren(node);
-  }
-
 
   var userInfo = document.getElementById('user-info');
 
+  //This is when the user-info section is to be constructed the first time
   if (!userInfo) {
     var s = ''
 
+    //Checks if already know the user from prior load of the page
     if (Config.User.IRI) {
       s = getUserSignedInHTML()
     }
@@ -72,10 +58,12 @@ async function showUserSigninSignout (node) {
       if (e.target.closest('.signout-user')) {
         removeLocalStorageDocument()
 
+        //Sign out for real
         if (Config['Session']?.isActive) {
           await Config['Session'].logout();
         }
 
+        //Remove traces of the user from localStorage
         removeLocalStorageProfile()
 
         Config.User = {
@@ -84,12 +72,19 @@ async function showUserSigninSignout (node) {
           UI: {}
         }
 
+        var buttonDeletes = document.querySelectorAll('aside.do blockquote[cite] article button.delete');
+        buttonDeletes.forEach(button => {
+          button.parentNode.removeChild(button);
+        })
+
+        //Clean up the header so it can be reconstructed
         removeChildren(node);
 
         var documentMenu = document.querySelector('#document-menu')
 
         showUserSigninSignout(documentMenu.querySelector('header'))
 
+        //Signed out so update button states
         getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
           updateFeatureStatesOfResourceInfo(resourceInfo);
           updateDocumentDoButtonStates();
@@ -200,30 +195,53 @@ function submitSignIn (url) {
         userIdentityInput.parentNode.removeChild(userIdentityInput)
       }
 
-      signInWithOIDC()
-        .catch(e => {
-          showActionMessage(document.body, { timer: null, content: e.message, type: 'info' });
-        })
+      if (Config.User.IRI && !Config.User.OIDCIssuer) {
+        const message = {
+          'content': 'OIDC issuer not found in profile, not signed in. Using information from profile to personalise the UI.',
+          'type': 'info',
+          'timer': null
+        }
 
-      // afterSetUserInfo()
+        showActionMessage(document.body, message);
+
+        afterSetUserInfo();
+      }
+      else if (Config.User.IRI) {
+        signInWithOIDC()
+          .catch(e => {
+            const message = {
+              'content': 'Cannot sign in. Using information from profile to personalise the UI.',
+              'type': 'info',
+              'timer': null
+            }
+
+            showActionMessage(document.body, message);
+
+            afterSetUserInfo();
+          })
+      }
     })
 }
 
 //XXX: User Profile should've been fetch by now.
  async function signInWithOIDC() {
-  if (Config.User.IRI && !Config.User.OIDCIssuer) {
-    throw new Error('OIDC issuer not found in profile, not signed in. Using information from profile to personalize the UI.');
-  }
-  else if (!Config.User.IRI) {
-    throw  new Error('Cannot sign in because no profile was found. You are now in anonymous mode.');
-  }
-
   const idp = Config.User.OIDCIssuer;
 
   const redirect_uri = window.location.href.split('#')[0];
 
   // Redirects away from dokieli :( but hopefully only briefly :)
-  Config['Session'].login(idp, redirect_uri);
+  Config['Session'].login(idp, redirect_uri)
+    .catch((e) => {
+      const message = {
+        'content': 'Cannot sign in. Using information from profile to personalise the UI.',
+        'type': 'info',
+        'timer': null
+      }
+
+      showActionMessage(document.body, message);
+
+      afterSetUserInfo();
+    });
 }
 
 function setUserInfo (subjectIRI, options = {}) {
@@ -233,6 +251,8 @@ function setUserInfo (subjectIRI, options = {}) {
     Object.keys(subject).forEach((key) => {
       Config.User[key] = subject[key];
     })
+
+    updateLocalStorageProfile(subject);
   });
 }
 
@@ -240,6 +260,8 @@ function setContactInfo(subjectIRI, options = {}) {
   return getSubjectInfo(subjectIRI, options).then(subject => {
     Config.User['Contacts'] = Config.User.Contacts || {};
     Config.User.Contacts[subjectIRI] = subject;
+
+    updateLocalStorageProfile(Config.User);
   });
 }
 
