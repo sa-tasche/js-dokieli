@@ -24,8 +24,6 @@ async function showUserSigninSignout (node) {
   //TODO: Check 
   var webId = Config['Session'].isActive ? Config['Session'].webId : null;
 
-  console.log(webId, Config.User.IRI, Config.Session)
-
   // was LoggedIn with new OIDC WebID
   if (webId && (webId != Config.User.IRI || !Config.User.IRI)) {
     //Sets Config.User based on webId
@@ -178,7 +176,6 @@ function submitSignIn (url) {
   }
 
   if (!url) {
-    console.log('submitSignIn - no user url input')
     return Promise.resolve()
   }
 
