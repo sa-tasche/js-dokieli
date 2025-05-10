@@ -188,7 +188,7 @@ function domSanitize(strHTML, options = {}) {
 }
 
 function sanitizeObject(input) {
-  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+  if (typeof input !== 'object' || input === null) {
     return {};
   }
 
@@ -207,6 +207,11 @@ function sanitizeObject(input) {
       value === null
     ) {
       safe[key] = value;
+    }
+    else if (Array.isArray(value)) {
+      safe[key] = value.map(item =>
+        typeof item === 'object' && item !== null ? sanitizeObject(item) : item
+      );
     }
     else if (typeof value === 'object') {
       safe[key] = sanitizeObject(value);
