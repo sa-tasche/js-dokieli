@@ -13,7 +13,7 @@ import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation,
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage } from './storage.js'
+import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
@@ -4999,17 +4999,22 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     updateContactsInfo: function(url, node, options) {
       options = options || {};
 
-      return getUserContacts(url).then(
-        function(contacts) {
-          if(contacts.length) {
+      return getUserContacts(url)
+        .then(contacts => {
+          if (contacts.length) {
             contacts.forEach(url => {
               getSubjectInfo(url)
                 .then(subject => {
+                  DO.C.User['Contacts'] = DO.C.User['Contacts'] || {};
                   DO.C.User.Contacts[url] = subject;
+
                   if (subject.Graph) {
                     DO.U.addShareResourceContactInput(node, subject.Graph);
                   }
-                });
+
+                  //TODO: This should be called only once after processing all contacts. Refactor the loop to eventually use Promise.allSettled perhaps.
+                  updateLocalStorageProfile(DO.C.User);
+                })
             });
 
             // return Promise.all(promises)
