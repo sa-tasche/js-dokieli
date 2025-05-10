@@ -36,27 +36,26 @@ async function showUserSigninSignout (node) {
           })
   }
 
-  var userInfo = document.getElementById('user-info');
+  if (node.hasChildNodes()) { return; }
 
-  //This is when the user-info section is to be constructed the first time
-  if (!userInfo) {
-    var s = ''
+    let userInfoHTML;
+
+    const signedInHTML = getUserSignedInHTML();
+    const signInHTML = getUserSignInHTML();
 
     //Checks if already know the user from prior load of the page
-    if (Config.User.IRI) {
-      s = getUserSignedInHTML()
-    }
-    else {
-      // s = '<button class="signin-user" title="Sign in to authenticate">' + Icon['.fas.fa-user-astronaut'] + 'Sign in</button>'
-      s = `${getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' })}`;
-    }
+    userInfoHTML = Config.User.IRI ? signedInHTML : signInHTML;
 
-    node.insertAdjacentHTML('beforeend', '<section id="user-info">' + s + '</section>')
+    node.insertAdjacentHTML('afterbegin', userInfoHTML);
 
-    userInfo = document.getElementById('user-info')
+    node.addEventListener('click', async (e) => {
+      var buttonSignIn = e.target.closest('.signin-user');
 
-    userInfo.addEventListener('click', async (e) => {
-      if (e.target.closest('.signout-user')) {
+      if (buttonSignIn) {
+        buttonSignIn.disabled = true;
+        showUserIdentityInput();
+      }
+      else if (e.target.closest('.signout-user')) {
         removeLocalStorageDocument()
 
         //Sign out for real
@@ -78,12 +77,10 @@ async function showUserSigninSignout (node) {
           button.parentNode.removeChild(button);
         })
 
-        //Clean up the header so it can be reconstructed
+        //Clean up the user-info so it can be reconstructed
         removeChildren(node);
 
-        var documentMenu = document.querySelector('#document-menu')
-
-        showUserSigninSignout(documentMenu.querySelector('header'))
+        node.insertAdjacentHTML('afterbegin', signInHTML);
 
         //Signed out so update button states
         getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
@@ -93,18 +90,14 @@ async function showUserSigninSignout (node) {
       }
     });
 
-    var su = document.querySelector('#document-menu button.signin-user')
-    if (su) {
-      su.addEventListener('click', showUserIdentityInput)
-    }
-
-  }
 }
 
 
-function showUserIdentityInput (e) {
-  if (typeof e !== 'undefined') {
-    e.target.disabled = true
+function showUserIdentityInput () {
+  var signInUser = document.querySelector('#document-menu button.signin-user');
+
+  if (signInUser) {
+    signInUser.disabled = true;
   }
 
   var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
@@ -113,14 +106,14 @@ function showUserIdentityInput (e) {
   document.body.appendChild(fragmentFromString(code))
 
   var buttonSignIn = document.querySelector('#user-identity-input button.signin')
-  if (! Config.User.WebIdDelegate)
-    buttonSignIn.setAttribute('disabled', 'disabled')
+  if (!Config.User.WebIdDelegate) {
+    buttonSignIn.setAttribute('disabled', 'disabled');
+  }
 
   document.querySelector('#user-identity-input').addEventListener('click', e => {
     if (e.target.closest('button.close')) {
-      var signinUser = document.querySelector('#document-menu button.signin-user')
-      if (signinUser) {
-        signinUser.disabled = false
+      if (signInUser) {
+        signInUser.disabled = false
       }
     }
   })
