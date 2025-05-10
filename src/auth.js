@@ -262,6 +262,15 @@ function setContactInfo(subjectIRI, options = {}) {
   });
 }
 
+function isGraphValid(g) {
+  if (!g) return false;
+  if (g.resource || g.cause) return false;
+  if (g.status?.toString().startsWith('4') || g.status?.toString().startsWith('5')) return false;
+  if (typeof g.out !== 'function') return false;
+  if (!Array.from(g.out().quads()).length) return false;
+  return true;
+}
+
 //TODO: Review grapoi
 /**
  * @param subjectIRI {string}
@@ -284,8 +293,9 @@ function getSubjectInfo (subjectIRI, options = {}) {
     .then(g => {
       //TODO: Consider whether to construct an empty graph (useful to work only with their IRI);
 
-      if (!g || g.resource || g.cause || (g && !Array.from(g.out().quads()).length)) {
-        return {};
+      if (!isGraphValid(g)) {
+        // console.warn('Invalid graph object:', g);
+        return {}
       }
 
       g = g.node(rdf.namedNode(subjectIRI));
