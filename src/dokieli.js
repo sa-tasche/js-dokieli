@@ -3952,19 +3952,19 @@ console.log(reason);
         s += '<li>' + editFile + '</li>';
       }
 
-      s += `<li>${getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' })}`;
+      s += `<li>${getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' })}</li>`;
 
       s += `<li>${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data (Turtle, JSON-LD, TriG)', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}</li>`;
 
       if (DO.C.Resource[documentURL]['odrl'] && DO.C.Resource[documentURL]['odrl']['prohibitionAssignee'] == DO.C.User.IRI &&
         ((Array.isArray(DO.C.Resource[documentURL]['odrl']['prohibitionActions']) && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')) ||
         (Array.isArray(DO.C.Resource[documentURL]['odrl']['permissionActions']) && DO.C.Resource[documentURL]['odrl']['permissionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')))) {
-        s += `${getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonDisabled: getButtonDisabledHTML('resource-print'), buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' })}`;
+        s += `<li>${getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonDisabled: getButtonDisabledHTML('resource-print'), buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' })}</li>`;
       }
 
       s += `<li>${getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x' })}</li>`;
 
-      s += `<li>{getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' })}</li>`;
+      s += `<li>${getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' })}</li>`;
 
       s += '</ul></section>';
 
