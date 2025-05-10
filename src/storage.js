@@ -202,25 +202,13 @@ function updateLocalStorageProfile(User) {
   var id = generateUUID();
   var datetime = getDateTimeISO();
 
-  //Need to remove SimpleRDF (and grapoi?) graphs because they're cyclic.
-  if (U.Graph) {
-    delete U.Graph
-  }
-  if (U.Preferences && U.Preferences.graph) {
-    delete U.Preferences.graph
-  }
-
-  if (U.Contacts) {
-    Object.keys(U.Contacts).forEach(key => {
-      contact = U.Contacts[key];
-      if (contact.Graph) {
-        delete contact.Graph
-      }
-      if (contact.Preferences && contact.Preferences.graph) {
-        delete contact.Preferences.graph
-      }
-    })
-  }
+  //Graphs seem to be cyclic and not allowed in localStorage, so we delete.
+  U.Graph && delete U.Graph;
+  U.Preferences?.graph && delete U.Preferences.graph;
+  Object.entries(U.Contacts).forEach(([key, contact]) => {
+    contact.Graph && delete contact.Graph;
+    contact.Preferences?.graph && delete contact.Preferences.graph;
+  });
 
   var object = {
     "@context": "https://www.w3.org/ns/activitystreams",
