@@ -20,8 +20,11 @@ function getUserSignedInHTML() {
   return getAgentHTML() + getButtonHTML({ button: 'signout', buttonClass: 'signout-user', buttonTitle: 'Live long and prosper' });
 }
 
+function getUserSignInHTML() {
+  return getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in', iconSize: 'fa-2x' })
+}
+
 async function showUserSigninSignout (node) {
-  //TODO: Check 
   var webId = Config['Session'].isActive ? Config['Session'].webId : null;
 
   // was LoggedIn with new OIDC WebID
@@ -414,6 +417,7 @@ export {
   afterSetUserInfo,
   enableDisableButton,
   getUserSignedInHTML,
+  getUserSignInHTML,
   getSubjectInfo,
   setUserInfo,
   setContactInfo,
