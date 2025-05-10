@@ -3928,7 +3928,7 @@ console.log(reason);
 
       var s = '<section id="document-do"><h2>Do</h2><ul>';
 
-      s += `${getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonDisabled: isButtonDisabled('resource-share'), buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' })}`;
+      s += `<li>${getButtonHTML({ button: 'share', buttonClass: 'resource-share', buttonDisabled: isButtonDisabled('resource-share'), buttonTitle: 'Share resource', buttonTextContent: 'Share', iconSize: 'fa-2x' })}</li>`;
 
       s += `<li>${getButtonHTML({ button: 'in-reply-to', buttonClass: 'resource-reply', buttonTitle: 'Reply', buttonTextContent: 'Reply', iconSize: 'fa-2x' })}</li>`;
 
@@ -3940,9 +3940,9 @@ console.log(reason);
 
       s += `<li>${getButtonHTML({ button: 'save', buttonClass: 'resource-save', buttonTitle: 'Save article', buttonTextContent: 'Save', iconSize: 'fa-2x' })}</li>`;
 
-      s += `${getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonDisabled: isButtonDisabled('resource-save-as'), buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' })}`;
+      s += `<li>${getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonDisabled: isButtonDisabled('resource-save-as'), buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' })}</li>`;
 
-      s += `${getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x' })}`;
+      s += `<li>${getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x' })}</li>`;
 
       //TODO: Use DO.C.Editor.mode and getButtonHTML instead
       if (DO.C.EditorAvailable) {
@@ -3952,9 +3952,9 @@ console.log(reason);
         s += '<li>' + editFile + '</li>';
       }
 
-      s += `${getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' })}`;
+      s += `<li>${getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' })}`;
 
-      s += `${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data (Turtle, JSON-LD, TriG)', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}`;
+      s += `<li>${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data (Turtle, JSON-LD, TriG)', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}</li>`;
 
       if (DO.C.Resource[documentURL]['odrl'] && DO.C.Resource[documentURL]['odrl']['prohibitionAssignee'] == DO.C.User.IRI &&
         ((Array.isArray(DO.C.Resource[documentURL]['odrl']['prohibitionActions']) && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')) ||
@@ -3962,9 +3962,9 @@ console.log(reason);
         s += `${getButtonHTML({ button: 'print', buttonClass: 'resource-print', buttonDisabled: getButtonDisabledHTML('resource-print'), buttonTitle: 'Print document', buttonTextContent: 'Print', iconSize: 'fa-2x' })}`;
       }
 
-      s += `${getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x' })}`;
+      s += `<li>${getButtonHTML({ button: 'delete', buttonClass: 'resource-delete', buttonTitle: 'Delete article', buttonTextContent: 'Delete', iconSize: 'fa-2x' })}</li>`;
 
-      s += `${getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' })}`;
+      s += `<li>{getButtonHTML({ button: 'messages', buttonClass: 'message-log', buttonTitle: 'Show message log', buttonTextContent: 'Messages', iconSize: 'fa-2x' })}</li>`;
 
       s += '</ul></section>';
 
