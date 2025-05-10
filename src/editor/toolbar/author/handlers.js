@@ -479,6 +479,7 @@ export function processAction(action, formValues, selectionData) {
 //       return DO.U.getListHTMLFromTriples(triples, {element: 'select', elementId: resultContainerId});
 //     })
 //     .then(listHTML => {
+//       listHTML = `<label for="${resultContainerId}">Datasets</label>${listHTML}`;
 //       sG.setHTMLUnsafe(domSanitize(listHTML));
 //       form.removeChild(form.querySelector('.fas.fa-circle-notch.fa-spin.fa-fw'));
 //     })
