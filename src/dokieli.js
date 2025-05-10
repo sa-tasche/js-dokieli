@@ -3737,7 +3737,7 @@ console.log(reason);
 
         var options = {};
         var feedFormat = DO.C.MediaTypes.Feed[0];
-        var feedFormatSelectionChecked = generateFeed.querySelector('select[name="feed-format"]')
+        var feedFormatSelectionChecked = generateFeed.querySelector('select[id="feed-format"]')
         if (feedFormatSelectionChecked.length) {
           feedFormat = (DO.C.MediaTypes.Feed.indexOf(feedFormatSelectionChecked.value) > -1) ? feedFormatSelectionChecked.value : feedFormat;
 
@@ -4794,7 +4794,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       const documentURL = currentLocation();
 
-      const selectNode = '<select id="' + id + '">' + getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode }) + '</select>';
+      const selectNode = '<label for="' + id + '">Change aeccess</label><select id="' + id + '">' + getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode }) + '</select>';
 
       node.insertAdjacentHTML('beforeend', selectNode);
 
@@ -6718,7 +6718,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         }
 
         var html = document.documentElement.cloneNode(true)
-        var baseURLSelectionChecked = newDocument.querySelector('select[name="base-url"]')
+        var baseURLSelectionChecked = newDocument.querySelector('select[id="base-url"]')
         // console.log(baseURLSelectionChecked);
 
         if (baseURLSelectionChecked.length) {
@@ -7218,8 +7218,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     },
 
     getFeedFormatSelection: function() {
-      return '<div id="feed-format-selection"><label>Format:</label>\n\
-      <select name="feed-format">\n\
+      return '<div id="feed-format-selection"><label for="feed-format">Format:</label>\n\
+      <select id="feed-format">\n\
       <option id="feed-format-atom" value="application/atom+xml">Atom</option>\n\
       <option id="feed-format-rss" value="application/rss+xml" selected="selected">RSS</option>\n\
       </select>\n\
@@ -7227,8 +7227,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     },
 
     getBaseURLSelection: function() {
-      return '<div id="base-url-selection"><label>Location of media resources:</label>\n\
-      <select name="base-url">\n\
+      return '<div id="base-url-selection"><label for="base-url">Location of media resources:</label>\n\
+      <select id="base-url">\n\
       <option id="base-url-absolute" value="base-url-absolute" selected="selected">Use references as is</option>\n\
       <option id="base-url-relative" value="base-url-relative">Copy to your storage</option>\n\
       </select>\n\

@@ -642,6 +642,9 @@ width:60%;
 #share-resource-permissions .permissions li {
 height:3em;
 }
+#share-resource-permissions .permissions li label {
+display:none;
+}
 #share-resource-permissions > ul li select,
 #share-resource-permissions > ul li select + .progress {
 float:right;
