@@ -178,7 +178,7 @@ display:inline-block;
 button:disabled .fas,
 button:disabled .far,
 button:disabled .fab {
-fill:#aaa;
+fill:#777;
 }
 .fa-2x {
 width:2em;
@@ -480,7 +480,7 @@ aside.do.on label {
 }
 aside.do.on label[for]:has(~ input[disabled]),
 aside.do.on input[disabled] ~ label[for] {
-  color: #777;
+  color: #555;
 }
 
 aside.do.on:not([id="document-items"]) label {
@@ -1453,7 +1453,7 @@ transition: fill 0.3s;
 fill: #080;
 }
 #document-menu section button[disabled] {
-color:#777 !important;
+color:#555 !important;
 background-color:#fff !important;
 }
 #document-menu section button[disabled]:hover {
@@ -1896,6 +1896,10 @@ transition: opacity 0.3s;
 aside.do button:hover:not(.toggle),
 .editor-form:not(.editor-slashmenu) button:hover:not(.toggle)  {
 opacity: 0.8;
+}
+aside.do button[disabled]:not(:has(svg)) {
+  background-color: #555;
+  cursor: not-allowed;
 }
 
 .editor-slashmenu > :not(form) button {
