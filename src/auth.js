@@ -239,6 +239,7 @@ function submitSignIn (url) {
 
 function setUserInfo (subjectIRI, options = {}) {
   options.ui = Config.User.UI;
+  options.fetchIndexes = options.fetchIndexes ?? true;
 
   return getSubjectInfo(subjectIRI, options).then(subject => {
     Object.keys(subject).forEach((key) => {
@@ -328,7 +329,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
     })
     .then(agent => {
       //XXX: Revisit what the retun should be, whether to be undefined, {}, or someting else. Is it useful to retain an agent object that doesn't have a Graph? (Probably better not.)
-      if (!agent.Graph) return agent;
+      if (!agent.Graph || !options.fetchIndexes) return agent;
 
       return getAgentTypeIndex(agent.Graph)
         .then(typeIndexes => {
