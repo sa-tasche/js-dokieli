@@ -242,8 +242,17 @@ function getResource (url, headers = {}, options = {}) {
 
   options.headers = Object.assign({}, headers)
 
+  const controller = new AbortController();
+  const timeout = options.timeout || Config.HttpTimeout;
+  const id = setTimeout(() => controller.abort(), timeout);
+  options.signal = controller.signal;
+
   return _fetch(url, options)
+    .finally(() => clearTimeout(id))
     .catch(error => {
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timed out after ${timeout}ms`, { cause: error });
+      }
       //XXX: When CORS preflight request returns 405, error is an object but neither an instance of Error nor Response.
 
 // console.log(options)
