@@ -4987,7 +4987,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       if (DO.C.User.Contacts && Object.keys(DO.C.User.Contacts).length){
         Object.keys(DO.C.User.Contacts).forEach(iri => {
           if (DO.C.User.Contacts[iri].Inbox && DO.C.User.IRI !== iri) {
-            DO.U.addShareResourceContactInput(shareResourceNode, DO.C.User.Contacts[iri].Graph);
+            DO.U.addShareResourceContactInput(shareResourceNode, DO.C.User.Contacts[iri]);
           }
         });
       }
@@ -5008,9 +5008,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                   DO.C.User['Contacts'] = DO.C.User['Contacts'] || {};
                   DO.C.User.Contacts[url] = subject;
 
-                  if (subject.Graph) {
-                    DO.U.addShareResourceContactInput(node, subject.Graph);
-                  }
+                  DO.U.addShareResourceContactInput(node, subject);
 
                   //TODO: This should be called only once after processing all contacts. Refactor the loop to eventually use Promise.allSettled perhaps.
                   updateLocalStorageProfile(DO.C.User);
@@ -5028,14 +5026,14 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         });
     },
 
-    addShareResourceContactInput: function(node, s) {
-      var iri = s.term.value;
-      var inbox = DO.C.User.Contacts[iri]['Inbox'];
+    addShareResourceContactInput: function(node, agent) {
+      var iri = agent.IRI
+      var inbox = agent.Inbox;
 
       if (inbox && inbox.length) {
         var id = encodeURIComponent(iri);
-        var name = getAgentName(s) || iri;
-        var img = getGraphImage(s);
+        var name = agent.Name || iri;
+        var img = agent.Image;
         if (!(img && img.length)) {
           img = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
         }
