@@ -1792,7 +1792,7 @@ DO = {
       }
 
       var dMenuButton = dMenu.querySelector('button');
-      var dHead = dMenu.querySelector('header');
+      var dUserInfo = dMenu.querySelector('#user-info');
       var dInfo = dMenu.querySelector('div');
 
       dMenuButton.classList.remove('show');
@@ -1802,7 +1802,7 @@ DO = {
       dMenu.classList.add('on');
       // body.classList.add('on-document-menu');
 
-      showUserSigninSignout(dHead);
+      showUserSigninSignout(dUserInfo);
       DO.U.showDocumentDo(dInfo);
       DO.U.showViews(dInfo);
 
@@ -1992,8 +1992,6 @@ DO = {
 
         if(dMenu) {
           var dMenuButton = dMenu.querySelector('button');
-          var dHead = dMenu.querySelector('header');
-          var dInfo = dMenu.querySelector('div');
 
           dMenuButton.classList.remove('show');
           dMenuButton.classList.add('hide');
