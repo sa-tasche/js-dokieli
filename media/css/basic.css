@@ -1250,6 +1250,10 @@ margin-bottom:0;
   padding: 0;
 }
 
+#home #features ul + p {
+  text-align: center;
+}
+
 .do-callout {
   background-color: #ddd;
   text-align: center;
