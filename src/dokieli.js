@@ -4496,7 +4496,7 @@ console.log(reason);
             </ul>
 
             <label for="share-resource-note">Note</label>
-            <textarea id="share-resource-note" rows="2" cols="40" name="share-resource-note" placeholder="Check this out!"></textarea>
+            <textarea id="share-resource-note" rows="3" cols="40" name="share-resource-note" placeholder="Check this out!"></textarea>
 
             <button class="share" id="share-resource-agents-button" title="Share resource">Share</button>
           </div>

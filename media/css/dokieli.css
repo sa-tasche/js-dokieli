@@ -550,6 +550,7 @@ font-size: 1em;
 border: 2px solid #ccc;
 border-radius: 5px;
 margin-bottom: 1em;
+font-family:inherit;
 }
 aside.do textarea {
 width:96% !important;
@@ -653,12 +654,6 @@ float:right;
 #share-resource-permissions > ul li select {
 margin-top:-0.25em;
 }
-
-
-/* 
-#share-resource-share-url input[type="text"] {
-  font-family: monospace;
-} */
 
 #share-resource-share-url button.copy-to-clipboard {
 display:inline-block;
