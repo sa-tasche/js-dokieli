@@ -9,7 +9,7 @@
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceGraph, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
 import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, buttonClose, buttonInfo, notificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, getButtonDisabledHTML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, updateDocumentDoButtonStates, updateFeatureStatesOfResourceInfo, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, isButtonDisabled, hasNonWhitespaceText } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
-import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads } from './graph.js'
+import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument } from './util.js'
 import { generateGeoView } from './geo.js'
@@ -219,8 +219,9 @@ DO = {
       var processContacts = (contacts) => {
         if (contacts.length) {
           var contactsPromises = contacts.map((url) =>
-            getSubjectInfo(url).then((subject) => {
+            getSubjectInfo(url, { 'fetchIndexes': true }).then((subject) => {
               if (subject.Graph) {
+                DO.C.User['Contacts'] = DO.C.User['Contacts'] || {};
                 DO.C.User.Contacts[url] = subject;
                 return DO.U.processAgentActivities(subject); 
               }
@@ -265,10 +266,19 @@ DO = {
     },
 
     processAgentActivities: function(agent) {
+      // console.log(agent.IRI, agent.TypeIndex, agent.PublicTypeIndex, agent.PrivateTypeIndex)
       if (agent.TypeIndex && Object.keys(agent.TypeIndex).length) {
-        // console.log(agent.IRI, agent.TypeIndex)
-        // console.log(DO.U.processAgentTypeIndex(agent))
         return DO.U.processAgentTypeIndex(agent);
+      }
+      else if (agent.Graph && (agent.PublicTypeIndex?.length || agent.PrivateTypeIndex?.length)) {
+        return getAgentTypeIndex(agent.Graph)
+          .then(typeIndexes => {
+            Object.keys(typeIndexes).forEach(typeIndexType => {
+              agent.TypeIndex[typeIndexType] = typeIndexes[typeIndexType];
+            });
+
+            return processAgentActivities(agent);
+          });
       }
 
       return [Promise.resolve()];
