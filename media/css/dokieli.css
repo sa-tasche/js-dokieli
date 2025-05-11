@@ -627,9 +627,6 @@ overflow:auto;
 #share-resource.do.on #share-resource-contacts label {
 vertical-align:middle;
 }
-#share-resource-search-contacts {
-/* width: 100%; */
-}
 
 #share-resource > div h3 {
 margin-top:1em;
@@ -2739,10 +2736,7 @@ width:65%;
 #citation-url {
 display:block;
 }
-.editor-form button {
-/* background-color:transparent; */
-/* border:none; */
-}
+
 div.specref-search-results {
 border-bottom:1px solid #ccc;
 margin:1em 0;
@@ -3056,33 +3050,9 @@ h1 + div p:first-child {
     font-weight: bold !important;
   }
 
-  .editor-form label:not([for="annotation-location-personal-storage"]) {
-    /* text-transform: uppercase; */
-  }
-
   .editor-form .editor-form-input {
     /* font-size:1em; */
     padding:0.25em 0.5em;
-  }
-
-  .editor-form .editor-form-input,
-  .editor-form label {
-    /* border: none;
-    box-sizing: border-box;
-    font-size: 14px;
-    margin: 0;
-    padding: 6px;
-    width: 316px;
-    display: inline-block; */
-  }
-  .editor-form .editor-form-input:focus,
-  .editor-form label:focus {
-    /* -webkit-appearance: none;
-        -moz-appearance: none;
-            appearance: none;
-    border: none;
-    box-shadow: none;
-    outline: 0; */
   }
 
   .resizable-img {
