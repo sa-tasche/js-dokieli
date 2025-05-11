@@ -4190,7 +4190,7 @@ console.log(reason);
                 .then(() => {
                   //FIXME:
                   getDocumentContentNode(document).setHTMLUnsafe(domSanitize('<main><article about="" typeof="schema:Article"></article></main>'));
-                  Editor.init('author');
+                  DO.Editor.init('author');
 
 
                   // or better: createHTML() and update spawnDocument()
