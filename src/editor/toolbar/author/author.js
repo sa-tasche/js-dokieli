@@ -86,8 +86,8 @@ export class AuthorToolbar extends ToolbarView {
           </dl>
           <label for="a-href">URL</label> <input class="editor-form-input" id="a-href" name="a-href" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
           <label for="a-title">Title</label> <input class="editor-form-input" id="a-title" name="a-title" placeholder="Add advisory information for the tooltip." type="text" />
-      <button class="editor-form-submit" title="Save" type="submit">Save</button>
-      <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
+          <button class="editor-form-submit" title="Save" type="submit">Save</button>
+          <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
         </fieldset>
       `,
 
@@ -137,6 +137,7 @@ export class AuthorToolbar extends ToolbarView {
           <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML()}</select>
           <label for="citation-url">URL</label>
           <input class="editor-form-input" id="citation-url" name="citation-url" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" type="url" value="" />
+          <label for="citation-content">Note</label>
           <textarea class="editor-form-textarea" cols="20" id="citation-content" name="citation-content" rows="1" placeholder="${options.placeholder ? options.placeholder : 'Describe the purpose or reason of citation.'}"></textarea>
           <label for="citation-language">Language</label>
           <select class="editor-form-select" id="citation-language" name="citation-language">${getLanguageOptionsHTML()}</select>
