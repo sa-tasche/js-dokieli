@@ -25,7 +25,7 @@ async function cleanup(page, specificity) {
   await expect(page.locator("sup.ref-annotation")).not.toBeVisible();
 }
 
-test.only("should be able to request to increase specificity on selected text", async ({ page }) => {
+test("should be able to request to increase specificity on selected text", async ({ page }) => {
   const documentMenu = page.locator("[id=document-menu]");
   await documentMenu.locator('button').first().click();
   expect(documentMenu).toBeVisible();
