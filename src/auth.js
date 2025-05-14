@@ -12,6 +12,8 @@ import { Session } from '@uvdsl/solid-oidc-client-browser';
 const ns = Config.ns;
 Config['Session'] = new Session();
 
+const signInHTML = getUserSignInHTML();
+
 export async function restoreSession() {
   return Config['Session'].handleRedirectFromLogin();
 }
@@ -38,61 +40,63 @@ async function showUserSigninSignout (node) {
 
   if (node.hasChildNodes()) { return; }
 
-    let userInfoHTML;
+  let userInfoHTML;
 
-    const signedInHTML = getUserSignedInHTML();
-    const signInHTML = getUserSignInHTML();
+  const signedInHTML = getUserSignedInHTML();
 
-    //Checks if already know the user from prior load of the page
-    userInfoHTML = Config.User.IRI ? signedInHTML : signInHTML;
+  //Checks if already know the user from prior load of the page
+  userInfoHTML = Config.User.IRI ? signedInHTML : signInHTML;
 
-    node.insertAdjacentHTML('afterbegin', userInfoHTML);
+  node.insertAdjacentHTML('afterbegin', userInfoHTML);
 
-    node.addEventListener('click', async (e) => {
-      var buttonSignIn = e.target.closest('.signin-user');
-      var buttonSignOut = e.target.closest('.signout-user');
+  node.addEventListener('click', async (e) => {
+    var buttonSignIn = e.target.closest('.signin-user');
+    var buttonSignOut = e.target.closest('.signout-user');
 
-      if (buttonSignIn) {
-        buttonSignIn.disabled = true;
-        showUserIdentityInput();
-      }
-      else if (buttonSignOut) {
-        removeLocalStorageDocument()
-
-        //Sign out for real
-        if (Config['Session']?.isActive) {
-          await Config['Session'].logout();
-        }
-
-        //Remove traces of the user from localStorage
-        removeLocalStorageProfile()
-
-        Config.User = {
-          IRI: null,
-          Role: 'social',
-          UI: {}
-        }
-
-        var buttonDeletes = document.querySelectorAll('aside.do blockquote[cite] article button.delete');
-        buttonDeletes.forEach(button => {
-          button.parentNode.removeChild(button);
-        })
-
-        //Clean up the user-info so it can be reconstructed
-        removeChildren(node);
-
-        node.insertAdjacentHTML('afterbegin', signInHTML);
-
-        //Signed out so update button states
-        getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
-          updateFeatureStatesOfResourceInfo(resourceInfo);
-          updateDocumentDoButtonStates();
-        });
-      }
-    });
+    if (buttonSignIn) {
+      buttonSignIn.disabled = true;
+      showUserIdentityInput();
+    }
+    else if (buttonSignOut) {
+      signOut(node);
+    }
+  });
 
 }
 
+
+async function signOut(node) {
+  //Sign out for real
+  if (Config['Session']?.isActive) {
+    await Config['Session'].logout();
+  }
+
+  //Clean up the user-info so it can be reconstructed
+  removeChildren(node);
+
+  node.insertAdjacentHTML('afterbegin', signInHTML);
+
+  removeLocalStorageDocument();
+
+  removeLocalStorageProfile();
+
+  Config.User = {
+    IRI: null,
+    Role: 'social',
+    UI: {}
+  }
+
+  var buttonDeletes = document.querySelectorAll('aside.do blockquote[cite] article button.delete');
+  buttonDeletes.forEach(button => {
+    button.parentNode.removeChild(button);
+  })
+
+  //Signed out so update button states
+  getResourceSupplementalInfo(Config.DocumentURL).then(resourceInfo => {
+    updateFeatureStatesOfResourceInfo(resourceInfo);
+    updateDocumentDoButtonStates();
+  });
+}
 
 function showUserIdentityInput () {
   var signInUser = document.querySelector('#document-menu button.signin-user');
@@ -419,5 +423,6 @@ export {
   setContactInfo,
   showUserIdentityInput,
   showUserSigninSignout,
-  submitSignIn
+  submitSignIn,
+  signOut
 }
