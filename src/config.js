@@ -541,7 +541,7 @@ export default {
     oa: rdf.namespace('http://www.w3.org/ns/oa#'),
     odrl: rdf.namespace('http://www.w3.org/ns/odrl/2/'),
     opmw: rdf.namespace('http://www.opmw.org/ontology/'),
-    owl: rdf.namespace('http://www.w3.org/2002/07/owl/'),
+    owl: rdf.namespace('http://www.w3.org/2002/07/owl#'),
     pim: rdf.namespace('http://www.w3.org/ns/pim/space#'),
     prov: rdf.namespace('http://www.w3.org/ns/prov#'),
     pso: rdf.namespace('http://purl.org/spar/pso/'),
