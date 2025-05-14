@@ -1154,23 +1154,24 @@ function getGraphInbox(s) {
   );
 }
 
-function getAgentKnows (s) {
-  var knows = [];
+function getAgentKnows(s) {
+  let knows = [
+    ...(s.out(ns.foaf.knows).values || []),
+    ...(s.out(ns.schema.knows).values || [])
+  ];
 
-  var foafknows = s.out(ns.foaf.knows).values;
-  var schemaknows = s.out(ns.schema.knows).values;
-
-  if (foafknows.length){
-    knows = knows.concat(foafknows);
+  if (Array.isArray(Config.User.SameAs)) {
+    for (const iri of Config.User.SameAs) {
+      const userG = s.node(rdf.namedNode(iri));
+      knows.push(
+        ...(userG.out(ns.foaf.knows).values || []),
+        ...(userG.out(ns.schema.knows).values || [])
+      );
+    }
   }
 
-  if (schemaknows.length){
-    knows = knows.concat(schemaknows);
-  }
-
-  knows = uniqueArray(knows);
-
-  return (knows.length) ? knows : undefined;
+  const uniqueKnows = uniqueArray(knows);
+  return uniqueKnows.length ? uniqueKnows : undefined;
 }
 
 function getAgentFollowing (s) {
