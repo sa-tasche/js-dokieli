@@ -54,7 +54,7 @@ export default {
   ContributorRoles: ['author', 'editor'],
   LocalDocument: (document.location.protocol == 'file:'),
   UseLocalStorage: false,
-  HttpTimeout: 3000,
+  HttpTimeout: 5000,
   AutoSave: {
     Methods: ['localStorage', 'http'],
     Timer: 60000,
