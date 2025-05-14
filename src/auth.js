@@ -50,12 +50,13 @@ async function showUserSigninSignout (node) {
 
     node.addEventListener('click', async (e) => {
       var buttonSignIn = e.target.closest('.signin-user');
+      var buttonSignOut = e.target.closest('.signout-user');
 
       if (buttonSignIn) {
         buttonSignIn.disabled = true;
         showUserIdentityInput();
       }
-      else if (e.target.closest('.signout-user')) {
+      else if (buttonSignOut) {
         removeLocalStorageDocument()
 
         //Sign out for real
