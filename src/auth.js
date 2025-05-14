@@ -384,8 +384,13 @@ function afterSetUserInfo () {
   Promise.allSettled(promises)
     .then(results => {
       var uI = document.getElementById('user-info')
-      if (uI) {
-        uI.replaceChildren(fragmentFromString(getUserSignedInHTML()))
+
+      //FIXME: This works but is it fugly? It is so that 1) we don't have double assignment of event handler on user-info's signOut and to also make sure that the user with a Session can actually signOut (removing children loses the event)
+      if (uI && !Config['Session']?.isActive) {
+        // uI.replaceChildren(fragmentFromString(getUserSignedInHTML()))
+
+        removeChildren(node);
+        showUserSigninSignout(node);
       }
 
       showGeneralMessages();
