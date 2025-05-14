@@ -4815,7 +4815,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       const documentURL = currentLocation();
 
-      const selectNode = '<label for="' + id + '">Change aeccess</label><select id="' + id + '">' + getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode }) + '</select>';
+      const selectNode = '<label for="' + id + '">Change access</label><select id="' + id + '">' + getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode }) + '</select>';
 
       node.insertAdjacentHTML('beforeend', selectNode);
 
