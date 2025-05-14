@@ -318,6 +318,7 @@ function getSubjectInfo (subjectIRI, options = {}) {
         Outbox: getAgentOutbox(g),
         Inbox: getAgentInbox(g),
         TypeIndex: {},
+        Preferences: {},
         PreferencesFile: getAgentPreferencesFile(g),
         PublicTypeIndex: getAgentPublicTypeIndex(g),
         PrivateTypeIndex: getAgentPrivateTypeIndex(g),
