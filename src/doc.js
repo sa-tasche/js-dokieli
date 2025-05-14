@@ -2929,33 +2929,28 @@ function getAgentHTML(options = {}) {
 
   if (Config.User.Name) {
     // XXX: We have the IRI already
-    userName = '<span about="' + Config.User.IRI + '" property="schema:name">' +
-      Config.User.Name + '</span>'
+    userName = `<span about="${Config.User.IRI}" property="schema:name">${Config.User.Name}</span>`;
   }
 
-  let userImage = ''
+  let userImage = '';
 
   if (!('omitImage' in options && options.omitImage) && 'Image' in Config.User && typeof Config.User.Image !== 'undefined' && Config.User.Image.length > 0) {
-    userImage = getResourceImageHTML(Config.User.Image, options) + ' '
+    userImage = getResourceImageHTML(Config.User.Image, options) + ' ';
   }
 
-  let user = ''
+  let user = `<span typeof="schema:Person">${userName}</span>`;
 
   if ('IRI' in Config.User && Config.User.IRI !== null && Config.User.IRI.length > 0) {
-    user = '<span about="' + Config.User.IRI + '" typeof="schema:Person">' +
-    userImage + '<a rel="schema:url" href="' + Config.User.IRI + '"> ' +
-    userName + '</a></span>'
-  } else {
-    user = '<span typeof="schema:Person">' + userName + '</span>'
+    user = `<span about="${Config.User.IRI}" typeof="schema:Person">${userImage}<a rel="schema:url" href="${Config.User.IRI}">${userName}</a></span>`;
   }
 
-  return user
+  return user;
 }
 
 function getResourceImageHTML(resource, options = {}) {
   var avatarSize = ('avatarSize' in options) ? options.avatarSize : Config['AvatarSize'];
 
-  return '<img alt="" height="' + avatarSize + '" rel="schema:image" src="' + resource + '" width="' + avatarSize + '" />';
+  return `<img alt="" height="${avatarSize}" rel="schema:image" src="${resource}" width="${avatarSize}" />`;
 }
 
 function createLicenseHTML(iri, options = {}) {
