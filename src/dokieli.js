@@ -14,7 +14,7 @@ import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument } from './util.js'
 import { generateGeoView } from './geo.js'
 import { getLocalStorageProfile, showAutoSaveStorage, hideAutoSaveStorage, updateLocalStorageProfile } from './storage.js'
-import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession } from './auth.js'
+import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
 import * as d3Force from 'd3-force';
@@ -1519,6 +1519,11 @@ DO = {
           // user.object.describes.Role = (DO.C.User.IRI && user.object.describes.Role) ? user.object.describes.Role : 'social';
 
           DO.C['User'] = sanitizeObject(user.object.describes);
+
+          if (!Config.User.Graph) {
+            setUserInfo(Config.User.IRI)
+              .then(afterSetUserInfo);
+          }
         }
       })
     },
