@@ -1230,49 +1230,65 @@ function getAgentMade (s) {
   return d.length ? d : undefined;
 }
 
-//TODO: Review grapoi
-function getGraphImage (s) {
-  var image = s.out(ns.as.image).values;
-  var icon = s.out(ns.as.icon).values;
-  if (image.length || icon.length) {
-    var image = image[0] || icon[0];
-    Array.from(s.out().quads()).some(t => {
-      // var image = s.out([ns.as.icon, ns.as.image]).out([ns.as.url, ns.as.href]).values[0];
-      if (t.predicate.value == ns.as.url.value || t.predicate.value == ns.as.href.value) {
-        // https://github.com/rdfjs-base/to-ntriples
-        // toNT(t.subject)
-        // toNT(t)
-        // toNT(s.dataset)
-        //t.subject.term.equals(s.out(ns.as.icon).terms[0])
+function getGraphImage(s) {
+  const iconTerms = s.out(ns.as.icon).terms;
+  const imageTerms = s.out(ns.as.image).terms;
 
-        if (t.subject.value == s.out(ns.as.icon).values[0] || "_:" + t.subject.value == s.out(ns.as.icon).values[0]) {
-          image = t.object.value;
-          return true;
-        }
-        else if (t.subject.value == s.out(ns.as.image).values[0] || "_:" + t.subject.value == s.out(ns.as.image).values[0]) {
-          image = t.object.value;
-          return true;
-        }
-        return false;
+  let image;
+
+  if (imageTerms.length || iconTerms.length) {
+    const terms = [...imageTerms, ...iconTerms];
+
+    for (const term of terms) {
+      if (term.termType === 'NamedNode') {
+        image = term.value;
+        break;
       }
-    });
+
+      if (term.termType === 'BlankNode') {
+        const match = Array.from(s.out().quads()).find(t => {
+          const pred = t.predicate.value;
+          const subj = t.subject.value;
+          return (
+            (pred === ns.as.url.value || pred === ns.as.href.value) &&
+            (subj === term.value || '_:' + subj === term.value)
+          );
+        });
+        if (match) {
+          image = match.object.value;
+          break;
+        }
+      }
+    }
   }
   else {
-    image = s.out(ns.foaf.img).values[0] || s.out(ns.schema.image).values[0] || s.out(ns.vcard.photo).values[0] || s.out(ns.vcard.hasPhoto).values[0] || s.out(ns.sioc.avatar).values[0] || s.out(ns.foaf.depiction).values[0] || undefined
+    const props = [
+      ns.foaf.img,
+      ns.schema.image,
+      ns.vcard.photo,
+      ns.vcard.hasPhoto,
+      ns.sioc.avatar,
+      ns.foaf.depiction
+    ];
+
+    image = props
+      .flatMap(prop => s.out(prop).terms)
+      .find(term => term?.termType === 'NamedNode')
+      ?.value;
   }
 
-  if (typeof image !== 'undefined') {
+  if (image) {
     try {
-      image = new URL(image).href;
-      return image;
-    }
-    catch {
+      return new URL(image).href;
+    } catch {
       return undefined;
     }
   }
 
-  return image;
+  return undefined;
 }
+
+
 
 function getGraphEmail(s) {
   var email = s.out(ns.schema.email).values;
