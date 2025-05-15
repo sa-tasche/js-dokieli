@@ -536,7 +536,7 @@
                       </dl>
                     </dd>
 
-                    <dt about="#feature-document-metadata" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-jar-wheat"></i><dfn id="document-metadata">Document metadata</dfn></dt>
+                    <dt about="#feature-document-metadata" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-jar-wheat"></i><dfn id="feature-document-metadata">Document metadata</dfn></dt>
                     <dd about="#feature-document-metadata" property="skos:definition">Based on document's underlying structured data, displays information about its contributors such as editors and authors, number of citations, requirements, advisements, concepts, statements, as well as an estimated reading time, number of characters, words, and bytes.</dd>
                   </dl>
                 </div>
