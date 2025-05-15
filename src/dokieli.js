@@ -1868,6 +1868,8 @@ DO = {
     },
 
     showAboutDokieli: function(node) {
+      if (document.querySelector('#about-dokieli')) { return; }
+
       const html = `
       <section id="about-dokieli">
         <dl>
