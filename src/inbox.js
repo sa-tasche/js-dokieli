@@ -64,8 +64,7 @@ function sendNotifications(tos, note, iri, shareResource) {
                 toInput
                   .parentNode
                   .querySelector('.progress[data-to="' + to + '"]')
-                  .setHTMLUnsafe(domSanitize('<a target="_blank" href="' +
-                  location + '">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>'));
+                  .setHTMLUnsafe(domSanitize('<a href="' + location + '" rel="noopener" target="_blank">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>'));
               }
             })
             .catch(error => {

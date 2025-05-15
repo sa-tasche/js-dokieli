@@ -462,7 +462,7 @@ console.log(node)
                 status = '. ' + status;
               }
     
-              searchResultsItems.push('<li><input name="specref-item" id="ref-' + key + '" type="radio" value="' + key + '" /> <label for="ref-' + key + '"><a href="' + href + '" target="_blank">' + title + '</a>' + publisher + date + status + '</label></li>');
+              searchResultsItems.push('<li><input name="specref-item" id="ref-' + key + '" type="radio" value="' + key + '" /> <label for="ref-' + key + '"><a href="' + href + '" rel="noopener" target="_blank">' + title + '</a>' + publisher + date + status + '</label></li>');
             }
           });
           searchResultsHTML = '<ul>' + searchResultsItems.join('') + '</ul>';

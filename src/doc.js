@@ -1336,7 +1336,7 @@ function showTimeMap(node, url) {
         var o = t.object.value;
 
         if (p === ns.mem.mementoDateTime.value) {
-          items.push('<li><a href="' + s + '" target="_blank">' + o + '</a></li>');
+          items.push('<li><a href="' + s + '" rel="noopener" target="_blank">' + o + '</a></li>');
         }
       });
 
@@ -2831,7 +2831,7 @@ function showRobustLinksDecoration(node) {
 
     var originalurl = i.getAttribute('data-originalurl');
     originalurl = (originalurl) ? originalurl.trim() : undefined;
-    originalurl = (originalurl) ? '<span>Original</span><span><a href="' + originalurl + '" target="_blank">' + originalurl + '</a></span>' : '';
+    originalurl = (originalurl) ? '<span>Original</span><span><a href="' + originalurl + '" rel="noopener" target="_blank">' + originalurl + '</a></span>' : '';
 
     var versionurl = i.getAttribute('data-versionurl');
     versionurl = (versionurl) ? versionurl.trim() : undefined;
@@ -2841,13 +2841,13 @@ function showRobustLinksDecoration(node) {
     if (versiondate) {
       versiondate = versiondate.trim();
       nearlinkdateurl = 'http://timetravel.mementoweb.org/memento/' + versiondate.replace(/\D/g, '') + '/' + href;
-      nearlinkdateurl = '<span>Near Link Date</span><span><a href="' + nearlinkdateurl + '" target="_blank">' + versiondate + '</a></span>'
+      nearlinkdateurl = '<span>Near Link Date</span><span><a href="' + nearlinkdateurl + '" rel="noopener" target="_blank">' + versiondate + '</a></span>'
     }
     else if (versionurl) {
       versiondate = versionurl;
     }
 
-    versionurl = (versionurl) ? '<span>Version</span><span><a href="' + versionurl + '" target="_blank">' + versiondate + '</a></span>' : '';
+    versionurl = (versionurl) ? '<span>Version</span><span><a href="' + versionurl + '" rel="noopener" target="_blank">' + versiondate + '</a></span>' : '';
 
     // var citations = Object.keys(Config.Citation).concat(ns.schema.citation);
 
@@ -3341,7 +3341,7 @@ function showResourceAudienceAgentOccupations() {
               Config.Resource[iri]['labels'] = skosLabels;
             }
 // console.log(label)
-            ul.push('<li><a href="' + iri + '" target="_blank">' + label + '</a></li>');
+            ul.push('<li><a href="' + iri + '" rel="noopener" target="_blank">' + label + '</a></li>');
           }
         });
 

@@ -1573,7 +1573,7 @@ DO = {
       if (open) {
         open = decodeURIComponent(open);
 
-        var message = 'Opening <a href="' + open + '" target="_blank">' + open + '</a>';
+        var message = 'Opening <a href="' + open + '" rel="noopener" target="_blank">' + open + '</a>';
         message = {
           'content': message,
           'type': 'info',
@@ -1872,7 +1872,7 @@ DO = {
       <section id="about-dokieli">
         <dl>
           <dt>About</dt>
-          <dd><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><a href="https://dokie.li/" target="_blank">dokieli</a> is an ${Icon[".fab.fa-osi"]} <a href="https://git.dokie.li/" target="_blank">open source</a> project. There is ${Icon[".fas.fa-flask"]} <a href="https://dokie.li/docs" target="_blank">documentation</a> and public ${Icon[".fas.fa-comments"]} <a href="https://matrix.to/#/%23dokieli:matrix.org" target="_blank">chat</a>. Made with fun.</dd>
+          <dd><img alt="" height="16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="16" /><a href="https://dokie.li/" rel="noopener" target="_blank">dokieli</a> is an ${Icon[".fab.fa-osi"]} <a href="https://git.dokie.li/" rel="noopener" target="_blank">open source</a> project. There is ${Icon[".fas.fa-flask"]} <a href="https://dokie.li/docs" rel="noopener" target="_blank">documentation</a> and public ${Icon[".fas.fa-comments"]} <a href="https://matrix.to/#/%23dokieli:matrix.org" rel="noopener" target="_blank">chat</a>. Made with fun.</dd>
         </dl>
       </section>`;
 
@@ -3307,7 +3307,7 @@ console.log(reason);
 
       var rlUL = document.querySelector('#robustify-links-list');
       rlCandidates.forEach(i => {
-        var html = '<li><input id="' + i.href + '" type="checkbox" value="' + i.href + '" /> <label for="' + i.href + '"><a href="' + i.href + '" target="_blank" title="' + i.textContent + '">' + i.href + '</a></label>';
+        var html = '<li><input id="' + i.href + '" type="checkbox" value="' + i.href + '" /> <label for="' + i.href + '"><a href="' + i.href + '" rel="noopener" target="_blank" title="' + i.textContent + '">' + i.href + '</a></label>';
 
           //TODO: addEventListener
 //         if(robustLinksUnique[i.href]) {
@@ -3362,7 +3362,7 @@ console.log(reason);
               Object.keys(robustLinksUnique).forEach(url => {
                 if (i.value == url) {
 // console.log(robustLinksUnique[url])
-                  progress.setHTMLUnsafe(domSanitize('<a href="' + robustLinksUnique[url]["data-versionurl"] + '" target="_blank">' + Icon[".fas.fa-archive"] + '</a>'));
+                  progress.setHTMLUnsafe(domSanitize('<a href="' + robustLinksUnique[url]["data-versionurl"] + '" rel="noopener" target="_blank">' + Icon[".fas.fa-archive"] + '</a>'));
 // console.log(node)
                   node.setAttribute("data-versionurl", robustLinksUnique[url]["data-versionurl"]);
                   node.setAttribute("data-versiondate", robustLinksUnique[url]["data-versiondate"]);
@@ -3388,7 +3388,7 @@ console.log(reason);
 // console.log('Add    robustLinksUnique: ' + Object.keys(robustLinksUnique).length);
                   }
 
-                  progress.setHTMLUnsafe(domSanitize('<a href="' + versionURL + '" target="_blank">' + Icon[".fas.fa-archive"] + '</a>'));
+                  progress.setHTMLUnsafe(domSanitize('<a href="' + versionURL + '" rel="noopener" target="_blank">' + Icon[".fas.fa-archive"] + '</a>'));
 
                   showRobustLinksDecoration(node.closest('cite'));
                 })
@@ -3539,7 +3539,7 @@ console.log(reason);
       var handleSuccess = function(o) {
 // console.log(o)
         if (options.showActionMessage) {
-          var message = messageArchivedAt + '<a target="_blank" href="' + o.location + '">' + o.location + '</a>';
+          var message = messageArchivedAt + '<a rel="noopener" target="_blank" href="' + o.location + '">' + o.location + '</a>';
           message = {
             'content': message,
             'type': 'success'
@@ -3674,7 +3674,7 @@ console.log(reason);
               let location = 'https://web.archive.org' + response.wayback_id
 
               if (options.showActionMessage) {
-                message = messageArchivedAt + '<a target="_blank" href="' + location + '">' + location + '</a>';
+                message = messageArchivedAt + '<a href="' + location + '" rel="noopener" target="_blank">' + location + '</a>';
                 message = {
                   'content': message,
                   'type': 'info'
@@ -3865,7 +3865,7 @@ console.log(reason);
 
                 generateFeed.insertAdjacentHTML('beforeend',
                   '<div class="response-message"><p class="success">' +
-                  'Document saved at <a href="' + url + documentMode + '" target="_blank">' + url + '</a></p></div>'
+                  'Document saved at <a href="' + url + documentMode + '" rel="noopener" target="_blank">' + url + '</a></p></div>'
                 )
 
                 window.open(url + documentMode, '_blank')
@@ -4409,7 +4409,7 @@ console.log(reason);
           .then(response => {
             replyToResource
               .querySelector('.response-message')
-              .setHTMLUnsafe(domSanitize('<p class="success"><a target="_blank" href="' + response.url + '">Reply saved!</a></p>'));
+              .setHTMLUnsafe(domSanitize('<p class="success"><a href="' + response.url + '" rel="noopener" target="_blank">Reply saved!</a></p>'));
 
             return getLinkRelation(ns.ldp.inbox.value, null, getDocument());
           })
@@ -4452,7 +4452,7 @@ console.log(reason);
             var location = response.headers.get('Location')
 
             if (location) {
-              notificationSent = '<a target="_blank" href="' + location.trim() + '">' + notificationSent + '</a>!'
+              notificationSent = '<a href="' + location.trim() + '" rel="noopener" "target="_blank">' + notificationSent + '</a>!'
             }
             else {
               notificationSent = notificationSent + ", but location unknown."
@@ -4806,7 +4806,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       }
       img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
-      var input = '<li id="share-resource-access-subject-' + id + '">' + img + '<a href="' + iri + '" target="_blank">' + name + '</a></li>';
+      var input = '<li id="share-resource-access-subject-' + id + '">' + img + '<a href="' + iri + '" rel="noopener" target="_blank">' + name + '</a></li>';
 
       node.insertAdjacentHTML('beforeend', input);
     },
@@ -5065,7 +5065,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         }
         img = '<img alt="" height="32" src="' + img + '" width="32" />';
 
-        var input = '<li><input id="share-resource-contact-' + id + '" type="checkbox" value="' + iri + '" /><label for="share-resource-contact-' + id + '">' + img + '<a href="' + iri + '" target="_blank">' + name + '</a></label></li>';
+        var input = '<li><input id="share-resource-contact-' + id + '" type="checkbox" value="' + iri + '" /><label for="share-resource-contact-' + id + '">' + img + '<a href="' + iri + '" rel="noopener" target="_blank">' + name + '</a></label></li>';
 
         node.insertAdjacentHTML('beforeend', input);
       }
@@ -5306,7 +5306,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                 var storageDescriptionNode = document.getElementById(id + '-storage-description');
 
                 if (!storageDescriptionNode) {
-                  var storageLocation = '<dl id="storage-location"><dt>Storage location</dt><dd><a href="' + storageUrl +'" target="_blank">' + storageUrl + '</a></dd></dl>';
+                  var storageLocation = '<dl id="storage-location"><dt>Storage location</dt><dd><a href="' + storageUrl +'" rel="noopener" target="_blank">' + storageUrl + '</a></dd></dl>';
 
                   getResourceGraph(sDURL).then(g => {
                     if (g) {
@@ -5380,7 +5380,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         persistencePolicy.forEach(iri => {
           DO.C.Resource[g.term.value]['persistencePolicy'].push(iri);
 
-          pp.push('<dd><a href="' + iri  + '" target="_blank">' + iri + '</a></dd>');
+          pp.push('<dd><a href="' + iri  + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
         });
 
         s = '<dl id="storage-persistence-policy"><dt>URI persistence policy</dt>' + pp.join('') + '</dl>'
@@ -5411,19 +5411,19 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             //XXX: Label derived from URI.
             var ruleLabel = rule.substr(rule.lastIndexOf('/') + 1);
 
-            policyDetails.push('<dt>Rule<dt><dd><a href="' + rule + '" target="_blank">' + ruleLabel + '</a></dd>');
+            policyDetails.push('<dt>Rule<dt><dd><a href="' + rule + '" rel="noopener" target="_blank">' + ruleLabel + '</a></dd>');
           }
 
           //TODO: odrl:Set
 
           var uid = policy.out(ns.odrl.uid).values[0];
           if (uid) {
-            policyDetails.push('<dt>Unique identifier<dt><dd><a href="' + uid + '" target="_blank">' + uid + '</a></dd>');
+            policyDetails.push('<dt>Unique identifier<dt><dd><a href="' + uid + '" rel="noopener" target="_blank">' + uid + '</a></dd>');
           }
 
           var target = policy.out(ns.odrl.target).values[0];
           if (target) {
-            policyDetails.push('<dt>Target<dt><dd><a href="' + target + '" target="_blank">' + target + '</a></dd>');
+            policyDetails.push('<dt>Target<dt><dd><a href="' + target + '" rel="noopener" target="_blank">' + target + '</a></dd>');
           }
 
           var permission = policy.out(ns.odrl.permission).values[0];
@@ -5445,7 +5445,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
           var detail = '<dl>' + policyDetails.join('') + '</dl>';
 
-          odrlPolicies.push('<dd><details><summary><a href="' + iri + '" target="_blank">' + iri + '</a></summary>' + detail + '</details></dd>');
+          odrlPolicies.push('<dd><details><summary><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></summary>' + detail + '</details></dd>');
         });
 
         s = '<dl id="odrl-policies"><dt>Policies</dt>' + odrlPolicies.join('') + '</dl>';
@@ -5506,7 +5506,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       var assigners = g.out(ns.odrl.assigner).values;
 
       assigners.forEach(iri => {
-        a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
+        a.push('<dd><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
       });
 
       s = '<dt>Assigners</dt>' + a.join('');
@@ -5521,7 +5521,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       var assignees = g.out(ns.odrl.assignees).values;
 
       assignees.forEach(iri => {
-        a.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
+        a.push('<dd><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
       });
 
       s = '<dt>Assignees</dt>' + a.join('');
@@ -5542,7 +5542,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         solidOwner.forEach(iri => {
           DO.C.Resource[g.term.value]['owner'].push(iri);
 
-          resourceOwners.push('<dd><a href="' + iri + '" target="_blank">' + iri + '</a></dd>');
+          resourceOwners.push('<dd><a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a></dd>');
         });
 
         s = '<dl id="resource-owners"><dt>Owners</dt>' + resourceOwners.join('') + '</dl>';
@@ -5592,18 +5592,18 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             buttonSubscribeClass = 'unsubscribe';
           }
 
-          nSHTML.push('<dd id="notification-subscription-' + subscription + '"><details><summary><a href="' + subscription + '" target="_blank">' + subscription + '</a></summary>');
+          nSHTML.push('<dd id="notification-subscription-' + subscription + '"><details><summary><a href="' + subscription + '" rel="noopener" target="_blank">' + subscription + '</a></summary>');
           nSHTML.push('<dl rel="notify:subscription" resource="' + subscription + '">');
-          // nSHTML.push('<dt>Subscription</dt><dd><a href="' + subscription + '" target="_blank">' + subscription + '</a></dd>');
+          // nSHTML.push('<dt>Subscription</dt><dd><a href="' + subscription + '" rel="noopener" target="_blank">' + subscription + '</a></dd>');
 
           var topic = subjectURI;
 
           if (topic) {
-            nSHTML.push('<dt>Topic</dt><dd><a href="' + topic + '" rel="notify:topic" target="_blank">' + topic + '</a> <button id="notification-subscription-' + subscription + '-button"' + ' class="' + buttonSubscribeClass + '">' + buttonSubscribe + '</button></dd>');
+            nSHTML.push('<dt>Topic</dt><dd><a href="' + topic + '" rel="notify:topic nopener" target="_blank">' + topic + '</a> <button id="notification-subscription-' + subscription + '-button"' + ' class="' + buttonSubscribeClass + '">' + buttonSubscribe + '</button></dd>');
           }
 
           if (channelType) {
-            nSHTML.push('<dt>Channel Type</dt><dd><a href="' + channelType + '" rel="notify:channelType" target="_blank">' + channelType + '</a></dd>');
+            nSHTML.push('<dt>Channel Type</dt><dd><a href="' + channelType + '" rel="notify:channelType noopener" target="_blank">' + channelType + '</a></dd>');
           }
 
           if (features) {
@@ -5628,7 +5628,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                   break;
               }
 
-              nSHTML.push('<li><a href="' + href + '" resource="' + iri + '" target="_blank">' + label + '</a></li>');
+              nSHTML.push('<li><a href="' + href + '" resource="' + iri + '" rel="noopener" target="_blank">' + label + '</a></li>');
             });
 
             nSHTML.push('</ul></dd>');
@@ -6283,7 +6283,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       var handleResource = function handleResource (iri, headers, options) {
         var message = {
-          'content': 'Opening <a href="' + iri + '" target="_blank">' + iri + '</a>.',
+          'content': 'Opening <a href="' + iri + ' "rel="noopener" target="_blank">' + iri + '</a>.',
           'type': 'info',
           'timer': 10000
         }
@@ -6301,7 +6301,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
             document.getElementById(messageId).remove();
 
-            var message = 'Unable to open <a href="' + iri + '" target="_blank">' + iri + '</a>.';
+            var message = 'Unable to open <a href="' + iri + ' "rel="noopener" target="_blank">' + iri + '</a>.';
             message = {
               'content': message,
               'type': 'error',
@@ -6362,7 +6362,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                 if (rm) {
                   rm.parentNode.removeChild(rm)
                 }
-                var message = 'Opened <a href="' + iri + '" target="_blank">' + iri + '</a>.';
+                var message = 'Opened <a href="' + iri + '" rel="noopener" target="_blank">' + iri + '</a>.';
                 message = {
                   'content': message,
                   'type': 'success',
@@ -7195,7 +7195,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                     var location = response.headers.get('Location');
 
                     if (location) {
-                      notificationSent = '<a target="_blank" href="' + location.trim() + '">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>'
+                      notificationSent = '<a href="' + location.trim() + '" rel="noopener" target="_blank">' + Icon[".fas.fa-check-circle.fa-fw"] + '</a>'
                     }
                     else {
                       notificationSent = notificationSent + ", but location unknown."
@@ -7856,7 +7856,7 @@ WHERE {\n\
         x2 = range * (i / parts.length) + (div / 2);
         y2 = range - parts[i];
 
-        lines += '<a rel="rdfs:seeAlso" resource="' + data[i][observation] + '" target="_blank" href="' + data[i][observation] + '"><line' +
+        lines += '<a href="' + data[i][observation] + '" rel="rdfs:seeAlso noopener" resource="' + data[i][observation] + '" target="_blank"><line' +
           ' x1="' + x1 + '%"' +
           ' x2="' + x2 + '%"' +
           ' y1="' + y1 + '%"' +
@@ -7866,7 +7866,7 @@ WHERE {\n\
 
         //Last data item
         if(i+1 === parts.length) {
-          lines += '<a target="_blank" href="' + data[i][observation] + '"><circle' +
+          lines += '<a href="' + data[i][observation] + '" rel="noopener" target="_blank"><circle' +
             ' cx="' + x2 + '%"' +
             ' cy="' + y2 + '%"' +
             ' r="' + dotSize + '"' +
@@ -8612,7 +8612,7 @@ WHERE {\n\
       var contextNode = selectArticleNode(document);
       // <p class="count"><data about="" datatype="xsd:nonNegativeInteger" property="sioc:num_replies" value="' + interactionsCount + '">' + interactionsCount + '</data> interactions</p>
       //<progress min="0" max="100" value="0"></progress>
-      //<div class="actions"><a href="/docs#resource-activities" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
+      //<div class="actions"><a href="/docs#resource-activities" rel="noopener" target="_blank">${Icon[".fas.fa-circle-info"]}</a></div>
 
       //TEMP buttonRel/Resource
       var aside = `<aside class="do" contenteditable="false" id="document-notifications">${DO.C.Button.Toggle}<h2>Notifications ${getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: Config.ButtonInfo['feature-notifications'] })}</h2><div><div class="info"></div><ul class="activities"></ul></div></aside>`;
