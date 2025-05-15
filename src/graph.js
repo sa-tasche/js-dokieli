@@ -1288,17 +1288,22 @@ function getGraphImage(s) {
   return undefined;
 }
 
-
-
 function getGraphEmail(s) {
-  var email = s.out(ns.schema.email).values;
-  var mbox = s.out(ns.foaf.mbox).values;
-  var d =
-    email.length ? email[0] :
-    mbox.length ? mbox[0] :
-    undefined;
+  const props = [ns.schema.email, ns.foaf.mbox];
 
-  return d === undefined ? undefined : domSanitize(d)
+  for (const prop of props) {
+    const terms = s.out(prop).terms;
+    for (const term of terms) {
+      if (term.termType === 'NamedNode') {
+        return term.value;
+      }
+      if (term.termType === 'Literal') {
+        return domSanitize(term.value);
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function getGraphContributors(s) {
@@ -1312,18 +1317,22 @@ function getGraphEditors(s) {
 }
 
 function getGraphAuthors(s) {
-  var author = s.out(ns.schema.author).values;
-  var creator = s.out(ns.schema.creator).values;
-  var actor = s.out(ns.as.author).values;
-  var dcreator = s.out(ns.dcterms.creator).values;
+  const props = [
+    ns.schema.author,
+    ns.schema.creator,
+    ns.as.author,
+    ns.dcterms.creator
+  ];
 
-  return (
-    author.length > 0 ? author :
-    creator.length > 0 ? creator :
-    actor.length > 0 ? actor :
-    dcreator.length > 0 ? dcreator :
-    undefined
-  );
+  for (const prop of props) {
+    const values = s.out(prop).values;
+
+    if (values.length > 0) {
+      return values;
+    }
+  }
+
+  return undefined;
 }
 
 function getGraphPerformers(s) {
