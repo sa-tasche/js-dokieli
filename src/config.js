@@ -95,7 +95,7 @@ export default {
     },
   },
   Button: {
-    Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
+    Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
     Delete: getButtonHTML({ button: 'delete', buttonClass: 'delete', buttonTitle: 'Delete' }),
     Toggle: getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonTitle: 'Show/Hide' }),
     More: getButtonHTML({ button: 'more', buttonClass: 'more', buttonTitle: 'Show more' })
