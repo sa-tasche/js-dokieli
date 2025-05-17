@@ -3892,58 +3892,6 @@ console.log(reason);
       }
 
       showTimeMap();
-
-      var mementoItems = document.getElementById('memento-items');
-      if (mementoItems) { return; }
-
-      var iri = DO.C.DocumentURL;
-
-      var li = [];
-      li.push(`<li>${getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonDisabled: isButtonDisabled('create-version'), buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x' })}</li>`);
-
-      li.push(`<li>${getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonDisabled: isButtonDisabled('create-immutable'), buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x' })}</li>`);
-
-      li.push(`<li>${getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonDisabled: isButtonDisabled('robustify-links'), buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify Links', iconSize: 'fa-2x' })}</li>`);
-
-      li.push(`<li>${getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonDisabled: isButtonDisabled('snapshot-internet-archive'), buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Internet Archive', iconSize: 'fa-2x' })}</li>`);
-
-      li.push(`<li>${getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonDisabled: isButtonDisabled('generate-feed'), buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' })}</li>`);
-
-      li.push(`<li>${getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonDisabled: isButtonDisabled('export-as-html'), buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' })}</li>`);
-
-      e.target.closest('button').insertAdjacentHTML('afterend', '<ul id="memento-items" class="on">' + li.join('') + '</ul>');
-
-      mementoItems = document.getElementById('memento-items');
-
-      mementoItems.addEventListener('click', (e) => {
-        if (e.target.closest('button.resource-save') ||
-            e.target.closest('button.create-version') ||
-            e.target.closest('button.create-immutable')) {
-          DO.U.resourceSave(e);
-        }
-
-        if (e.target.closest('button.export-as-html')) {
-          var options = {
-            subjectURI: DO.C.DocumentURL,
-            mediaType: 'text/html',
-            filenameExtension: '.html'
-          }
-          DO.U.exportAsDocument(getDocument(), options);
-        }
-
-        if (e.target.closest('button.robustify-links')){
-          DO.U.showRobustLinks(e);
-        }
-
-        if (e.target.closest('button.snapshot-internet-archive')){
-          // DO.U.snapshotAtEndpoint(e, iri, 'https://pragma.archivelab.org/', '', {'contentType': 'application/json'});
-          DO.U.snapshotAtEndpoint(e, iri, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': true });
-        }
-
-        if (e.target.closest('button.generate-feed')) {
-          DO.U.generateFeed(e);
-        }
-      });
     },
 
     showDocumentDo: function (node) {
@@ -3971,6 +3919,18 @@ console.log(reason);
       s += `<li>${getButtonHTML({ button: 'save-as', buttonClass: 'resource-save-as', buttonDisabled: isButtonDisabled('resource-save-as'), buttonTitle: 'Save as article', buttonTextContent: 'Save As', iconSize: 'fa-2x' })}</li>`;
 
       s += `<li>${getButtonHTML({ button: 'memento', buttonClass: 'resource-memento', buttonTitle: 'Memento article', buttonTextContent: 'Memento', iconSize: 'fa-2x' })}</li>`;
+
+      s += `<li>${getButtonHTML({ button: 'version', buttonClass: 'create-version', buttonDisabled: isButtonDisabled('create-version'), buttonTitle: 'Version this article', buttonTextContent: 'Version', iconSize: 'fa-2x' })}</li>`;
+
+      s += `<li>${getButtonHTML({ button: 'immutable', buttonClass: 'create-immutable', buttonDisabled: isButtonDisabled('create-immutable'), buttonTitle: 'Make this article immutable and version it', buttonTextContent: 'Immutable', iconSize: 'fa-2x' })}</li>`;
+
+      s += `<li>${getButtonHTML({ button: 'robustify-links', buttonClass: 'robustify-links', buttonDisabled: isButtonDisabled('robustify-links'), buttonTitle: 'Robustify Links', buttonTextContent: 'Robustify Links', iconSize: 'fa-2x' })}</li>`;
+
+      s += `<li>${getButtonHTML({ button: 'archive', buttonClass: 'snapshot-internet-archive', buttonDisabled: isButtonDisabled('snapshot-internet-archive'), buttonTitle: 'Capture with Internet Archive', buttonTextContent: 'Internet Archive', iconSize: 'fa-2x' })}</li>`;
+
+      s += `<li>${getButtonHTML({ button: 'feed', buttonClass: 'generate-feed', buttonDisabled: isButtonDisabled('generate-feed'), buttonTitle: 'Generate Web feed', buttonTextContent: 'Feed', iconSize: 'fa-2x' })}</li>`;
+
+      s += `<li>${getButtonHTML({ button: 'export', buttonClass: 'export-as-html', buttonDisabled: isButtonDisabled('export-as-html'), buttonTitle: 'Export and save to file', buttonTextContent: 'Export', iconSize: 'fa-2x' })}</li>`;
 
       //TODO: Use DO.C.Editor.mode and getButtonHTML instead
       if (DO.C.EditorAvailable) {
@@ -4069,6 +4029,33 @@ console.log(reason);
 
         if (e.target.closest('.resource-memento')) {
           DO.U.mementoDocument(e);
+        }
+
+        if (e.target.closest('.create-version') ||
+            e.target.closest('.create-immutable')) {
+          DO.U.resourceSave(e);
+        }
+
+        if (e.target.closest('.export-as-html')) {
+          var options = {
+            subjectURI: DO.C.DocumentURL,
+            mediaType: 'text/html',
+            filenameExtension: '.html'
+          }
+          DO.U.exportAsDocument(getDocument(), options);
+        }
+
+        if (e.target.closest('.robustify-links')){
+          DO.U.showRobustLinks(e);
+        }
+
+        if (e.target.closest('.snapshot-internet-archive')){
+          // DO.U.snapshotAtEndpoint(e, DO.C.DocumentURL, 'https://pragma.archivelab.org/', '', {'contentType': 'application/json'});
+          DO.U.snapshotAtEndpoint(e, DO.C.DocumentURL, 'https://web.archive.org/save/', '', {'Accept': '*/*', 'showActionMessage': true });
+        }
+
+        if (e.target.closest('.generate-feed')) {
+          DO.U.generateFeed(e);
         }
 
         if (e.target.closest('.resource-print')) {

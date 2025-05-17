@@ -127,7 +127,7 @@ export default {
     'resource-open': true,
     'resource-save': false,
     'resource-save-as': true,
-    'resource-memento': true,
+    'resource-memento': false,
     'create-version': false,
     'create-immutable': false,
     'robustify-links': true,
