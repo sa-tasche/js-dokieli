@@ -278,26 +278,11 @@ export class Editor {
     }
   }
 
+  //TODO: Port Contributor and Modified to slashmenu widget
   setEditorDataItems(e) {
     if (e && e.target.closest('button.editor-enable')) {
       this.updateDocumentTitle();
       var documentURL = Config.DocumentURL;
-
-      //XXX: THIS MAY NO LONGER BE NEEDED
-      //FIXME: This is a horrible way of hacking MediumEditorTable
-      // document.querySelectorAll('i.fa-table, i.fa-link, i.fa-picture-o').forEach(i => {
-      //   var icon = Icon[".fas.fa-table.fa-2x"].replace(/ fa\-2x/, '');
-
-      //   if (i.classList.contains('fa-link') > 0) {
-      //     icon = Icon[".fas.fa-link"];
-      //   }
-      //   else if (i.classList.contains('fa-image') > 0) {
-      //     icon = Icon[".fas.fa-image"];
-      //   }
-
-      //   i.parentNode.replaceChild(fragmentFromString(icon), i);
-      // });
-
 
       var s = Config.Resource[documentURL].graph.node(rdf.namedNode(documentURL));
 
@@ -414,115 +399,6 @@ export class Editor {
       if(!modified && lastModified) {
         lastModified = new Date(lastModified);
         setDate(document, { 'id': 'document-modified', 'property': 'schema:dateModified', 'title': 'Modified', 'datetime': lastModified } );
-      }
-
-      var documentLanguage = 'document-language';
-      var language = document.getElementById(documentLanguage);
-      if(!language) {
-        var dl = '        <dl class="do" id="' + documentLanguage + '"><dt>Language</dt><dd><select contenteditable="false" name="language">' + getLanguageOptionsHTML({ 'selected': '' }) + '</select></dd></dl>';
-        insertDocumentLevelHTML(document, dl, { 'id': documentLanguage });
-
-        var dLangS = document.querySelector('#' + documentLanguage + ' select');
-        dLangS.addEventListener('change', (e) => {
-          dLangS.querySelectorAll('option').forEach(o => {
-            o.removeAttribute('selected');
-          });
-          dLangS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
-        });
-      }
-
-      var documentLicense = 'document-license';
-      var license = document.getElementById(documentLicense);
-      if(!license) {
-        dl = '        <dl class="do" id="' + documentLicense + '"><dt>License</dt><dd><select contenteditable="false" name="license">' + getLicenseOptionsHTML({ 'selected': '' }) + '</select></dd></dl>';
-        insertDocumentLevelHTML(document, dl, { 'id': documentLicense });
-
-        var dLS = document.querySelector('#' + documentLicense + ' select');
-        dLS.addEventListener('change', (e) => {
-          dLS.querySelectorAll('option').forEach(o => {
-            o.removeAttribute('selected');
-          });
-          dLS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
-        });
-      }
-
-      var documentType = 'document-type';
-      var type = document.getElementById(documentType);
-      if(!type) {
-        dl = '        <dl class="do" id="' + documentType + '"><dt>Document Type</dt><dd><select contenteditable="false" name="document-type">' + getResourceTypeOptionsHTML({ 'selected': '' }) + '</select></dd></dl>';
-        insertDocumentLevelHTML(document, dl, { 'id': documentType });
-
-        var dTypeS = document.querySelector('#' + documentType + ' select');
-        dTypeS.addEventListener('change', (e) => {
-          dTypeS.querySelectorAll('option').forEach(o => {
-            o.removeAttribute('selected');
-          });
-          dTypeS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
-        });
-      }
-
-      var documentStatus = 'document-status';
-      var status = document.getElementById(documentStatus);
-      if(!status) {
-        dl = '        <dl class="do" id="' + documentStatus + '"><dt>Document Status</dt><dd><select contenteditable="false" name="status">' + getPublicationStatusOptionsHTML({ 'selected': '' }) + '</select></dd></dl>';
-        insertDocumentLevelHTML(document, dl, { 'id': documentStatus });
-
-        var dSS = document.querySelector('#' + documentStatus + ' select');
-        dSS.addEventListener('change', (e) => {
-          dSS.querySelectorAll('option').forEach(o => {
-            o.removeAttribute('selected');
-          });
-          dSS.querySelector('option[value="' + e.target.value + '"]').setAttribute('selected', 'selected');
-        });
-      }
-
-      if (getGraphTypes(s).includes(ns.doap.Specification.value)) {
-        var documentTestSuite = 'document-test-suite';
-        var testSuite = document.getElementById(documentTestSuite);
-        if (!testSuite) {
-          // <!--<button class="add-test-suite" contenteditable="false" title="Add test suite">' + Icon[".fas.fa-plus"] + '</button>-->
-          dl = '        <dl class="do" id="' + documentTestSuite + '"><dt>Test Suite</dt><dd><input contenteditable="false" name="test-suite" placeholder="https://example.net/test-suite" type="text" value="" /></dd></dl>';
-          insertDocumentLevelHTML(document, dl, { 'id': documentTestSuite });
-
-          //XXX: This is a workaround until we understand why the input value is not available in setEditSelections() where it is using `document.querySelector` to get the value fresh. The following catches the blur event and sets the input value back to itself, and that seems to be available setEditSelections().
-          var dTS = document.querySelector('#' + documentTestSuite + ' input');
-          dTS.addEventListener('blur', (e) => {
-            dTS.setAttribute('value', dTS.value)
-          });
-        }
-      }
-
-      var inbox = getGraphInbox(s);
-      if (!inbox?.length) {
-        var documentInbox = 'document-inbox';
-        var inbox = document.getElementById(documentInbox);
-        if (!inbox) {
-          //XXX: <!--<button class="add-inbox" contenteditable="false" title="Add inbox">' + Icon[".fas.fa-plus"] + '</button>-->
-          dl = '        <dl class="do" id="' + documentInbox + '"><dt>Inbox</dt><dd><input contenteditable="false" name="inbox" placeholder="https://example.net/inbox/" type="text" value="" /></dd></dl>';
-          insertDocumentLevelHTML(document, dl, { 'id': documentInbox });
-
-          //XXX: Same as above comment about workaround for setEditSelections
-          var dI = document.querySelector('#' + documentInbox + ' input');
-          dI.addEventListener('blur', (e) => {
-            dI.setAttribute('value', dI.value);
-          });
-        }
-      }
-
-      if (!s.out(ns.as.inReplyTo).values.length) {
-        var documentInReplyTo = 'document-in-reply-to';
-        var inReplyTo = document.getElementById(documentInReplyTo);
-        if (!inReplyTo) {
-          //XXX: <!--<button class="add-in-reply-to" contenteditable="false" title="Add in-reply-to">' + Icon[".fas.fa-plus"] + '</button>-->
-          dl = '        <dl class="do" id="' + documentInReplyTo + '"><dt>In Reply To</dt><dd><input contenteditable="false" name="in-reply-to" placeholder="https://example.net/article" type="text" value="" /></dd></dl>';
-          insertDocumentLevelHTML(document, dl, { 'id': documentInReplyTo });
-
-          //XXX: Same as above comment about workaround for setEditSelections
-          var dIRT = document.querySelector('#' + documentInReplyTo + ' input');
-          dIRT.addEventListener('blur', (e) => {
-            dIRT.setAttribute('value', dI.value);
-          });
-        }
       }
     }
     else if (e && e.target.closest('button.editor-disable')) {

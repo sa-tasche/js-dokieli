@@ -924,15 +924,6 @@ DO = {
           .attr('rel', 'dcterms:license')
           .attr('fill', legendCategories[7].color)
           .text(DO.C.License[options.license].name)
-        // var selectLicense = '<select id="graph-license" name="graph-license">' + getLicenseOptionsHTML() + '</select>';
-        // graphLegend.append('License: <a href="' + options.license + '">' + DO.C.License[options.license].name  + '</a>' + selectLicense);
-
-        // graphLegend
-        //   .append("text")
-        //   .attr("x", 0)
-        //   .attr("y", 45)
-        //   .text('Language: <a href="' + options.language + '">' + DO.C.Languages[options.language].name  + '');
-        // var selectLanguages = '<select id="graph-view-language" name="graph-view-language">' + getLanguageOptionsHTML() + '</select>';
 
         const legendInfo = {};
 
@@ -1695,12 +1686,12 @@ DO = {
 
       var licenseOptions = document.querySelectorAll('[about="#feature-license-options"][typeof="schema:ChooseAction"], [href="#feature-license-options"][typeof="schema:ChooseAction"], [resource="#feature-license-options"][typeof="schema:ChooseAction"]');
       for (var i = 0; i < licenseOptions.length; i++){
-        licenseOptions[i].parentNode.replaceChild(fragmentFromString('<label class="do" for="feature-license-options">License</label><select class="do" id="feature-license-options">' + getLicenseOptionsHTML() + '</select>'), licenseOptions[i]);
+        licenseOptions[i].parentNode.replaceChild(fragmentFromString('<label class="do" for="feature-license-options">License</label> <select class="do" id="feature-license-options">' + getLicenseOptionsHTML() + '</select>'), licenseOptions[i]);
       }
 
       var languageOptions = document.querySelectorAll('[about="#feature-language-options"][typeof="schema:ChooseAction"], [href="#feature-language-options"][typeof="schema:ChooseAction"], [resource="#feature-language-options"][typeof="schema:ChooseAction"]');
       for (var i = 0; i < languageOptions.length; i++){
-        languageOptions[i].parentNode.replaceChild(fragmentFromString('<label class="do" for="feature-language-options">Languages</label><select class="do" id="feature-language-options">' + getLanguageOptionsHTML() + '</select>'), languageOptions[i]);
+        languageOptions[i].parentNode.replaceChild(fragmentFromString('<label class="do" for="feature-language-options">Languages</label> <select class="do" id="feature-language-options">' + getLanguageOptionsHTML() + '</select>'), languageOptions[i]);
       }
     },
 
@@ -7231,21 +7222,27 @@ console.log('XXX: Cannot access effectiveACLResource', e);
     },
 
     getFeedFormatSelection: function() {
-      return '<div id="feed-format-selection"><label for="feed-format">Format:</label>\n\
-      <select id="feed-format">\n\
-      <option id="feed-format-atom" value="application/atom+xml">Atom</option>\n\
-      <option id="feed-format-rss" value="application/rss+xml" selected="selected">RSS</option>\n\
-      </select>\n\
-      </div>';
+      return `
+        <div id="feed-format-selection">
+          <label for="feed-format">Format:</label>
+          <select id="feed-format">
+            <option id="feed-format-atom" value="application/atom+xml">Atom</option>
+            <option id="feed-format-rss" value="application/rss+xml" selected="selected">RSS</option>
+          </select>
+        </div>
+      `;
     },
 
     getBaseURLSelection: function() {
-      return '<div id="base-url-selection"><label for="base-url">Location of media resources:</label>\n\
-      <select id="base-url">\n\
-      <option id="base-url-absolute" value="base-url-absolute" selected="selected">Use references as is</option>\n\
-      <option id="base-url-relative" value="base-url-relative">Copy to your storage</option>\n\
-      </select>\n\
-      </div>';
+      return `
+        <div id="base-url-selection">
+          <label for="base-url">Location of media resources:</label>
+          <select id="base-url">
+            <option id="base-url-absolute" value="base-url-absolute" selected="selected">Use references as is</option>
+            <option id="base-url-relative" value="base-url-relative">Copy to your storage</option>
+          </select>
+        </div>
+      `;
     },
 
     rewriteBaseURL: function(nodes, options) {
