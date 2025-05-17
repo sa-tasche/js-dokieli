@@ -2,8 +2,13 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 test("menu should not have any automatically detectable accessibility issues", async ({ page }) => {
-  await openMenu(page);
+  await page.goto("/");
+  await page.waitForLoadState("load");
+  await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 
+  await page.locator("#document-menu button").click();
+  const menu = page.locator("[id=document-menu]");
+  await expect(menu).toBeVisible();
   const results = await new AxeBuilder({ page })
     .include("#document-menu")
     .analyze();
@@ -12,8 +17,13 @@ test("menu should not have any automatically detectable accessibility issues", a
 });
 
 test("menu should not have any WCAG A or AA violations", async ({ page }) => {
-  await openMenu(page);
+  await page.goto("/");
+  await page.waitForLoadState("load");
+  await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 
+  await page.locator("#document-menu button").click();
+  const menu = page.locator("[id=document-menu]");
+  await expect(menu).toBeVisible();
   const results = await new AxeBuilder({ page })
     .include("#document-menu")
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -23,8 +33,12 @@ test("menu should not have any WCAG A or AA violations", async ({ page }) => {
 });
 
 test("menu WCAG AAA violations", async ({ page }) => {
-  await openMenu(page);
+  await page.goto("/");
+  await page.waitForLoadState("load");
+  await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 
+  await page.locator("#document-menu button").click();
+  const menu = page.locator("[id=document-menu]");
   const results = await new AxeBuilder({ page })
     .include("#document-menu")
     .withTags(["wcag2aaa", "wcag21aaa"])
