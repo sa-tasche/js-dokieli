@@ -4809,7 +4809,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       const documentURL = currentLocation();
 
-      const selectNode = '<label for="' + id + '">Change access</label><select id="' + id + '">' + getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode }) + '</select>';
+      const selectNode = '<select aria-label="Change access permission" id="' + id + '">' + getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode }) + '</select>';
 
       node.insertAdjacentHTML('beforeend', selectNode);
 
@@ -7882,8 +7882,9 @@ WHERE {\n\
     getListHTMLFromTriples: function(triples, options) {
       options = options || {element: 'ul'};
       var elementId = ('elementId' in options) ? ' id="' + options.elementId + '"' : '';
-      var elementName = ('elementId' in options) ? ' name="' + options.elementId + '"' : '';
-      var elementTitle = ('elementId' in options) ? options.elementId : '';
+      var elementName = ('elementName' in options) ? ' name="' + options.elementName + '"' : '';
+      var elementLabel = ('elementLabel' in options) ? ' aria-label="' + options.elementLabel + '"': '';
+      var elementTitle = ('elementTitle' in options) ? options.elementTitle : '';
       var items = '';
       triples.forEach(t => {
         var s = t.subject.value;
@@ -7909,7 +7910,7 @@ WHERE {\n\
         case 'dl':
           return '<dl' + elementId + '><dt>' + elementTitle + '</dt>' + items + '</dl>';
         case 'select':
-          return '<select' + elementId + elementName + '>' + items + '</select>';
+          return '<select' + elementLabel + elementId + elementName + '>' + items + '</select>';
       }
     },
 

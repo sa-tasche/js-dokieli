@@ -130,7 +130,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a language</legend>
-        <label for="language">Language</label> <select class="editor-form-select" name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
+        <label for="set-language">Language</label> <select class="editor-form-select" id="set-language" name="language" required="">${getLanguageOptionsHTML({ 'selected': '' })}</select>
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
@@ -145,7 +145,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a license</legend>
-        <label for="license">License</label> <select class="editor-form-select" name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
+        <label for="set-license">License</label> <select class="editor-form-select" id="set-language" name="license" required="">${getLicenseOptionsHTML({ 'selected': '' })}</select>
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
@@ -160,7 +160,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add an inbox</legend>
-        <label for="inbox">Inbox</label> <input class="editor-form-input" contenteditable="false" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        <label for="set-inbox">Inbox</label> <input class="editor-form-input" id="set-inbox" name="inbox" placeholder="https://example.net/inbox/" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
@@ -175,7 +175,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add an in reply to URL</legend>
-        <label for="in-reply-to">In reply to</label> <input class="editor-form-input" contenteditable="false" name="in-reply-to" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        <label for="set-in-reply-to">In reply to</label> <input class="editor-form-input" id="set-in-reply-to" name="in-reply-to" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
@@ -190,7 +190,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a publication status</legend>
-        <label for="publication-status">Publication status</label> <select class="editor-form-select" name="publication-status" required="">${getPublicationStatusOptionsHTML({ 'selected': '' })}</select>
+        <label for="set-publication-status">Publication status</label> <select class="editor-form-select" id="set-publication-status" name="publication-status" required="">${getPublicationStatusOptionsHTML({ 'selected': '' })}</select>
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
@@ -205,7 +205,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a type</legend>
-        <label for="resource-type">Resource type</label> <select class="editor-form-select" name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
+        <label for="set-resource-type">Resource type</label> <select class="editor-form-select" id="set-resource-type" name="resource-type" required="">${getResourceTypeOptionsHTML({ 'selected': '' })}</select>
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>
@@ -220,7 +220,7 @@ export class SlashMenu {
     var html = `
       <fieldset>
         <legend>Add a test suite</legend>
-        <label for="test-suite">Test suite</label> <input class="editor-form-input" contenteditable="false" name="test-suite" placeholder="https://example.net/test-suite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
+        <label for="set-test-suite">Test suite</label> <input class="editor-form-input" id="set-test-suite" name="test-suite" placeholder="https://example.net/test-suite" pattern="https?://.+" placeholder="Paste or type a link (URL)" oninput="setCustomValidity('')" oninvalid="setCustomValidity('Please enter a valid URL')" required="" type="url" value="" />
         <div>
           <button class="editor-form-submit" title="Save" type="submit">Save</button>
           <button class="editor-form-cancel" title="Cancel" type="button">Cancel</button>

@@ -641,7 +641,7 @@ function createNoteDataHTML(n) {
     default: case 'read':
       hX = 3;
       if ('creator' in n && 'iri' in n.creator && n.creator.iri == Config.User.IRI) {
-        buttonDelete = '<button class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>' ;
+        buttonDelete = '<button aria-label="Delete item" class="delete do" title="Delete item">' + Icon[".fas.fa-trash-alt"] + '</button>' ;
       }
       articleClass = (motivatedByIRI == 'oa:commenting') ? '': ' class="do"';
       aAbout = ('iri' in n) ? n.iri : aAbout;
