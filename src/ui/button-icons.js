@@ -250,19 +250,33 @@ export const buttonIcons = {
 }
 
 //Given a button action, generates an HTML string for the button including an icon and text.
-export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonRel, buttonResource, buttonTitle, buttonTextContent, buttonType, iconSize }) {
+export function getButtonHTML({
+  button,
+  buttonClass,
+  buttonLabel,
+  buttonDisabled,
+  buttonRel,
+  buttonResource,
+  buttonTitle,
+  buttonTextContent,
+  buttonType,
+  iconSize }) {
+
   if (!button) {
-    throw new Error('Need to pass button.');
+      throw new Error('`button` identifier is required.');
   }
 
+  const titleContent = buttonTitle || buttonIcons[button]?.title || button;
+  const title = ` title="${titleContent}"`;
+  const label = buttonLabel || titleContent;
+  const ariaLabel = label ? ` aria-label="${label}"` : '';
   const className = buttonClass ? ` class="${buttonClass}"` : '';
-  const title = ` title="${buttonTitle || buttonIcons[button]?.title || button }"`;
   const disabled = buttonDisabled ? ` disabled=""` : '';
-  const type = buttonType ? ` type="${buttonType}"` : '';
-  const textContent = buttonTextContent || buttonIcons[button]?.textContent;
   let icon = buttonIcons[button]?.icon;
   const rel = buttonRel ? ` rel="${buttonRel}"` : '';
   const resource = buttonResource ? ` resource="${buttonResource}"` : '';
+  const textContent = buttonTextContent || buttonIcons[button]?.textContent;
+  const type = buttonType ? ` type="${buttonType}"` : '';
 
   if (iconSize) {
     let parser = new DOMParser();
@@ -274,5 +288,5 @@ export function getButtonHTML({ button, buttonClass, buttonDisabled, buttonRel, 
 
   const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
 
-  return `<button${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
+  return `<button${ariaLabel}${className}${disabled}${rel}${resource}${title}${type}>${buttonContent}</button>`;
 }
