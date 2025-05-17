@@ -7045,7 +7045,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           html = setDocumentRelation(html, [r], o);
         }
 
-        var baseURLSelectionChecked = saveAsDocument.querySelector('select[name="base-url"]')
+        var baseURLSelectionChecked = saveAsDocument.querySelector('select[id="base-url"]')
         if (baseURLSelectionChecked.length) {
           var baseURLType = baseURLSelectionChecked.value
           var nodes = html.querySelectorAll('head link, [src], object[data]')
