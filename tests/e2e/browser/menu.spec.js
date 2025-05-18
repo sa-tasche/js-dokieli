@@ -149,7 +149,7 @@ test("clicking on the save-as button displays save-as modal", async ({
   await expect(saveAsModal).toBeVisible();
 });
 
-test.only("clicking on the memento button displays memento modal", async ({
+test("clicking on the memento button displays memento modal", async ({
   page,
   isMobile,
 }) => {
@@ -170,12 +170,29 @@ test.only("clicking on the memento button displays memento modal", async ({
   // await expect(versionBtn).toBeVisible();
   // const immutableBtn = page.locator("[class=create-immutable]");
   // await expect(immutableBtn).toBeVisible();
-  // const robustifyBtn = page.locator("[class=robustify-links]");
-  // await expect(robustifyBtn).toBeVisible();
   // const snapshotBtn = page.locator("[class=snapshot-internet-archive]");
   // await expect(snapshotBtn).toBeVisible();
   // const exportBtn = page.locator("[class=export-as-html]");
   // await expect(exportBtn).toBeVisible();
+});
+
+
+test.only("clicking on the robustify links button displays robustify links modal", async ({
+  page,
+  isMobile,
+}) => {
+  await page.goto("/");
+  await expect(page.locator("[id=document-menu]")).not.toBeVisible();
+
+  await page.locator("#document-menu button").click();
+  const menu = page.locator("[id=document-menu]");
+  await expect(menu).toBeVisible();
+  await expect(page.locator(".close")).toBeVisible();
+
+  const robustifyLinksBtw = page.locator("[class=robustify-links]");
+  await robustifyLinksBtw.click();
+  const robustifyLinksModal = page.locator("[id=robustify-links]");
+  await expect(robustifyLinksModal).toBeVisible();
 });
 
 test("clicking on the edit button button enables author mode", async ({
