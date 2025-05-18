@@ -4,15 +4,17 @@ import { config as envConfig } from 'dotenv';
 envConfig();
 
 const config = {
+  worker: 8,
   testDir: "./tests/e2e/browser",
   // temp increase timeout 
+  timeout: 10000,
   // timeout: 30 * 1000,
-  timeout: 120 * 1000,
+  // timeout: 120 * 1000,
   expect: {
-    timeout: 10000,
+    timeout: 5000,
   },
   fullyParallel: true,
-  retries: 3,
+  retries: 0,
   reporter: "html",
   webServer: {
     command: "npx serve",
@@ -23,7 +25,7 @@ const config = {
     actionTimeout: 0,
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
-    video: "off",
+    video: "on",
   },
   projects: [
     {
@@ -31,7 +33,7 @@ const config = {
       use: {
         ...devices["Desktop Chrome"],
       },
-    },
+    }/*,
     {
       name: "firefox",
       use: {
@@ -68,7 +70,7 @@ const config = {
       use: {
         channel: "chrome",
       },
-    },
+    },*/
   ],
   outputDir: "test-results/",
 };
