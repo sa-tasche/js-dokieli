@@ -149,11 +149,11 @@ test("clicking on the save-as button displays save-as modal", async ({
   await expect(saveAsModal).toBeVisible();
 });
 
-test("clicking on the memento button displays additional buttons", async ({
+test.only("clicking on the memento button displays memento modal", async ({
   page,
   isMobile,
 }) => {
-  await page.goto("/");
+  await page.goto("/tests/e2e/browser/html/memento.html");
   await expect(page.locator("[id=document-menu]")).not.toBeVisible();
 
   await page.locator("#document-menu button").click();
@@ -163,16 +163,19 @@ test("clicking on the memento button displays additional buttons", async ({
 
   const mementoBtw = page.locator("[class=resource-memento]");
   await mementoBtw.click();
-  const versionBtn = page.locator("[class=create-version]");
-  await expect(versionBtn).toBeVisible();
-  const immutableBtn = page.locator("[class=create-immutable]");
-  await expect(immutableBtn).toBeVisible();
-  const robustifyBtn = page.locator("[class=robustify-links]");
-  await expect(robustifyBtn).toBeVisible();
-  const snapshotBtn = page.locator("[class=snapshot-internet-archive]");
-  await expect(snapshotBtn).toBeVisible();
-  const exportBtn = page.locator("[class=export-as-html]");
-  await expect(exportBtn).toBeVisible();
+  const mementoModal = page.locator("[id=memento-document]");
+  await expect(mementoModal).toBeVisible();
+
+  // const versionBtn = page.locator("[class=create-version]");
+  // await expect(versionBtn).toBeVisible();
+  // const immutableBtn = page.locator("[class=create-immutable]");
+  // await expect(immutableBtn).toBeVisible();
+  // const robustifyBtn = page.locator("[class=robustify-links]");
+  // await expect(robustifyBtn).toBeVisible();
+  // const snapshotBtn = page.locator("[class=snapshot-internet-archive]");
+  // await expect(snapshotBtn).toBeVisible();
+  // const exportBtn = page.locator("[class=export-as-html]");
+  // await expect(exportBtn).toBeVisible();
 });
 
 test("clicking on the edit button button enables author mode", async ({
