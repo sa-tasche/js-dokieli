@@ -9,7 +9,7 @@ describe('getButtonHTML', () => {
   });
 
   it('throws an error if no button is provided', () => {
-    expect(() => getButtonHTML({})).toThrow('Need to pass button.');
+    expect(() => getButtonHTML({})).toThrow('`button` identifier is required.');
   });
 
   it('generates button HTML with icon and default title', () => {
