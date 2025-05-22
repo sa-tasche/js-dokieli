@@ -178,7 +178,7 @@ export function processAction(action, formValues, selectionData) {
 //TODO: MOVE
 
 export function getFormActionData(action, formValues, selectionData) {
-console.log(selectionData) // undefined
+// console.log(selectionData)
 // console.log(selectionData.selectedParentElement)
 
   const data = {

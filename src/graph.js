@@ -372,7 +372,7 @@ function serializeGraph (g, options = {}) {
     var quads = g.out().quads();
 
     return streamToString(rdf.formats.serializers.get(options.contentType, { compact: true, prettyPrint: true }).import(Readable.from(quads), { compact: true, prettyPrint: true })).then((data) => {
-      return data.replace(new RegExp(escapeRegExp(localhostUUID, 'g'), ''));
+      return data.replace(new RegExp(escapeRegExp(localhostUUID), 'g'), '');
     });
   }
   catch(e) {
@@ -395,7 +395,8 @@ function serializeGraph (g, options = {}) {
 
 function applyParserSerializerFixes(data, contentType) {
   // FIXME: FUGLY because parser defaults to localhost. Using UUID to minimise conflict
-  data = data.replace(new RegExp(escapeRegExp(localhostUUID, 'g'), ''));
+
+  data = data.replace(new RegExp(escapeRegExp(localhostUUID), 'g'), '');
 
   switch(contentType) {
     case 'text/turtle':

@@ -169,7 +169,7 @@ export function createNoteData(annotation) {
     about, resource, ['typeof']: typeOf, href, rel, property, datatype
   } = formData;
 
-  console.log(formData)
+  // console.log(formData)
 
   // aLS = { 'id': id, 'containerIRI': containerIRI, 'noteURL': noteURL, 'noteIRI': noteIRI, 'fromContentType': fromContentType, 'contentType': contentType, 'canonical': true, 'annotationInbox': annotationInbox };
 
