@@ -1608,7 +1608,7 @@ DO = {
           }
 
           addMessageToLog({...messageObject, content: message}, Config.MessageLog);
-          showActionMessage(document.body, message);
+          showActionMessage(document.body, messageObject);
 
           DO.U.showGraph(urls, '#graph-view', options);
 
@@ -6534,7 +6534,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
           'type': 'error',
           'timer': 3000,
         }
-        addMessageToLog(messageObject, Config.MessageLog);
+        addMessageToLog({...messageObject, content: message}, Config.MessageLog);
         showActionMessage(document.body, messageObject);
 
         throw new Error(message);
