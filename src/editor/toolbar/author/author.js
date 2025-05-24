@@ -131,8 +131,10 @@ export class AuthorToolbar extends ToolbarView {
           <legend>Add a citation</legend>
           <label for="citation-specref-search">Search</label> <input class="editor-form-input" id="citation-specref-search" name="citation-specref-search" placeholder="Enter terms to search for specifications" type="text" value="" />
           <input id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="Search" />
+          <span>
           <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label for="ref-footnote">Footnote</label>
           <input id="ref-reference" name="citation-ref-type" type="radio" value="ref-reference" /> <label for="ref-reference">Reference</label>
+          </span>
           <label for="citation-relation">Relation</label>
           <select class="editor-form-select" id="citation-relation" name="citation-relation">${getCitationOptionsHTML()}</select>
           <label for="citation-url">URL</label>
