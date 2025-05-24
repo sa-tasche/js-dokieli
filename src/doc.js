@@ -928,7 +928,7 @@ function showActionMessage(node, message, options = {}) {
 
   let aside = node.querySelector('#document-action-message');
   if (!aside) {
-    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on" tabindex="0">' + Config.Button.Close + '<h2>Messages</h2><ul></ul></aside>'));
+    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on" role="status" tabindex="0">' + Config.Button.Close + '<h2>Messages</h2><ul role="log"></ul></aside>'));
     aside = node.querySelector('#document-action-message');
   }
   aside.querySelector('h2 + ul').insertAdjacentHTML('afterbegin', messageItem);

@@ -4074,7 +4074,7 @@ console.log(reason);
       var messageLog;
 
       if (DO.C.MessageLog && DO.C.MessageLog.length) {
-        messageLog = '<table><caption>Messages</caption><thead><tr><th>Date/Time</th><th>Message</th><th>Type</th></tr></thead><tbody>';
+        messageLog = '<table role="log"><caption>Messages</caption><thead><tr><th>Date/Time</th><th>Message</th><th>Type</th></tr></thead><tbody>';
         Object.keys(DO.C.MessageLog).forEach(i => {
           messageLog += '<tr><td><time>' + DO.C.MessageLog[i].dateTime + '</time></td><td>' + DO.C.MessageLog[i].content + '</td><td>' + DO.C.MessageLog[i].type + '</td></tr>';
         });
