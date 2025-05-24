@@ -380,10 +380,10 @@
                       </dl>
                     </dd>
 
-                    <dt about="#feature-version" id="feature-version" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-code-branch"></i><dfn id="feature-version">Version</dfn></dt>
+                    <dt about="#feature-version" property="skos:prefLabel" typeof="skos:Concept"><i class="fas fa-code-branch"></i><dfn id="feature-version">Version</dfn></dt>
                     <dd about="#feature-version" property="skos:definition">Generates a derived copy of the current document as a mutable resource including provenance.</dd>
 
-                    <dt about="#feature-immutable" id="feature-immutable" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-snowflake"></i><dfn id="feature-immutable">Immutable</dfn></dt>
+                    <dt about="#feature-immutable" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-snowflake"></i><dfn id="feature-immutable">Immutable</dfn></dt>
                     <dd about="#feature-immutable" property="skos:prefLabel">Generates a derived copy of the current document as an immutable or frozen Memento resource including provenance. Creates or updates a Memento TimeMap including a reference to the immutable resource.</dd>
 
                     <dt about="#feature-memento" property="skos:prefLabel" typeof="skos:Concept"><i class="far fa-clock"></i><dfn id="feature-memento">Memento</dfn></dt>
