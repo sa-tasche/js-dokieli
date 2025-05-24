@@ -51,7 +51,7 @@ function generateGeoView(data) {
   node.appendChild(fragmentFromString(gpxActivity));
 
   var table = node.querySelector('#geo table');
-  table.insertAdjacentHTML('afterend', '<button class="do copy-to-clipboard" title="Copy to clipboard">' + Icon[".fas.fa-copy"] + '</button>');
+  table.insertAdjacentHTML('afterend', Config.Button.Clipboard);
   var button = table.nextElementSibling;
   setCopyToClipboard(table, button);
 

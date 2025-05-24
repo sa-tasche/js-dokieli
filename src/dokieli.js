@@ -3230,7 +3230,7 @@ console.log(reason);
       elements.forEach(element => {
         var nodes = selectArticleNode(document).querySelectorAll(element);
         nodes.forEach(node => {
-          node.insertAdjacentHTML('afterend', '<button class="do copy-to-clipboard" title="Copy to clipboard">' + Icon[".fas.fa-copy"] + '</button>');
+          node.insertAdjacentHTML('afterend', DO.C.Button.Clipboard);
           var button = node.nextElementSibling;
           setCopyToClipboard(node, button);
         });
@@ -4487,7 +4487,8 @@ console.log(reason);
             <h3>Share URL</h3>
 
             <label for="share-resource-clipboard">Copy URL to clipboard</label>
-            <input id="share-resource-clipboard" name="share-resource-clipboard" readonly="readonly" type="text" value="${iri}" /><button class="do copy-to-clipboard" title="Copy to clipboard">${Icon[".fas.fa-copy"]}</button>
+            <input id="share-resource-clipboard" name="share-resource-clipboard" readonly="readonly" type="text" value="${iri}" />
+            ${DO.C.Button.Clipboard}
           </div>
 
           ${shareResourceLinkedResearch}
