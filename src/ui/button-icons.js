@@ -295,6 +295,7 @@ export function getButtonHTML({
     let doc = parser.parseFromString(icon, 'image/svg+xml');
     let svgElement = doc.querySelector('svg');
     svgElement.classList.add(iconSize);
+    svgElement.setAttribute('aria-hidden', 'true');
     icon = new XMLSerializer().serializeToString(svgElement);
   }
 
