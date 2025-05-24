@@ -3937,7 +3937,7 @@ console.log(reason);
 
       s += `<li>${getButtonHTML({ button: 'source', buttonClass: 'resource-source', buttonTitle: 'Edit article source code', buttonTextContent: 'Source', iconSize: 'fa-2x' })}</li>`;
 
-      s += `<li>${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data (Turtle, JSON-LD, TriG)', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}</li>`;
+      s += `<li>${getButtonHTML({ button: 'data-meta', buttonClass: 'embed-data-meta', buttonTitle: 'Embed structured data', buttonTextContent: 'Embed Data', iconSize: 'fa-2x' })}</li>`;
 
       if (DO.C.Resource[documentURL]['odrl'] && DO.C.Resource[documentURL]['odrl']['prohibitionAssignee'] == DO.C.User.IRI &&
         ((Array.isArray(DO.C.Resource[documentURL]['odrl']['prohibitionActions']) && DO.C.Resource[documentURL]['odrl']['prohibitionActions'].some(action => action === 'http://www.w3.org/ns/odrl/2/print')) ||
