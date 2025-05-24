@@ -262,6 +262,14 @@ export const buttonIcons = {
   clipboard: {
     title: 'Copy to clipboard',
     icon: Icon[".fas.fa-copy"]
+  },
+  bars: {
+    title: 'Show',
+    icon: Icon[".fas.fa-bars"]
+  },
+  minus: {
+    title: 'Hide',
+    icon: Icon[".fas.fa-minus"]
   }
 }
 
