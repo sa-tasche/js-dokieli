@@ -2646,7 +2646,7 @@ span {
 #editor-form-citation fieldset {
   display: grid;
   grid-template-columns: repeat(6, auto); 
-  grid-template-rows: repeat(8, auto);
+  grid-template-rows: repeat(7, auto);
   grid-gap: 0.5em;
   border: none;
   padding-block: 0;
@@ -2654,16 +2654,30 @@ span {
   "legend legend legend legend legend legend"
   "label1 input1 input1 input1 input1 input2"
   "results results results results results results"
-  "input3 label2 . input4 label3 ."
-  "select1 select1 . . label4 input5"
+  "foot-ref foot-ref  . . . . "
+  "label2 select1 select1  label3 input3 input3"
+  "label4 . . . . ."
   "textarea textarea textarea textarea textarea textarea"
   "label5 select2 . . . . "
   ". . . . button1 button2";
 
-
   legend {
     grid-area: legend;
     text-align: left;
+  }
+
+  span {
+    grid-area: foot-ref;
+    text-align: left;
+    display: flex;
+    margin-bottom: 1em;
+    
+    input:nth-of-type(1) {
+      margin: 0 0.5em 0 0;
+    }
+    input:nth-of-type(2) {
+      margin: 0 0.5em 0 0.5em;
+    }
   }
 
   div {
@@ -2690,15 +2704,15 @@ span {
 
   input:nth-of-type(3) {
     grid-area: input3;
+  } 
+   input:nth-of-type(4) {
+    grid-area: input4;
   }
   input:nth-of-type(4) {
     grid-area: input4;
   }
   input:nth-of-type(5) {
     grid-area: input5;
-  }
-  input:nth-of-type(6) {
-    grid-area: input6;
   }
   label:nth-of-type(1) {
     grid-area: label1
@@ -2717,7 +2731,16 @@ span {
   }
 
   label:nth-of-type(5) {
-    grid-area: label5
+    grid-area: label5;
+    justify-content: center;
+  }
+
+  label:nth-of-type(6) {
+    grid-area: label6
+  }
+
+  label:nth-of-type(7) {
+    grid-area: label7
   }
 
   select:nth-of-type(1) {
