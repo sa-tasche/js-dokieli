@@ -248,11 +248,11 @@ export const buttonIcons = {
     icon: Icon[".fas.fa-check"]
   },
   error: {
-    title: 'success',
+    title: 'error',
     icon: Icon[".fas.fa-triangle-exclamation"]
   },
   warning: {
-    title: 'success',
+    title: 'warning',
     icon: Icon[".fas.fa-circle-exclamation"]
   },
   'test-suite': {
