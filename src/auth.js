@@ -189,7 +189,7 @@ function submitSignIn (url) {
 
       if (Config.User.IRI && !Config.User.OIDCIssuer) {
         const message = {
-          'content': `<p>Cannot sign in. Using information from profile to personalise the UI.</p>`,
+          'content': `Cannot sign in. Using information from profile to personalise the UI.`,
           'type': 'info',
           'timer': null
         }
@@ -203,7 +203,7 @@ function submitSignIn (url) {
         signInWithOIDC()
           .catch(e => {
             const message = {
-              'content': `<p>Cannot sign in. Using information from profile to personalise the UI.</p>`,
+              'content': `Cannot sign in. Using information from profile to personalise the UI.`,
               'type': 'info',
               'timer': null
             }
@@ -227,7 +227,7 @@ function submitSignIn (url) {
   Config['Session'].login(idp, redirect_uri)
     .catch((e) => {
       const message = {
-        'content': `<p>Cannot sign in. Using information from profile to personalise the UI.</p>`,
+        'content': `Cannot sign in. Using information from profile to personalise the UI.`,
         'type': 'info',
         'timer': null
       }

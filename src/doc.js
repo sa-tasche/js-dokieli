@@ -12,6 +12,7 @@ import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import { gfmTagfilterHtml } from 'micromark-extension-gfm-tagfilter';
 import { Icon } from './ui/icons.js';
 import { showUserIdentityInput, signOut } from './auth.js'
+import { buttonIcons } from './ui/button-icons.js'
 
 const ns = Config.ns;
 
@@ -923,7 +924,7 @@ function showActionMessage(node, message, options = {}) {
   message['type'] = ('type' in message) ? message.type : 'info';
 
   const id = generateAttributeId();
-  const messageItem = domSanitize('<li id="' + id  + '" class="' + message.type + '">' + message.content + '</li>');
+  const messageItem = domSanitize('<li id="' + id  + '" class="' + message.type + '">' + buttonIcons[message.type].icon + ' ' + message.content + '</li>');
 
   let aside = node.querySelector('#document-action-message');
   if (!aside) {
@@ -972,7 +973,6 @@ function showActionMessage(node, message, options = {}) {
 
   return id;
 }
-
 
 function hasNonWhitespaceText (node) {
   return !!node.textContent.trim();
@@ -3388,7 +3388,7 @@ function showResourceAudienceAgentOccupations() {
         if (ul.length > 0){
           ul = `<ul>${ul.join('')}</ul>`;
 
-          var message = `<p>This document's audience matches your profile:</p>${ul}`;
+          var message = `<span>This document's audience matches your profile:</span>${ul}`;
           message = {
             'content': message,
             'type': 'info',
@@ -3425,7 +3425,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
 
       navigator.clipboard.writeText(text)
         .then(() => {
-          var message = `<p>Copied to clipboard.</p>`;
+          var message = `Copied to clipboard.`;
           message = {
             'content': message,
             'type': 'info',
@@ -3435,7 +3435,7 @@ function setCopyToClipboard(contentNode, triggerNode, options = {}) {
           showActionMessage(document.body, message);
         })
         .catch(error => {
-          var message = `<p>Failed to copy text to clipboard.</p>`;
+          var message = `Failed to copy text to clipboard.`;
           message = {
             'content': message,
             'type': 'error',

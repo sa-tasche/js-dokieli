@@ -1599,7 +1599,7 @@ DO = {
           var anchors = urls.map(url => `<a href="${url}">${url}</a>`).join(', ');
 
           var message = `Loading graph(s) ${anchors}`;
-          var actionMessage = `<p><span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Loading graph(s) ${anchors}</span></p>`;
+          var actionMessage = `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Loading graph(s) ${anchors}</span>`;
 
           const messageObject = {
             'content': actionMessage,
@@ -3453,7 +3453,7 @@ console.log(reason);
             options['showActionMessage'] = ('showActionMessage' in options) ? options.showActionMessage : true;
 
             if (options.showActionMessage) {
-              var message = `<p>Archived <a href="${uri}">${uri}</a> at <a href="${versionURL}">${versionURL}</a> and created RobustLink.</p>`;
+              var message = `Archived <a href="${uri}">${uri}</a> at <a href="${versionURL}">${versionURL}</a> and created RobustLink.`;
 
               message = {
                 'content': message,
@@ -4127,14 +4127,14 @@ console.log(reason);
 
               switch(response.status) {
                 case 200: case 204: default:
-                  message = `<p>Deleted <code>${url}</code>.</p>`;
-                  actionMessage = `<p>Deleted <code>${url}</code>.</p>`;
+                  message = `Deleted <code>${url}</code>.`;
+                  actionMessage = `Deleted <code>${url}</code>.`;
 
                   break;
 
                 case 202:
-                  message = `<p>Deleting <code>${url}</code> in progress.</p>`;
-                  actionMessage = `<p>Deleting <code>${url}</code> in progress.</p>`;
+                  message = `Deleting <code>${url}</code> in progress.`;
+                  actionMessage = `Deleting <code>${url}</code> in progress.`;
 
                   break;
               }
@@ -4165,26 +4165,26 @@ console.log(reason);
                 switch(error.status) {
                   case 401:
                     if (DO.C.User.IRI) {
-                      message = `<p>You do not have permission to delete <code>${url}</code>.</p>`;
+                      message = `You do not have permission to delete <code>${url}</code>.`;
                       //TODO: signoutShowSignIn()
-                      actionMessage = `<p>You do not have permission to delete <code>${url}</code>. Try signing in with a different account.</p>`;
+                      actionMessage = `You do not have permission to delete <code>${url}</code>. Try signing in with a different account.`;
                     }
                     else {
-                      message = `<p>You are not signed in.</p>`;
-                      actionMessage = `<p>You are not signed in. ${buttonSignInHTML} and try again.</p>`;
+                      message = `You are not signed in.`;
+                      actionMessage = `You are not signed in. ${buttonSignInHTML} and try again.`;
                     }
 
                     break;
 
                   case 403: default:
                     if (DO.C.User.IRI) {
-                      message = `<p>You do not have permission to delete <code>${url}</code>.</p>`;
+                      message = `You do not have permission to delete <code>${url}</code>.`;
                       //TODO: signoutShowSignIn() requestAccess()
-                      actionMessage = `<p>You do not have permission to delete <code>${url}</code>. Try signing in with a different account or request access.</p>`;
+                      actionMessage = `You do not have permission to delete <code>${url}</code>. Try signing in with a different account or request access.`;
                     }
                     else {
-                      message += `<p>You are not signed in.</p>`;
-                      actionMessage = `<p>You are not signed in. ${buttonSignInHTML} and try again.</p>`;
+                      message += `You are not signed in.`;
+                      actionMessage = `You are not signed in. ${buttonSignInHTML} and try again.`;
                     }
 
                     break;
@@ -4192,8 +4192,8 @@ console.log(reason);
                   case 409:
                     //XXX: If/when there is more (structured) detail from the server, it can be processed and used here.
 
-                    message = `<p>It was not possible to delete <code>${url}</code>.</p>`;
-                    actionMessage = `<p>It was not possible to delete <code>${url}</code> because something changed in the meantime. Please reload the document and try again later.</p>`;
+                    message = `It was not possible to delete <code>${url}</code>.`;
+                    actionMessage = `It was not possible to delete <code>${url}</code> because something changed in the meantime. Please reload the document and try again later.`;
 
                     break;
                 }
@@ -6259,8 +6259,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       // options['noCredentials'] = true;
 
       var handleResource = function handleResource (iri, headers, options) {
-        var message = `<p>Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a>.</p>`;
-        var actionMessage = `<p><span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a></span></p>`;
+        var message = `Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a>.`;
+        var actionMessage = `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a></span>`;
 
         const messageObject = {
           'content': actionMessage,
@@ -6281,8 +6281,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
             document.getElementById(messageId).remove();
 
-            var message = `<p>Unable to open <a href="${iri}"rel="noopener" target="_blank">${iri}</a>.</p>`;
-            var actionMessage = `<p><span class="progress">${Icon[".fas.fa-times-circle.fa-fw"]} Unable to open <a href="${iri}"rel="noopener" target="_blank">${iri}</a>.</span></p>`;
+            var message = `Unable to open <a href="${iri}"rel="noopener" target="_blank">${iri}</a>.`;
+            var actionMessage = `<span class="progress">${Icon[".fas.fa-times-circle.fa-fw"]} Unable to open <a href="${iri}"rel="noopener" target="_blank">${iri}</a>.</span>`;
 
             const messageObject = {
               'content': actionMessage,
@@ -6345,7 +6345,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                 if (rm) {
                   rm.parentNode.removeChild(rm)
                 }
-                var message = `<p>Opened <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.</p>`;
+                var message = `Opened <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
                 message = {
                   'content': message,
                   'type': 'success',
@@ -6528,7 +6528,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       const isFileIRI = isFileProtocol(iri);
 
       if (!isHttpIRI && !isFileIRI) {
-        const message = `<p>Cannot open, not valid URL or file location.</p>`;
+        const message = `Cannot open, not valid URL or file location.`;
         const messageObject = {
           'content': message,
           'type': 'error',
@@ -6557,7 +6557,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
               var id = 'geo';
               var metadataBounds = document.querySelector('#' + id + ' figcaption a');
               if (metadataBounds) {
-                var message = `<p>Opened geo data at <a href="${metadataBounds.href}">${metadataBounds.textContent}</a></p>`;
+                var message = `<Opened geo data at <a href="${metadataBounds.href}">${metadataBounds.textContent}</a>`;
                 message = {
                   'content': message,
                   'type': 'info',

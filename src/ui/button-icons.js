@@ -243,6 +243,18 @@ export const buttonIcons = {
     title: 'info',
     icon: Icon[".fas.fa-circle-info"]
   },
+  success: {
+    title: 'success',
+    icon: Icon[".fas.fa-check"]
+  },
+  error: {
+    title: 'success',
+    icon: Icon[".fas.fa-triangle-exclamation"]
+  },
+  warning: {
+    title: 'success',
+    icon: Icon[".fas.fa-circle-exclamation"]
+  },
   'test-suite': {
     title: 'Test suite',
     icon: Icon[".fas.fa-vial-circle-check"]

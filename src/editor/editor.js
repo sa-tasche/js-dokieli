@@ -67,7 +67,7 @@ export class Editor {
   }
 
   showEditorModeActionMessage(mode) {
-    var message = `<p>Activated <em>${mode}</em> mode.</p>`;
+    var message = `Activated <em>${mode}</em> mode.`;
     message = {
       'content': message,
       'type': 'info'
