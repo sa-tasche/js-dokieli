@@ -917,43 +917,62 @@ function handleActionMessage(resolved, rejected) {
 }
 
 function showActionMessage(node, message, options = {}) {
-  if (!node || !message) { return; }
+  if (!node || !message) return;
 
   message['timer'] = ('timer' in message) ? message.timer : Config.ActionMessage.Timer;
   message['type'] = ('type' in message) ? message.type : 'info';
 
-  var id = generateAttributeId();
-  var messageItem = domSanitize('<li id="' + id  + '" class="' + message.type + '">' + message.content + '</li>');
+  const id = generateAttributeId();
+  const messageItem = domSanitize('<li id="' + id  + '" class="' + message.type + '">' + message.content + '</li>');
 
-  var aside = node.querySelector('#document-action-message');
+  let aside = node.querySelector('#document-action-message');
   if (!aside) {
-    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on">' + Config.Button.Close + '<h2>Messages</h2><ul></ul></aside>'));
+    node.appendChild(fragmentFromString('<aside id="document-action-message" class="do on" tabindex="0">' + Config.Button.Close + '<h2>Messages</h2><ul></ul></aside>'));
+    aside = node.querySelector('#document-action-message');
   }
-  node.querySelector('#document-action-message > h2 + ul').insertAdjacentHTML('afterbegin', messageItem);
+  aside.querySelector('h2 + ul').insertAdjacentHTML('afterbegin', messageItem);
+
+  let timerId = null;
+
+  function startTimer() {
+    if (message.timer !== null) {
+      timerId = window.setTimeout(() => {
+        const aside = node.querySelector('#document-action-message');
+        if (aside) {
+          const li = aside.querySelector('#' + id);
+          if (li) {
+            li.parentNode.removeChild(li);
+          }
+
+          const remaining = aside.querySelector('h2 + ul > li');
+          if (!remaining) {
+            node.removeChild(aside);
+          }
+        }
+      }, message.timer);
+    }
+  }
+
+  function clearTimer() {
+    if (timerId !== null) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+  }
 
   if (message.timer !== null) {
-    window.setTimeout(function () {
-      var aside = node.querySelector('#document-action-message');
-      if (aside) {
-        var li = aside.querySelector('#' + id);
-        if (li) {
-          li.parentNode.removeChild(li);
-        }
-      
-        li = aside.querySelector('h2 + ul > li');
-        if (!li) {
-          node.removeChild(aside);
-        }
-      }
-    }, message.timer);
-  }
+    startTimer();
 
-  //TODO: To halt the timer when the user hovers over the message.
-  // aside.addEventListener('hover', function (e) {
-  // });
+    const pauseEvents = ['mouseenter', 'focusin'];
+    const resumeEvents = ['mouseleave', 'focusout'];
+
+    pauseEvents.forEach(evt => aside.addEventListener(evt, clearTimer));
+    resumeEvents.forEach(evt => aside.addEventListener(evt, startTimer));
+  }
 
   return id;
 }
+
 
 function hasNonWhitespaceText (node) {
   return !!node.textContent.trim();
