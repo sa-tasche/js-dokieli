@@ -99,7 +99,9 @@ export default {
     Delete: getButtonHTML({ button: 'delete', buttonClass: 'delete', buttonTitle: 'Delete' }),
     Toggle: getButtonHTML({ button: 'toggle', buttonClass: 'toggle', buttonTitle: 'Show/Hide' }),
     More: getButtonHTML({ button: 'more', buttonClass: 'more', buttonTitle: 'Show more' }),
-    Clipboard: getButtonHTML({ button: 'clipboard', buttonClass: 'do copy-to-clipboard', buttonTitle: 'Copy to clipboard' })
+    Clipboard: getButtonHTML({ button: 'clipboard', buttonClass: 'do copy-to-clipboard', buttonTitle: 'Copy to clipboard' }),
+    OpenMenu: getButtonHTML({ button: 'bars', buttonClass: 'show', buttonTitle: 'Open menu' }),
+    CloseMenu: getButtonHTML({ button: 'minus', buttonClass: 'hide', buttonTitle: 'Close menu' }),
   },
   //TODO: Use a single object for Button, ButtonInfo, ButtonStates?
   ButtonInfo: {
