@@ -67,4 +67,46 @@ describe('getButtonHTML', () => {
     const html = getButtonHTML({ button: 'fallback-test' });
     expect(html).toContain('>fallback-test<');
   });
+
+  it("should have aria-label if there is button label", () => {
+    buttonIcons['aria-test-with-text'] = {
+      title: 'ARIA Test',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+    }
+    const html = getButtonHTML({ button: 'aria-test-with-text', buttonLabel: 'TestLabel' });
+    expect(html).toContain('aria-label="TestLabel');
+
+  })
+
+  it("should have aria-label if no button label or text content", () => {
+    buttonIcons['aria-test'] = {
+      title: 'ARIA Test',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
+    }
+    const html = getButtonHTML({ button: 'aria-test' });
+    expect(html).toContain('aria-label="ARIA Test');
+  })
+
+  it("should not have aria-label if there is text content", () => {
+    buttonIcons['aria-test-with-text'] = {
+      title: 'ARIA Test',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+      textContent: 'Test'
+    }
+    const html = getButtonHTML({ button: 'aria-test-with-text' });
+    expect(html).not.toContain('aria-label');
+  })
+
+  it("should use text content if both text content and button label are available", () => {
+    buttonIcons['aria-test-with-text'] = {
+      title: 'ARIA Test',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+      textContent: 'Test Text Content',
+    }
+    const html = getButtonHTML({ button: 'aria-test-with-text', buttonLabel: 'TestLabel' });
+    expect(html).not.toContain('TestLabel');
+    expect(html).toContain('Test Text Content');
+
+  })
+
 });
