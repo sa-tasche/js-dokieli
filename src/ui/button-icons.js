@@ -258,6 +258,10 @@ export const buttonIcons = {
   'test-suite': {
     title: 'Test suite',
     icon: Icon[".fas.fa-vial-circle-check"]
+  },
+  clipboard: {
+    title: 'Copy to clipboard',
+    icon: Icon[".fas.fa-copy"]
   }
 }
 
