@@ -14,6 +14,7 @@ import {
   showAutoSaveStorage,
 } from 'src/storage.js';
 
+import { accessModeAllowed } from 'src/doc.js';
 import Config from 'src/config.js';
 
 vi.mock('src/config.js', () => ({
@@ -40,6 +41,7 @@ vi.mock('src/util.js', async () => {
 vi.mock('src/doc.js', () => ({
   getDocument: vi.fn(() => '<p>fake content</p>'),
   updateMutableResource: vi.fn(),
+  accessModeAllowed: vi.fn(() => true),
 }));
 
 beforeEach(() => {
