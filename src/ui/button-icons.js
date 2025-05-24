@@ -268,14 +268,14 @@ export function getButtonHTML({
 
   const titleContent = buttonTitle || buttonIcons[button]?.title || button;
   const title = ` title="${titleContent}"`;
+  const textContent = buttonTextContent || buttonIcons[button]?.textContent;
   const label = buttonLabel || titleContent;
-  const ariaLabel = label ? ` aria-label="${label}"` : '';
+  const ariaLabel = (label && !textContent) ? ` aria-label="${label}"` : '';
   const className = buttonClass ? ` class="${buttonClass}"` : '';
   const disabled = buttonDisabled ? ` disabled=""` : '';
   let icon = buttonIcons[button]?.icon;
   const rel = buttonRel ? ` rel="${buttonRel}"` : '';
   const resource = buttonResource ? ` resource="${buttonResource}"` : '';
-  const textContent = buttonTextContent || buttonIcons[button]?.textContent;
   const type = buttonType ? ` type="${buttonType}"` : '';
 
   if (iconSize) {
