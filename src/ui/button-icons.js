@@ -294,14 +294,16 @@ export function getButtonHTML({
   const resource = buttonResource ? ` resource="${buttonResource}"` : '';
   const type = buttonType ? ` type="${buttonType}"` : '';
 
-  let parser = new DOMParser();
-  let doc = parser.parseFromString(icon, 'image/svg+xml');
-  let svgElement = doc.querySelector('svg');
-  svgElement.setAttribute('aria-hidden', 'true');
-  if (iconSize) {
-    svgElement.classList.add(iconSize);
+  if (icon) {
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(icon, 'image/svg+xml');
+    let svgElement = doc.querySelector('svg');
+    svgElement.setAttribute('aria-hidden', 'true');
+    if (iconSize) {
+      svgElement.classList.add(iconSize);
+    }
+    icon = new XMLSerializer().serializeToString(svgElement);
   }
-  icon = new XMLSerializer().serializeToString(svgElement);
 
   const buttonContent = (!icon && !textContent) ? button : `${icon ? icon : ''} ${textContent ? `<span>${textContent}</span>` : ''}`;
 
