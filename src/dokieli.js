@@ -1763,7 +1763,7 @@ DO = {
 
 
     showDocumentInfo: function() {
-      document.body.appendChild(fragmentFromString('<menu class="do" id="document-menu" role="toolbar"><button class="show" title="Open menu">' + Icon[".fas.fa-bars"] + '</button><div><section id="user-info"></section></div></menu>'));
+      document.body.appendChild(fragmentFromString(`<menu class="do" id="document-menu" role="toolbar">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></menu>`));
 
       var userInfo = document.getElementById('user-info');
 
@@ -1802,10 +1802,7 @@ DO = {
       var dUserInfo = dMenu.querySelector('#user-info');
       var dInfo = dMenu.querySelector('div');
 
-      dMenuButton.classList.remove('show');
-      dMenuButton.classList.add('hide');
-      dMenuButton.setAttribute('title', 'Hide Menu');
-      dMenuButton.setHTMLUnsafe(domSanitize(Icon[".fas.fa-minus"]));
+      dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.CloseMenu), dMenuButton);
       dMenu.classList.add('on');
       // body.classList.add('on-document-menu');
 
@@ -1839,6 +1836,7 @@ DO = {
 
       var dMenu = document.querySelector('#document-menu.do');
       var dMenuButton = dMenu.querySelector('button');
+      dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.OpenMenu), dMenuButton);
 
       dMenu.classList.remove('on');
       // var sections = dMenu.querySelectorAll('section');
@@ -1852,10 +1850,7 @@ DO = {
         dMenu.querySelector('button.signin-user').disabled = false;
       }
       // body.classList.remove('on-document-menu');
-      dMenuButton.classList.remove('hide');
-      dMenuButton.classList.add('show');
-      dMenuButton.setAttribute('title', 'Open Menu');
-      dMenuButton.setHTMLUnsafe(domSanitize(Icon[".fas.fa-bars"]));
+
       removeNodesWithIds(DO.C.DocumentDoItems);
     },
 
@@ -2014,11 +2009,8 @@ DO = {
 
         if(dMenu) {
           var dMenuButton = dMenu.querySelector('button');
+          dMenuButton.parentNode.replaceChild(fragmentFromString(DO.C.Button.CloseMenu), dMenuButton);
 
-          dMenuButton.classList.remove('show');
-          dMenuButton.classList.add('hide');
-          dMenuButton.setAttribute('title', 'Open Menu');
-          dMenuButton.setHTMLUnsafe(domSanitize(Icon[".fas.fa-minus"]));
           dMenu.classList.remove('on');
           body.classList.remove('on-document-menu');
 
