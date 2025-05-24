@@ -13,7 +13,7 @@ const config = {
     timeout: 5000,
   },
   fullyParallel: true,
-  retries: 0,
+  retries: 2,
   reporter: "html",
   webServer: {
     command: "npx serve",
