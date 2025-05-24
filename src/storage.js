@@ -2,7 +2,7 @@
 
 import Config from './config.js';
 import { getDateTimeISO, generateUUID, getHash, fragmentFromString } from './util.js';
-import { getDocument, updateMutableResource } from './doc.js';
+import { accessModeAllowed, getDocument, updateMutableResource } from './doc.js';
 
 
 function initLocalStorage(key) {
@@ -249,7 +249,7 @@ function updateLocalStorageProfile(User) {
 function showAutoSaveStorage(node, iri) {
   iri = iri || Config.DocumentURL;
 
-  if(document.querySelector('#autosave-items')) { return; }
+  if (document.querySelector('#autosave-items')) { return; }
 
   var checked;
   var useLocalStorage = '';
@@ -263,40 +263,44 @@ function showAutoSaveStorage(node, iri) {
     enableAutoSave(iri, {'method': 'localStorage'});
   }
 
-  checked = (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['http']) ? ' checked="checked"' : '';
+  if (accessModeAllowed(iri, 'write') && navigator.onLine) {
+    checked = (Config.AutoSave.Items[iri] && Config.AutoSave.Items[iri]['http']) ? ' checked="checked"' : '';
 
-  var useHTTPStorage = '<li class="http-storage-html-autosave"><input id="http-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="http-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (http)</label></li>';
-  // var useHTTPStorage = '';
+    var useHTTPStorage = '<li class="http-storage-html-autosave"><input id="http-storage-html-autosave" class="autosave" type="checkbox"' + checked +' /> <label for="http-storage-html-autosave">' + (Config.AutoSave.Timer / 60000) + 'm autosave (http)</label></li>';
 
-  node.insertAdjacentHTML('beforeend', '<ul id="autosave-items" class="on">' + useLocalStorage + useHTTPStorage + '</ul>');
+    node.insertAdjacentHTML('beforeend', '<ul id="autosave-items" class="on">' + useLocalStorage + useHTTPStorage + '</ul>');
 
-  node.querySelector('#autosave-items').addEventListener('click', e => {
-    if (e.target.closest('input.autosave')) {
-      var method;
-      switch (e.target.id){
-        default:
-        case 'local-storage-html-autosave':
-          method = 'localStorage';
-          break;
-        case 'http-storage-html-autosave':
-          method = 'http';
-          break;
+    node.querySelector('#autosave-items').addEventListener('click', e => {
+      if (e.target.closest('input.autosave')) {
+        var method;
+        switch (e.target.id){
+          default:
+          case 'local-storage-html-autosave':
+            method = 'localStorage';
+            break;
+          case 'http-storage-html-autosave':
+            method = 'http';
+            break;
+        }
+
+        if (e.target.getAttribute('checked')) {
+          e.target.removeAttribute('checked');
+          disableAutoSave(iri, {'method': method});
+        }
+        else {
+          e.target.setAttribute('checked', 'checked');
+          enableAutoSave(iri, {'method': method});
+        }
       }
-
-      if (e.target.getAttribute('checked')) {
-        e.target.removeAttribute('checked');
-        disableAutoSave(iri, {'method': method});
-      }
-      else {
-        e.target.setAttribute('checked', 'checked');
-        enableAutoSave(iri, {'method': method});
-      }
-    }
-  });
+    });
+  }
 }
 
 function hideAutoSaveStorage(node, iri) {
   node = node || document.getElementById('autosave-items');
+
+  if (!node) { return; }
+
   iri = iri || Config.DocumentURL;
   node.parentNode.removeChild(node);
   disableAutoSave(iri);
