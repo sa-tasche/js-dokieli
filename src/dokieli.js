@@ -6253,7 +6253,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
       var handleResource = function handleResource (iri, headers, options) {
         var message = `Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a>.`;
-        var actionMessage = `<span class="progress">${Icon[".fas.fa-circle-notch.fa-spin.fa-fw"]} Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a></span>`;
+        var actionMessage = `Opening <a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
 
         const messageObject = {
           'content': actionMessage,
@@ -6274,8 +6274,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
             document.getElementById(messageId).remove();
 
-            var message = `Unable to open <a href="${iri}"rel="noopener" target="_blank">${iri}</a>.`;
-            var actionMessage = `<span class="progress">${Icon[".fas.fa-times-circle.fa-fw"]} Unable to open <a href="${iri}"rel="noopener" target="_blank">${iri}</a>.</span>`;
+            var message = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
+            var actionMessage = `Unable to open <a href="${iri}" rel="noopener" target="_blank">${iri}</a>.`;
 
             const messageObject = {
               'content': actionMessage,
