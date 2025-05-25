@@ -233,9 +233,9 @@ TODO:
 
     var exact = doc.textBetween(from, to); // consider \n
     const textNode = view.domAtPos(from).node;
-    console.log(textNode)
+    // console.log(textNode)
     const selectedParentElement = textNode.parentNode;
-    console.log(selectedParentElement)
+    // console.log(selectedParentElement)
 
     // var selectionState = MediumEditor.selection.exportSelection(selectedParentElement, this.document);
     // var prefixStart = Math.max(0, start - Config.ContextLength);
@@ -277,15 +277,15 @@ TODO:
 
 
   replaceSelectionWithFragment(fragment) {
-    console.log(fragment)
+    // console.log(fragment)
     const { state, dispatch } = this.editorView;
     const { selection, schema } = state;
     // parseSlice(fragment, { preserveWhitespace: true })
     let node = DOMParser.fromSchema(schema).parseSlice(fragment);
   
     let tr = state.tr.replaceSelection(node);
-    console.log(tr)
-    dispatch(tr);  
+    // console.log(tr)
+    dispatch(tr);
   }
 
   //Equivalent to insertAdjacentHTML('beforend') / appendChild?
