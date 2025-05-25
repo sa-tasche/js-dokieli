@@ -1284,9 +1284,18 @@ a.highlight,
 }
 
 #document-action-message {
-  background-color: rgb(51, 51, 51);
-  color: rgb(238, 238, 238);
-  padding: 1.5em;
+  background-color: #000;
+  color: #FFF;
+  font-weight: bold;
+  padding:1em 3em 1em 1em;
+}
+#document-action-message a,
+#document-action-message a:visited {
+  color:#FFFF00;
+  border-bottom-color:#CCC;
+}
+#document-action-message a:hover {
+  background-color:#555;
 }
 
 #document-action-message > h2 {
@@ -1299,7 +1308,7 @@ position: absolute;
 #document-action-message button.close {
   background: transparent !important;
   svg {
-    fill:  rgb(238, 238, 238) !important;
+    fill:  #FFF !important;
   }
 }
 
@@ -1902,7 +1911,7 @@ border: 1px solid rgba(0, 0, 0, 0.35) !important;
 }
 button.close {
 position:absolute;
-top:0.75em;
+top:1em;
 right:1em;
 z-index:2147483647;
 padding:0 !important;
