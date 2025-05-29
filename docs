@@ -42,7 +42,7 @@
 
           <dl id="document-modified">
             <dt>Modified</dt>
-            <dd><time content="2025-05-07T00:00:00Z" datatype="xsd:dateTime" datetime="2025-05-07T00:00:00Z" property="schema:dateModified">2025-05-07</time></dd>
+            <dd><time content="2025-05-07T00:00:00Z" datatype="xsd:dateTime" datetime="2025-05-29T00:00:00Z" property="schema:dateModified">2025-05-29</time></dd>
           </dl>
 
           <dl id="document-type">
@@ -181,7 +181,7 @@
                     <dt>Planned for</dt>
                     <dd><time>2025-Q2</time>–<time>2025-Q4</time></dd>
                     <dt>Contribute</dt>
-                    <dd>Fund, <a href="https://github.com/dokieli/dokieli/milestone/18">code</a>.</dd>
+                    <dd><a href="https://opencollective.com/dokieli">Financial support</a>, <a href="https://github.com/dokieli/dokieli/milestone/18">code</a>.</dd>
                   </dl>
                 </div>
               </section>
