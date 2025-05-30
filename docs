@@ -70,7 +70,7 @@
             <dd><a href="https://github.com/dokieli/dokieli" rel="doap:repository">GitHub dokieli/dokieli</a> (<a href="https://github.com/dokieli/dokieli/pulls">pull requests</a>, <a href="https://github.com/dokieli/dokieli/issues/new">new issue</a>, <a href="https://github.com/dokieli/dokieli/issues" rel="doap:bug-database">open issues</a>)</dd>
           </dl>
 
-          <nav id="table-of-contents"><h2>Contents</h2><div><ol class="toc"><li data-id="abstract"><a href="#abstract">Abstract</a></li><li data-id="principles"><a href="#principles">Principles</a></li><li data-id="getting-started"><a href="#getting-started">Getting started</a><ol><li data-id="using-dokieli"><a href="#using-dokieli">Using dokieli</a><ol><li data-id="embeddable-web-application"><a href="#embeddable-web-application">Embeddable Web Application</a></li><li data-id="web-extension"><a href="#web-extension">Web Extension</a></li></ol></li><li data-id="contributing"><a href="#contributing">Contributing</a></li></ol></li><li data-id="roadmap"><a href="#roadmap">Roadmap</a><ol><li data-id="credibility-assessment"><a href="#credibility-assessment">Credibility assessment</a></li><li data-id="web-browser-extension"><a href="#web-browser-extension">Web browser extension</a></li><li data-id="internationalization-localization"><a href="#internationalization-localization">Internationalization and localization</a></li><li data-id="mobile-support"><a href="#mobile-support">Mobile support</a></li><li data-id="end-to-end-encryption"><a href="#end-to-end-encryption">End-to-end encryption</a></li><li data-id="collaborative-editing"><a href="#collaborative-editing">Collaborative editing</a></li><li data-id="knowledge-organisation"><a href="#knowledge-organisation">Knowledge organisation</a></li></ol></li><li data-id="documents"><a href="#documents">Documents</a></li><li data-id="storage"><a href="#storage">Storage</a></li><li data-id="user-interface"><a href="#user-interface">User interface</a><ol><li data-id="modes"><a href="#modes">Modes</a></li><li data-id="menu"><a href="#menu">Menu</a></li><li data-id="features"><a href="#features">Features</a></li><li data-id="components"><a href="#components">Components</a></li></ol></li><li data-id="accessibility-usability-inclusion"><a href="#accessibility-usability-inclusion">Accessibility, Usability, and Inclusion</a><ol><li data-id="accessibility-statement"><a href="#accessibility-statement">Accessibility Statement</a><ol><li data-id="accessibility-measures-to-support-accessibility"><a href="#accessibility-measures-to-support-accessibility">Measures to support accessibility</a></li><li data-id="accessibility-conformance-status"><a href="#accessibility-conformance-status">Conformance status</a></li><li data-id="accessibility-feedback"><a href="#accessibility-feedback">Feedback</a></li><li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Technical specifications</a></li><li data-id="accessibility-assessment-approach"><a href="#accessibility-assessment-approach">Assessment approach</a></li></ol></li><li data-id="authoring-accessibility"><a href="#authoring-accessibility">Authoring accessibility</a><ol><li data-id="authoring-tool-user-interface-accessibility"><a href="#authoring-tool-user-interface-accessibility">Authoring tool user interface accessibility</a></li><li data-id="support-for-producing-accessible-content"><a href="#support-for-producing-accessible-content">Support for producing accessible content</a></li></ol></li></ol></li></ol></div></nav>
+          <nav id="table-of-contents"><h2>Contents</h2><div><ol class="toc"><li data-id="abstract"><a href="#abstract">Abstract</a></li><li data-id="principles"><a href="#principles">Principles</a></li><li data-id="getting-started"><a href="#getting-started">Getting started</a><ol><li data-id="using-dokieli"><a href="#using-dokieli">Using dokieli</a><ol><li data-id="embeddable-web-application"><a href="#embeddable-web-application">Embeddable Web Application</a></li><li data-id="web-extension"><a href="#web-extension">Web Extension</a></li></ol></li><li data-id="contributing"><a href="#contributing">Contributing</a></li></ol></li><li data-id="roadmap"><a href="#roadmap">Roadmap</a><ol><li data-id="project-credibility-assessment"><a href="#project-credibility-assessment">Credibility assessment</a></li><li data-id="project-web-browser-extension"><a href="#project-web-browser-extension">Web browser extension</a></li><li data-id="project-internationalization-localization"><a href="#project-internationalization-localization">Internationalization and localization</a></li><li data-id="project-mobile-support"><a href="#project-mobile-support">Mobile support</a></li><li data-id="project-end-to-end-encryption"><a href="#project-end-to-end-encryption">End-to-end encryption</a></li><li data-id="project-collaborative-editing"><a href="#project-collaborative-editing">Collaborative editing</a></li><li data-id="project-knowledge-organisation"><a href="#project-knowledge-organisation">Knowledge organisation</a></li></ol></li><li data-id="documents"><a href="#documents">Documents</a></li><li data-id="storage"><a href="#storage">Storage</a></li><li data-id="user-interface"><a href="#user-interface">User interface</a><ol><li data-id="modes"><a href="#modes">Modes</a></li><li data-id="menu"><a href="#menu">Menu</a></li><li data-id="features"><a href="#features">Features</a></li><li data-id="components"><a href="#components">Components</a></li></ol></li><li data-id="accessibility-usability-inclusion"><a href="#accessibility-usability-inclusion">Accessibility, Usability, and Inclusion</a><ol><li data-id="accessibility-statement"><a href="#accessibility-statement">Accessibility Statement</a><ol><li data-id="accessibility-measures-to-support-accessibility"><a href="#accessibility-measures-to-support-accessibility">Measures to support accessibility</a></li><li data-id="accessibility-conformance-status"><a href="#accessibility-conformance-status">Conformance status</a></li><li data-id="accessibility-feedback"><a href="#accessibility-feedback">Feedback</a></li><li data-id="accessibility-technical-specifications"><a href="#accessibility-technical-specifications">Technical specifications</a></li><li data-id="accessibility-assessment-approach"><a href="#accessibility-assessment-approach">Assessment approach</a></li></ol></li><li data-id="authoring-accessibility"><a href="#authoring-accessibility">Authoring accessibility</a><ol><li data-id="authoring-tool-user-interface-accessibility"><a href="#authoring-tool-user-interface-accessibility">Authoring tool user interface accessibility</a></li><li data-id="support-for-producing-accessible-content"><a href="#support-for-producing-accessible-content">Support for producing accessible content</a></li></ol></li></ol></li></ol></div></nav>
         </details>
 
         <div datatype="rdf:HTML" id="content" property="schema:description">
@@ -158,7 +158,7 @@
             <div datatype="rdf:HTML" property="schema:description">
               <p>Here are the features and improvements in dokieli's roadmap. Everything here is subject to change.</p>
 
-              <section id="credibility-assessment" inlist="" rel="schema:hasPart" resource="#credibility-assessment">
+              <section id="project-credibility-assessment" inlist="" rel="schema:hasPart" resource="#project-credibility-assessment">
                 <h3 property="schema:name">Credibility assessment</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
@@ -172,7 +172,7 @@
                 </div>
               </section>
 
-              <section id="web-browser-extension" inlist="" rel="schema:hasPart" resource="#web-browser-extension">
+              <section id="project-web-browser-extension" inlist="" rel="schema:hasPart" resource="#project-web-browser-extension">
                 <h3 property="schema:name">Web browser extension</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
@@ -186,7 +186,7 @@
                 </div>
               </section>
 
-              <section id="internationalization-localization" inlist="" rel="schema:hasPart" resource="#internationalization-localization">
+              <section id="project-internationalization-localization" inlist="" rel="schema:hasPart" resource="#project-internationalization-localization">
                 <h3 property="schema:name">Internationalization and localization</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
@@ -200,7 +200,7 @@
                 </div>
               </section>
 
-              <section id="mobile-support" inlist="" rel="schema:hasPart" resource="#mobile-support">
+              <section id="project-mobile-support" inlist="" rel="schema:hasPart" resource="#project-mobile-support">
                 <h3 property="schema:name">Mobile support</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
@@ -214,7 +214,7 @@
                 </div>
               </section>
 
-              <section id="end-to-end-encryption" inlist="" rel="schema:hasPart" resource="#end-to-end-encryption">
+              <section id="project-end-to-end-encryption" inlist="" rel="schema:hasPart" resource="#project-end-to-end-encryption">
                 <h3 property="schema:name">End-to-end encryption</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
@@ -228,7 +228,7 @@
                 </div>
               </section>
 
-              <section id="collaborative-editing" inlist="" rel="schema:hasPart" resource="#collaborative-editing">
+              <section id="project-collaborative-editing" inlist="" rel="schema:hasPart" resource="#project-collaborative-editing">
                 <h3 property="schema:name">Collaborative editing</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>
@@ -242,7 +242,7 @@
                 </div>
               </section>
 
-              <section id="knowledge-organisation" inlist="" rel="schema:hasPart" resource="#knowledge-organisation">
+              <section id="project-knowledge-organisation" inlist="" rel="schema:hasPart" resource="#project-knowledge-organisation">
                 <h3 property="schema:name">Knowledge organisation</h3>
                 <div datatype="rdf:HTML" property="schema:description">
                   <dl>

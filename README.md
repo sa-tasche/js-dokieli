@@ -6,17 +6,18 @@ It is built with the following principles in mind: freedom of expression, decent
 
 Welcome! Check out the:
 
-* [Documentation](https://dokie.li/docs)
-* [Contributing Guide](CONTRIBUTING.md)
 * [Code of Conduct](CODE-OF-CONDUCT.md)
+* [Contributing Guide](CONTRIBUTING.md)
+* [Documentation](https://dokie.li/docs)
 * [Security Policy](SECURITY.md)
+* [Roadmap](https://dokie.li/docs#roadmap)
 
 ## Use
 
 dokieli can be used as a:
 
 * single-page application - open any dokieli embedded article
-* browser extension - import dokieli from your Web browser's extensions (see also <a href="https://dokie.li/docs">instructions</a>).
+* browser extension - import dokieli from your Web browser's extensions (see also [instructions](https://dokie.li/docs).
 
 ## Setup
 
