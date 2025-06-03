@@ -1422,6 +1422,10 @@ margin-right:4.5em;
 #home #supporters p a:has(img) + span:not(:has(time)) {
   display: none;
 }
+#home #supporters li > p a + span + span {
+text-align: center;
+display: block;
+}
 
 #home #summary {
   font-size: 2em;
