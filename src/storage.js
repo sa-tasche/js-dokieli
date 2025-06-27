@@ -205,8 +205,7 @@ async function enableAutoSave(key, options = {}) {
 
   await autoSave(key, options);
 
-  // TODO: check remote in intervals if no input
-  document.addEventListener('input', e => {
+  const handleInputPaste = (e) => {
     //I love that this function is called sync but it is async
     const sync = async (key, options) => {
       await autoSave(key, options);
@@ -227,7 +226,11 @@ async function enableAutoSave(key, options = {}) {
       debounceTimeout = setTimeout(async () => await sync(key, options), Config.AutoSave.Timer); // debounce delay 
       // Config.AutoSave.Items[key][options.method]['id'] = debounceTimeout;
     }
-  })
+  }
+
+  // TODO: check remote in intervals if no input
+  document.addEventListener('input', handleInputPaste);
+  document.addEventListener('paste', handleInputPaste);
 }
 
 async function disableAutoSave(key, options = {}) {
