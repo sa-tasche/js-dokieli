@@ -382,23 +382,13 @@ export const buttonIcons = {
   }
 }
 
-function hasAccessButtonCheck (accessMode) {
-  if (!accessMode) return false;
-
-  const hasWriteAccess = accessModeAllowed(null, accessMode);
-
-  if (!hasWriteAccess) return false;
-
-  return true;
-}
-
 const buttonState = {
   '#document-do .resource-save': ({ online, localhost }) => {
     const info = Config.Resource[Config.DocumentURL];
 
-    if (!online && !localhost) return false;
+    if (!online) return false;
 
-    if (!hasAccessButtonCheck('write')) {
+    if (!accessModeAllowed(null, 'write')) {
       return false;
     }
 
@@ -416,7 +406,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!hasAccessButtonCheck('write')) {
+    if (!accessModeAllowed(null, 'write')) {
       return false;
     }
 
@@ -434,7 +424,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!hasAccessButtonCheck('write')) {
+    if (!accessModeAllowed(null, 'write')) {
       return false;
     }
 
@@ -452,7 +442,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!hasAccessButtonCheck('write')) {
+    if (!accessModeAllowed(null, 'write')) {
       return false;
     }
 
@@ -574,7 +564,43 @@ const buttonState = {
     }
 
     return true;
-  }
+  },
+
+  '#review-changes .review-changes-save-local': ({ online, localhost }) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (!online && !localhost) return false;
+
+    if (!accessModeAllowed(null, 'write')) {
+      return false;
+    }
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.modify.value)) {
+      return false;
+    }
+
+    return true;
+  },
+
+  '#review-changes .review-changes-submit': ({ online, localhost }) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (!online && !localhost) return false;
+
+    if (!accessModeAllowed(null, 'write')) {
+      return false;
+    }
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        info.odrl.prohibitionActions.includes(ns.odrl.modify.value)) {
+      return false;
+    }
+
+    return true;
+  },
 };
 
 
