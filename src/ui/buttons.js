@@ -386,7 +386,7 @@ const buttonState = {
   '#document-do .resource-save': ({ online, localhost }) => {
     const info = Config.Resource[Config.DocumentURL];
 
-    if (!online) return false;
+    if (!online && !localhost) return false;
 
     if (!accessModeAllowed(null, 'write')) {
       return false;

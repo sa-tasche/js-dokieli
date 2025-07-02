@@ -1645,6 +1645,18 @@ DO = {
       }
     },
 
+    initServiceWorker: function() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(() => {
+            console.log('Service Worker registered');
+          })
+          .catch((err) => {
+            console.error('Service Worker registration failed:', err);
+          });
+      }
+    },
+
     initLocalStorage: function() {
       getLocalStorageItem(DO.C.DocumentURL).then(collection => {
         if (!collection) {
@@ -1940,7 +1952,7 @@ DO = {
 
         DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
       }
-      //304, 403, 404
+      //304, 403, 404, 405
       catch (e) {
         // console.log(e);
         // console.log(e.response)
