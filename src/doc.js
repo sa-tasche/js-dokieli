@@ -2209,8 +2209,18 @@ function updateSupplementalInfo(response, options) {
   var headers = response.headers;
   var documentURL = Config.DocumentURL;
 
+  const preservedHeaders = {};
+  if (options?.preserveHeaders?.length) {
+    for (const key of options.preserveHeaders) {
+      const existing = Config['Resource'][documentURL]?.headers?.[key];
+      if (existing !== undefined) {
+        preservedHeaders[key] = existing;
+      }
+    }
+  }
+
   Config['Resource'][documentURL]['response'] = response;
-  Config['Resource'][documentURL]['headers'] = {};
+  Config['Resource'][documentURL]['headers'] = {...preservedHeaders};
   Config['Resource'][documentURL]['headers']['response'] = headers;
 
   checkHeaders.forEach(header => {
