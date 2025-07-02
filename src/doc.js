@@ -2203,7 +2203,7 @@ async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, respons
 }
 
 function updateSupplementalInfo(response, options) {
-  var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires', 'date'];
+  var checkHeaders = options?.checkHeaders ?? ['wac-allow', 'link', 'last-modified', 'etag', 'expires', 'date', 'allow'];
   var headers = response.headers;
   var documentURL = Config.DocumentURL;
 
@@ -2219,7 +2219,7 @@ function updateSupplementalInfo(response, options) {
       Config['Resource'][documentURL]['headers'][header] = { 'field-value' : headerValue };
 
       if (header == 'wac-allow') {
-        var permissionGroups = Config['Resource'][documentURL]['headers']['wac-allow']["field-value"];
+        var permissionGroups = Config['Resource'][documentURL]['headers']['wac-allow']['field-value'];
         var wacAllowRegex = new RegExp(/(\w+)\s*=\s*"?\s*((?:\s*[^",\s]+)*)\s*"?/, 'ig');
         var wacAllowMatches = matchAllIndex(permissionGroups, wacAllowRegex);
 
@@ -2233,7 +2233,7 @@ function updateSupplementalInfo(response, options) {
         });
       }
 
-      if (header == 'link') {
+      else if (header == 'link') {
         var linkHeaders = LinkHeader.parse(headerValue);
 
         Config['Resource'][documentURL]['headers']['linkHeaders'] = linkHeaders;
@@ -2246,6 +2246,10 @@ function updateSupplementalInfo(response, options) {
             linkTarget = relationItem.uri = getAbsoluteIRI(getBaseURL(response.url), linkTarget);
           }
         });
+      }
+
+      else if (header == 'allow') {
+        Config['Resource'][documentURL]['headers']['allow'] = headerValue.toLowerCase().split(',').map(s => s.trim());
       }
     }
   })
