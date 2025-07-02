@@ -2231,7 +2231,7 @@ DO = {
 
       updateLocalStorageItem(id, { published: getDateTimeISO() });
 
-      updateResourceInfos(DO.C.DocumentURL, content, response);
+      updateResourceInfos(DO.C.DocumentURL, content, response, { preserveHeaders: ['wac-allow'] });
     },
 
     showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
