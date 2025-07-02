@@ -601,6 +601,27 @@ const buttonState = {
 
     return true;
   },
+
+  '#document-autosave #autosave-remote': ({ online, localhost }) => {
+    const info = Config.Resource[Config.DocumentURL];
+
+    if (!online && !localhost) return false;
+
+    if (!accessModeAllowed(null, 'write')) {
+      return false;
+    }
+
+    if (info.odrl?.prohibitionActions &&
+        info.odrl.prohibitionAssignee === Config.User.IRI &&
+        (info.odrl.prohibitionActions.includes(ns.odrl.derive.value) ||
+         info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value))) {
+      return false;
+    }
+
+    if (!online && !localhost) return false;
+
+    return true;
+  },
 };
 
 
