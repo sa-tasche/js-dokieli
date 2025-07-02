@@ -2188,7 +2188,9 @@ function getGraphFromDataBlock(data, options) {
 async function updateResourceInfos(documentURL = DO.C.DocumentURL, data, response, options = {}) {
   data = data || getDocument();
 
-  await getResourceInfo(data).then(resourceInfo => {
+  const storeHash = options.storeHash !== false;
+
+  await getResourceInfo(data, { storeHash }).then(resourceInfo => {
     DO.C.Resource[documentURL] = { ...DO.C.Resource[documentURL], ...resourceInfo };
   });
 
