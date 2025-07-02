@@ -2550,19 +2550,18 @@ function getResourceInfoSKOS(g) {
   return info['skos'];
 }
 
-function accessModeAllowed (documentURL, mode) {
+function accessModeAllowed(documentURL, mode) {
   documentURL = documentURL || Config.DocumentURL;
 
-  var allowedMode = false;
+  const wac = Config.Resource?.[documentURL]?.headers?.['wac-allow']?.permissionGroup;
+  if (!wac) return false;
 
-  if ('headers' in Config.Resource[documentURL] && 'wac-allow' in Config.Resource[documentURL]['headers'] && 'permissionGroup' in Config.Resource[documentURL]['headers']['wac-allow']) {
-    if (('user' in Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['user'].includes(mode))
-      || ('public' in Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup'] && Config.Resource[documentURL]['headers']['wac-allow']['permissionGroup']['public'].includes(mode))) {
-      allowedMode = true;
-    }
-  }
+  return (
+    (wac.user && wac.user.includes(mode)) ||
+    (wac.public && wac.public.includes(mode))
+  );
+}
 
-  return allowedMode;
 }
 
 function createImmutableResource(url, data, options) {
