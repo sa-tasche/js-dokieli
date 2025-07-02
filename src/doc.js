@@ -2562,6 +2562,14 @@ function accessModeAllowed(documentURL, mode) {
   );
 }
 
+function accessModePossiblyAllowed(documentURL, mode) {
+  documentURL = documentURL || Config.DocumentURL;
+
+  const wac = Config.Resource?.[documentURL]?.headers?.['wac-allow']?.permissionGroup;
+
+  if (!wac) return true;
+
+  return accessModeAllowed(documentURL, mode);
 }
 
 function createImmutableResource(url, data, options) {
@@ -3755,6 +3763,7 @@ export {
   getResourceInfoCitations,
   handleDeleteNote,
   accessModeAllowed,
+  accessModePossiblyAllowed,
   createImmutableResource,
   createMutableResource,
   updateMutableResource,
