@@ -1957,6 +1957,56 @@ DO = {
         //   remoteContentNode = getDocumentNodeFromString(remoteContent);
         //   remoteHash = await getHash(remoteContent);
         // }
+
+        var message = '';
+        var actionMessage = '';
+        var actionTerm = 'update';
+        var url = DO.C.DocumentURL;
+
+        if (status != 304 && status != 404) {
+          switch (status) {
+            default:
+              message = `Error (${status}).`;
+              actionMessage = `Error (${status}).`;
+              break;
+
+            case 401:
+              if (DO.C.User.IRI) {
+                message = `You do not have permission to ${actionTerm} <code>${url}</code>.`;
+                //TODO: signoutShowSignIn()
+                actionMessage = `You do not have permission to ${actionTerm} <code>${url}</code>. Try signing in with a different account.`;
+              }
+              else {
+                message = `You are not signed in.`;
+                actionMessage = `You are not signed in. ${DO.C.Button.SignIn} and try again.`;
+              }
+
+              return;
+
+            case 403:
+              if (DO.C.User.IRI) {
+                message = `You do not have permission to ${actionTerm} <code>${url}</code>.`;
+                //TODO: signoutShowSignIn() requestAccess()
+                actionMessage = `You do not have permission to ${actionTerm} <code>${url}</code>. Try signing in with a different account or request access.`;
+              }
+              else {
+                message = `You are not signed in.`;
+                actionMessage = `You are not signed in. ${DO.C.Button.SignIn} and try again.`;
+              }
+
+              return;
+          }
+
+          let messageObject = {
+            'content': actionMessage,
+            'type': 'error',
+            'timer': null,
+            'code': status
+          }
+
+          addMessageToLog({...messageObject, content: message}, Config.MessageLog);
+          showActionMessage(document.body, messageObject);
+        }
       }
 
       // console.log(`localContent: ${localContent}`);
