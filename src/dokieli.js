@@ -2026,7 +2026,7 @@ DO = {
       }
 
       if (latestLocalDocumentItemObjectUnpublished) {
-        if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash) {
+        if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash && status !== 304) {
           reviewOptions['message'] = `Remote content has changed since your last edit and you have local unpublished changes.`;
           DO.U.showResourceReviewChanges(localContent, remoteContent, DO.C.Resource[DO.C.DocumentURL].response, reviewOptions);
           return;
