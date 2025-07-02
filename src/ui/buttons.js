@@ -618,8 +618,6 @@ const buttonState = {
       return false;
     }
 
-    if (!online && !localhost) return false;
-
     return true;
   },
 };
