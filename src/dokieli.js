@@ -1913,15 +1913,13 @@ DO = {
 
       localContent = getDocument();
       let localHash = await getHash(localContent);
-      let localPublished;
       let data;
 
       if (latestLocalDocumentItemObjectUnpublished) {
-        const { digestSRI, mediaType, content, published } = latestLocalDocumentItemObjectUnpublished;
+        const { digestSRI, mediaType, content } = latestLocalDocumentItemObjectUnpublished;
         localContent = content;
         localHash = digestSRI;
         localContentType = mediaType;
-        localPublished = published;
       }
 
       //200
