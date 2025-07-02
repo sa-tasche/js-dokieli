@@ -1876,7 +1876,6 @@ DO = {
       let reviewOptions = {}
 
       let storageObject;
-      let latestLocalDocumentItemObject;
       let remoteHash;
       let remoteContent;
       let remoteContentNode;
@@ -1891,7 +1890,7 @@ DO = {
 
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
 
-      latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getLocalStorageItem(storageObject.items[0]) : null;
+      // let latestLocalDocumentItemObject = (storageObject && storageObject.items?.length) ? await getLocalStorageItem(storageObject.items[0]) : null;
 
       let localContent;
       let latestLocalDocumentItemObjectPublished;
@@ -4695,14 +4694,15 @@ console.log(reason);
 
               var message = '';
               var actionMessage = '';
+              let actionTerm = 'delete';
 
               if (error.status) {
                 switch(error.status) {
                   case 401:
                     if (DO.C.User.IRI) {
-                      message = `You do not have permission to delete <code>${url}</code>.`;
+                      message = `You do not have permission to ${actionTerm} <code>${url}</code>.`;
                       //TODO: signoutShowSignIn()
-                      actionMessage = `You do not have permission to delete <code>${url}</code>. Try signing in with a different account.`;
+                      actionMessage = `You do not have permission to ${actionTerm} <code>${url}</code>. Try signing in with a different account.`;
                     }
                     else {
                       message = `You are not signed in.`;
@@ -4713,9 +4713,9 @@ console.log(reason);
 
                   case 403: default:
                     if (DO.C.User.IRI) {
-                      message = `You do not have permission to delete <code>${url}</code>.`;
+                      message = `You do not have permission to ${actionTerm} <code>${url}</code>.`;
                       //TODO: signoutShowSignIn() requestAccess()
-                      actionMessage = `You do not have permission to delete <code>${url}</code>. Try signing in with a different account or request access.`;
+                      actionMessage = `You do not have permission to ${actionTerm} <code>${url}</code>. Try signing in with a different account or request access.`;
                     }
                     else {
                       message += `You are not signed in.`;
@@ -4727,8 +4727,8 @@ console.log(reason);
                   case 409:
                     //XXX: If/when there is more (structured) detail from the server, it can be processed and used here.
 
-                    message = `It was not possible to delete <code>${url}</code>.`;
-                    actionMessage = `It was not possible to delete <code>${url}</code> because something changed in the meantime. Please reload the document and try again later.`;
+                    message = `It was not possible to ${actionTerm} <code>${url}</code>.`;
+                    actionMessage = `It was not possible to ${actionTerm} <code>${url}</code> because something changed in the meantime. Please reload the document and try again later.`;
 
                     break;
                 }
