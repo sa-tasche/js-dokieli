@@ -1743,6 +1743,15 @@ margin:2em 0 0 0;
   left:auto;
 }
 
+#document-autosave label:has(+ input:disabled):before,
+#document-autosave label:has(+ input:disabled) {
+  color:#777;
+  cursor:not-allowed;
+}
+#document-autosave label:has(+ input:disabled) {
+  background:#777;
+}
+
 .tabs nav {
 position:relative;
 z-index:2147483647;
