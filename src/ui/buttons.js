@@ -5,6 +5,8 @@ import { isLocalhost } from "../uri.js";
 
 const ns = Config.ns;
 
+const docsBaseURL = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('docs') : 'https://dokie.li/docs';
+
 export function initButtons() {
   Config.Button = {
     Close: getButtonHTML({ button: 'close', buttonClass: 'close', buttonLabel: 'Close', buttonTitle: 'Close', iconSize: 'fa-2x' }),
@@ -15,20 +17,20 @@ export function initButtons() {
     OpenMenu: getButtonHTML({ button: 'bars', buttonClass: 'show', buttonTitle: 'Open menu' }),
     CloseMenu: getButtonHTML({ button: 'minus', buttonClass: 'hide', buttonTitle: 'Close menu' }),
     Info: {
-      Delete: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Delete', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-delete' }),
-      EmbedData: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Embed Data', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-embed-data' }),
-      GraphView: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Graph View', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-graph-view'}),
-      GenerateFeeds: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Generate Feed', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-generate-feed' }),
-      MessageLog: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Message Log', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-message-log' }),
-      Notifications: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-notifications' }),
-      Open: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Open', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-open' }),
-      Reply: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Reply', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-reply' }),
-      ReviewChanges: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Review Changes', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-review-changes' }),
-      RobustLinks: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Robustify Links', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-robustify-links' }),
-      SaveAs: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Save As', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-save-as' }),
-      Share: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Share', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-share' }),
-      SignIn: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Sign In', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-sign-in' }),
-      Source: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Source', buttonRel: 'rel:help', buttonResource: 'https://dokie.li/docs#feature-source' })
+      Delete: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Delete', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-delete` }),
+      EmbedData: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Embed Data', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-embed-data` }),
+      GraphView: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Graph View', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-graph-view` }),
+      GenerateFeeds: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Generate Feed', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-generate-feed` }),
+      MessageLog: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Message Log', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-message-log` }),
+      Notifications: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Notifications', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-notifications` }),
+      Open: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Open', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-open` }),
+      Reply: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Reply', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-reply` }),
+      ReviewChanges: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Review Changes', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-review-changes` }),
+      RobustLinks: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Robustify Links', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-robustify-links` }),
+      SaveAs: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Save As', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-save-as` }),
+      Share: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Share', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-share` }),
+      SignIn: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Sign In', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-sign-in` }),
+      Source: getButtonHTML({ button: 'info', buttonClass: 'info', buttonTitle: 'About Source', buttonRel: 'rel:help', buttonResource: `${docsBaseURL}#feature-source` })
     },
     SignIn: getButtonHTML({ button: 'signin', buttonClass: 'signin-user', buttonTitle: 'Sign in to authenticate', buttonTextContent: 'Sign in' }),
     Menu: {

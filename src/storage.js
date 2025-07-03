@@ -257,7 +257,7 @@ function removeLocalStorageItem(key) {
 
   console.log(getDateTimeISO() + ': ' + key + ' removed from local storage.')
 
-  if (Config.WebExtension) {
+  if (Config.WebExtensionEnabled) {
     var browser = (typeof browser !== 'undefined') ? browser : chrome;
 
     return browser.storage.sync.remove(key);
@@ -295,7 +295,7 @@ async function removeLocalStorageAsSignOut() {
 function getLocalStorageItem(key) {
   if (!key) { Promise.resolve(); }
 
-  if (Config.WebExtension) {
+  if (Config.WebExtensionEnabled) {
     if (typeof browser !== 'undefined') {
       return browser.storage.sync.get(key).then(o => { return o[key]; });
     }
@@ -356,7 +356,7 @@ function updateLocalStorageProfile(User) {
     "actor": U.IRI
   };
 
-  if (Config.WebExtension) {
+  if (Config.WebExtensionEnabled) {
     if (typeof browser !== 'undefined') {
       return browser.storage.sync.set({ [key]: object });
     }

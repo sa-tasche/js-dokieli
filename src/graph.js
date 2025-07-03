@@ -561,9 +561,13 @@ function getResourceGraph (iri, headers, options = {}) {
     Object.assign(headers, defaultHeaders)
   }
 
+  const isWebExtensionURL = Config.WebExtensionBaseURL ? iri.startsWith(Config.WebExtensionBaseURL) : false;
+
   return getResource(iri, headers, options)
     .then(response => {
-      let cT = response.headers.get('Content-Type')
+      let cT = response.headers.get('Content-Type');
+
+      cT = (isWebExtensionURL && (!cT || cT === 'application/x-unknown-content-type')) ? 'text/html' : cT;
       options['contentType'] = (cT) ? cT.split(';')[ 0 ].trim() : 'text/turtle'
       // options['subjectURI'] = stripFragmentFromString(iri)
       options['subjectURI'] = iri

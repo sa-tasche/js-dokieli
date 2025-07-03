@@ -11,6 +11,7 @@ export default {
     if (contentNode) {
       DO.U.initButtons();
       DO.U.setDocumentURL(url);
+      DO.U.setWebExtensionURL();
       DO.U.setDocumentString();
       DO.U.initUser();
       DO.U.initLocalStorage();
@@ -77,7 +78,8 @@ export default {
   MathAvailable: (typeof MathJax !== 'undefined'),
   EditorEnabled: false,
   ContentEditable: false,
-  WebExtension: ((window.chrome && chrome.runtime && chrome.runtime.id) || (typeof browser !== 'undefined' && browser.runtime && browser.runtime.id)),
+  WebExtensionEnabled: ((window.chrome && chrome.runtime && chrome.runtime.id) || (typeof browser !== 'undefined' && browser.runtime && browser.runtime.id)),
+  WebExtension: (typeof browser !== 'undefined') ? browser : window.chrome,
   Editor: {
     headings: ["h1", "h2", "h3", "h4", "h5", "h6"],
     regexEmptyHTMLTags: /<[^\/>][^>]*><\/[^>]+>/gim,

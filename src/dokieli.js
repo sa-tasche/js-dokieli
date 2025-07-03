@@ -1535,6 +1535,10 @@ DO = {
       DO.Editor.init(null, null, options);
     },
 
+    setWebExtensionURL: function() {
+      DO.C['WebExtensionBaseURL'] = Config.WebExtensionEnabled ? Config.WebExtension.runtime.getURL('') : null;
+    },
+
     setDocumentURL: function(url) {
       url = url || currentLocation();
 
@@ -4191,7 +4195,7 @@ console.log(reason);
           var pIRI = endpoint + iri;
           // i = 'https://web.archive.org/save/https://example.org/';
 
-          pIRI = (DO.C.WebExtension) ? pIRI : getProxyableIRI(pIRI, {'forceProxy': true});
+          pIRI = (DO.C.WebExtensionEnabled) ? pIRI : getProxyableIRI(pIRI, {'forceProxy': true});
           // pIRI = getProxyableIRI(pIRI, {'forceProxy': true})
 // console.log(pIRI)
           return getResource(pIRI, headers, options)
@@ -4475,11 +4479,9 @@ console.log(reason);
 
                 let url = response.url || storageIRI
 
-                var documentMode = (DO.C.WebExtension) ? '' : ''
-
                 generateFeed.insertAdjacentHTML('beforeend',
                   '<div class="response-message"><p class="success">' +
-                  'Document saved at <a href="' + url + documentMode + '" rel="noopener" target="_blank">' + url + '</a></p></div>'
+                  'Document saved at <a href="' + url + '" rel="noopener" target="_blank">' + url + '</a></p></div>'
                 )
 
                 window.open(url + documentMode, '_blank')
@@ -7328,7 +7330,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
 
         putResource(storageIRI, html)
           .then(() => {
-            var documentMode = (DO.C.WebExtension) ? '' : '?author=true'
+            var documentMode = (DO.C.WebExtensionEnabled) ? '' : '?author=true'
 
             newDocument.insertAdjacentHTML('beforeend',
               '<div class="response-message"><p class="success">' +
@@ -7642,7 +7644,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             let url = response.url || storageIRI
             url = domSanitize(url);
 
-            var documentMode = (DO.C.WebExtension) ? '' : '?author=true'
+            var documentMode = (DO.C.WebExtensionEnabled) ? '' : '?author=true'
 
             saveAsDocument.insertAdjacentHTML('beforeend',
               '<div class="response-message"><p class="success">' +
