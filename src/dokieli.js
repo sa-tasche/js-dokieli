@@ -1894,6 +1894,8 @@ DO = {
       let remoteDate;
       const previousRemoteHash = DO.C.Resource[DO.C.DocumentURL]['digestSRI'];
 
+      const hasAccessModeWrite = accessModePossiblyAllowed(DO.C.DocumentURL, 'write');
+
       storageObject = await getLocalStorageItem(DO.C.DocumentURL);
 
       const remoteAutoSaveEnabled = (storageObject && storageObject.autoSave !== undefined) ? storageObject.autoSave : true;
@@ -2049,6 +2051,11 @@ DO = {
         }
 
         if (options.forceLocal) {
+          if (!hasAccessModeWrite) {
+            console.log(`No Write access.`);
+            return;
+          }
+
           console.log(`Force pushing local content.`);
 
           const h = localETag ? { 'If-Match': localETag } : {};
@@ -2113,6 +2120,11 @@ DO = {
                 return;
               }
 
+              if (!hasAccessModeWrite) {
+                console.log(`No Write access.`);
+                return;
+              }
+
               const h = localETag ? { 'If-Match': localETag } : {};
 
               try {
@@ -2160,6 +2172,11 @@ DO = {
               return;
             }
 
+            if (!hasAccessModeWrite) {
+              console.log(`No Write access.`);
+              return;
+            }
+
             const h = localETag ? { 'If-Match': localETag } : {};
 
             try {
@@ -2185,6 +2202,11 @@ DO = {
 
           if (!remoteAutoSaveEnabled) {
             console.log(`remoteAutoSave is disabled.`);
+            return;
+          }
+
+          if (!hasAccessModeWrite) {
+            console.log(`No Write access.`);
             return;
           }
 
