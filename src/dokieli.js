@@ -2491,6 +2491,7 @@ DO = {
 
       let html = `
       <section id="document-autosave">
+        <h2>Autosave</h2>
         <label for="autosave-remote">Autosave</label> <input${checked} id="autosave-remote" title="Keep changes local or sync to remote storage" type="checkbox" />
       </section>
       `;
