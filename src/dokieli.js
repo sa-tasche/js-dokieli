@@ -2113,7 +2113,7 @@ DO = {
 
           if (latestLocalDocumentItemObjectUnpublished) {
             if (etagsMatch || previousRemoteHash == remoteHash) {
-              console.log(`Local unpublished changes. Remote unchanged. Update remote.`);
+              console.log(`Local unpublished changes. Remote unchanged (200). Updating remote.`);
 
               if (!remoteAutoSaveEnabled) {
                 console.log(`remoteAutoSave is disabled.`);
@@ -2165,7 +2165,7 @@ DO = {
         //Because of GET If-None-Match: <etag>
         case 304:
           if (latestLocalDocumentItemObjectUnpublished) {
-            console.log(`Local unpublished changes. Remote unchanged. Update remote.`);
+            console.log(`Local unpublished changes. Remote unchanged (304). Updating remote.`);
 
             if (!remoteAutoSaveEnabled) {
               console.log(`remoteAutoSave is disabled.`);
