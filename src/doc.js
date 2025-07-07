@@ -245,6 +245,34 @@ function normaliseContent (node) {
     // console.log(temp.outerHTML + '<--pmNode.parentNode.outerHTML THERE SHOULD BE NO LINE BREAK BEFORE THIS-->');
   }
 
+  element.querySelectorAll('a').forEach(a => {
+    const next = a.nextElementSibling;
+    if (!next) return;
+
+    if (
+      next.tagName.toLowerCase() === 'span' &&
+      next.childElementCount === 1 &&
+      next.firstElementChild.tagName.toLowerCase() === 'a'
+    ) {
+      const innerA = next.firstElementChild;
+
+      const sameHref = a.getAttribute('href') === innerA.getAttribute('href');
+      const sameTitle = a.getAttribute('title') === innerA.getAttribute('title');
+
+      if (sameHref && sameTitle) {
+        const newSpan = document.createElement('span');
+
+        while (innerA.firstChild) {
+          newSpan.appendChild(innerA.firstChild);
+        }
+
+        a.appendChild(newSpan);
+
+        next.remove();
+      }
+    }
+  });
+
   return getFragmentOfNodesChildren(element);
 }
 
