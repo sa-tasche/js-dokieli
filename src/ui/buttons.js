@@ -1,4 +1,4 @@
-import { accessModeAllowed } from "../doc.js";
+import { accessModePossiblyAllowed } from "../doc.js";
 import { Icon} from "./icons.js";
 import Config from "../config.js";
 import { isLocalhost } from "../uri.js";
@@ -390,7 +390,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!accessModeAllowed(null, 'write')) {
+    if (!accessModePossiblyAllowed(null, 'write')) {
       return false;
     }
 
@@ -408,7 +408,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!accessModeAllowed(null, 'write')) {
+    if (!accessModePossiblyAllowed(null, 'write')) {
       return false;
     }
 
@@ -426,7 +426,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!accessModeAllowed(null, 'write')) {
+    if (!accessModePossiblyAllowed(null, 'write')) {
       return false;
     }
 
@@ -444,7 +444,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!accessModeAllowed(null, 'write')) {
+    if (!accessModePossiblyAllowed(null, 'write')) {
       return false;
     }
 
@@ -573,7 +573,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!accessModeAllowed(null, 'write')) {
+    if (!accessModePossiblyAllowed(null, 'write')) {
       return false;
     }
 
@@ -591,7 +591,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!accessModeAllowed(null, 'write')) {
+    if (!accessModePossiblyAllowed(null, 'write')) {
       return false;
     }
 
@@ -609,7 +609,7 @@ const buttonState = {
 
     if (!online && !localhost) return false;
 
-    if (!accessModeAllowed(null, 'write')) {
+    if (!accessModePossiblyAllowed(null, 'write')) {
       return false;
     }
 
