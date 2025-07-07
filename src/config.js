@@ -96,7 +96,7 @@ export default {
   DOMNormalisation: {
     'voidElements': ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'],
     'selfClosing': ['circle', 'ellipse', 'line', 'path', 'polygon', 'polyline', 'rect', 'stop', 'use'],
-    'skipAttributes': ['aria-multiline', 'contenteditable', 'data-placeholder', 'role', 'spellcheck', 'style'],
+    'skipAttributes': ['aria-multiline', 'contenteditable', 'data-placeholder', 'draggable', 'role', 'spellcheck', 'style'],
     'sortAttributes': true,
     'skipNodeWithClass': 'do',
     'skipNodeComment': true,
