@@ -7855,8 +7855,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
         <div id="base-url-selection">
           <label for="base-url">Location of media resources:</label>
           <select id="base-url">
-            <option id="base-url-absolute" value="base-url-absolute" selected="selected">Use references as is</option>
-            <option id="base-url-relative" value="base-url-relative">Copy to your storage</option>
+            <option id="base-url-relative" value="base-url-relative" selected="selected">Copy to your storage</option>
+            <option id="base-url-absolute" value="base-url-absolute">Use references as is</option>
           </select>
         </div>
       `;
