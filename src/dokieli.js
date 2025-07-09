@@ -7974,7 +7974,7 @@ console.log('XXX: Cannot access effectiveACLResource', e);
             break;
         }
 
-        var fromURL, x = node.getAttribute(ref).trim();
+        var fromURL = node.getAttribute(ref).trim();
         var pathToFile = '';
         var s = fromURL.split(':')[0];
 
