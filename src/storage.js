@@ -245,9 +245,14 @@ async function disableAutoSave(key, options = {}) {
     if (Config.AutoSave.Items[key][method]) {
       console.log(getDateTimeISO() + ': ' + key + ' ' + options.method + ' autosave disabled.');
 
-      await autoSave(key, options);
+      if (options.saveSnapshot) {
+        await autoSave(key, options);
+      }
+
       clearInterval(Config.AutoSave.Items[key][method].id);
       Config.AutoSave.Items[key][method] = undefined;
+
+      await updateLocalStorageItem(key, { autoSave: false });
     }
   }
 }
