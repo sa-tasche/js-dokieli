@@ -604,8 +604,12 @@ const buttonState = {
     return true;
   },
 
-  '#document-autosave #autosave-remote': ({ online, localhost }) => {
+  '#document-autosave #autosave-remote': ({ online, localhost, autoSave, documentAction }) => {
     const info = Config.Resource[Config.DocumentURL];
+
+    if (!autoSave) return false;
+
+    if (documentAction == 'new' || documentAction == 'open')  return false;
 
     if (!online && !localhost) return false;
 
@@ -637,11 +641,15 @@ export function updateButtons(selectors) {
   selectors = selectors || Object.keys(buttonState);
   // console.log("Online: ", navigator.onLine);
 
+  const autoSave = !!(Config.AutoSave.Items[Config.DocumentURL]?.['localStorage']);
+
   const context = {
     authenticated: Config['Session'].isActive,
     online: navigator.onLine,
     localhost: isLocalhost(Config.DocumentURL),
-    editorMode: DO.Editor.mode
+    editorMode: DO.Editor.mode,
+    autoSave,
+    documentAction: Config.DocumentAction
   }
 
   selectors.forEach(selector => {

@@ -4592,7 +4592,7 @@ console.log(reason);
           DO.Editor.toggleEditor('social');
           // hideAutoSaveStorage(node.querySelector('#autosave-items'), documentURL);
 
-          disableAutoSave(DO.C.DocumentURL, {'method': 'localStorage'});
+          disableAutoSave(DO.C.DocumentURL, {'method': 'localStorage', saveSnapshot: true });
         }
         else {
           b = e.target.closest('button.editor-enable');
@@ -4831,7 +4831,7 @@ console.log(reason);
       options = options || {};
 
       getResourceInfo(data, options).then(i => {
-        if (DO.Editor.new) {
+        if (DO.C.DocumentAction == 'new'|| DO.C.DocumentAction == 'open') {
           DO.U.saveAsDocument(e);
         }
         else {
@@ -6955,6 +6955,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
                   })
               })
               .then(() => {
+                DO.C.DocumentAction = 'open';
+
                 var rm = document.querySelector('#document-action-message')
                 if (rm) {
                   rm.parentNode.removeChild(rm)
@@ -7293,115 +7295,12 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       DO.U.hideDocumentMenu();
 
       DO.Editor.toggleEditor('author', { template: 'new' });
-    },
 
-    //XXX: To be deprecated. Formerly used for createNewDocument 
-    createNewDocumentSaveAs: function(e) {
-      e.target.disabled = true
-      document.body.appendChild(fragmentFromString('<aside id="create-new-document" class="do on">' + DO.C.Button.Close + '<h2>Create New Document</h2></aside>'))
+      DO.C.DocumentAction = 'new';
 
-      var newDocument = document.getElementById('create-new-document')
-      newDocument.addEventListener('click', e => {
-        if (e.target.closest('button.close')) {
-          document.querySelector('#document-do .resource-new').disabled = false
-        }
-      })
+      disableAutoSave(DO.C.DocumentURL, {'method': 'localStorage'});
 
-      var id = 'location-new'
-      var action = 'write'
-
-      DO.U.setupResourceBrowser(newDocument, id, action)
-      document.getElementById(id).insertAdjacentHTML('afterbegin', '<p>Choose a location to save your new article.</p>')
-      var baseURLSelection = (document.location.protocol == 'file:') ? '' : DO.U.getBaseURLSelection()
-      baseURLSelection = domSanitize(baseURLSelection);
-
-      newDocument.insertAdjacentHTML('beforeend', baseURLSelection +
-        '<p>Your new document will be saved at <samp id="' + id + '-' + action +
-        '">https://example.org/path/to/article</samp></p><button class="create" title="Create new document">Create</button>')
-
-      var bli = document.getElementById(id + '-input')
-      bli.focus()
-      bli.placeholder = 'https://example.org/path/to/article'
-
-      newDocument.addEventListener('click', e => {
-        if (!e.target.closest('button.create')) {
-          return
-        }
-
-        var newDocument = document.getElementById('create-new-document')
-        var storageIRI = newDocument.querySelector('#' + id + '-' + action).innerText.trim()
-        var title = (storageIRI.length) ? getURLLastPath(storageIRI) : ''
-        title = DO.U.generateLabelFromString(title);
-
-        var rm = newDocument.querySelector('.response-message')
-        if (rm) {
-          rm.parentNode.removeChild(rm)
-        }
-
-        var html = document.documentElement.cloneNode(true)
-        var baseURLSelectionChecked = newDocument.querySelector('select[id="base-url"]')
-        // console.log(baseURLSelectionChecked);
-
-        if (baseURLSelectionChecked.length) {
-          var baseURLType = baseURLSelectionChecked.value
-          var nodes = html.querySelectorAll('head link, [src], object[data]')
-          if (baseURLType == 'base-url-relative') {
-            DO.U.copyRelativeResources(storageIRI, nodes)
-          }
-          nodes = DO.U.rewriteBaseURL(nodes, {'baseURLType': baseURLType})
-        }
-
-        html.querySelector('body').setHTMLUnsafe(domSanitize('<main><article about="" typeof="schema:Article"><h1 property="schema:name">' + title + '</h1></article></main>'));
-        html.querySelector('head title').setHTMLUnsafe(domSanitize(title));
-        html = getDocument(html)
-
-        putResource(storageIRI, html)
-          .then(() => {
-            var documentMode = (DO.C.WebExtensionEnabled) ? '' : '?author=true'
-
-            newDocument.insertAdjacentHTML('beforeend',
-              '<div class="response-message"><p class="success">' +
-              'New document created at <a href="' + storageIRI +
-              documentMode + '">' + storageIRI + '</a></p></div>'
-            )
-
-            window.open(storageIRI + documentMode, '_blank')
-          })
-
-          .catch(error => {
-            console.log('Error creating a new document:')
-            console.error(error)
-
-            let message
-
-            switch (error.status) {
-              case 0:
-              case 405:
-                message = 'this location is not writable.'
-                break
-              case 401:
-                message = 'you are not authorized.'
-                if(!DO.C.User.IRI){
-                  message += ' Try signing in.';
-                }
-                break
-              case 403:
-                message = 'you do not have permission to write here.'
-                break
-              case 406:
-                message = 'enter a name for your resource.'
-                break
-              default:
-                message = error.message
-                break
-            }
-
-            newDocument.insertAdjacentHTML('beforeend',
-              '<div class="response-message"><p class="error">' +
-              'Could not create new document: ' + domSanitize(message) + '</p>'
-            )
-          })
-      })
+      updateButtons();
     },
 
     saveAsDocument: async function saveAsDocument (e) {
@@ -7677,6 +7576,8 @@ console.log('XXX: Cannot access effectiveACLResource', e);
               '<div class="response-message"><p class="success">' +
               'Document saved at <a href="' + url + documentMode + '">' + url + '</a></p></div>'
             )
+
+            DO.C.DocumentAction = 'save-as';
 
             if (DO.Editor['new']) {
               //XXX: Commenting this out for now, not sure what this was supposed to fix

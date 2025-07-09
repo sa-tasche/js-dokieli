@@ -31,6 +31,7 @@ export default {
       DO.U.monitorNetworkStatus();
     }
   },
+  DocumentAction: '',
   Button: {},
   DocumentURL: '',
   DocumentString: '',
