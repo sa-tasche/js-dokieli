@@ -2308,7 +2308,7 @@ function getResourceSupplementalInfo (documentURL, options) {
     const previousResponseDateHeaderValue = previousResponse?.get('date');
     const previousResponseDate = previousResponseDateHeaderValue ? new Date(previousResponseDateHeaderValue) : null;
 
-    if(!previousResponse || !previousResponseDateHeaderValue || (previousResponseDate && (currentDate.getTime() - previousResponseDate.getTime() > Config.RequestCheck.Timer))) {
+    if (!previousResponse || !previousResponseDateHeaderValue || (previousResponseDate && (currentDate.getTime() - previousResponseDate.getTime() > Config.RequestCheck.Timer))) {
       options.reuse = false;
     }
   }
@@ -2319,42 +2319,44 @@ function getResourceSupplementalInfo (documentURL, options) {
     return getResourceHead(documentURL, rHeaders, rOptions)
       .then(response => {
         updateSupplementalInfo(response);
-      })
-      .then(() => {
-        var promises = [];
-        var linkHeaders = Config['Resource'][documentURL]['headers']['linkHeaders'];
-
-        if (linkHeaders) {
-          linkHeaders.refs.forEach(relationItem => {
-            var relationType = relationItem.rel;
-            var linkTarget = relationItem.uri;
-            //TODO: GET acl linkTarget only if user/public has control permission.
-            if ('followLinkRelationTypes' in options && options.followLinkRelationTypes.includes(relationType)) {
-              promises.push(getResourceGraph(linkTarget));
-            }
-          });
-        }
-
-        return Promise.allSettled(promises)
-          .then(results => {
-            results.forEach(result => {
-              var g = result.value;
-
-              if (g) {
-                //FIXME: Consider the case where `linkTarget` URL is redirected and so may not be same as `s`.
-                var s = g.term.value;
-                Config['Resource'][s] = {};
-                Config['Resource'][s]['graph'] = g;
-              }
-            });
-
-            return Config['Resource'][documentURL];
-        });
+        processSupplementalInfoLinkHeaders(documentURL, options);
       });
   }
   else {
     return Promise.resolve(Config['Resource'][documentURL]);
   }
+}
+
+function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
+  var promises = [];
+  var linkHeaders = Config['Resource'][documentURL]['headers']?.['linkHeaders'];
+
+  if (linkHeaders) {
+    linkHeaders.refs.forEach(relationItem => {
+      var relationType = relationItem.rel;
+      var linkTarget = relationItem.uri;
+      //TODO: GET acl linkTarget only if user/public has control permission.
+      if ('followLinkRelationTypes' in options && options.followLinkRelationTypes.includes(relationType)) {
+        promises.push(getResourceGraph(linkTarget));
+      }
+    });
+  }
+
+  return Promise.allSettled(promises)
+    .then(results => {
+      results.forEach(result => {
+        var g = result.value;
+
+        if (g) {
+          //FIXME: Consider the case where `linkTarget` URL is redirected and so may not be same as `s`.
+          var s = g.term.value;
+          Config['Resource'][s] = {};
+          Config['Resource'][s]['graph'] = g;
+        }
+      });
+
+      return Config['Resource'][documentURL];
+  });
 }
 
 function getResourceInfoCitations(g) {
@@ -3795,6 +3797,7 @@ export {
   updateResourceInfos,
   updateSupplementalInfo,
   getResourceSupplementalInfo,
+  processSupplementalInfoLinkHeaders,
   getResourceInfoODRLPolicies,
   getResourceInfoSpecRequirements,
   getResourceInfoSpecAdvisements,

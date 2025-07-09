@@ -7,7 +7,7 @@
  */
 
 import { getResource, setAcceptRDFTypes, postResource, putResource, currentLocation, patchResourceWithAcceptPatch, putResourceWithAcceptPut, copyResource, deleteResource } from './fetcher.js'
-import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed } from './doc.js'
+import { getDocument, getDocumentContentNode, escapeCharacters, showActionMessage, selectArticleNode, eventButtonNotificationsToggle, showRobustLinksDecoration, getResourceInfo, getResourceSupplementalInfo, removeNodesWithIds, getResourceInfoSKOS, removeReferences, buildReferences, removeSelectorFromNode, insertDocumentLevelHTML, getResourceInfoSpecRequirements, getTestDescriptionReviewStatusHTML, createFeedXML, showTimeMap, createMutableResource, createImmutableResource, updateMutableResource, createHTML, getResourceImageHTML, setDocumentRelation, setDate, getLanguageOptionsHTML, getLicenseOptionsHTML, getNodeWithoutClasses, getDoctype, setCopyToClipboard, addMessageToLog, accessModeAllowed, getAccessModeOptionsHTML, focusNote, handleDeleteNote, parseMarkdown, getReferenceLabel, createNoteDataHTML, hasNonWhitespaceText, eventButtonClose, eventButtonInfo, eventButtonSignIn, eventButtonSignOut, getDocumentNodeFromString, updateResourceInfos, accessModePossiblyAllowed, updateSupplementalInfo, processSupplementalInfoLinkHeaders } from './doc.js'
 import { getProxyableIRI, getPathURL, stripFragmentFromString, getFragmentOrLastPath, getFragmentFromString, getURLLastPath, getLastPathSegment, forceTrailingSlash, getBaseURL, getParentURLPath, encodeString, generateDataURI, getMediaTypeURIs, isHttpOrHttpsProtocol, isFileProtocol } from './uri.js'
 import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation, getAgentName, getGraphImage, getGraphFromData, isActorType, isActorProperty, getGraphLabel, getGraphLabelOrIRI, getGraphConceptLabel, getUserContacts, getAgentInbox, getLinkRelationFromHead, getACLResourceGraph, getAccessSubjects, getAuthorizationsMatching, getGraphRights, getGraphLicense, getGraphLanguage, getGraphDate, getGraphAuthors, getGraphEditors, getGraphContributors, getGraphPerformers, getUserLabelOrIRI, getGraphTypes, filterQuads, getAgentTypeIndex } from './graph.js'
 import { notifyInbox, sendNotifications } from './inbox.js'
@@ -1680,6 +1680,7 @@ DO = {
           }
         }
         else {
+          //XXX: syncLocalRemoteResource is also eventually calling getResourceInfo through updateResourceInfos (in try)
           getResourceInfo(DO.C.DocumentString).then(resourceInfo => {
             DO.U.processPotentialAction(resourceInfo);
 
@@ -1688,16 +1689,18 @@ DO = {
             }
           });
 
-          // var options = { 'reuse': true };
-          var options = {};
-          if (document.location.protocol.startsWith('http')) {
-            options['followLinkRelationTypes'] = ['describedby'];
-          }
-          getResourceSupplementalInfo(DO.C.DocumentURL, options).then(resourceInfo => {
-            updateButtons();
+          // var options = { reuse: true };
+          // var options = { init: true };
+          // var options = {};
+          // if (document.location.protocol.startsWith('http')) {
+          //   options['followLinkRelationTypes'] = ['describedby'];
+          // }
+
+          // getResourceSupplementalInfo(DO.C.DocumentURL, options).then(resourceInfo => {
+          //   updateButtons();
 
             DO.U.syncLocalRemoteResource();
-          });
+          // });
 
           // window.setTimeout(checkResourceInfo, 100);
         }
@@ -1706,7 +1709,6 @@ DO = {
       checkResourceInfo();
 
       DO.U.processActivateAction();
-
     },
 
     processActivateAction: function() {
@@ -1948,23 +1950,33 @@ DO = {
 
         remoteHash = await getHash(remoteContent);
 
-        DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
+        let linkHeadersOptions = {};
+        if (!Config['Resource'][DO.C.DocumentURL]['headers']) {
+          linkHeadersOptions['followLinkRelationTypes'] = ['describedby'];
+        }
+
+        await updateResourceInfos(DO.C.DocumentURL, remoteContent, response, { storeHash: true });
+        processSupplementalInfoLinkHeaders(DO.C.DocumentURL, linkHeadersOptions);
+
+        // DO.C.Resource[DO.C.DocumentURL]['digestSRI'] = remoteHash;
       }
       //304, 403, 404, 405
       catch (e) {
-        // console.log(e);
-        // console.log(e.response)
+        console.log(e);
+        console.log(e.response)
         status = e.status || 0;
         response = e.response;
         remoteETag = response?.headers.get('ETag');
         remoteLastModified = response?.headers.get('Last-Modified');
         remoteDate = response?.headers.get('Date');
 
-        // if (latestLocalDocumentItemObjectPublished?.content) {
-        //   remoteContent = latestLocalDocumentItemObjectPublished.content;
-        //   remoteContentNode = getDocumentNodeFromString(remoteContent);
-        //   remoteHash = await getHash(remoteContent);
-        // }
+        remoteContent = DO.C.Resource[DO.C.DocumentURL].data;
+        remoteContentNode = getDocumentNodeFromString(remoteContent);
+        remoteHash = await getHash(remoteContent);
+
+        if (response) {
+          updateSupplementalInfo(response);
+        }
 
         var message = '';
         var actionMessage = '';
@@ -2067,7 +2079,6 @@ DO = {
           catch(error) {
             if (error.status === 412) {
               DO.U.syncLocalRemoteResource();
-              // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
             }
             else {
               throw new Error(`${error.status} Unhandled status ${error}`);
@@ -2089,20 +2100,16 @@ DO = {
       }
 
       if (latestLocalDocumentItemObjectUnpublished) {
+        var tmplLocal = document.implementation.createHTMLDocument('template');
+        tmplLocal.documentElement.setHTMLUnsafe(localContent);
+        const localContentNode = tmplLocal.body;
+        DO.Editor.replaceContent(DO.Editor.mode, localContentNode);
+        DO.Editor.init(DO.Editor.mode, document.body);
+
         if (latestLocalDocumentItemObjectPublished.digestSRI !== remoteHash && status !== 304) {
           reviewOptions['message'] = `Remote content has changed since your last edit and you have local unpublished changes.`;
           DO.U.showResourceReviewChanges(localContent, remoteContent, DO.C.Resource[DO.C.DocumentURL].response, reviewOptions);
           return;
-        }
-        //Remote didn't change, we want to restore current view with what we have unpublished
-        else {
-          var tmplLocal = document.implementation.createHTMLDocument('template');
-          tmplLocal.documentElement.setHTMLUnsafe(localContent);
-          const localContentNode = tmplLocal.body;
-          DO.Editor.replaceContent(DO.Editor.mode, localContentNode);
-          DO.Editor.init(DO.Editor.mode, document.body);
-
-          //TODO: Show message that your updates were applied.
         }
       }
 
@@ -2113,7 +2120,7 @@ DO = {
 
           if (latestLocalDocumentItemObjectUnpublished) {
             if (etagsMatch || previousRemoteHash == remoteHash) {
-              console.log(`Local unpublished changes. Remote unchanged (200). Updating remote.`);
+              console.log(`Local unpublished changes. Remote unchanged (200). Should update remote.`);
 
               if (!remoteAutoSaveEnabled) {
                 console.log(`remoteAutoSave is disabled.`);
@@ -2133,8 +2140,6 @@ DO = {
               }
               catch(error) {
                 if (error.status === 412) {
-                  // reviewOptions['message'] = `Local unpublished changes. Remote changed in the meantime. Review.`;
-                  // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
                   DO.U.syncLocalRemoteResource();
                 }
                 else {
@@ -2157,7 +2162,6 @@ DO = {
           else {
             reviewOptions['message'] = `No local unpublished changes. Remote unchanged. Review changes.`;
             DO.U.syncLocalRemoteResource();
-            // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
           }
 
           break;
@@ -2165,7 +2169,7 @@ DO = {
         //Because of GET If-None-Match: <etag>
         case 304:
           if (latestLocalDocumentItemObjectUnpublished) {
-            console.log(`Local unpublished changes. Remote unchanged (304). Updating remote.`);
+            console.log(`Local unpublished changes. Remote unchanged (304). Should update remote.`);
 
             if (!remoteAutoSaveEnabled) {
               console.log(`remoteAutoSave is disabled.`);
@@ -2185,8 +2189,6 @@ DO = {
             }
             catch(error) {
               if (error.status === 412) {
-                // reviewOptions['message'] = `Local unpublished changes. Remote changed in the meantime. Review.`;
-                // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
                 DO.U.syncLocalRemoteResource();
               }
               else {
@@ -2216,8 +2218,6 @@ DO = {
           }
           catch (error) {
             if (error.status === 412) {
-              // reviewOptions['message'] = `Error (412)`;
-              // DO.U.showResourceReviewChanges(localContent, remoteContent, response, reviewOptions);
               DO.U.syncLocalRemoteResource();
             }
             else {
@@ -2255,7 +2255,7 @@ DO = {
     showResourceReviewChanges: function(localContent, remoteContent, response, reviewOptions) {
       if (!localContent.length || !remoteContent.length) return;
 
-      updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
+      // updateResourceInfos(DO.C.DocumentURL, getDocument(), response);
 
       // console.log(localContent, remoteContent);
 
