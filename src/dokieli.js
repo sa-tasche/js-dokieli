@@ -13,7 +13,7 @@ import { getResourceGraph, getResourceOnlyRDF, traverseRDFList, getLinkRelation,
 import { notifyInbox, sendNotifications } from './inbox.js'
 import { uniqueArray, fragmentFromString, generateAttributeId, sortToLower, getDateTimeISO, getDateTimeISOFromMDY, generateUUID, isValidISBN, findPreviousDateTime, domSanitize, sanitizeObject, escapeRDFLiteral, tranformIconstoCSS, getIconsFromCurrentDocument, getHash, getDateTimeISOFromDate } from './util.js'
 import { generateGeoView } from './geo.js'
-import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, addLocalStorageDocumentItem } from './storage.js'
+import { getLocalStorageItem, updateLocalStorageProfile, enableAutoSave, disableAutoSave, updateLocalStorageItem, autoSave, removeLocalStorageDocumentFromCollection } from './storage.js'
 import { showUserSigninSignout, showUserIdentityInput, getSubjectInfo, restoreSession, afterSetUserInfo, setUserInfo, userInfoSignOut } from './auth.js'
 import { Icon } from './ui/icons.js'
 import * as d3Selection from 'd3-selection';
@@ -2083,7 +2083,16 @@ DO = {
         if (options.forceLocal) {
           if (!hasAccessModeWrite) {
             console.log(`No Write access.`);
+
+            //TODO: showModalSyncRemote()
+
             return;
+          }
+
+          if (!remoteAutoSaveEnabled) {
+            console.log('Remote autoSave is disabled. Asking to enable autosave-remote');
+
+            //TODO: showModalEnableAutoSave()
           }
 
           console.log(`Force pushing local content.`);
@@ -2108,6 +2117,8 @@ DO = {
 
         if (options.forceRemote) {
           console.log(`Force replacing with remote content.`);
+
+          removeLocalStorageDocumentFromCollection(DO.C.DocumentURL, latestLocalDocumentItemObjectUnpublished.id);
 
           DO.Editor.replaceContent(DO.Editor.mode, remoteContentNode);
           DO.Editor.init(DO.Editor.mode, document.body);

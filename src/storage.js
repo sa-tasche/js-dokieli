@@ -276,7 +276,7 @@ function removeLocalStorageItem(key) {
 }
 
 async function removeLocalStorageDocumentFromCollection(collectionKey, itemKey) {
-  if (!key) return Promise.resolve();
+  if (!itemKey) return Promise.resolve();
 
   const collection = await getLocalStorageItem(collectionKey);
 
