@@ -275,6 +275,21 @@ function removeLocalStorageItem(key) {
   }
 }
 
+async function removeLocalStorageDocumentFromCollection(collectionKey, itemKey) {
+  if (!key) return Promise.resolve();
+
+  const collection = await getLocalStorageItem(collectionKey);
+
+  if (!collection) return;
+
+  await removeLocalStorageItem(itemKey);
+
+  const index = collection.items.indexOf(itemKey);
+  if (index !== -1) {
+    collection.items.splice(index, 1);
+  }
+}
+
 async function removeLocalStorageDocumentItems(key) {
   if (!key) return Promise.resolve();
 
@@ -455,6 +470,7 @@ export {
   updateLocalStorageItem,
   addLocalStorageDocumentItem,
   getLocalStorageItem,
+  removeLocalStorageDocumentFromCollection,
   removeLocalStorageItem,
   removeLocalStorageDocumentItems,
   removeLocalStorageAsSignOut,
