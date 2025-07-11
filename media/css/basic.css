@@ -1407,8 +1407,8 @@ margin-right:4.5em;
 }
 
 #home #supporters li,
-#home #supporters li p {
-  display: flex;
+#home #supporters li p:first-child {
+  display: flex !important;
   flex-direction: column;
   align-items: center;
 }
@@ -1417,14 +1417,15 @@ margin-right:4.5em;
   border:0;
 }
 
-#home #supporters a img + span,
-/*XXX: ProseMirror hack*/
-#home #supporters p a:has(img) + span:not(:has(time)) {
-  display: none;
-}
 #home #supporters li > p a + span + span {
 text-align: center;
 display: block;
+}
+#home #supporters a img + span,
+/*XXX: ProseMirror hack*/
+#home #supporters p a:has(img) + span:not(:has(time)),
+#home #supporters p a:has(img) + span a:has(+ time) {
+  display: none !important;
 }
 
 #home #summary {
