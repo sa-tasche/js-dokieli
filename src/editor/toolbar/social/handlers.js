@@ -4,7 +4,7 @@ import { getFormValues, kebabToCamel, generateAttributeId, getDateTimeISO } from
 import { createActivityHTML, createHTML, createNoteDataHTML, getNodeLanguage, getReferenceLabel } from "../../../doc.js"
 import { getAbsoluteIRI, stripFragmentFromString } from "../../../uri.js"
 import Config from "../../../config.js"
-import { postActivity } from "../../../inbox.js"
+import { notifyInbox, postActivity } from "../../../inbox.js"
 
 const ns = Config.ns;
 
@@ -506,6 +506,8 @@ export function positionActivity(annotation, options) {
 
 
 function sendNotification(annotation, options) {
+  const documentURL = Config.DocumentURL;
+
   if (!annotation['canonical']) {
     return Promise.resolve();
   }
