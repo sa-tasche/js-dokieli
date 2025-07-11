@@ -1666,6 +1666,12 @@ DO = {
         if (!collection) {
           autoSave(DO.C.DocumentURL, { method: 'localStorage' });
         }
+        else if (collection.autoSave) {
+          DO.C.AutoSave.Items[DO.C.DocumentURL] ||= {};
+          DO.C.AutoSave.Items[DO.C.DocumentURL]['localStorage'] ||= {};
+          // DO.C.AutoSave.Items[DO.C.DocumentURL]['localStorage']['digestSRI'] = latestLocalDocumentItem.digestSRI;
+          DO.C.AutoSave.Items[DO.C.DocumentURL]['localStorage']['updated'] = collection.updated;
+        }
       });
     },
 
@@ -4579,8 +4585,6 @@ console.log(reason);
       var s = `<section id="document-do"><h2>Do</h2><ul>${buttons.map(b => `<li>${b}</li>`).join('')}</ul></section>`;
 
       node.insertAdjacentHTML('beforeend', s);
-
-      updateButtons();
 
       var dd = document.getElementById('document-do');
 

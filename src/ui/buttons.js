@@ -385,9 +385,7 @@ export const buttonIcons = {
 }
 
 const buttonState = {
-  '#document-do .resource-save': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .resource-save': ({ info, online, localhost }) => {
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -403,9 +401,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .create-version': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .create-version': ({ info, online, localhost }) => {
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -421,9 +417,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .create-immutable': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .create-immutable': ({ info, online, localhost }) => {
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -439,9 +433,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-delete': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .resource-delete': ({ info, online, localhost }) => {
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -457,9 +449,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-memento': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .resource-memento': ({ info, online, localhost }) => {
     if (!info['timemap']) return false;
 
     if (!online && !localhost) return false;
@@ -469,9 +459,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .snapshot-internet-archive': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .snapshot-internet-archive': ({ info, online, localhost }) => {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         (info.odrl.prohibitionActions.includes(ns.odrl.archive.value) ||
@@ -484,9 +472,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-save-as': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .resource-save-as': ({ info, online, localhost }) => {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         (info.odrl.prohibitionActions.includes(ns.odrl.derive.value) ||
@@ -499,9 +485,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .resource-print': () => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .resource-print': ({ info }) => {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         info.odrl.prohibitionActions.includes(ns.odrl.print.value)) {
@@ -511,9 +495,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .export-as-html': () => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .export-as-html': ({ info }) => {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         (info.odrl.prohibitionActions.includes(ns.odrl.transform.value) ||
@@ -524,9 +506,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .generate-feed': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .generate-feed': ({ info, online, localhost }) => {
     if (info.odrl?.prohibitionActions &&
         info.odrl.prohibitionAssignee === Config.User.IRI &&
         info.odrl.prohibitionActions.includes(ns.odrl.reproduce.value)) {
@@ -538,9 +518,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .robustify-links': ({ online, editorMode }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .robustify-links': ({ info, online, editorMode }) => {
     if (editorMode !== 'author') return false;
 
     if (info.odrl?.prohibitionActions &&
@@ -554,9 +532,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-do .embed-data-meta': ({ editorMode }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#document-do .embed-data-meta': ({ info, editorMode }) => {
     if (editorMode !== 'author') return false;
     
     if (info.odrl?.prohibitionActions &&
@@ -568,9 +544,7 @@ const buttonState = {
     return true;
   },
 
-  '#review-changes .review-changes-save-local': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#review-changes .review-changes-save-local': ({ info, online, localhost }) => {
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -586,9 +560,7 @@ const buttonState = {
     return true;
   },
 
-  '#review-changes .review-changes-submit': ({ online, localhost }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
+  '#review-changes .review-changes-submit': ({ info, online, localhost }) => {
     if (!online && !localhost) return false;
 
     if (!accessModePossiblyAllowed(null, 'write')) {
@@ -604,11 +576,7 @@ const buttonState = {
     return true;
   },
 
-  '#document-autosave #autosave-remote': ({ online, localhost, autoSave, documentAction }) => {
-    const info = Config.Resource[Config.DocumentURL];
-
-    if (!autoSave) return false;
-
+  '#document-autosave #autosave-remote': ({ info, online, localhost, documentAction }) => {
     if (documentAction == 'new' || documentAction == 'open')  return false;
 
     if (!online && !localhost) return false;
@@ -639,16 +607,13 @@ export function buttonShouldBeEnabled(selector, context) {
 
 export function updateButtons(selectors) {
   selectors = selectors || Object.keys(buttonState);
-  // console.log("Online: ", navigator.onLine);
-
-  const autoSave = !!(Config.AutoSave.Items[Config.DocumentURL]?.['localStorage']);
 
   const context = {
+    info: Config.Resource[Config.DocumentURL],
     authenticated: Config['Session'].isActive,
     online: navigator.onLine,
     localhost: isLocalhost(Config.DocumentURL),
     editorMode: DO.Editor.mode,
-    autoSave,
     documentAction: Config.DocumentAction
   }
 
