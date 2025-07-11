@@ -1974,8 +1974,8 @@ DO = {
       }
       //304, 403, 404, 405
       catch (e) {
-        console.log(e);
-        console.log(e.response)
+        // console.log(e);
+        // console.log(e.response)
         status = e.status || 0;
         response = e.response;
         remoteETag = response?.headers.get('ETag');
