@@ -62,6 +62,7 @@ export class ToolbarView {
     document.addEventListener("mouseup", this.selectionHandler); 
     this.updateToolbarVisibility = this.updateToolbarVisibility.bind(this);
     this.formClickHandler = this.formClickHandler.bind(this);
+    this.selectionUpdate = this.selectionUpdate.bind(this);
     // this.cleanupToolbar = this.cleanupToolbar.bind(this);
     // this.clearToolbarForm = this.clearToolbarForm.bind(this);
 
@@ -70,7 +71,6 @@ export class ToolbarView {
 
     
   }
-
 
   initializeButtons(buttons) {
     buttons.forEach(({ button, command, dom }) => {
@@ -156,6 +156,28 @@ export class ToolbarView {
       toolbarForm.classList.toggle('editor-form-active');
 
       this.positionPopup(toolbarForm);
+
+      const formContent = toolbarForm.querySelector(`textarea#${button}-content`);
+      const formFirstInput = toolbarForm.querySelector('input');
+
+      if (formContent) {
+        formContent.focus();
+      }
+      else {
+        formFirstInput.focus();
+      }
+
+      const lastClickedButton = this.dom.querySelector(`#editor-button-${button}`);
+      
+      const handleEscKey = (event) => {
+        if (event.key === "Escape") {
+          this.clearToolbarForm(toolbarForm);
+          this.clearToolbarButton(button);
+          document.removeEventListener("keydown", handleEscKey);
+          lastClickedButton.focus();
+        }
+      }
+      document.addEventListener("keydown", handleEscKey);
   }
 
   closeOtherPopups(activeButton) {
@@ -350,6 +372,9 @@ export class ToolbarView {
       const toolbarWidth = this.dom.offsetWidth;
       const margin = 10;
 
+      const firstButton = this.dom.querySelector('button');
+      const shouldFocus = !!(!this.dom.classList.contains("editor-form-active") && firstButton !== document.activeElement);
+
       // Display the toolbar
       // TODO: do not change visibility if the selection is within a .do element (except the annotation maybe?)
       this.dom.classList.add("editor-form-active");
@@ -378,8 +403,46 @@ export class ToolbarView {
       this.dom.style.right = 'initial';
     // }
 
-    // document.addEventListener("keyup", handleSelectionEnd); 
-    // document.addEventListener("mouseup", handleSelectionEnd); 
+
+    if (shouldFocus) {    
+      const handleTab = (event) => {
+        
+        if (event.key === "Tab") {
+          const toolbarForms = document.querySelectorAll(`.editor-form`);
+          const activeForm = Array.from(toolbarForms).filter(form => form.classList.contains('editor-form-active'))[0];
+  
+          if (activeForm) {
+            return;
+          }
+          event.preventDefault(); 
+          const focusedButton = this.dom.querySelector('.edito          ive');
+
+          if
+ (!focusedButton) {
+            firstButton?.focus();
+          }
+
+          document.removeEventListener("keydown", handleTab);
+        }
+      };
+      document.addEventListener("keydown", handleTab);
+    }
+
+    const handleEscKey = (event) => {
+      if (event.key === "Escape") {
+        const toolbarForms = document.querySelectorAll(`.editor-form`);
+        const activeForm = Array.from(toolbarForms).filter(form => form.classList.contains('editor-form-active'))[0];
+
+        if (activeForm) {
+          return;
+        }
+        this.dom.classList.remove("editor-form-active");
+        this.clearSelection();
+        document.removeEventListener("keydown", handleEscKey);
+      }
+    };
+  
+    document.addEventListener("keydown", handleEscKey);
   }
 
   isSelectionsStartEndRangesWithinSameParent(selection) {

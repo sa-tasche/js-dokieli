@@ -129,7 +129,7 @@ export class AuthorToolbar extends ToolbarView {
       citation: (options) => `
         <fieldset>
           <legend>Add a citation</legend>
-          <label for="citation-specref-search">Search</label> <input class="editor-form-input" id="citation-specref-search" name="citation-specref-search" placeholder="Enter terms to search for specifications" type="text" value="" />
+          <label for="citation-specref-search">Search <a href="https://www.specref.org/" rel="noopener" target="_blank">specref.org</a></label> <input class="editor-form-input" id="citation-specref-search" name="citation-specref-search" placeholder="Enter terms to search for specifications" type="text" value="" />
           <input id="citation-specref-search-submit" name="citation-specref-search-submit" type="submit" value="Search" />
           <span>
           <input id="ref-footnote" name="citation-ref-type" type="radio" value="ref-footnote" /> <label for="ref-footnote">Footnote</label>
@@ -221,6 +221,14 @@ TODO:
       dispatch(tr);
       return true;
     };
+  }
+
+  clearSelection() {
+    const { state, dispatch } = this.editorView;
+    const { tr } = state;
+    const pos = state.selection.from; 
+
+    dispatch(tr.setSelection(TextSelection.create(state.doc, pos)));
   }
 
   getTextQuoteSelector() {

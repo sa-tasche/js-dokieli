@@ -60,6 +60,26 @@ export class SlashMenu {
     
     this.menuContainer.style.left = `${cursorX}px`;
     this.menuContainer.style.top = `${cursorY}px`;
+
+    const firstButton = this.menuContainer.querySelector("button");
+
+    const handleTab = (event) => {
+      if (event.key === "Tab") {
+        event.preventDefault();
+        firstButton?.focus();
+        document.removeEventListener("keydown", handleTab);
+      }
+    };
+
+    const handleEscKey = (event) => {
+      if (event.key === "Escape") {
+        this.hideMenu();
+        document.removeEventListener("keydown", handleEscKey);
+      }
+    };
+  
+    document.addEventListener("keydown", handleTab);
+    document.addEventListener("keydown", handleEscKey);
   }
 
   hideMenu() {

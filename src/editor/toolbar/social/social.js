@@ -48,6 +48,13 @@ export class SocialToolbar extends ToolbarView {
     ];
   }
 
+  clearSelection() {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      selection.removeAllRanges();
+    }
+  }
+
   getSelectionAsHTML(selection) {
     selection = selection || window.getSelection();
     if (!selection.rangeCount) return "";
@@ -109,7 +116,6 @@ export class SocialToolbar extends ToolbarView {
   }
 
   replaceSelectionWithFragment(fragment) {
-console.log('---', fragment)
 
     const selection = this.selection;
     if (!selection.rangeCount) return;

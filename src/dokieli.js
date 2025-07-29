@@ -5366,6 +5366,9 @@ console.log('XXX: Cannot access effectiveACLResource', e);
       }
 
       var shareResource = document.getElementById('share-resource');
+
+      shareResource.querySelector('#share-resource-note').focus();
+
       shareResource.addEventListener('click', function (e) {
         if (e.target.closest('button.close')) {
           // Config.ButtonStates['resource-share'] = true;
