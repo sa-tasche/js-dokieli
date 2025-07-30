@@ -2423,7 +2423,7 @@ DO = {
     },
 
     showDocumentInfo: function() {
-      document.body.prepend(fragmentFromString(`<menu class="do" id="document-menu" role="toolbar">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></menu>`));
+      document.body.prepend(fragmentFromString(`<div class="do" id="document-menu">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></div>`));
 
       var userInfo = document.getElementById('user-info');
 

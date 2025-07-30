@@ -436,7 +436,7 @@ font-weight:normal !important;
 padding:0;
 }
 
-menu.do,
+#document-menu.do,
 aside.do {
 position:fixed;
 z-index:2147483646;
@@ -444,7 +444,7 @@ max-height:90%;
 background-color:#fff;
 margin:0;
 }
-menu.do {
+#document-menu.do {
 top:0;
 right:0;
 font-size:initial;
@@ -483,7 +483,7 @@ width:90%;
 padding:2em;
 color:#000;
 }
-menu.do.on {
+#document-menu.do.on {
 border-left:1px solid #ccc;
 border-bottom:1px solid #ccc;
 border-bottom-left-radius:0.5em;
