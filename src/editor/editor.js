@@ -146,7 +146,7 @@ export class Editor {
 
     document.body.replaceChildren(fragmentFromString(`<main><article><h1 aria-label="Add a title" data-placeholder="${this.placeholder.h1}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-placeholder="${this.placeholder.p}"></p></div></article></main>`));
 
-    document.body.appendChild(documentMenu);
+    document.body.prepend(documentMenu);
 
     document.body.removeAttribute('id');
     document.body.removeAttribute('class');
@@ -233,7 +233,11 @@ export class Editor {
      });
 
      this.restrictedNodes.forEach(node => {
-      document.body.appendChild(node);
+      if (node.id == 'document-menu' || node.id == 'document-items') {
+        document.body.prepend(node);
+      } else {
+        document.body.appendChild(node);
+      }
     });
 
     // console.log(this.editorView.state.doc)

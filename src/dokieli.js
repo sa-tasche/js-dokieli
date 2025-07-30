@@ -2423,7 +2423,7 @@ DO = {
     },
 
     showDocumentInfo: function() {
-      document.body.appendChild(fragmentFromString(`<menu class="do" id="document-menu" role="toolbar">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></menu>`));
+      document.body.prepend(fragmentFromString(`<menu class="do" id="document-menu" role="toolbar">${DO.C.Button.OpenMenu}<div><section id="user-info"></section></div></menu>`));
 
       var userInfo = document.getElementById('user-info');
 
@@ -3173,7 +3173,9 @@ DO = {
         documentItems.parentNode.removeChild(documentItems);
       }
 
-      document.body.appendChild(fragmentFromString('<aside id="document-items" class="do on">' + DO.C.Button.Close + '</aside>'));
+      var documentMenu = document.getElementById('document-menu');
+
+      document.body.insertBefore(fragmentFromString('<aside id="document-items" class="do on">' + DO.C.Button.Close + '</aside>'), documentMenu.nextSibling);
       documentItems = document.getElementById('document-items');
 
       var articleNode = selectArticleNode(document);
