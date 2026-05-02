@@ -890,7 +890,7 @@ figure.listing pre samp:before {
 
 pre {
   overflow: auto;
-  page-break-inside: avoid;
+  break-inside: avoid;
   hyphens: none;
   background-color: #fbfbfb;
   border-left: 0.5em solid #bbb;
