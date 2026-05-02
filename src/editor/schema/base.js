@@ -222,6 +222,15 @@ let customNodes = {
     parseDOM: [{ tag: "footer", getAttrs(node){ return getAttributes(node); }}],
     toDOM: toDOMWith("footer")
   },
+  descriptionDiv: {
+    content: "block+",
+    group: "block",
+    defining: true,
+    isolating: true,
+    attrs: { originalAttributes: { default: {} } },
+    parseDOM: [{ tag: 'div[property~="schema:description"]', priority: 60, getAttrs(node){ return getAttributes(node); }}],
+    toDOM: toDOMWith("div")
+  },
   div: {
     content: "block*",
     group: "block",
