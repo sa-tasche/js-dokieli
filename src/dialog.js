@@ -3283,7 +3283,7 @@ export function addSlide(e) {
   hideDocumentMenu();
 
   const id = 'slide-' + generateUUID();
-  const slide = fragmentFromString(`<section class="slide" id="${id}" inlist="" rel="schema:hasPart" resource="#${id}" typeof="bibo:Slide"><h2 property="schema:name"></h2><p></p></section>`);
+  const slide = fragmentFromString(`<section class="slide" id="${id}" inlist="" rel="schema:hasPart" resource="#${id}" typeof="bibo:Slide"><h2 property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div></section>`);
 
   Config.Editor.insertSlideAtEnd(slide);
 }
