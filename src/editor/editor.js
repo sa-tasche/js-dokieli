@@ -25,6 +25,8 @@ import { AuthorToolbar } from "./toolbar/author/author.js";
 import { SocialToolbar } from "./toolbar/social/social.js";
 import { SlashMenu } from "./slashmenu/slashmenu.js";
 import { placeholderPlugin } from "./plugins/placeholder.js";
+import { autoIdPlugin } from "./plugins/autoId.js";
+import { slideStructurePlugin } from "./plugins/slideStructure.js";
 import { ImageResizeView } from "./nodeviews/imageResize.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
@@ -220,7 +222,7 @@ export class Editor {
 
     var documentMenu = document.getElementById('document-menu');
 
-    document.body.replaceChildren(fragmentFromString(`<main><article dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" data-i18n="editor.new.h1" data-placeholder="${i18n.t('editor.new.h1.data-placeholder')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p data-i18n="editor.new.p" data-placeholder="${i18n.t('editor.new.p.data-placeholder')}"></p></div></article></main>`));
+    document.body.replaceChildren(fragmentFromString(`<main><article dir="auto"><h1 aria-label="${i18n.t('editor.new.h1.aria-label')}" property="schema:name"></h1><div datatype="rdf:HTML" property="schema:description"><p></p></div></article></main>`));
 
     document.body.prepend(documentMenu);
 
@@ -259,7 +261,7 @@ export class Editor {
       documentMenu?.querySelector(sel)?.remove();
     });
 
-    document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name" data-placeholder="Presentation title"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" data-i18n="editor.new-slideshow.h2" data-placeholder="${i18n.t('editor.new-slideshow.h2.data-placeholder')}" property="schema:name"></h2><p data-i18n="editor.new-slideshow.p" data-placeholder="${i18n.t('editor.new-slideshow.p.data-placeholder')}"></p></section></article><div class="do progress"></div></main>`));
+    document.body.replaceChildren(fragmentFromString(`<main><article about="" dir="auto" typeof="schema:CreativeWork"><header class="caption"><h1 property="schema:name"></h1></header><section class="slide" id="cover" inlist="" rel="schema:hasPart" resource="#cover" typeof="bibo:Slide"><h2 aria-label="${i18n.t('editor.new-slideshow.h2.aria-label')}" property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div></section></article><div class="do progress"></div></main>`));
 
     document.body.prepend(documentMenu);
 
@@ -358,7 +360,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), keymapPlugin, placeholderPlugin, editorToolbarPlugin];
+    editorPlugins = [history(), keymapPlugin, placeholderPlugin, slideStructurePlugin, autoIdPlugin, editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -488,6 +490,8 @@ export class Editor {
       history(),
       keymapPlugin,
       placeholderPlugin,
+      slideStructurePlugin,
+      autoIdPlugin,
       editorToolbarPlugin,
     ];
   }
