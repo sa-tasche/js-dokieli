@@ -23,6 +23,72 @@ import Config from "../../../config.js";
 
 let Slash;
 
+function isSlideSection(node) {
+  if (node?.type.name !== 'section') return false;
+  const cls = node.attrs.originalAttributes?.class || '';
+  return cls.split(/\s+/).includes('slide');
+}
+
+function handleSlideHeadingEnter(state, dispatch) {
+  const { $from } = state.selection;
+  if (!state.selection.empty) return false;
+  if ($from.parent.type.name !== 'heading') return false;
+  if ($from.parentOffset !== $from.parent.content.size) return false;
+  if ($from.depth < 1) return false;
+  const section = $from.node($from.depth - 1);
+  if (!isSlideSection(section)) return false;
+
+  const { schema } = state;
+  const headingIdx = $from.index($from.depth - 1);
+  const afterHeading = $from.after($from.depth);
+  const nextSibling = headingIdx + 1 < section.childCount ? section.child(headingIdx + 1) : null;
+
+  let tr = state.tr;
+  if (!nextSibling || nextSibling.type.name !== 'descriptionDiv') {
+    const descDiv = schema.nodes.descriptionDiv.create(
+      { originalAttributes: { datatype: 'rdf:HTML', property: 'schema:description' } },
+      schema.nodes.p.create()
+    );
+    tr = tr.insert(afterHeading, descDiv);
+  }
+  tr.setSelection(TextSelection.create(tr.doc, afterHeading + 2));
+  if (dispatch) dispatch(tr);
+  return true;
+}
+
+function handleSlideEmptyDescBackspace(state, dispatch) {
+  const { $from } = state.selection;
+  if (!state.selection.empty) return false;
+  if ($from.parentOffset !== 0) return false;
+  if ($from.parent.content.size !== 0) return false;
+  if ($from.depth < 2) return false;
+
+  const descDiv = $from.node($from.depth - 1);
+  if (descDiv.type.name !== 'descriptionDiv') return false;
+  if (descDiv.childCount !== 1) return false;
+
+  const section = $from.node($from.depth - 2);
+  if (!isSlideSection(section)) return false;
+
+  let headingEnd = null;
+  let cursor = $from.before($from.depth - 2) + 1;
+  for (let i = 0; i < section.childCount; i++) {
+    const child = section.child(i);
+    if (child.type.name === 'heading') {
+      headingEnd = cursor + child.nodeSize - 1;
+      break;
+    }
+    cursor += child.nodeSize;
+  }
+  if (headingEnd === null) return false;
+
+  const descDivStart = $from.before($from.depth - 1);
+  const tr = state.tr.delete(descDivStart, descDivStart + descDiv.nodeSize);
+  tr.setSelection(TextSelection.create(tr.doc, headingEnd));
+  if (dispatch) dispatch(tr);
+  return true;
+}
+
 function customEnterCommand(state, dispatch) {
   const { selection } = state;
   const { $from } = selection;
@@ -56,6 +122,8 @@ function customEnterCommand(state, dispatch) {
   if (isCodeBlock) {
     return newlineInCode(state, dispatch);
   }
+
+  if (handleSlideHeadingEnter(state, dispatch)) return true;
 
   if (isListItem && listItemDepth !== null) {
     let liType = node.type;
@@ -120,6 +188,8 @@ function customBackspaceCommand(state, dispatch) {
   if (!selection.empty) {
     return deleteSelection(state, dispatch);
   }
+
+  if (handleSlideEmptyDescBackspace(state, dispatch)) return true;
 
   return joinBackward(state, dispatch);
 }
