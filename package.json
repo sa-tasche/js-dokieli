@@ -1,6 +1,6 @@
 {
   "name": "dokieli",
-  "version": "0.3.1465",
+  "version": "0.3.1466",
   "description": "dokieli is a clientside editor for decentralised article publishing, annotations, and social interactions.",
   "main": "./src/dokieli.js",
   "type": "module",
@@ -121,5 +121,5 @@
       "afterEach"
     ]
   },
-  "packageManager": "yarn@4.13.0"
+  "packageManager": "yarn@4.14.1"
 }
