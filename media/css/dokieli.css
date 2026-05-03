@@ -2521,10 +2521,12 @@ margin-top: 0.75em;
 #document-menu #document-menu-tabs > nav ul {
 display: flex;
 padding: 0;
+margin: 0 1em !important;
 }
 #document-menu #document-menu-tabs > nav li {
 display: inline-block;
 border: 0;
+flex: 1;
 }
 
 #document-menu #document-menu-tabs > nav li a {
@@ -2538,6 +2540,7 @@ border-bottom: 0;
 border-top-left-radius: 0.25em;
 border-top-right-radius: 0.25em;
 margin-right: 2px;
+text-align: center;
 }
 #document-menu #document-menu-tabs > nav li a:hover,
 #document-menu #document-menu-tabs > nav li a:focus {
@@ -2549,7 +2552,6 @@ border-color: #000;
 outline:2px solid #080;
 }
 #document-menu #document-menu-tabs > nav li.selected {
-border: 0;
 }
 #document-menu #document-menu-tabs > nav li.selected a {
 color: #080;
@@ -2559,8 +2561,6 @@ border: 2px solid #333;
 border-bottom: 0;
 }
 #document-menu #document-menu-tabs > nav li:first-child a {
-border-left:0;
-border-top-left-radius:0;
 }
 
 #document-menu #document-menu-tabs > section {
