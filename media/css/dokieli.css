@@ -919,8 +919,8 @@ content: '';
 details summary::before {
 content: '';
 display: inline-block;
-width: 0.45em;
-height: 0.45em;
+width: 0.5em;
+height: 0.5em;
 border-right: 2px solid currentColor;
 border-bottom: 2px solid currentColor;
 transform: rotate(-45deg);
@@ -2076,7 +2076,7 @@ background-color:#fff !important;
 color:#000 !important;
 padding:0;
 margin:0;
-font-size:1.1em;
+font-size:inherit;
 font-weight:normal;
 text-transform: inherit !important;
 }
@@ -2120,11 +2120,9 @@ color:#000 !important;
 background-color:#fff !important;
 display: flex;
 align-items: center;
-gap: 0.75em;
-/* width: calc(100% - 2em); */
+gap: 0.5em;
 width:100%;
-padding: 0.75em 1em 0.7em 1.5em;
-text-align: start;
+padding: 0.75em 1em;
 border-radius: 0.25em;
 }
 
@@ -2303,27 +2301,19 @@ display: block;
 }
 #document-menu dt {
 font-weight:bold;
-display:inline;
-}
-#document-menu dt:after {
-content:": ";
 }
 #document-menu dd {
 display:inline;
 margin-left:0;
-}
-#document-menu dd:after {
-content:"";
-margin-right:1em;
-}
-#document-menu dd:last-child:after {
-content:"";
 }
 
 #document-menu #about-dokieli {
 margin:1em auto 0 auto;
 width:calc(100% - 2em);
 border-top:1px solid #ccc !important;
+}
+#document-menu #about-dokieli dt {
+display:none;
 }
 
 #document-menu #about-dokieli img,
@@ -2339,9 +2329,9 @@ height: auto;
 #document-menu #user-info button.signout-user {
 display: inline-flex;
 align-items: center;
-gap: 0.75em;
-margin: 1em 0 0 0.75em;
-padding: 0.5em 0.75em;
+gap: 0.5em;
+margin: 1em 0 0 0;
+padding: 0.5em 1em;
 }
 
 #document-menu .timemap dd {
@@ -2369,9 +2359,10 @@ display:none;
 #document-menu #document-views-label,
 #document-menu #ui-language-label {
 display: block !important;
-font-size: 0.85em;
-text-transform: uppercase;
 font-weight: bold;
+}
+#document-menu #ui-language-select {
+width:calc(100% - 4em);
 }
 
 
@@ -2381,8 +2372,8 @@ font-weight: bold;
 }
 #document-menu #ui-language svg.fas,
 #document-menu #document-views > svg.fas {
-margin:0 0.75em 0 1.5em;
-font-size:1.1em;
+margin:0 0.5em 0 0.75em;
+font-size:1.25em;
 }
 
 #document-menu .editor-disable,
@@ -2392,13 +2383,12 @@ background-color:#eee !important;
 
 #document-menu #document-autosave {
 margin-top:3em;
-width:calc(100% - 1.5em);
 }
 
 #document-autosave input[type="checkbox"] {
   position:relative;
   top:0;
-  right:23em;
+  right:-24em;
 }
 #document-autosave input:focus + label {
   outline: 2px solid #080;
@@ -2427,9 +2417,8 @@ outline-offset: 5px;
   color: #fff;
   user-select: none;
   position: absolute;
-  right: 2em;
+  right: 1em;
   left: auto;
-}
 }
 
 #document-autosave label:lang(ko)::before,
@@ -2498,10 +2487,10 @@ outline-offset: 5px;
 
 #document-autosave span {
   position: absolute;
-  left: -17.5em;
+  left: -18.5em;
   color: #000;
-  padding-left: 1em;
-  padding-right:13em;
+  padding-left: 0;
+  padding-right:18em;
   width:max-content;
 }
 
@@ -2523,14 +2512,11 @@ z-index: 1;
 }
 #document-menu.do.on > div {
 padding: 1em 1em 0.5em 1em;
+font-size: initial;
 }
 
 #document-menu #document-menu-tabs {
 margin-top: 0.75em;
-}
-#document-menu #document-menu-tabs > nav {
-border-bottom: 1px solid #ccc;
-margin-bottom: 0.5em;
 }
 #document-menu #document-menu-tabs > nav ul {
 display: flex;
@@ -2538,38 +2524,56 @@ padding: 0;
 }
 #document-menu #document-menu-tabs > nav li {
 display: inline-block;
-flex: 1;
 border: 0;
-text-align: center;
 }
+
 #document-menu #document-menu-tabs > nav li a {
 display: block;
-background-color: #fff;
+background-color: #eee;
 color: #333;
-padding: 0.5em 0.75em;
-border-bottom: 2px solid transparent;
+padding: 0.5em 1em;
+border: 2px solid #ccc;
 text-decoration: none;
+border-bottom: 0;
+border-top-left-radius: 0.25em;
+border-top-right-radius: 0.25em;
+margin-right: 2px;
 }
 #document-menu #document-menu-tabs > nav li a:hover,
 #document-menu #document-menu-tabs > nav li a:focus {
 color: #000;
 background-color: #eee;
+border-color: #000;
+}
+#document-menu #document-menu-tabs > nav li a:focus {
+outline:2px solid #080;
 }
 #document-menu #document-menu-tabs > nav li.selected {
 border: 0;
 }
 #document-menu #document-menu-tabs > nav li.selected a {
 color: #080;
-border-bottom-color: #080;
 background-color: #fff;
+border-bottom: transparent;
+border: 2px solid #333;
+border-bottom: 0;
 }
+#document-menu #document-menu-tabs > nav li:first-child a {
+border-left:0;
+border-top-left-radius:0;
+}
+
 #document-menu #document-menu-tabs > section {
 margin: 0;
-padding: 0;
 border: 0;
 width: auto;
 display: none;
 user-select: none;
+position: relative !important;
+margin-top: -2px;
+border-top: 2px solid #ccc !important;
+padding-top: 1em !important;
+padding-top: 1em !important;
 }
 #document-menu #document-menu-tabs > section.selected {
 display: block;
@@ -2579,7 +2583,7 @@ width: auto;
 }
 
 #document-menu #document-do .menu-group {
-margin: 0 0 0.5em 0;
+margin: 0 0 0.25em 0;
 padding: 0;
 }
 #document-menu #document-do .menu-group > ul {
@@ -2592,15 +2596,12 @@ padding: 0;
 #document-views h2,
 #ui-language h2, 
 #document-menu #document-do details.menu-group > summary {
-cursor: pointer;
-padding: 0.5em 1em;
-font-size: 0.85em;
+padding: 0.5em 1em 0.5em 1em;
+font-size: initial;
 font-weight: bold;
 color: #333;
-text-transform: uppercase;
-letter-spacing: 0.03em;
 list-style: none;
-background-color: #f5f5f5;
+background-color: #eee;
 border-radius: 0.25em;
 }
 #document-menu #document-do details.menu-group[open] > summary {
@@ -2610,8 +2611,9 @@ border-bottom-right-radius: 0;
 }
 #document-menu #document-do details.menu-group > summary:hover,
 #document-menu #document-do details.menu-group > summary:focus {
-background-color: #eee;
+background-color: #ddd;
 color: #000;
+/*! border: 1px solid #ccc; */
 }
 
 #document-menu #document-do .menu-group-danger > summary {
