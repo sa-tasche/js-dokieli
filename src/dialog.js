@@ -48,7 +48,7 @@ let editHistoryAside = null;
 let unobserveEditHistory = () => {};
 let lastRestoredKey = null;
 window.addEventListener('dokieli:version-restored', (e) => { lastRestoredKey = e.detail?.key ?? null; });
-window.addEventListener('dokieli:editor-mode-changed', () => updateSlideshowAddButton());
+window.addEventListener('dokieli:editor-mode-changed', () => updateSlideshowControls());
 
 let _documentDoClickInit = false;
 let _documentMenuClickInit = false;
@@ -3943,7 +3943,7 @@ export function createNewSlideshow(e) {
 
   updateButtons();
 
-  updateSlideshowAddButton();
+  updateSlideshowControls();
 
   initSlideshowInteraction();
 }
@@ -3954,13 +3954,14 @@ let _slideshow = null;
 export function initSlideshowInteraction(slideshow) {
   if (slideshow) _slideshow = slideshow;
 
+  updateSlideshowControls();
+
   if (_slideshowInteractionInit) return;
   _slideshowInteractionInit = true;
 
   document.addEventListener('click', (e) => {
     if (!document.body.classList.contains('shower')) return;
     if (!document.body.classList.contains('list')) return;
-    if (Config.Editor.mode === 'author') return;
     if (e.target.closest('#document-menu') || e.target.closest('.do')) return;
     const slide = e.target.closest('.slide');
     if (!slide) return;
@@ -3989,42 +3990,36 @@ export function initSlideshowInteraction(slideshow) {
   }, true);
 }
 
-export function updateSlideshowAddButton() {
-  const existing = document.getElementById('add-slide-control');
+let hoveredSlide = null;
+let controlsHideTimer = null;
+let controlsInit = false;
+let draggingSlideId = null;
+
+export function updateSlideshowControls() {
+  const existing = document.getElementById('slideshow-controls');
   const isSlideshow = document.body.classList.contains('shower');
   const isAuthor = Config.Editor.mode === 'author';
 
-  if (isSlideshow && isAuthor) {
-    if (!existing) {
-      const container = document.querySelector('main') || document.body;
-      const div = document.createElement('div');
-      div.className = 'do';
-      div.id = 'add-slide-control';
-      div.innerHTML = '<button class="do resource-new-slide" type="button">+</button>';
-      container.appendChild(div);
-    }
-    initSlideOverlay();
-  } else {
+  if (!isSlideshow) {
     existing?.remove();
-    const overlay = document.getElementById('slide-overlay');
-    if (overlay) overlay.hidden = true;
+    document.getElementById('slide-drop-indicator')?.remove();
+    return;
   }
-}
 
-let slideOverlayInit = false;
-let hoveredSlide = null;
-let draggingSlideId = null;
-
-export function initSlideOverlay() {
-  let overlay = document.getElementById('slide-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'slide-overlay';
-    overlay.className = 'do';
-    overlay.hidden = true;
-    overlay.innerHTML = `<button class="slide-drag-handle" draggable="true" type="button" title="Drag to reorder" aria-label="Drag to reorder">${Icon['.fas.fa-grip-vertical']}</button><button class="slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button>`;
-    document.body.appendChild(overlay);
+  if (existing) {
+    existing.dataset.author = isAuthor ? 'true' : 'false';
+    const t = existing.querySelector('.toggle-slide-numbers');
+    if (t) t.setAttribute('aria-pressed', document.body.classList.contains('numbered') ? 'true' : 'false');
+    return;
   }
+
+  const div = document.createElement('div');
+  div.className = 'do';
+  div.id = 'slideshow-controls';
+  div.dataset.author = isAuthor ? 'true' : 'false';
+  div.hidden = true;
+  div.innerHTML = `<button class="do slide-drag-handle" draggable="true" type="button" title="Drag to reorder" aria-label="Drag to reorder">${Icon['.fas.fa-grip-vertical']}</button><button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button><button class="do toggle-slide-numbers" type="button" title="Toggle slide numbers" aria-label="Toggle slide numbers" aria-pressed="${document.body.classList.contains('numbered') ? 'true' : 'false'}">${Icon['.fas.fa-hashtag']}</button>`;
+  document.body.appendChild(div);
 
   let indicator = document.getElementById('slide-drop-indicator');
   if (!indicator) {
@@ -4035,38 +4030,90 @@ export function initSlideOverlay() {
     document.body.appendChild(indicator);
   }
 
-  if (slideOverlayInit) return;
-  slideOverlayInit = true;
+  initSlideshowControlsHover(div, indicator);
+}
 
-  const positionOverlay = (slide) => {
+function initSlideshowControlsHover(controls, indicator) {
+  if (controlsInit) return;
+  controlsInit = true;
+
+  const positionAt = (slide) => {
     const rect = slide.getBoundingClientRect();
-    overlay.style.top = `${rect.top + window.scrollY + 8}px`;
-    overlay.style.left = `${rect.right + window.scrollX - overlay.offsetWidth - 8}px`;
-    overlay.hidden = false;
+    controls.style.top = `${rect.top + window.scrollY + 8}px`;
+    controls.style.left = `${rect.right + window.scrollX + 8}px`;
+    controls.hidden = false;
+  };
+
+  const scheduleHide = () => {
+    clearTimeout(controlsHideTimer);
+    controlsHideTimer = setTimeout(() => { controls.hidden = true; hoveredSlide = null; }, 250);
   };
 
   const hideIndicator = () => { indicator.hidden = true; };
 
-  document.body.addEventListener('mouseover', (e) => {
-    if (Config.Editor.mode !== 'author') return;
+  document.addEventListener('mouseover', (e) => {
     if (!document.body.classList.contains('shower')) return;
-    if (e.target.closest('#slide-overlay')) return;
+    if (e.target.closest('#slideshow-controls')) {
+      clearTimeout(controlsHideTimer);
+      return;
+    }
     const slide = e.target.closest('.slide');
     if (slide && slide !== hoveredSlide) {
       hoveredSlide = slide;
-      positionOverlay(slide);
+      clearTimeout(controlsHideTimer);
+      positionAt(slide);
+    } else if (!slide) {
+      scheduleHide();
     }
   });
 
-  overlay.addEventListener('click', (e) => {
-    if (!e.target.closest('.slide-delete') || !hoveredSlide) return;
-    Config.Editor.deleteSlideById(hoveredSlide.id);
-    overlay.hidden = true;
-    hoveredSlide = null;
+  controls.addEventListener('click', (e) => {
+    if (e.target.closest('.toggle-slide-numbers')) {
+      toggleSlideNumbers(e);
+      return;
+    }
+    if (e.target.closest('.enter-slide-full') && hoveredSlide) {
+      const slides = Array.from(document.querySelectorAll('.shower .slide'));
+      const idx = slides.indexOf(hoveredSlide);
+      if (_slideshow && idx >= 0) {
+        _slideshow.goTo(idx);
+        _slideshow.enterFullMode();
+      }
+      return;
+    }
+    if (e.target.closest('.add-slide-trigger')) {
+      const trigger = e.target.closest('.add-slide-trigger');
+      const options = controls.querySelector('.add-slide-options');
+      const open = options.hidden;
+      options.hidden = !open;
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      return;
+    }
+    const opt = e.target.closest('.add-slide-option');
+    if (opt) {
+      const template = opt.dataset.template || 'normal';
+      const targetId = hoveredSlide?.id;
+      const options = controls.querySelector('.add-slide-options');
+      options.hidden = true;
+      controls.querySelector('.add-slide-trigger')?.setAttribute('aria-expanded', 'false');
+      ensureAuthorAndDo(() => addSlideAfter(targetId, template));
+      return;
+    }
+    if (e.target.closest('.slide-delete') && hoveredSlide) {
+      const id = hoveredSlide.id;
+      ensureAuthorAndDo(() => Config.Editor.deleteSlideById(id));
+      controls.hidden = true;
+      hoveredSlide = null;
+    }
   });
 
-  const handle = overlay.querySelector('.slide-drag-handle');
+  const handle = controls.querySelector('.slide-drag-handle');
   handle.addEventListener('dragstart', (e) => {
+    if (Config.Editor.mode !== 'author') {
+      e.preventDefault();
+      Config.Editor.toggleEditor('author');
+      return;
+    }
     if (!hoveredSlide) { e.preventDefault(); return; }
     draggingSlideId = hoveredSlide.id;
     e.dataTransfer.effectAllowed = 'move';
@@ -4092,7 +4139,7 @@ export function initSlideOverlay() {
     draggingSlideId = null;
     document.body.classList.remove('slide-dragging');
     hideIndicator();
-    overlay.hidden = true;
+    controls.hidden = true;
     hoveredSlide = null;
 
     const { clientX, clientY } = e;
@@ -4101,7 +4148,7 @@ export function initSlideOverlay() {
       const slide = el && el.closest && el.closest('.slide');
       if (slide) {
         hoveredSlide = slide;
-        positionOverlay(slide);
+        positionAt(slide);
       }
     }, 0);
   });
@@ -4135,13 +4182,63 @@ export function initSlideOverlay() {
   }, true);
 }
 
+function newSlideFragment(template = 'normal') {
+  const id = 'slide-' + generateUUID();
+  const wrapper = (inner) => `<section class="slide" id="${id}" inlist="" rel="schema:hasPart" resource="#${id}" typeof="bibo:Slide">${inner}</section>`;
+  switch (template) {
+    case 'shout':
+      return fragmentFromString(wrapper(`<h2 class="shout" property="schema:name"></h2>`));
+    case 'cover':
+      return fragmentFromString(wrapper(`<h2 property="schema:name"></h2><figure><img class="cover" src="" alt=""></figure>`));
+    default:
+      return fragmentFromString(wrapper(`<h2 property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div>`));
+  }
+}
+
 export function addSlide(e) {
   hideDocumentMenu();
+  Config.Editor.insertSlideAtEnd(newSlideFragment());
+}
 
-  const id = 'slide-' + generateUUID();
-  const slide = fragmentFromString(`<section class="slide" id="${id}" inlist="" rel="schema:hasPart" resource="#${id}" typeof="bibo:Slide"><h2 property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div></section>`);
+export function addSlideAfter(targetId, template = 'normal') {
+  hideDocumentMenu();
+  const fragment = newSlideFragment(template);
+  if (targetId) {
+    Config.Editor.insertSlideAfter(targetId, fragment);
+  } else {
+    Config.Editor.insertSlideAtEnd(fragment);
+  }
+}
 
-  Config.Editor.insertSlideAtEnd(slide);
+function ensureAuthorAndDo(action) {
+  if (Config.Editor.mode === 'author') {
+    action();
+    return;
+  }
+  Config.Editor.toggleEditor('author');
+  // PM mounts synchronously but in collab mode its doc binds to Yjs/IndexedDB
+  // which loads asynchronously; wait until slides appear in the PM state.
+  let attempts = 0;
+  const tryRun = () => {
+    const view = Config.Editor.authorToolbarView?.editorView;
+    if (view) {
+      let hasSlides = false;
+      view.state.doc.descendants(n => {
+        if (hasSlides) return false;
+        if (n.type.name === 'section' && (n.attrs.originalAttributes?.class || '').split(' ').includes('slide')) {
+          hasSlides = true;
+        }
+      });
+      if (hasSlides) { action(); return; }
+    }
+    if (++attempts < 40) setTimeout(tryRun, 50);
+  };
+  tryRun();
+}
+
+export function toggleSlideNumbers(e) {
+  document.body.classList.toggle('numbered');
+  updateSlideshowControls();
 }
 
 export function showEmbedData(e) {
