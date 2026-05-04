@@ -35,13 +35,18 @@ const ns = Config.ns;
 
 Config.OIDC['client_id'] = isLocalhost(window.location) ? process.env.DEV_CLIENT_ID : process.env.CLIENT_ID;
 
-const clientid = (Config.OIDC['client_id']) ? Config.OIDC['client_id'] : null;
+const clientid = Config.OIDC['client_id'] || null;
 
 const currentScriptSameOrigin = isCurrentScriptSameOrigin();
 
+const useStaticClientId = !!(clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin);
+Config.OIDC['useStaticClientId'] = useStaticClientId;
+
 //Use static client registration if there is a Client ID Document URL and the dokieli script is on same origin as webpage and not Web Extension mode. Otherwise, use dynamic registration.
 // Manually configuring the database so that we can restore the session without using the refresher worker 
-Config['Session'] = (clientid && !Config['WebExtensionEnabled'] && currentScriptSameOrigin) ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() }) : new SessionCore({ redirect_uris: [window.location.href], client_name: "dokieli" }, { database: new SessionIDB() });
+Config['Session'] = useStaticClientId
+  ? new SessionCore({ client_id: clientid }, { database: new SessionIDB() })
+  : new SessionCore({ redirect_uris: [window.location.href], client_name: "dokieli" }, { database: new SessionIDB() });
 
 export async function restoreSession() {
   await Config['Session']?.handleRedirectFromLogin();
@@ -451,11 +456,11 @@ export async function signOutGitForge(host) {
 }
 
 async function loginWithIDP(idpUrl) {
-  Config.OIDC['authStartLocation'] = Config.OIDC['client_id'] ? window.location.href.split('#')[0] : null;
+  Config.OIDC['authStartLocation'] = Config.OIDC.useStaticClientId ? window.location.href.split('#')[0] : null;
   updateBrowserStorageOIDC();
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
-  redirect_uri = Config.OIDC['client_id'] ? redirect_uri : window.location.href.split('#')[0];
+  redirect_uri = Config.OIDC.useStaticClientId ? redirect_uri : window.location.href.split('#')[0];
 
   Config['Session']?.login(idpUrl, redirect_uri)
     .catch(e => {
@@ -476,7 +481,7 @@ async function loginWithIDP(idpUrl) {
   updateBrowserStorageOIDC();
 
   let redirect_uri = process.env.OIDC_REDIRECT_URI || (window.location.origin + '/');
-  redirect_uri = Config.OIDC['client_id'] ? redirect_uri :  window.location.href.split('#')[0];
+  redirect_uri = Config.OIDC.useStaticClientId ? redirect_uri :  window.location.href.split('#')[0];
 
   // Redirects away from dokieli :( but hopefully only briefly :)
   Config['Session']?.login(idp, redirect_uri)
