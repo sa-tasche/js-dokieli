@@ -310,6 +310,10 @@ export class Editor {
     return toolbarView?.insertSlideAtEnd(fragment);
   }
 
+  insertSlideAfter(targetId, fragment) {
+    return this.authorToolbarView?.insertSlideAfter(targetId, fragment);
+  }
+
   deleteSlideById(id) {
     return this.authorToolbarView?.deleteSlideById(id);
   }
