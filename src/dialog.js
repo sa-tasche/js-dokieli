@@ -488,10 +488,12 @@ export function initDocumentDoEvents() {
     }
 
     if (e.target.closest('.resource-save')){
+      exitSingleBeforeSerialize();
       resourceSave(e);
     }
 
     if (e.target.closest('.resource-save-as')) {
+      exitSingleBeforeSerialize();
       saveAsDocument(e);
     }
 
@@ -501,6 +503,7 @@ export function initDocumentDoEvents() {
 
     if (e.target.closest('.create-version') ||
         e.target.closest('.create-immutable')) {
+      exitSingleBeforeSerialize();
       resourceSave(e);
     }
 
@@ -509,6 +512,7 @@ export function initDocumentDoEvents() {
     }
 
     if (e.target.closest('.export-as-html')) {
+      exitSingleBeforeSerialize();
       var options = {
         subjectURI: Config.DocumentURL,
         mediaType: 'text/html',
@@ -531,6 +535,7 @@ export function initDocumentDoEvents() {
     }
 
     if (e.target.closest('.resource-print')) {
+      exitSingleBeforeSerialize();
       window.print();
       return false;
     }
@@ -3988,6 +3993,19 @@ export function initSlideshowInteraction(slideshow) {
       document.body.classList.add('full');
     }
   }, true);
+
+  // Single mode: click any non-active thumbnail to make it the active slide.
+  document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('shower')) return;
+    if (!document.body.classList.contains('single')) return;
+    if (e.target.closest('#document-menu') || e.target.closest('.do')) return;
+    const slide = e.target.closest('.slide');
+    if (!slide || slide.classList.contains('active')) return;
+    e.preventDefault();
+    const slides = Array.from(document.querySelectorAll('.shower .slide'));
+    const idx = slides.indexOf(slide);
+    if (_slideshow && idx >= 0) _slideshow.goTo(idx);
+  }, true);
 }
 
 let hoveredSlide = null;
@@ -4003,13 +4021,18 @@ export function updateSlideshowControls() {
   if (!isSlideshow) {
     existing?.remove();
     document.getElementById('slide-drop-indicator')?.remove();
+    document.getElementById('slideshow-toggles')?.remove();
     return;
   }
 
-  if (existing) {
+  updateSlideshowToggles();
+
+  // If a stale panel from a previous build is in the DOM (still containing the
+  // toggle buttons that now live in #slideshow-toggles), tear it down and rebuild.
+  if (existing && existing.querySelector('.toggle-slide-numbers, .toggle-single-view')) {
+    existing.remove();
+  } else if (existing) {
     existing.dataset.author = isAuthor ? 'true' : 'false';
-    const t = existing.querySelector('.toggle-slide-numbers');
-    if (t) t.setAttribute('aria-pressed', document.body.classList.contains('numbered') ? 'true' : 'false');
     return;
   }
 
@@ -4018,7 +4041,7 @@ export function updateSlideshowControls() {
   div.id = 'slideshow-controls';
   div.dataset.author = isAuthor ? 'true' : 'false';
   div.hidden = true;
-  div.innerHTML = `<button class="do slide-drag-handle" draggable="true" type="button" title="Drag to reorder" aria-label="Drag to reorder">${Icon['.fas.fa-grip-vertical']}</button><button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button><button class="do toggle-slide-numbers" type="button" title="Toggle slide numbers" aria-label="Toggle slide numbers" aria-pressed="${document.body.classList.contains('numbered') ? 'true' : 'false'}">${Icon['.fas.fa-hashtag']}</button>`;
+  div.innerHTML = `<button class="do slide-drag-handle" draggable="true" type="button" title="Drag to reorder" aria-label="Drag to reorder">${Icon['.fas.fa-grip-vertical']}</button><button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button>`;
   document.body.appendChild(div);
 
   let indicator = document.getElementById('slide-drop-indicator');
@@ -4031,6 +4054,25 @@ export function updateSlideshowControls() {
   }
 
   initSlideshowControlsHover(div, indicator);
+}
+
+function updateSlideshowToggles() {
+  let el = document.getElementById('slideshow-toggles');
+  const singlePressed = document.body.classList.contains('single') ? 'true' : 'false';
+
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'do';
+    el.id = 'slideshow-toggles';
+    el.innerHTML = `<button class="do toggle-single-view" type="button" title="Toggle single-slide view" aria-label="Toggle single-slide view" aria-pressed="${singlePressed}">${Icon['.fas.fa-table']}</button>`;
+    (document.querySelector('main') || document.body).appendChild(el);
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.toggle-single-view')) toggleSingleView();
+    });
+    return;
+  }
+
+  el.querySelector('.toggle-single-view')?.setAttribute('aria-pressed', singlePressed);
 }
 
 function initSlideshowControlsHover(controls, indicator) {
@@ -4068,10 +4110,6 @@ function initSlideshowControlsHover(controls, indicator) {
   });
 
   controls.addEventListener('click', (e) => {
-    if (e.target.closest('.toggle-slide-numbers')) {
-      toggleSlideNumbers(e);
-      return;
-    }
     if (e.target.closest('.enter-slide-full') && hoveredSlide) {
       const slides = Array.from(document.querySelectorAll('.shower .slide'));
       const idx = slides.indexOf(hoveredSlide);
@@ -4096,12 +4134,12 @@ function initSlideshowControlsHover(controls, indicator) {
       const options = controls.querySelector('.add-slide-options');
       options.hidden = true;
       controls.querySelector('.add-slide-trigger')?.setAttribute('aria-expanded', 'false');
-      ensureAuthorAndDo(() => addSlideAfter(targetId, template));
+      ensureAuthorAndDo(() => { addSlideAfter(targetId, template); relayoutIfSingle(); });
       return;
     }
     if (e.target.closest('.slide-delete') && hoveredSlide) {
       const id = hoveredSlide.id;
-      ensureAuthorAndDo(() => Config.Editor.deleteSlideById(id));
+      ensureAuthorAndDo(() => { Config.Editor.deleteSlideById(id); relayoutIfSingle(); });
       controls.hidden = true;
       hoveredSlide = null;
     }
@@ -4179,7 +4217,13 @@ function initSlideshowControlsHover(controls, indicator) {
     const rect = slide.getBoundingClientRect();
     const before = e.clientY < rect.top + rect.height / 2;
     Config.Editor.moveSlide(draggingSlideId, slide.id, before);
+    relayoutIfSingle();
   }, true);
+}
+
+function relayoutIfSingle() {
+  if (!document.body.classList.contains('single')) return;
+  requestAnimationFrame(() => _slideshow?.layoutSingle());
 }
 
 function newSlideFragment(template = 'normal') {
@@ -4236,9 +4280,21 @@ function ensureAuthorAndDo(action) {
   tryRun();
 }
 
-export function toggleSlideNumbers(e) {
-  document.body.classList.toggle('numbered');
+export function toggleSingleView() {
+  if (!_slideshow) return;
+  if (document.body.classList.contains('single')) {
+    _slideshow.exitSingleMode();
+  } else {
+    _slideshow.enterSingleMode();
+  }
   updateSlideshowControls();
+}
+
+function exitSingleBeforeSerialize() {
+  if (document.body.classList.contains('single')) {
+    _slideshow?.exitSingleMode();
+    updateSlideshowControls();
+  }
 }
 
 export function showEmbedData(e) {

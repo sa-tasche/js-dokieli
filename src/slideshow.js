@@ -18,7 +18,11 @@ limitations under the License.
 import Config from './config.js';
 import { getDocumentContentNode } from './utils/html.js';
 
-const MODES = { LIST: 'list', FULL: 'full' };
+const MODES = { LIST: 'list', FULL: 'full', SINGLE: 'single' };
+// Vertical thumbnail rail layout (in single mode): each thumb's transformed
+// height (640px * 0.215 ≈ 138px) plus 14px gap.
+const THUMB_TOP_BASE = 24;
+const THUMB_STRIDE = 152;
 
 // Skipped when syncing slide id to URL; 'open=' is handled specially (slide id rides as its fragment).
 const OTHER_DOKIELI_HASH_PARAMS = ['author', 'graph', 'graph-view', 'output', 'social', 'style'];
@@ -55,7 +59,53 @@ function setActive(idx, options = {}) {
   activeIndex = Math.max(0, Math.min(idx, slides.length - 1));
   slides.forEach((s, i) => s.classList.toggle('active', i === activeIndex));
   updateProgress();
+  if (isSingle()) layoutSingle();
   if (options.syncHash !== false) syncToHash(slides[activeIndex]);
+}
+
+function isSingle() {
+  return document.body.classList.contains(MODES.SINGLE);
+}
+
+// In single mode, lay slides out as a vertical rail. The active slide is
+// positioned by CSS in the main area; we leave its rail slot occupied by a
+// placeholder so the rail order doesn't shift when the active changes.
+export function layoutSingle() {
+  const slides = getSlides();
+  for (let i = 0; i < slides.length; i++) {
+    const s = slides[i];
+    if (s.classList.contains('active')) {
+      s.style.top = '';
+    } else {
+      s.style.top = (THUMB_TOP_BASE + i * THUMB_STRIDE) + 'px';
+    }
+  }
+  updateActivePlaceholder(slides);
+}
+
+function updateActivePlaceholder(slides) {
+  const activeIdx = slides.findIndex(s => s.classList.contains('active'));
+  let placeholder = document.getElementById('rail-active-placeholder');
+  if (activeIdx < 0) {
+    placeholder?.remove();
+    return;
+  }
+  if (!placeholder) {
+    placeholder = document.createElement('div');
+    placeholder.id = 'rail-active-placeholder';
+    placeholder.className = 'do';
+    document.body.appendChild(placeholder);
+  }
+  const article = document.querySelector('.shower > main > article');
+  if (!article) return;
+  const rect = article.getBoundingClientRect();
+  placeholder.style.top = (rect.top + window.scrollY + THUMB_TOP_BASE + activeIdx * THUMB_STRIDE) + 'px';
+  placeholder.style.left = (rect.left + window.scrollX + 24) + 'px';
+}
+
+function clearSingleLayout() {
+  for (const s of getSlides()) s.style.top = '';
+  document.getElementById('rail-active-placeholder')?.remove();
 }
 
 function hasOtherDokieliParam(hashStr) {
@@ -124,16 +174,35 @@ export function prev() {
   setActive(activeIndex - 1);
 }
 
+// Track the non-full mode to return to when exiting full.
+let preFullMode = MODES.LIST;
+
 export function enterFullMode() {
-  document.body.classList.remove(MODES.LIST);
+  if (isSingle()) preFullMode = MODES.SINGLE;
+  else if (document.body.classList.contains(MODES.LIST)) preFullMode = MODES.LIST;
+  document.body.classList.remove(MODES.LIST, MODES.SINGLE);
   document.body.classList.add(MODES.FULL);
+  clearSingleLayout();
   setActive(activeIndex);
 }
 
 export function exitFullMode() {
   document.body.classList.remove(MODES.FULL);
-  document.body.classList.add(MODES.LIST);
+  document.body.classList.add(preFullMode);
+  if (preFullMode === MODES.SINGLE) layoutSingle();
   clearSlideFromHash();
+}
+
+export function enterSingleMode() {
+  document.body.classList.remove(MODES.LIST, MODES.FULL);
+  document.body.classList.add(MODES.SINGLE);
+  layoutSingle();
+}
+
+export function exitSingleMode() {
+  document.body.classList.remove(MODES.SINGLE);
+  document.body.classList.add(MODES.LIST);
+  clearSingleLayout();
 }
 
 function onKeyup(e) {
@@ -215,9 +284,12 @@ export function start() {
     content.appendChild(div);
   }
 
-  if (!document.body.classList.contains(MODES.LIST) && !document.body.classList.contains(MODES.FULL)) {
+  if (!document.body.classList.contains(MODES.LIST)
+      && !document.body.classList.contains(MODES.FULL)
+      && !document.body.classList.contains(MODES.SINGLE)) {
     document.body.classList.add(MODES.LIST);
   }
+  if (document.body.classList.contains(MODES.SINGLE)) layoutSingle();
 
   setActive(0, { syncHash: false });
   const deepLinked = syncFromHash();
@@ -255,5 +327,8 @@ export default {
   prev,
   enterFullMode,
   exitFullMode,
+  enterSingleMode,
+  exitSingleMode,
+  layoutSingle,
   isStarted,
 };
