@@ -2389,7 +2389,7 @@ margin-top:3em;
 #document-autosave input[type="checkbox"] {
   position:relative;
   top:0;
-  right:-24em;
+  right:-20em;
 }
 #document-autosave input:focus + label {
   outline: 2px solid #080;
@@ -2488,10 +2488,10 @@ outline-offset: 5px;
 
 #document-autosave span {
   position: absolute;
-  left: -18.5em;
+  left: -14.5em;
   color: #000;
   padding-left: 0;
-  padding-right:18em;
+  padding-right:14em;
   width:max-content;
 }
 
@@ -2501,7 +2501,7 @@ outline-offset: 5px;
 }
 
 #document-menu.do.on {
-width: 24em;
+width: 20em;
 max-width: 90vw;
 padding: 0;
 }
@@ -2522,7 +2522,7 @@ margin-top: 0.75em;
 #document-menu #document-menu-tabs > nav ul {
 display: flex;
 padding: 0;
-margin: 0 1em !important;
+margin: 0 !important;
 }
 #document-menu #document-menu-tabs > nav li {
 display: inline-block;
@@ -2534,13 +2534,10 @@ flex: 1;
 display: block;
 background-color: #fff;
 color: #333;
-padding: 0.5em 1em;
-/*! border: 0; */
+padding: 0.5em 0;
 text-decoration: none;
-/*! border-bottom: 0; */
 border-top-left-radius: 0.25em;
 border-top-right-radius: 0.25em;
-/*! margin-right: 2px; */
 text-align: center;
 margin-right: 2px;
 border-bottom-color: #eee;
