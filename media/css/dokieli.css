@@ -3194,6 +3194,8 @@ overflow: visible !important;
 
 span.ref[typeof~="http://purl.org/dc/dcmitype/Text"] {
 position:relative;
+font-family:inherit;
+font-size:inherit;
 }
 span.ref[typeof~="http://purl.org/dc/dcmitype/Text"] mark + sup[class^="ref-"] {
 color:#000;
