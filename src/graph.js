@@ -693,8 +693,12 @@ function getResourceGraph(iri, headers, options = {}) {
 
   const isWebExtensionURL = Config.WebExtensionBaseURL ? iri.startsWith(Config.WebExtensionBaseURL) : false;
 
+  let savedHeaders;
+
   return Config.Storage.get(iri, headers, options)
     .then(response => {
+      savedHeaders = response.headers;
+
       let cT = response.headers.get('Content-Type');
 
       cT = (isWebExtensionURL && (!cT || cT === 'application/x-unknown-content-type')) ? 'text/html' : cT;
@@ -741,7 +745,8 @@ function getResourceGraph(iri, headers, options = {}) {
       // console.log(stripFragmentFromString(iri))
 
       //       return g.node(rdf.namedNode(iri));
-      return rdf.grapoi({ dataset: g.dataset, term: rdf.namedNode(stripFragmentFromString(iri))});
+      const graph = rdf.grapoi({ dataset: g.dataset, term: rdf.namedNode(stripFragmentFromString(iri))});
+      return options.withHeaders ? { graph, headers: savedHeaders } : graph;
     })
     .catch(e => {
       if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
