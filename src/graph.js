@@ -1754,8 +1754,8 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
 
         Config.Resource[iri]['acl']['defaultACLResource'] = Config.Resource[iri]['acl']['defaultACLResource'] || aclResource;
 
-        return getResourceGraph(aclResource)
-          .then(g => {
+        return getResourceGraph(aclResource, {}, { withHeaders: true })
+          .then(({ graph: g, headers }) => {
             // console.log(i)
             // console.log(i.status)
             //404?
@@ -1774,9 +1774,10 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
 
             Config.Resource[documentURL]['acl']['effectiveACLResource'] = aclResource;
             Config.Resource[aclResource] = {};
+            Config.Resource[aclResource]['headers'] = headers;
             //TODO: We probably shouldn't use this approach here:
             Config.Resource[aclResource]['graph'] = g;
-
+            // console.log(Config.Resource[aclResource])
             return g;
           },
           function(reason){
