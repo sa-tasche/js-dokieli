@@ -1755,11 +1755,12 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
         Config.Resource[iri]['acl']['defaultACLResource'] = Config.Resource[iri]['acl']['defaultACLResource'] || aclResource;
 
         return getResourceGraph(aclResource, {}, { withHeaders: true })
-          .then(({ graph: g, headers }) => {
+          .then(result => {
             // console.log(i)
             // console.log(i.status)
+
             //404?
-            if (typeof g === 'undefined') {
+            if (!result) {
               var container = pathURL.endsWith('/') ? getParentURLPath(pathURL) : baseURL;
               // console.log(container);
               if (typeof container !== 'undefined') {
@@ -1771,6 +1772,9 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
                 return Promise.reject(new Error('effectiveACLResource not determined. https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm'));
               }
             }
+
+            const { graph: g, headers } = result;
+
 
             Config.Resource[documentURL]['acl']['effectiveACLResource'] = aclResource;
             Config.Resource[aclResource] = {};
