@@ -697,8 +697,6 @@ function getResourceGraph(iri, headers, options = {}) {
 
   return Config.Storage.get(iri, headers, options)
     .then(response => {
-      savedHeaders = response.headers;
-
       let cT = response.headers.get('Content-Type');
 
       cT = (isWebExtensionURL && (!cT || cT === 'application/x-unknown-content-type')) ? 'text/html' : cT;
@@ -746,7 +744,7 @@ function getResourceGraph(iri, headers, options = {}) {
 
       //       return g.node(rdf.namedNode(iri));
       const graph = rdf.grapoi({ dataset: g.dataset, term: rdf.namedNode(stripFragmentFromString(iri))});
-      return options.withHeaders ? { graph, headers: savedHeaders } : graph;
+      return options.withResponse ? { graph, response } : graph;
     })
     .catch(e => {
       if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
@@ -1754,7 +1752,7 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
 
         Config.Resource[iri]['acl']['defaultACLResource'] = Config.Resource[iri]['acl']['defaultACLResource'] || aclResource;
 
-        return getResourceGraph(aclResource, {}, { withHeaders: true })
+        return getResourceGraph(aclResource, {}, { withResponse: true })
           .then(result => {
             // console.log(i)
             // console.log(i.status)
@@ -1773,12 +1771,24 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
               }
             }
 
-            const { graph: g, headers } = result;
+            const { graph: g, response } = result;
 
+            const link = response.headers.get('Link');
+            const conditions = [];
+
+            if (link) {
+              const linkHeaders = LinkHeader.parse(link);
+              if (linkHeaders.has('rel', 'http://www.w3.org/ns/auth/acl#condition')) {
+                linkHeaders.rel('http://www.w3.org/ns/auth/acl#condition').forEach(l => {
+                  conditions.push(l.uri);
+                });
+              }
+            }
 
             Config.Resource[documentURL]['acl']['effectiveACLResource'] = aclResource;
             Config.Resource[aclResource] = {};
-            Config.Resource[aclResource]['headers'] = headers;
+            Config.Resource[aclResource]['response'] = response;
+            Config.Resource[aclResource]['conditions'] = conditions;
             //TODO: We probably shouldn't use this approach here:
             Config.Resource[aclResource]['graph'] = g;
             // console.log(Config.Resource[aclResource])
@@ -1860,7 +1870,7 @@ function getAuthorizationsMatching (g, matchers) {
       var allKeysMatched = Object.keys(matchers).every(key => Object.keys(candidateAuthorization).includes(key));
 
       if (allKeysMatched) {
-        var properties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin'];
+        var properties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin', 'condition'];
         var authorization = {};
         properties.forEach(p => {
           authorization[p] = s.out(ns.acl[p]).values;

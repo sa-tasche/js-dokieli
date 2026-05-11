@@ -1160,6 +1160,20 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
 
   var patches = [];
 
+  var updatedMode;
+
+  switch (selectedMode) {
+    case ns.acl.Read.value:
+      updatedMode = [ns.acl.Read.value];
+      break;
+    case ns.acl.Write.value:
+      updatedMode = [ns.acl.Read.value, ns.acl.Write.value];
+      break;
+    case ns.acl.Control.value:
+      updatedMode = [ns.acl.Read.value, ns.acl.Write.value, ns.acl.Control.value];
+      break;
+  }
+
 // console.log(authorizations);
   if (hasOwnACLResource) {
     Object.keys(authorizations).forEach(authorization => {
@@ -1201,7 +1215,7 @@ acl:${deleteAccessSubjectProperty} <${deleteAccessSubject}> .
 <${authorizationSubject}>
 a acl:Authorization ;
 acl:accessTo <${documentURL}> ;
-acl:mode <${selectedMode}> ;
+acl:mode <${updatedMode.join('>, <')}> ;
 acl:${subjectType} <${accessSubject}> .
 `;
 
@@ -1221,18 +1235,6 @@ acl:${subjectType} <${accessSubject}> .
           authorizationsToDelete.push(authorization);
         }
         else {
-          switch (selectedMode) {
-            case ns.acl.Read.value:
-              updatedMode = [ns.acl.Read.value];
-              break;
-            case ns.acl.Write.value:
-              updatedMode = [ns.acl.Read.value, ns.acl.Write.value];
-              break;
-            case ns.acl.Control.value:
-              updatedMode = [ns.acl.Read.value, ns.acl.Write.value, ns.acl.Control.value];
-              break;
-          }
-
           updatedAuthorizations[authorization].mode = updatedMode;
         }
       }
