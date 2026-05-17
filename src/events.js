@@ -153,7 +153,7 @@ export function eventButtonInfo() {
         }
         else {
           return getResourceGraph(url)
-            .then(graph => {
+            .then(({ graph }) => {
               Config.Resource[url] = { graph };
               return graph;
             });

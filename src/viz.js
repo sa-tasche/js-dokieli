@@ -286,14 +286,9 @@ export function showVisualisationGraph(url, data, selector, options) {
 
   function handleResource(iri, headers, options) {
     return getResourceGraph(iri, headers, options)
-      .then(g => {
-        // var cT = response.headers.get('Content-Type');
-        // options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle';
-
-        // return response.text().then(data => {
-          options['mergeGraph'] = true;
-          initiateVisualisation(options['subjectURI'], g, options);
-        // });
+      .then(({ graph: g }) => {
+        options['mergeGraph'] = true;
+        initiateVisualisation(options['subjectURI'], g, options);
       })
   }
 
@@ -1104,9 +1099,11 @@ export function showGraphResources(resources, selector, options) {
         .then(resolvedPromises => {
           let dataset = rdf.dataset();
 
-          resolvedPromises.forEach(response => {
-            if (response.value) {
-              dataset.addAll(response.value.dataset);
+          resolvedPromises.forEach(result => {
+            if (result.status !== 'fulfilled') return;
+            const g = result.value?.graph;
+            if (g) {
+              dataset.addAll(g.dataset);
             }
           })
 

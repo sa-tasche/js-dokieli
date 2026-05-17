@@ -61,7 +61,7 @@ export function showResourceAudienceAgentOccupations() {
 
     Config.Resource[Config.DocumentURL].audience.forEach(audience => {
       if (Config.User.Occupations.includes(audience)) {
-        matches.push(getResourceGraph(audience).then(g => {
+        matches.push(getResourceGraph(audience).then(({ graph: g }) => {
           Config.Resource[audience] = { graph: g };
           return g ? g.node(rdf.namedNode(audience)) : g;
         }));

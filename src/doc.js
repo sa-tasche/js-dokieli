@@ -1176,7 +1176,7 @@ export function showTimeMap(node, url) {
   var elementId = 'memento-document';
 
   getResourceGraph(url)
-    .then(g => {
+    .then(({ graph: g }) => {
       // console.log(g)
       if (!node) {
         node = document.getElementById(elementId);
@@ -1876,7 +1876,8 @@ export function processSupplementalInfoLinkHeaders(documentURL, options = {}) {
   return Promise.allSettled(promises)
     .then(results => {
       results.forEach(result => {
-        var g = result.value;
+        if (result.status !== 'fulfilled') return;
+        var g = result.value?.graph;
 
         if (g) {
           //FIXME: Consider the case where `linkTarget` URL is redirected and so may not be same as `s`.
@@ -3552,11 +3553,11 @@ export function processCitationClaim(citation) {
   // console.log('  processCitationClaim(' + citation.citingEntity + ')')
   // var pIRI = getProxyableIRI(citation.citingEntity);
   return getResourceGraph(citation.citingEntity)
-    .then(i => {
+    .then(({ graph: g }) => {
         var cEURL = stripFragmentFromString(citation.citingEntity);
         Config.Activity[cEURL] = {};
-        Config.Activity[cEURL]['Graph'] = i;
-        var s = i.node(rdf.namedNode(citation.citingEntity));
+        Config.Activity[cEURL]['Graph'] = g;
+        var s = g.node(rdf.namedNode(citation.citingEntity));
         addCitation(citation, s);
       }
     );
@@ -3978,32 +3979,27 @@ export function buildResourceView(data, options) {
               // }, 1000)
             });
 
-            // return Promise.all(promises.map(p => p.catch(e => e)))
             return Promise.allSettled(promises)
               .then(results => {
                 var items = [];
-                // graphs.filter(result => !(result instanceof Error));
 
-                //TODO: Refactor if/else based on getResourceGraph
                 results.forEach(result => {
-                  // console.log(result.value)
-
-                  //XXX: Not sure about htis.
-                  if (result.value instanceof Error) {
-                    // TODO: decide how to handle
-                  }
-                  //FIXME: This is not actually useful yet. getResourceGraph should return the iri in which its content had no triples or failed to parse perhaps.
-                  else if (typeof result.value === 'undefined') {
-                    //   items.push('<a href="' + result.value + '">' + result.value + '</a>');
-                  }
-                  else if ('resource' in result.value) {
-                    items.push('<li rel="schema:hasPart" resource="' + result.value.resource + '"><a href="' + result.value.resource + '">' + result.value.resource + '</a></li>');
-                  }
-                  else {
-                    var html = generateIndexItemHTML(result.value);
-                    if (typeof html === 'string' && html !== '') {
-                      items.push('<li rel="schema:hasPart" resource="' + result.value.term.value + '">' + html + '</li>');
+                  // Rejected entries carry { response, graph: undefined, error };
+                  // surface the resource URL from the response when possible.
+                  if (result.status === 'rejected') {
+                    var rejectedURL = result.reason?.response?.url;
+                    if (rejectedURL) {
+                      items.push('<li rel="schema:hasPart" resource="' + rejectedURL + '"><a href="' + rejectedURL + '">' + rejectedURL + '</a></li>');
                     }
+                    return;
+                  }
+
+                  var g = result.value?.graph;
+                  if (!g) return;
+
+                  var html = generateIndexItemHTML(g);
+                  if (typeof html === 'string' && html !== '') {
+                    items.push('<li rel="schema:hasPart" resource="' + g.term.value + '">' + html + '</li>');
                   }
                 })
 
@@ -4695,7 +4691,7 @@ export function getCitation(i, options) {
       url = i.replace(/https?:\/\/dx\.doi\.org\//i, 'https://doi.org/');
     }
 
-    return getResourceGraph(url, null, options);
+    return getResourceGraph(url, null, options).then(({ graph }) => graph);
   }
 }
 

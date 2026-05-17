@@ -62,7 +62,7 @@ describe("graph", () => {
       resetMockFetch();
     });
 
-    test("should return undefined if graph cannot be returned", async () => {
+    test("rejects with { response, graph: undefined, error } when graph cannot be parsed", async () => {
       const iri = "http://example.com/nonexistent-resource";
       const headers = { Accept: "text/turtle" };
       const options = {};
@@ -74,12 +74,17 @@ describe("graph", () => {
         },
       });
 
-      await expect(
-        getResourceGraph(iri, headers, options)
-      ).resolves.toBeUndefined();
+      const rejected = await getResourceGraph(iri, headers, options).then(
+        () => null,
+        (r) => r
+      );
+
+      expect(rejected).toBeDefined();
+      expect(rejected.graph).toBeUndefined();
+      expect(rejected.error).toBeDefined();
     });
 
-    test("should return a resource", async () => {
+    test("resolves with { response, graph, error: undefined } on success", async () => {
       const iri = "http://example.com/Person1";
       const headers = { Accept: "text/turtle" };
       const options = {};
@@ -98,16 +103,18 @@ describe("graph", () => {
 `,
       });
 
-      const result = await getResourceGraph(iri, headers, options);
+      const { response, graph, error } = await getResourceGraph(iri, headers, options);
 
-      expect(result.out().values).toHaveLength(2);
+      expect(error).toBeUndefined();
+      expect(response).toBeDefined();
+      expect(graph.out().values).toHaveLength(2);
 
-      expect(result.out().values).toEqual([
+      expect(graph.out().values).toEqual([
         "http://example.com/Person",
         "John Doe",
       ]);
 
-      const johnDoeQuad = result.out(ns.foaf.name).values;
+      const johnDoeQuad = graph.out(ns.foaf.name).values;
       expect(johnDoeQuad).toEqual(["John Doe"]);
     });
   });

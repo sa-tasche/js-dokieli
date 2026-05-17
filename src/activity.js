@@ -317,7 +317,7 @@ export function getNotifications(url) {
   Config.Inbox[url]['Notifications'] = [];
 
   return getResourceGraph(url)
-    .then(g => {
+    .then(({ graph: g }) => {
       Config.Inbox[url]['Graph'] = g;
 
       var s = g.node(rdf.namedNode(url));
@@ -422,9 +422,9 @@ export function showActivities(url, options = {}) {
     //   // return [];
     //   throw e;
     // })
-    .then(g => {
+    .then(({ graph: g }) => {
       // console.log(g)
-      if (!g || g.resource) return;
+      if (!g) return;
 
       if (options.notification) {
         Config.Notification[url] = {};
@@ -927,9 +927,13 @@ export async function positionInteraction(noteIRI, containerNode, options) {
 
   Config.Activity[noteIRI] = {};
 
-  const g = await getResourceGraph(noteIRI);
-  //XXX: REVISIT
-  if (!g || g.resource) return;
+  let g;
+  try {
+    ({ graph: g } = await getResourceGraph(noteIRI));
+  } catch {
+    return;
+  }
+  if (!g) return;
   showAnnotation(noteIRI, g, containerNode, options);
 }
 

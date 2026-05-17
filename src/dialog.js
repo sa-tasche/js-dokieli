@@ -925,15 +925,16 @@ export function shareResource(listenerEvent, iri) {
 
           //Gets some information about the accessSubject that can be displayed besides their URI.
           getResourceGraph(accessSubject)
-            .catch(e => {
-              showPermissions(null, accessSubject);
-            })
-            .then(g => {
+            .then(result => {
               var s;
+              var g = result?.graph;
               if (g && g.node) {
                 s = g.node(rdf.namedNode(accessSubject));
               }
               showPermissions(s, accessSubject);
+            })
+            .catch(e => {
+              showPermissions(null, accessSubject);
             })
         })
     });
@@ -1034,8 +1035,8 @@ export function updateContactsInfo(url, node, options) {
 }
 
 export function addShareResourceContactInput(node, agent) {
-  var iri = agent.IRI
-  var inbox = agent.Inbox;
+  var iri = agent?.IRI
+  var inbox = agent?.Inbox;
 
   if (inbox && inbox.length) {
     var id = encodeURIComponent(iri);
@@ -1718,7 +1719,7 @@ function triggerBrowse(url, id, action){
     }
     var headers;
     headers = {'Accept': 'text/turtle, application/ld+json'};
-    getResourceGraph(url, headers).then(g => {
+    getResourceGraph(url, headers).then(({ graph: g }) => {
       generateBrowserList(g, url, id, action).then(l => {
         showStorageDescription(g, id, url);
         return l;
@@ -1727,10 +1728,10 @@ function triggerBrowse(url, id, action){
         console.log('???? ' + reason); // Probably no reason for it to get to here
       });
     },
-    function(reason){
+    function({ response } = {}){
       var node = document.getElementById(id + '-ul');
 
-      showErrorResponseMessage(node, reason.response);
+      showErrorResponseMessage(node, response);
     });
   }
   else{
@@ -1903,7 +1904,7 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
   } else {
     var headers = {'Accept': 'text/turtle, application/ld+json'};
     getResourceGraph(baseUrl, headers)
-      .then(g => {
+      .then(({ graph: g }) => {
         if (!g) return;
         return generateBrowserList(g, baseUrl, id, action)
           .then(() => showStorageDescription(g, id, baseUrl));
@@ -2097,16 +2098,16 @@ function nextLevelButton(button, url, id, action) {
     if(button.parentNode.classList.contains('container')){
       var headers;
       headers = {'Accept': 'text/turtle, application/ld+json'};
-      getResourceGraph(url, headers).then(g => {
+      getResourceGraph(url, headers).then(({ graph: g }) => {
           if (actionNode) {
             actionNode.textContent = (action == 'write') ? url + generateAttributeId() : url;
           }
           return generateBrowserList(g, url, id, action);
         },
-        function(reason){
+        function({ response } = {}){
           var node = document.getElementById(id);
 
-          showErrorResponseMessage(node, reason.response);
+          showErrorResponseMessage(node, response);
         }
       );
     }
@@ -2170,7 +2171,7 @@ function showStorageDescription(s, id, storageUrl, checkAgain) {
             if (!storageDescriptionNode) {
               var storageLocation = `<dl id="storage-location"><dt data-i18n="dialog.storage-location.dt">${i18n.t('dialog.storage-location.dt.textContent')}</dt><dd><a href="${storageUrl}" rel="noopener" target="_blank">${storageUrl}</a></dd></dl>`;
 
-              getResourceGraph(sDURL).then(g => {
+              getResourceGraph(sDURL).then(({ graph: g }) => {
                 if (g) {
                   var primaryTopic = g.out(ns.foaf.primaryTopic).values;
                   g = (primaryTopic.length) ? g.node(rdf.namedNode(primaryTopic[0])) : g.node(rdf.namedNode(storageUrl));
@@ -5483,8 +5484,7 @@ export function buildListOfStuff(id) {
       var url = testSuites[0];
 
       getResourceGraph(url, null, options)
-        .then(g => {
-// console.log(g.out().values)
+        .then(({ graph: g }) => {
           if (g) {
             insertTestCoverageToTable(id, g);
           }
@@ -5509,7 +5509,7 @@ console.log(reason);
       sanitizeInsertAdjacentHTML(thead.querySelector('tr > th'), 'beforeend', '<button id="include-diff-requirements" class="do add" disabled="disabled" title="' + buttonTextDiffRequirements + '">' + Icon[".fas.fa-circle-notch.fa-spin.fa-fw"] + '</button>');
 
       getResourceGraph(url, null, options)
-        .then(targetGraph => {
+        .then(({ graph: targetGraph }) => {
           if (targetGraph) {
             var targetGraphURI = targetGraph.term.value;
 // console.log(targetGraphURI)
@@ -5593,12 +5593,13 @@ export function showExtendedConcepts() {
   var options = { 'resources': [] };
 
   return Promise.allSettled(promises)
-    .then(results => results.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value))
+    .then(results =>
+      results
+        .filter(r => r.status === 'fulfilled' && r.value?.graph)
+        .map(r => r.value.graph))
     .then(graphs => {
-// console.log(graphs);
       graphs.forEach(g => {
-        if (g && !(g instanceof Error) && g.out().terms.length){
-        // if (g) {
+        if (g && g.out().terms.length){
           var documentURL = g.term.value;
           g = rdf.grapoi({dataset: g.dataset})
 // console.log(documentURL)

@@ -156,7 +156,7 @@ function getSubjectInfo(subjectIRI, options = {}) {
   options['noStore'] = !!options['noStore'];
 
   return getResourceGraph(subjectIRI, headers, options)
-    .then(g => {
+    .then(({ graph: g }) => {
       //TODO: Consider whether to construct an empty graph (useful to work only with their IRI);
 
       if (!isGraphValid(g)) {
@@ -682,7 +682,8 @@ function traverseRDFList(g, resource) {
   return result;
 }
 
-//TODO: Review grapoi
+// Success resolves with { response, graph, error: undefined }
+// Failure rejects with { response, graph: undefined, error }
 function getResourceGraph(iri, headers, options = {}) {
   let wildCard = options.excludeMarkup ? '' : ',*/*;q=0.1';
   let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
@@ -693,15 +694,15 @@ function getResourceGraph(iri, headers, options = {}) {
 
   const isWebExtensionURL = Config.WebExtensionBaseURL ? iri.startsWith(Config.WebExtensionBaseURL) : false;
 
-  let savedHeaders;
+  let savedResponse;
 
   return Config.Storage.get(iri, headers, options)
     .then(response => {
+      savedResponse = response;
       let cT = response.headers.get('Content-Type');
 
       cT = (isWebExtensionURL && (!cT || cT === 'application/x-unknown-content-type')) ? 'text/html' : cT;
       options['contentType'] = (cT) ? cT.split(';')[0].toLowerCase().trim() : 'text/turtle'
-      // options['subjectURI'] = stripFragmentFromString(iri)
       options['subjectURI'] = iri
 
       //XXX: Perhaps okay for text/markdown but not text/plain?
@@ -716,45 +717,26 @@ function getResourceGraph(iri, headers, options = {}) {
             return JSON.stringify(data);
           }
 
-          return Promise.reject({ resource: iri, response: response, message: 'Unsupported media type for RDF parsing (without @context): ' + options['contentType'] })
+          return Promise.reject(new Error('Unsupported media type for RDF parsing (without @context): ' + options['contentType']));
         });
       }
       else if (!Config.MediaTypes.RDF.includes(options['contentType'])) {
-        return Promise.reject({ resource: iri, response: response, message: 'Unsupported media type for RDF parsing: ' + options['contentType'] })
+        return Promise.reject(new Error('Unsupported media type for RDF parsing: ' + options['contentType']));
       }
 
       return response.text();
     })
-    .then(data => {
-      // console.log(data, options)
-      return getGraphFromData(data, options)
-    })
+    .then(data => getGraphFromData(data, options))
     .then(g => {
-      // console.log(g)
-      //       let fragment = (iri.lastIndexOf('#') >= 0) ? iri.substr(iri.lastIndexOf('#')) : ''
-      // console.log(iri, getProxyableIRI(iri), fragment)
-      //       var r = 
-      // console.log(r.term.value)
-      //       // var r =  rdf.grapoi({ dataset: g.dataset, term: rdf.namespace(getProxyableIRI(iri) + fragment)('')});
-
-      //       console.log(Array.from(r.out().quads()))
-      //       return r;
-
-      // console.log(stripFragmentFromString(iri))
-
-      //       return g.node(rdf.namedNode(iri));
       const graph = rdf.grapoi({ dataset: g.dataset, term: rdf.namedNode(stripFragmentFromString(iri))});
-      return options.withResponse ? { graph, response } : graph;
+      return { response: savedResponse, graph, error: undefined };
     })
-    .catch(e => {
-      if ('resource' in e || 'cause' in e || e.status?.toString().startsWith('5')) {
-        return e;
-      }
-
-      // throw e;
-    })
+    .catch(error => Promise.reject({
+      response: savedResponse || error?.response,
+      graph: undefined,
+      error
+    }));
 }
-
 function getResourceOnlyRDF(url) {
   return Config.Storage.head(url)
     .then(response => {
@@ -765,10 +747,25 @@ function getResourceOnlyRDF(url) {
       if (Config.MediaTypes.RDF.includes(options['contentType'])) {
         var headers = { 'Accept': setAcceptRDFTypes() };
         return getResourceGraph(url, headers);
-      } 
-      else {
-        return Promise.reject({ resource: url, response: response, message: 'Unsupported media type for RDF parsing: ' + options['contentType'] });
       }
+
+      return Promise.reject({
+        response,
+        graph: undefined,
+        error: new Error('Unsupported media type for RDF parsing: ' + options['contentType'])
+      });
+    })
+    .catch(rejected => {
+      // Already in our shape (e.g., from getResourceGraph): pass through.
+      // Otherwise (HEAD failure), wrap into the same shape.
+      if (rejected && 'graph' in rejected && 'error' in rejected) {
+        return Promise.reject(rejected);
+      }
+      return Promise.reject({
+        response: rejected?.response,
+        graph: undefined,
+        error: rejected
+      });
     });
 }
 
@@ -848,7 +845,7 @@ function getLinkRelationFromRDF(property, url) {
   if (!url) { return Promise.reject({'message': 'Missing url paramater' })}
 
   return getResourceGraph(url)
-    .then(g => {
+    .then(({ graph: g }) => {
         g = g.node(rdf.namedNode(url));
         var values = g.out(rdf.namedNode(property)).values;
 
@@ -877,7 +874,7 @@ function getAgentPreferencesInfo(g) {
   var preferencesFile = getAgentPreferencesFile(g) || Config.User.PreferencesFile;
 
   if (preferencesFile?.length) {
-    return getResourceGraph(preferencesFile[0]);
+    return getResourceGraph(preferencesFile[0]).then(({ graph }) => graph);
   }
   else {
     return Promise.reject({});
@@ -925,7 +922,7 @@ function getAgentSupplementalInfo(iri) {
   }
   else {
     return getResourceGraph(iri)
-      .then(g => {
+      .then(({ graph: g }) => {
         if (!Array.from(g.out().quads()).length) {
           return Promise.resolve([]);
         }
@@ -1046,7 +1043,10 @@ function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
         var promisesGetAgentSeeAlsoPrimaryTopicOf = [];
 
         results.forEach(result => {
-          var g = result.value;
+          // result.value is { response, graph, error: undefined } on fulfilled;
+          // rejected entries (same shape with error) are skipped.
+          if (result.status !== 'fulfilled') return;
+          var g = result.value?.graph;
 
           if (g) {
             var s = g.node(rdf.namedNode(subjectURI));
@@ -1119,9 +1119,8 @@ function getUserContacts(iri) {
     }
     else {
       return getResourceGraph(iri)
-        .then(g => {
-          // if(typeof g._graph == 'undefined' || g.resource || g.cause || g.status?.startsWith(5)) {
-          if(typeof g == 'undefined') {
+        .then(({ graph: g }) => {
+          if (typeof g === 'undefined') {
             return Promise.resolve([]);
           }
 
@@ -1152,9 +1151,8 @@ function getAgentTypeIndex(s) {
 
   var fetchTypeRegistration = function(iri, typeIndexType) {
     return getResourceGraph(iri)
-      .then(g => {
+      .then(({ graph: g }) => {
         //XXX: https://github.com/solid/type-indexes/issues/29 for potential property to discover TypeRegistrations.
-        // console.log(iri, g, g.term.value, typeIndexType);
 
         if (!g) {
           return {};
@@ -1752,27 +1750,8 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
 
         Config.Resource[iri]['acl']['defaultACLResource'] = Config.Resource[iri]['acl']['defaultACLResource'] || aclResource;
 
-        return getResourceGraph(aclResource, {}, { withResponse: true })
-          .then(result => {
-            // console.log(i)
-            // console.log(i.status)
-
-            //404?
-            if (!result) {
-              var container = pathURL.endsWith('/') ? getParentURLPath(pathURL) : baseURL;
-              // console.log(container);
-              if (typeof container !== 'undefined') {
-                Config.Resource[documentURL]['acl']['effectiveContainer'] = container;
-
-                return getACLResourceGraph(documentURL, container);
-              }
-              else {
-                return Promise.reject(new Error('effectiveACLResource not determined. https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm'));
-              }
-            }
-
-            const { graph: g, response } = result;
-
+        return getResourceGraph(aclResource, {})
+          .then(({ response, graph: g }) => {
             const link = response.headers.get('Link');
             const conditions = [];
 
@@ -1791,12 +1770,29 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
             Config.Resource[aclResource]['conditions'] = conditions;
             //TODO: We probably shouldn't use this approach here:
             Config.Resource[aclResource]['graph'] = g;
-            // console.log(Config.Resource[aclResource])
             return g;
           },
-          function(reason){
-            console.log(reason)
-            // return getACLResourceGraph(uri.getParentURLPath(iri))
+          function({ response, error } = {}){
+            // WAC effective ACL resource algorithm:
+            // 404: candidate ACL resource doesn't exist; check parent container.
+            // 403: terminate.
+            // Other 4xx / unknown: swallow for now.
+            const status = response?.status;
+
+            if (status === 404) {
+              var container = pathURL.endsWith('/') ? getParentURLPath(pathURL) : baseURL;
+              if (typeof container !== 'undefined') {
+                Config.Resource[documentURL]['acl']['effectiveContainer'] = container;
+                return getACLResourceGraph(documentURL, container);
+              }
+              return Promise.reject(new Error('effectiveACLResource not determined. https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm'));
+            }
+
+            if (status === 403) {
+              return Promise.reject(new Error('Access to candidate ACL resource is forbidden (403). Stopping effective ACL resource search.'));
+            }
+
+            console.log(error || response);
           });
       }
       else {
@@ -1904,8 +1900,8 @@ function getItemsList(url, options) {
 
   return getResourceGraph(url, options.headers, options)
     .then(
-      function(g) {
-        if (!g || g.resource) return [];
+      function({ graph: g }) {
+        if (!g) return [];
 
         var s = g.node(rdf.namedNode(url));
         // console.log(s.toString());
