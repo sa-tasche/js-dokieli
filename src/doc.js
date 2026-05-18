@@ -4557,7 +4557,6 @@ export function getCitation(i, options) {
   // console.log(i)
   // console.log(options)
   options = options || {};
-  options['noCredentials'] = true;
   var url;
 
   if (isValidISBN(i)) {

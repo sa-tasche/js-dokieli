@@ -152,7 +152,6 @@ function getSubjectInfo(subjectIRI, options = {}) {
   }
 
   var headers = {};
-  options['noCredentials'] = !!options['noCredentials'];
   options['noStore'] = !!options['noStore'];
 
   return getResourceGraph(subjectIRI, headers, options)
@@ -1389,8 +1388,7 @@ function getAgentFollowing(s) {
     const options = {
       headers: {
         'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json, text/turtle'
-      },
-      noCredentials: true
+      }
     };
     return getItemsList(following[0], options)
       .then(items => items.length ? items : undefined);

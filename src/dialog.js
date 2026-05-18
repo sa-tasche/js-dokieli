@@ -2215,8 +2215,6 @@ export async function openResource(iri, options) {
   // if (pIRI.slice(0, 5).toLowerCase() == 'http:') {
   // }
 
-  // options['noCredentials'] = true;
-
   var handleResource = async function handleResource(iri, headers, options) {
     var message = `Opening <a href="${iri} rel="noopener" target="_blank">${iri}</a>.`;
     var actionMessage = `Opening <a href="${iri}" rel="noopener" target="_blank">${iri}</a>`;
@@ -3973,8 +3971,6 @@ export function createRobustLink(uri, node, options){
 export function snapshotAtEndpoint(e, iri, endpoint, noteData, options = {}) {
   iri = iri || currentLocation();
   endpoint = endpoint || 'https://pragma.archivelab.org/';
-  options.noCredentials = true
-
   var progress, svgFail, messageArchivedAt;
   options['showActionMessage'] = ('showActionMessage' in options) ? options.showActionMessage : true;
 
@@ -5474,8 +5470,7 @@ export function buildListOfStuff(id) {
   insertDocumentLevelHTML(document, s, { id });
 
   if (id == 'table-of-requirements') {
-    var options = { noCredentials: true };
-    // var options = {};
+    var options = {};
     var testSuites = Config.Resource[documentURL].graph.out(ns.spec.testSuite).values;
 // testSuites = [];
 // console.log(testSuites)

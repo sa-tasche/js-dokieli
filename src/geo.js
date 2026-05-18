@@ -535,7 +535,7 @@ async function lookupPlace(lat, lon) {
   const reverseURL = `https://nominatim.openstreetmap.org/reverse?format=geojson&zoom=10&lat=${lat}&lon=${lon}`;
 
   const headers = { 'Accept': 'application/json' };
-  const options = { 'noCredentials': true };
+  const options = {};
 
   try {
     const reverseResponse = await Config.Storage.get(reverseURL, headers, options);

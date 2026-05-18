@@ -101,15 +101,6 @@ function copyResource (fromURL, toURL, options = {}) {
     .then(contents => {
       //XXX: Should this sanitize (domSanitize(contents)) or copy resource as is?
       return putResource(toURL, contents, contentType, null, options)
-        .catch(error => {
-          if (error.status === 0) {
-            // Retry with no credentials
-            options.noCredentials = true
-            return putResource(toURL, contents, contentType, null, options)
-          }
-
-          throw error  // re-throw error
-        })
     })
 }
 
@@ -128,7 +119,7 @@ function deleteResource (url, options = {}) {
     return Promise.reject(new Error('Cannot DELETE resource - missing url'))
   }
 
-  if (!options.noCredentials) {
+  if (options.withCredentials) {
     options.credentials = 'include'
   }
 
@@ -272,8 +263,7 @@ function getResource (url, headers = {}, options = {}) {
     headers['Cache-Control'] = 'no-store'
   }
 
-  //XXX: Do we need this?
-  if (!options.noCredentials) {
+  if (options.withCredentials) {
     options.credentials = 'include'
   }
 
@@ -305,28 +295,17 @@ function getResource (url, headers = {}, options = {}) {
           throw new Error('401 retries failed', { cause: error });
         }
         options.hasRetriedWithCredentials = true
-        options.noCredentials = false
         options.credentials = 'include'
-// console.log('status: 401')
         return getResource(url, headers, options)
       }
-      else if (!options.noCredentials && options.credentials !== 'omit') {
-// console.log('Possible CORS error, retry with no credentials')
-        options.noCredentials = true
-        options.credentials = 'omit'
-        return getResource(url, headers, options)
-      }
-      // else if (!error?.status) {
       else {
-        if (options.proxyForced) { 
+        if (options.proxyForced) {
           throw new Error('Cannot fetch proxied URL: ' + url);
         }
         var pIRI = getProxyableIRI(url, {'forceProxy': true});
 
         if (pIRI !== url) {
           options['proxyForced'] = true;
-          options.noCredentials = true;
-          options.credentials = 'omit';
           return getResource(pIRI, headers, options);
         }
         else {
@@ -372,7 +351,7 @@ function getResourceHead (url, headers = {}, options = {}) {
  *
  * @param [options={}] {object}
  * @param [options.header] {string} Specific response header to return
- * @param [options.noCredentials] {boolean}
+ * @param [options.withCredentials] {boolean} Send cookies cross-origin (`credentials: 'include'`)
  *
  * @returns {Promise} Resolves with `{ headers: ... }` object
  */
@@ -383,7 +362,7 @@ function getResourceOptions (url, options = {}) {
 
   options.method = 'OPTIONS'
 
-  if (!options.noCredentials) {
+  if (options.withCredentials) {
     options.credentials = 'include'
   }
 
@@ -518,7 +497,7 @@ function patchResource (url, data, options = {}) {
 
   options.method = 'PATCH'
 
-  if (!options.noCredentials) {
+  if (options.withCredentials) {
     options.credentials = 'include'
   }
 
@@ -549,7 +528,7 @@ function postResource (url, slug, data, contentType, links, options = {}) {
 
   options.body = data
 
-  if (!options.noCredentials) {
+  if (options.withCredentials) {
     options.credentials = 'include'
   }
 
@@ -568,16 +547,6 @@ function postResource (url, slug, data, contentType, links, options = {}) {
   }
 
   return _fetch(url, options)
-
-    .catch(error => {
-      if (error.status === 0 && !options.noCredentials) {
-        // Possible CORS error, retry with no credentials
-        options.noCredentials = true
-        return postResource(url, slug, data, contentType, options)
-      }
-
-      throw error
-    })
 
     .then(response => {
       if (!response.ok) {  // not a 2xx level response
@@ -619,7 +588,7 @@ function putResource (url, data, contentType, links, options = {}) {
 
   options.body = data
 
-  if (!options.noCredentials) {
+  if (options.withCredentials) {
     options.credentials = 'include'
   }
 

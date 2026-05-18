@@ -739,9 +739,6 @@ export function showVisualisationGraph(url, data, selector, options) {
             options = options || {};
             options['subjectURI'] = d.id;
             var headers = { 'Accept': setAcceptRDFTypes() };
-            if (url.protocol === 'http:') {
-              options['noCredentials'] = true;
-            }
             handleResource(d.id, headers, options);
           }
       }

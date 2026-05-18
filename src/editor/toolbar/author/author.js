@@ -986,7 +986,7 @@ nodeToHTML(node, schema) {
       var keyword = citationSpecRefSearch.value.trim();
       var url = 'https://api.specref.org/search-refs?q=' + encodeURIComponent(keyword);
       var headers = {'Accept': 'application/json'};
-      var options = {'noCredentials': true};
+      var options = {};
 
       Config.Storage.get(url, headers, options)
         .then(response => {
