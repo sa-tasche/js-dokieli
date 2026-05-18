@@ -1079,8 +1079,8 @@ function addAccessSubjectItem(node, s, url) {
   iri = domSanitize(iri);
 
   var id = encodeURIComponent(iri);
-  var name = Config.User?.Contacts[iri]?.Name || (s ? getAgentName(s) || iri : iri);
-  var img = Config.User?.Contacts[iri]?.Image || (s ? getGraphImage(s) : null);
+  var name = Config.User?.Contacts?.[iri]?.Name || (s ? getAgentName(s) || iri : iri);
+  var img = Config.User?.Contacts?.[iri]?.Image || (s ? getGraphImage(s) : null);
   if (!(img && img.length)) {
     img = Config.IconBase64['.fas.fa-user-secret'];
   }
