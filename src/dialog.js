@@ -3289,24 +3289,24 @@ export function showEmbedData(e) {
     var scriptType = {
       'meta-turtle': {
         mediaType: 'text/turtle',
-        scriptStart: '<script id="meta-turtle" title="Turtle" type="text/turtle">',
-        cdataStart: '# ' + Config.CDATAStart + '\n',
-        cdataEnd: '\n# ' + Config.CDATAEnd,
-        scriptEnd: '</script>'
+        scriptStart: `<script id="meta-turtle" title="Turtle" type="text/turtle">`,
+        cdataStart: `#${Config.CDATAStart}\n`,
+        cdataEnd: `\n#${Config.CDATAEnd}`,
+        scriptEnd: `</script>`
       },
       'meta-json-ld': {
         mediaType: 'application/ld+json',
-        scriptStart: '<script id="meta-json-ld" title="JSON-LD" type="application/ld+json">',
-        cdataStart: Config.CDATAStart + '\n',
-        cdataEnd: '\n' + Config.CDATAEnd,
-        scriptEnd: '</script>'
+        scriptStart: `<script id="meta-json-ld" title="JSON-LD" type="application/ld+json">`,
+        cdataStart: `${Config.CDATAStart}\n`,
+        cdataEnd: `\n${Config.CDATAEnd}`,
+        scriptEnd: `</script>`
       },
       'meta-trig': {
         mediaType: 'application/trig',
-        scriptStart: '<script id="meta-trig" title="TriG" type="application/trig">',
-        cdataStart: '# ' + Config.CDATAStart + '\n',
-        cdataEnd: '\n# ' + Config.CDATAEnd,
-        scriptEnd: '</script>'
+        scriptStart: `<script id="meta-trig" title="TriG" type="application/trig">`,
+        cdataStart: `#${Config.CDATAStart}\n`,
+        cdataEnd: `\n#${Config.CDATAEnd}`,
+        scriptEnd: `</script>`
       }
     }
 
