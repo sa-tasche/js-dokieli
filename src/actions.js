@@ -128,27 +128,26 @@ export async function setPreferredLanguagesInfo(g) {
   }
 
   let matchedLang;
-  let found = false;
 
-  for (const lang of preferredLanguages) {
+  outer: for (const lang of preferredLanguages) {
     const segments = lang.split("-");
 
     for (let len = segments.length; len > 0; len--) {
       const candidate = segments.slice(0, len).join("-");
 
-      if (Config.Translations.includes(candidate) || candidate in fallbackLng) {
+      if (Config.Translations.includes(candidate)) {
         matchedLang = candidate;
-        found = true;
-        break;
+        break outer;
+      }
+
+      if (candidate in fallbackLng) {
+        matchedLang = fallbackLng[candidate][0];
+        break outer;
       }
     }
-
-    if (found) break;
   }
 
-  if (matchedLang) {
-    updateUILanguage(matchedLang);
-  }
+  updateUILanguage(matchedLang ?? fallbackLng.default[0]);
 }
 
 export async function updateUILanguage(lang, user) {

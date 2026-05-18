@@ -85,7 +85,7 @@ export async function signOut() {
   Config.User = {
     IRI: null,
     Role: 'social',
-    UI: {}
+    UI: Config.User.UI
   }
 
   updateButtons();
