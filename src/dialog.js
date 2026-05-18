@@ -36,7 +36,7 @@ import { enableAutoSave, disableAutoSave, enableRemoteSync, disableRemoteSync, s
 import { showVisualisationGraph } from './viz.js';
 import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
-import { showUserSigninSignout, userInfoSignOut } from './auth.js';
+import { showUserSigninSignout } from './auth.js';
 import { initSlideshow } from './init.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
@@ -104,9 +104,6 @@ export function initDocumentMenu(options = {}) {
       else if (button?.classList.contains('hide')) {
         hideDocumentMenu(e);
       }
-    }
-    else if (button?.classList.contains('signout-user')) {
-      userInfoSignOut(document.getElementById('user-info'));
     }
   });
   
