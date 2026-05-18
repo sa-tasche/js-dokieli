@@ -15,14 +15,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import rdf from 'rdf-ext';
 import Config from './config.js';
-import { getAgentPreferredLanguages } from './graph.js';
+import { getAgentPreferredLanguages, getGraphConceptLabel, getResourceGraph } from './graph.js';
 import { fallbackLng, i18n } from './i18n.js';
 import { generateFilename } from './util.js';
 import { getDocumentContentNode } from "./utils/html.js";
 import { initButtons } from './ui/buttons.js';
 import { domSanitize } from './utils/sanitization.js';
 import { getDeviceStorageItem, setDeviceStorageItem, updateDeviceStorageItem } from './storage.js';
+import { addMessageToLog, showActionMessage } from './doc.js';
 
 export function exportAsDocument(data, options = {}) {
   const documentOptions = {
@@ -56,18 +58,25 @@ export function showGeneralMessages() {
 
 
 export function showResourceAudienceAgentOccupations() {
-  if (Config.User.Occupations && Config.User.Occupations.length > 0) {
+  if (Config.User.Occupations?.length) {
     var matches = [];
 
     Config.Resource[Config.DocumentURL].audience.forEach(audience => {
       if (Config.User.Occupations.includes(audience)) {
-        matches.push(getResourceGraph(audience).then(({ graph: g }) => {
-          Config.Resource[audience] = { graph: g };
-          return g ? g.node(rdf.namedNode(audience)) : g;
-        }));
+        matches.push(
+          getResourceGraph(audience)
+            .then(({ graph: g }) => {
+              Config.Resource[audience] = { graph: g };
+              return g ? g.node(rdf.namedNode(audience)) : g;
+            })
+            // .catch((error) => {
+            //   console.log(error)
+            // })
+            );
       }
     })
 
+    //FIXME: Showing the audience essentially only works if we can fetch the audience concept resource
     Promise.allSettled(matches)
       .then(results => {
         var ul = [];

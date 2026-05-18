@@ -84,7 +84,6 @@ export async function signOut() {
 
   Config.User = {
     IRI: null,
-    Role: 'social',
     UI: Config.User.UI
   }
 
@@ -579,8 +578,8 @@ export function afterSetUserInfo() {
       if (uI && !Config['Session']?.isActive) {
         // uI.replaceChildren(fragmentFromString(DO.Config.Button.Menu.SignOut))
 
-        removeChildren(node);
-        showUserSigninSignout(node);
+        removeChildren(uI);
+        showUserSigninSignout(uI);
       }
 
       showGeneralMessages();
