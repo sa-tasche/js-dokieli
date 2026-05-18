@@ -72,12 +72,13 @@ export async function showUserSigninSignout (node) {
 }
 
 export async function signOut() {
-  //Sign out for real
+  //TODO: Use the specific method that the user was signed in with
   if (Config['Session']?.isActive) {
     await Config['Session']?.logout();
   }
-
-  await signOutGitForge();
+  else {
+    await signOutGitForge();
+  }
 
   removeDeviceStorageAsSignOut();
 
@@ -433,8 +434,8 @@ async function signInWithForgejoPAT(serverUrl, token, aside) {
 
 export async function signOutGitForge(host) {
   const { getDeviceStorageItem, removeDeviceStorageItem } = await import('./storage.js');
-  const hosts = (await getDeviceStorageItem(GIT_FORGE_HOSTS_KEY)) || {};
   if (host) {
+    const hosts = (await getDeviceStorageItem(GIT_FORGE_HOSTS_KEY)) || {};
     delete hosts[host];
     if (Object.keys(hosts).length) {
       await setDeviceStorageItem(GIT_FORGE_HOSTS_KEY, hosts);
