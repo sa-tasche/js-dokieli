@@ -56,13 +56,9 @@ export async function restoreSession() {
 export async function showUserSigninSignout (node) {
   var webId = Config['Session']?.isActive ? Config['Session']?.webId : null;
 
-  // was LoggedIn with new OIDC WebID
-  if (webId && (webId != Config.User.IRI || !Config.User.IRI)) {
-    //Sets Config.User based on webId
-     await setUserInfo(webId)
-          .then(() => {
-            afterSetUserInfo()
-          })
+  if (webId && webId !== Config.User.IRI) {
+    await setUserInfo(webId);
+    afterSetUserInfo();
   }
 
   if (node.hasChildNodes()) { return; }
