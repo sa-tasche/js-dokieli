@@ -126,8 +126,7 @@ export function showUserIdentityInput () {
 
   var buttonClose = getButtonHTML({ key: 'dialog.signin.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
 
-  var webid = Config.User.WebIdDelegate ? Config.User.WebIdDelegate : "";
-  var buttonSignInDisabled = webid ? '' : ' disabled="disabled"';
+  var buttonSignInDisabled = '';
 
   var code = `
     <aside aria-labelledby="user-identity-input-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="user-identity-input" lang="${Config.User.UI.Language}" rel="schema:hasPart" resource="#user-identity-input" xml:lang="${Config.User.UI.Language}">
@@ -191,7 +190,7 @@ export function showUserIdentityInput () {
           <summary data-i18n="dialog.signin.advanced.summary">${i18n.t('dialog.signin.advanced.summary.textContent')}</summary>
           <p id="user-identity-input-webid">
             <label for="webid" data-i18n="dialog.signin.webid.label">${i18n.t('dialog.signin.webid.label.textContent')}</label>
-            <input dir="ltr" id="webid" type="url" placeholder="https://username.solidcommunity.net/" value="${webid}" name="webid"/>
+            <input dir="ltr" id="webid" type="url" placeholder="https://username.solidcommunity.net/" value="" name="webid"/>
             <button data-i18n="dialog.signin.submit.button" class="signin" type="button"${buttonSignInDisabled}>${i18n.t('dialog.signin.submit.button.textContent')}</button>
           </p>
         </details>

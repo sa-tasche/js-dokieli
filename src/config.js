@@ -43,8 +43,7 @@ export default {
     UI: {
       Language: 'en-GB', // default
       LanguageDir: 'ltr'
-    },
-    WebIdDelegate: null
+    }
   },
   ContributorRoles: ['author', 'editor'],
   LocalDocument: (document.location.protocol == 'file:'),
