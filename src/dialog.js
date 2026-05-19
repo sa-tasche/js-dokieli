@@ -3280,7 +3280,7 @@ export function addSlide(e) {
 }
 
 export function showEmbedData(e) {
-  if(document.querySelector('#embed-data-in-html')) { return; }
+  if(document.querySelector('#embed-data-entry')) { return; }
 
   // var eventEmbedData = function(e) {
     e.target.setAttribute('disabled', 'disabled');
@@ -3377,17 +3377,18 @@ export function showEmbedData(e) {
 
           serializeData(data, scriptType[name].mediaType, scriptType[name].mediaType, { sanitize: true })
             .then(scriptEntry => {
+              const scriptTextContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
+
               if (script) {
-                script.textContent = scriptType[name].cdataStart + scriptEntry + scriptType[name].cdataEnd;
+                script.textContent = scriptTextContent;
               }
               else {
-                sanitizeInsertAdjacentHTML(document.querySelector('head'), 'beforeend',
-                  scriptType[name].scriptStart +
-                  scriptType[name].cdataStart +
-                  scriptEntry +
-                  scriptType[name].cdataEnd +
-                  scriptType[name].scriptEnd
-                );
+                const el = document.createElement('script');
+                el.id = name;
+                el.title = scriptType[name].title;  // if needed
+                el.type = scriptType[name].mediaType;
+                el.textContent = scriptTextContent;
+                document.querySelector('head').appendChild(el);
               }
             })
             //TODO: Catch here when the input is invalid. Show alert indicating invalid. Let user correct it before saving again.
