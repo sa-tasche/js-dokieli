@@ -108,18 +108,5 @@
     "minimatch": "^10.2.4",
     "lodash": "^4.18.0"
   },
-  "standard": {
-    "globals": [
-      "DO",
-      "SimpleRDF",
-      "ld",
-      "describe",
-      "it",
-      "before",
-      "beforeEach",
-      "after",
-      "afterEach"
-    ]
-  },
   "packageManager": "yarn@4.14.1"
 }
