@@ -219,8 +219,7 @@ export function getParentURLPath(url) {
 }
 
 export function forceTrailingSlash(string) {
-  if (string.slice(-1) == '/') return string;
-  return string + '/';
+  return string.endsWith('/') ? string : string + '/';
 }
 
 export function getFragmentOrLastPath(string) {
