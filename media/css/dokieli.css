@@ -2237,7 +2237,7 @@ list-style: disc none inside;
 #document-do ul,
 #document-views ul,
 #document-metadata ul,
-#embed-data-in-html ul,
+#embed-data-entry ul,
 #share-resource ul,
 #list-of-stuff ul {
 list-style-type:none;

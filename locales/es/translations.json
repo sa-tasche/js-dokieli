@@ -214,6 +214,7 @@
   "dialog.embed-data-entry.h2.textContent": "Insertar datos",
   "dialog.embed-data-entry.submit.button.textContent": "Guardar",
   "dialog.embed-data-entry.submit.button.title": "Incrustar datos en el documento",
+  "dialog.embed-data-entry.invalid-data": "Datos no válidos. Por favor, corrija la entrada e inténtelo de nuevo.",
   "dialog.generate-feed.close.button.aria-label": "Cerrar Generación de Feed",
   "dialog.generate-feed.close.button.title": "Cerrar",
   "dialog.generate-feed.error.missing-location.p.textContent": "Especifique la ubicación donde guardar el feed.",

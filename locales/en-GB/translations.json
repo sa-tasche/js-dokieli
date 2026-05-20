@@ -214,6 +214,7 @@
   "dialog.embed-data-entry.h2.textContent": "Embed Data",
   "dialog.embed-data-entry.submit.button.textContent": "Save",
   "dialog.embed-data-entry.submit.button.title": "Embed data into document",
+  "dialog.embed-data-entry.invalid-data": "Invalid data. Please correct the input and try again.",
   "dialog.generate-feed.close.button.aria-label": "Close Generate Feed",
   "dialog.generate-feed.close.button.title": "Close",
   "dialog.generate-feed.error.missing-location.p.textContent": "Specify the location where the feed should be saved.",
