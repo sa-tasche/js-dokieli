@@ -1319,7 +1319,6 @@ export function replyToResource(e, iri) {
     </aside>
   `))
 
-  // TODO: License
   // TODO: ACL - can choose whether to make this reply private (to self), visible only to article author(s), visible to own contacts, public
   // TODO: Show name and face of signed in user reply is from, or 'anon' if article can host replies
 
@@ -1346,13 +1345,11 @@ export function replyToResource(e, iri) {
     }
 
     if (e.target.closest('button.reply')) {
-      note = document
-        .querySelector('#reply-to-resource #reply-to-resource-note')
-        .value.trim()
+      note = replyToResource.querySelector('#reply-to-resource-note').value.trim()
 
       var rm = replyToResource.querySelector('.response-message')
       if (rm) {
-        rm.parentNode.removeChild(rm)
+        rm.remove()
       }
       sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', '<div class="response-message"></div>')
 
@@ -1361,7 +1358,7 @@ export function replyToResource(e, iri) {
       try {
         noteIRI = noteIRI && noteIRI.length ? new URL(noteIRI).href : noteIRI;
       } catch (e) {
-        noteIRI = noteIRI; // Keep the original value if it's not a valid URL
+        // keep the original value if it's not a valid URL
       }
 
       // TODO: this needs to be form validation instead
@@ -1424,10 +1421,8 @@ export function replyToResource(e, iri) {
 
     Config.Storage.put(noteIRI, data)
       .catch(error => {
-        console.log('Could not save reply:')
-        console.error(error)
+        console.error('Could not save reply:', error)
 
-        let message;
         let errorKey = 'default';
 
         switch (error.status) {
@@ -1448,15 +1443,10 @@ export function replyToResource(e, iri) {
             errorKey = 'unacceptable';
             break
           default:
-            // some other reason
             break
         }
 
-        message = `<span data-i18n="dialog.reply-to-resource.error.${errorKey}.p">${i18n.t(`dialog.reply-to-resource.error.${errorKey}.p.textContent`)}</span>`;
-
-        // re-throw, to break out of the promise chain
-        
-        throw new Error('Cannot save your reply: ', i18n.t(`dialog.reply-to-resource.error.${errorKey}.p.textContent`));
+        throw new Error(i18n.t(`dialog.reply-to-resource.error.${errorKey}.p.textContent`));
       })
 
       .then(response => {
@@ -1510,7 +1500,7 @@ export function replyToResource(e, iri) {
 
         if (location) {
           let locationUrl = domSanitize(getAbsoluteIRI(response.url, location.trim()));
-          notificationLink = `<a href="${locationUrl}" rel="noopener" "target="_blank">${locationUrl}</a>`;
+          notificationLink = `<a href="${locationUrl}" rel="noopener" target="_blank">${locationUrl}</a>`;
         }
         // else {
         //   notificationSent = notificationSent + ", but location unknown."
