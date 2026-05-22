@@ -15,11 +15,19 @@ const config = {
   fullyParallel: true,
   retries: 0,
   reporter: "html",
-  webServer: {
-    command: "npx serve",
-    port: 3000,
-    reuseExistingServer: true,
-  },
+  webServer: [
+    {
+      command: "npx serve",
+      port: 3000,
+      reuseExistingServer: true,
+    },
+    {
+      command: "node tests/utils/ws-server.js",
+      port: 4000,
+      reuseExistingServer: true,
+      env: { PORT: "4000" },
+    },
+  ],
   use: {
     actionTimeout: 10000,
     baseURL: "http://localhost:3000",
