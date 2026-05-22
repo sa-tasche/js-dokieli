@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /*!
 Copyright 2012-2026 Sarven Capadisli <https://csarven.ca/>
 Copyright 2023-2026 Virginia Balseiro <https://virginiabalseiro.com/>

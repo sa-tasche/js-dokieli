@@ -1,4 +1,3 @@
-import jestPlugin from 'eslint-plugin-jest';
 import licenseHeader from 'eslint-plugin-license-header';
 
 export default [
@@ -12,27 +11,12 @@ export default [
       },
       ecmaVersion: 2022,
     },
-    plugins: {
-      jest: jestPlugin,
-      import: importPlugin
-    },
     rules: {
       'no-unused-vars': 'off',
       'no-useless-escape': 'off',
       'no-prototype-builtins': 'off',
-      'import/no-unresolved': 'error'
     },
     ignores: ['node_modules', 'scripts/', 'playwright-report/'],
-    settings: {
-      jest: {
-        version: 29,
-      },
-      "import/resolver": {
-        "typescript": {
-          "alwaysTryTypes": true
-        }
-      }
-    },
   },
 
   // License header only in src and tests
