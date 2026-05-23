@@ -126,7 +126,7 @@ exemplify what we can do with this technology. You are welcome to use and
 experiment with dokieli there, or anywhere else you come across a dokieli
 document.
 
-For the scholars among us, see the authoring guidelines below. View the [ACM SIG Proceedings Paper](https://dokie.li/acm-sigproc-sp) using the [LNCS Author Guidelines](https://dokie.li/lncs-splnproc) (typographical rules), and vice versa (see the menu) ;)
+For the scholars among us, view the authoring guidelines such as the [ACM SIG Proceedings Paper](https://dokie.li/acm-sigproc-sp) using the [LNCS Author Guidelines](https://dokie.li/lncs-splnproc) (typographical rules), and vice versa (see the dokieli menu) ;) More can be found in the [dokieli themes](https://github.com/dokieli/themes) repository.
 
 ## Specifications
 
