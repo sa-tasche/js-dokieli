@@ -42,7 +42,7 @@ export function exportAsDocument(data, options = {}) {
   var blob = new Blob([data], {type: mediaType + ';charset=utf-8'});
 
   var a = document.createElement("a");
-  a.download = generateFilename(url, options);
+  a.download = options.filename || generateFilename(url, options);
 
   a.href = window.URL.createObjectURL(blob);
   a.style.display = "none";

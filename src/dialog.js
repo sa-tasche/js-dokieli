@@ -1336,6 +1336,7 @@ export function replyToResource(e, iri) {
   var noteIRI;
 
   setupResourceBrowser(replyToResource, id, action)
+  attachBrowseStoragePopup(id, action)
   sanitizeInsertAdjacentHTML(document.getElementById(id), 'afterbegin', `<p data-i18n="dialog.reply-to-resource.save-location-choose.p">${i18n.t('dialog.reply-to-resource.save-location-choose.p.textContent')}</p>`)
 
   sanitizeInsertAdjacentHTML(replyToResource, 'beforeend', `<p data-i18n="dialog.reply-to-resource.save-location.p">${i18n.t('dialog.reply-to-resource.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`)
@@ -1537,12 +1538,9 @@ function setupResourceBrowser(parent, id, action){
     normalize: true
   };
 
-  var createContainerButton = '';
-  var createContainerDiv = '';
-  if (Config['Session']?.isActive) {
-    createContainerButton = ` <button data-i18n="browser.create-container.button" id="${id}-create-container-button" title="${i18n.t('browser.create-container.button.title')}">${i18n.t('browser.create-container.button.textContent')}</button>`;
-    createContainerDiv = `<div id="${id}-create-container"></div>`;
-  }
+  var isAuthed = !!Config['Session']?.isActive;
+  var createContainerButton = ` <button data-i18n="browser.create-container.button" id="${id}-create-container-button" ${isAuthed ? '' : 'disabled="disabled"'} title="${i18n.t('browser.create-container.button.title')}">${i18n.t('browser.create-container.button.textContent')}</button>`;
+  var createContainerDiv = `<div id="${id}-create-container"></div>`;
 
   var defaultDirUrl = '';
   var defaultFilename = '';
@@ -1577,7 +1575,7 @@ function setupResourceBrowser(parent, id, action){
   }
 
   var filenameField = action === 'write'
-    ? ` <label for="${id}-filename">Filename</label> <input dir="ltr" id="${id}-filename" name="${id}-filename" placeholder="my-document.html" type="text" value="${defaultFilename}" />`
+    ? ` <label data-i18n="browser.filename.label" for="${id}-filename">${i18n.t('browser.filename.label.textContent')}</label> <input dir="ltr" id="${id}-filename" name="${id}-filename" placeholder="document.html" type="text" value="${defaultFilename}" />`
     : '';
 
   var urlLabel = (action === 'write' && Config.User?.GitForge) ? 'URL or repo URL' : 'URL';
@@ -1604,7 +1602,9 @@ function setupResourceBrowser(parent, id, action){
     if (isValidBase(input.value)) {
       browseButton.removeAttribute('disabled');
       if(actionNode){
-        actionNode.textContent = withTrailingSlash(input.value) + (filenameInput ? filenameInput.value : generateAttributeId());
+        actionNode.textContent = action === 'read'
+          ? input.value
+          : withTrailingSlash(input.value) + (filenameInput ? filenameInput.value : generateAttributeId());
       }
     }
     else {
@@ -1698,6 +1698,604 @@ function setupResourceBrowser(parent, id, action){
         // }
       })
   }
+}
+
+async function bundleExternalAssets(rootEl) {
+  var files = [];
+  var usedNames = new Set();
+  var ensureUnique = (name) => {
+    if (!usedNames.has(name)) { usedNames.add(name); return name; }
+    var dot = name.lastIndexOf('.');
+    var base = dot > 0 ? name.slice(0, dot) : name;
+    var ext = dot > 0 ? name.slice(dot) : '';
+    var i = 1;
+    while (usedNames.has(`${base}-${i}${ext}`)) i++;
+    var unique = `${base}-${i}${ext}`;
+    usedNames.add(unique);
+    return unique;
+  };
+
+  var imageExtRe = /\.(jpe?g|png|gif|svg|webp|avif|ico|bmp)(\?|#|$)/i;
+  var fontExtRe = /\.(woff2?|ttf|otf|eot)(\?|#|$)/i;
+  var videoExtRe = /\.(mp4|webm|ogv|mov|avi|mkv|m4v)(\?|#|$)/i;
+  var audioExtRe = /\.(mp3|ogg|oga|wav|m4a|flac|aac|opus)(\?|#|$)/i;
+  var trackExtRe = /\.(vtt|srt)(\?|#|$)/i;
+  var detectKind = (url) => {
+    if (!url) return null;
+    if (imageExtRe.test(url)) return 'image';
+    if (fontExtRe.test(url)) return 'font';
+    if (videoExtRe.test(url)) return 'video';
+    if (audioExtRe.test(url)) return 'audio';
+    if (trackExtRe.test(url)) return 'track';
+    return null;
+  };
+  var fetched = new Map();
+  var contentHashes = new Map();
+
+  var hashContent = async (content) => {
+    var data = typeof content === 'string' ? new TextEncoder().encode(content) : content;
+    var buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  var relativePath = (fromPath, toPath) => {
+    var fromParts = fromPath.split('/');
+    var toParts = toPath.split('/');
+    fromParts.pop();
+    var i = 0;
+    while (i < fromParts.length && i < toParts.length - 1 && fromParts[i] === toParts[i]) i++;
+    var ups = fromParts.length - i;
+    return '../'.repeat(ups) + toParts.slice(i).join('/');
+  };
+
+  var processCSSUrls = async (cssContent, cssURL, cssZipPath) => {
+    var urlRegex = /url\(\s*(['"]?)([^'")\s]+)\1\s*\)/g;
+    var matches = Array.from(cssContent.matchAll(urlRegex));
+    var replacements = new Map();
+    for (var m of matches) {
+      var fullMatch = m[0];
+      var quote = m[1];
+      var rawURL = m[2];
+      if (replacements.has(fullMatch)) continue;
+      if (!rawURL || rawURL.startsWith('data:') || rawURL.startsWith('#') || rawURL.startsWith('blob:')) continue;
+      var resolved;
+      try { resolved = new URL(rawURL, cssURL).href; } catch { continue; }
+      if (!/^https?:/i.test(resolved)) continue;
+      var k = fontExtRe.test(resolved) ? 'font' : /\.css(\?|#|$)/i.test(resolved) ? 'css' : 'image';
+      var bundledName = await fetchAsset(resolved, k);
+      if (bundledName) {
+        var rel = relativePath(cssZipPath, bundledName);
+        replacements.set(fullMatch, 'url(' + quote + rel + quote + ')');
+      }
+    }
+    replacements.forEach((newVal, oldVal) => {
+      cssContent = cssContent.split(oldVal).join(newVal);
+    });
+    return cssContent;
+  };
+
+  var fetchAsset = async (rawURL, kind) => {
+    if (!rawURL || rawURL.startsWith('data:') || rawURL.startsWith('blob:') || rawURL.startsWith('#')) return null;
+    var abs;
+    try { abs = new URL(rawURL, document.baseURI).href; } catch { return null; }
+    if (!/^https?:/i.test(abs)) return null;
+    if (fetched.has(abs)) return fetched.get(abs);
+    try {
+      var res = await fetch(abs);
+      if (!res.ok) { fetched.set(abs, null); return null; }
+      var basename = (new URL(abs).pathname.split('/').pop()) || kind;
+      if (kind === 'css') {
+        var cssText = await res.text();
+        if (!/\.css$/i.test(basename)) basename += '.css';
+        var cssName = ensureUnique('media/css/' + basename);
+        fetched.set(abs, cssName);
+        var rewritten = await processCSSUrls(cssText, abs, cssName);
+        files.push({ name: cssName, content: rewritten });
+        return cssName;
+      }
+      var dir;
+      var content;
+      if (kind === 'js') {
+        content = await res.text();
+        if (!/\.js$/i.test(basename)) basename += '.js';
+        dir = 'scripts/';
+      }
+      else if (kind === 'font') {
+        var blob = await res.blob();
+        var ab = await blob.arrayBuffer();
+        content = new Uint8Array(ab);
+        if (!/\.[a-z0-9]+$/i.test(basename)) {
+          var ct = res.headers.get('content-type') || '';
+          if (/woff2/i.test(ct)) basename += '.woff2';
+          else if (/woff/i.test(ct)) basename += '.woff';
+          else if (/ttf|truetype/i.test(ct)) basename += '.ttf';
+          else if (/otf|opentype/i.test(ct)) basename += '.otf';
+          else basename += '.bin';
+        }
+        dir = 'media/fonts/';
+      }
+      else if (kind === 'video') {
+        var blob = await res.blob();
+        var ab = await blob.arrayBuffer();
+        content = new Uint8Array(ab);
+        if (!/\.[a-z0-9]+$/i.test(basename)) {
+          var ct = res.headers.get('content-type') || '';
+          if (/webm/i.test(ct)) basename += '.webm';
+          else if (/mp4/i.test(ct)) basename += '.mp4';
+          else if (/ogg/i.test(ct)) basename += '.ogv';
+          else basename += '.bin';
+        }
+        dir = 'media/video/';
+      }
+      else if (kind === 'audio') {
+        var blob = await res.blob();
+        var ab = await blob.arrayBuffer();
+        content = new Uint8Array(ab);
+        if (!/\.[a-z0-9]+$/i.test(basename)) {
+          var ct = res.headers.get('content-type') || '';
+          if (/mpeg|mp3/i.test(ct)) basename += '.mp3';
+          else if (/ogg/i.test(ct)) basename += '.ogg';
+          else if (/wav/i.test(ct)) basename += '.wav';
+          else if (/aac/i.test(ct)) basename += '.aac';
+          else if (/flac/i.test(ct)) basename += '.flac';
+          else basename += '.bin';
+        }
+        dir = 'media/audio/';
+      }
+      else if (kind === 'track') {
+        content = await res.text();
+        if (!/\.(vtt|srt)$/i.test(basename)) basename += '.vtt';
+        dir = 'media/tracks/';
+      }
+      else {
+        var blob = await res.blob();
+        var ab = await blob.arrayBuffer();
+        content = new Uint8Array(ab);
+        if (!/\.[a-z0-9]+$/i.test(basename)) {
+          var ct = res.headers.get('content-type') || blob.type || '';
+          var ext = (ct.match(/^image\/([a-z0-9+.-]+)/i)?.[1] || 'bin').toLowerCase();
+          if (ext === 'jpeg') ext = 'jpg';
+          if (ext === 'svg+xml') ext = 'svg';
+          basename += '.' + ext;
+        }
+        dir = 'media/images/';
+      }
+      var hash = await hashContent(content);
+      if (contentHashes.has(hash)) {
+        var existingName = contentHashes.get(hash);
+        fetched.set(abs, existingName);
+        return existingName;
+      }
+      var name = ensureUnique(dir + basename);
+      files.push({ name, content });
+      fetched.set(abs, name);
+      contentHashes.set(hash, name);
+      return name;
+    } catch (e) {
+      console.warn('Could not bundle ' + kind, rawURL, e);
+      fetched.set(abs, null);
+      return null;
+    }
+  };
+
+  for (var link of Array.from(rootEl.querySelectorAll('link[rel~="stylesheet"][href]'))) {
+    var name = await fetchAsset(link.getAttribute('href'), 'css');
+    if (name) link.setAttribute('href', name);
+  }
+
+  for (var script of Array.from(rootEl.querySelectorAll('script[src]'))) {
+    var name = await fetchAsset(script.getAttribute('src'), 'js');
+    if (name) script.setAttribute('src', name);
+  }
+
+  for (var img of Array.from(rootEl.querySelectorAll('img[src]'))) {
+    var name = await fetchAsset(img.getAttribute('src'), 'image');
+    if (name) img.setAttribute('src', name);
+  }
+
+  for (var el of Array.from(rootEl.querySelectorAll('img[srcset], source[srcset]'))) {
+    var srcset = el.getAttribute('srcset');
+    if (!srcset) continue;
+    var entries = srcset.split(',').map(s => s.trim()).filter(Boolean);
+    var rewritten = [];
+    var changed = false;
+    for (var entry of entries) {
+      var parts = entry.split(/\s+/);
+      var urlPart = parts[0];
+      var descriptor = parts.slice(1).join(' ');
+      var name = await fetchAsset(urlPart, 'image');
+      if (name) {
+        rewritten.push(descriptor ? `${name} ${descriptor}` : name);
+        changed = true;
+      }
+      else {
+        rewritten.push(entry);
+      }
+    }
+    if (changed) el.setAttribute('srcset', rewritten.join(', '));
+  }
+
+  for (var anchor of Array.from(rootEl.querySelectorAll('a[href]'))) {
+    var hrefAttr = anchor.getAttribute('href');
+    var k = detectKind(hrefAttr);
+    if (!k) continue;
+    var name = await fetchAsset(hrefAttr, k);
+    if (name) anchor.setAttribute('href', name);
+  }
+
+  for (var icon of Array.from(rootEl.querySelectorAll('link[rel~="icon"][href], link[rel~="apple-touch-icon"][href], link[rel~="shortcut"][href]'))) {
+    var name = await fetchAsset(icon.getAttribute('href'), 'image');
+    if (name) icon.setAttribute('href', name);
+  }
+
+  for (var video of Array.from(rootEl.querySelectorAll('video[poster]'))) {
+    var name = await fetchAsset(video.getAttribute('poster'), 'image');
+    if (name) video.setAttribute('poster', name);
+  }
+
+  for (var mediaEl of Array.from(rootEl.querySelectorAll('video[src], audio[src]'))) {
+    var mediaSrc = mediaEl.getAttribute('src');
+    var mk = mediaEl.tagName.toLowerCase() === 'video' ? 'video' : 'audio';
+    var name = await fetchAsset(mediaSrc, mk);
+    if (name) mediaEl.setAttribute('src', name);
+  }
+
+  for (var source of Array.from(rootEl.querySelectorAll('source[src]'))) {
+    var sSrc = source.getAttribute('src');
+    var sKind = detectKind(sSrc);
+    if (!sKind) {
+      var parentName = source.parentElement?.tagName?.toLowerCase();
+      sKind = parentName === 'video' ? 'video' : parentName === 'audio' ? 'audio' : 'image';
+    }
+    var name = await fetchAsset(sSrc, sKind);
+    if (name) source.setAttribute('src', name);
+  }
+
+  for (var track of Array.from(rootEl.querySelectorAll('track[src]'))) {
+    var name = await fetchAsset(track.getAttribute('src'), 'track');
+    if (name) track.setAttribute('src', name);
+  }
+
+  for (var obj of Array.from(rootEl.querySelectorAll('object[data]'))) {
+    var objData = obj.getAttribute('data');
+    var ok = detectKind(objData) || 'image';
+    var name = await fetchAsset(objData, ok);
+    if (name) obj.setAttribute('data', name);
+  }
+
+  for (var emb of Array.from(rootEl.querySelectorAll('embed[src]'))) {
+    var embSrc = emb.getAttribute('src');
+    var ek = detectKind(embSrc) || 'image';
+    var name = await fetchAsset(embSrc, ek);
+    if (name) emb.setAttribute('src', name);
+  }
+
+  for (var preload of Array.from(rootEl.querySelectorAll('link[rel~="preload"][href]'))) {
+    var pAs = (preload.getAttribute('as') || '').toLowerCase();
+    var preKind = pAs === 'font' ? 'font' : pAs === 'image' ? 'image' : pAs === 'video' ? 'video' : pAs === 'audio' ? 'audio' : pAs === 'track' ? 'track' : pAs === 'style' ? 'css' : pAs === 'script' ? 'js' : detectKind(preload.getAttribute('href'));
+    if (!preKind) continue;
+    var name = await fetchAsset(preload.getAttribute('href'), preKind);
+    if (name) preload.setAttribute('href', name);
+  }
+
+  return files;
+}
+
+function rewriteAssetURLsToAbsolute(rootEl) {
+  rootEl.querySelectorAll('link[rel~="stylesheet"][href]').forEach((link) => {
+    try {
+      link.setAttribute('href', new URL(link.getAttribute('href'), document.baseURI).href);
+    } catch {}
+  });
+  rootEl.querySelectorAll('script[src]').forEach((script) => {
+    try {
+      script.setAttribute('src', new URL(script.getAttribute('src'), document.baseURI).href);
+    } catch {}
+  });
+}
+
+function crc32(buf) {
+  if (!crc32.table) {
+    var table = new Uint32Array(256);
+    for (var i = 0; i < 256; i++) {
+      var c = i;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table[i] = c;
+    }
+    crc32.table = table;
+  }
+  var t = crc32.table;
+  var crc = 0xFFFFFFFF;
+  for (var j = 0; j < buf.length; j++) crc = (crc >>> 8) ^ t[(crc ^ buf[j]) & 0xFF];
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function createZipBlob(files) {
+  var enc = new TextEncoder();
+  var entries = files.map(f => {
+    var data = typeof f.content === 'string' ? enc.encode(f.content) : f.content;
+    return { name: f.name, nameBytes: enc.encode(f.name), data, crc: crc32(data), size: data.byteLength };
+  });
+
+  var chunks = [];
+  var offset = 0;
+  entries.forEach(e => {
+    e.offset = offset;
+    var lh = new ArrayBuffer(30);
+    var dv = new DataView(lh);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 0x0800, true);
+    dv.setUint16(8, 0, true);
+    dv.setUint16(10, 0, true);
+    dv.setUint16(12, 0x21, true);
+    dv.setUint32(14, e.crc, true);
+    dv.setUint32(18, e.size, true);
+    dv.setUint32(22, e.size, true);
+    dv.setUint16(26, e.nameBytes.byteLength, true);
+    dv.setUint16(28, 0, true);
+    chunks.push(new Uint8Array(lh), e.nameBytes, e.data);
+    offset += 30 + e.nameBytes.byteLength + e.size;
+  });
+
+  var cdStart = offset;
+  var cdSize = 0;
+  entries.forEach(e => {
+    var cd = new ArrayBuffer(46);
+    var dv = new DataView(cd);
+    dv.setUint32(0, 0x02014b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 20, true);
+    dv.setUint16(8, 0x0800, true);
+    dv.setUint16(10, 0, true);
+    dv.setUint16(12, 0, true);
+    dv.setUint16(14, 0x21, true);
+    dv.setUint32(16, e.crc, true);
+    dv.setUint32(20, e.size, true);
+    dv.setUint32(24, e.size, true);
+    dv.setUint16(28, e.nameBytes.byteLength, true);
+    dv.setUint16(30, 0, true);
+    dv.setUint16(32, 0, true);
+    dv.setUint16(34, 0, true);
+    dv.setUint16(36, 0, true);
+    dv.setUint32(38, 0, true);
+    dv.setUint32(42, e.offset, true);
+    chunks.push(new Uint8Array(cd), e.nameBytes);
+    cdSize += 46 + e.nameBytes.byteLength;
+  });
+
+  var eocd = new ArrayBuffer(22);
+  var dvE = new DataView(eocd);
+  dvE.setUint32(0, 0x06054b50, true);
+  dvE.setUint16(4, 0, true);
+  dvE.setUint16(6, 0, true);
+  dvE.setUint16(8, entries.length, true);
+  dvE.setUint16(10, entries.length, true);
+  dvE.setUint32(12, cdSize, true);
+  dvE.setUint32(16, cdStart, true);
+  dvE.setUint16(20, 0, true);
+  chunks.push(new Uint8Array(eocd));
+
+  return new Blob(chunks, { type: 'application/zip' });
+}
+
+function downloadBlobAsFile(blob, filename) {
+  var a = document.createElement('a');
+  a.download = filename;
+  a.href = URL.createObjectURL(blob);
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 0);
+}
+
+function attachBrowseStoragePopup(id, action) {
+  var listingEl = document.getElementById(id + '-listing');
+  var listingHome = listingEl?.parentNode;
+  if (listingEl) {
+    listingEl.classList.add('save-as-listing-detached');
+    listingEl.style.display = 'none';
+  }
+
+  var createBtnEl = document.getElementById(id + '-create-container-button');
+  var createBtnHome = createBtnEl?.parentNode;
+  if (createBtnEl) {
+    createBtnEl.classList.add('save-as-listing-detached');
+    createBtnEl.style.display = 'none';
+  }
+
+  var createDivEl = document.getElementById(id + '-create-container');
+  var createDivHome = createDivEl?.parentNode;
+  if (createDivEl) {
+    createDivEl.classList.add('save-as-listing-detached');
+    createDivEl.style.display = 'none';
+  }
+
+  var iconHome = `<span class="browse-nav-icon">${Icon['.fas.fa-house']}</span>`;
+  var iconBack = `<span class="browse-nav-icon">${Icon['.fas.fa-arrow-left']}</span>`;
+
+  var browseBtn = document.getElementById(id + '-update');
+  browseBtn?.addEventListener('click', () => {
+    if (document.getElementById('browse-storage')) return;
+    var urlInputEl = document.getElementById(id + '-input');
+    var priorURL = urlInputEl?.value || '';
+
+    var modalClose = getButtonHTML({ key: 'dialog.browse-storage.close.button', button: 'close', buttonClass: 'close', iconSize: 'fa-2x' });
+
+    document.body.appendChild(fragmentFromString(`
+      <aside aria-labelledby="browse-storage-label" class="do on" dir="${Config.User.UI.LanguageDir}" id="browse-storage" lang="${Config.User.UI.Language}" xml:lang="${Config.User.UI.Language}">
+        <h2 data-i18n="dialog.browse-storage.h2" id="browse-storage-label">${i18n.t('dialog.browse-storage.h2.textContent')}</h2>
+        ${modalClose}
+        <div class="browse-storage-nav">
+          <button class="browse-nav-back" type="button" title="${i18n.t('dialog.browse-storage.back.button.title')}" aria-label="${i18n.t('dialog.browse-storage.back.button.title')}">${iconBack}</button>
+          <span class="browse-storage-breadcrumb"></span>
+          <span class="browse-storage-nav-actions"></span>
+        </div>
+        <div class="browse-storage-body"></div>
+        <div class="browse-storage-selected">
+          <label data-i18n="dialog.browse-storage.selected-path.label" for="browse-storage-selected-path">${i18n.t('dialog.browse-storage.selected-path.label.textContent')}</label>
+          <input id="browse-storage-selected-path" readonly="readonly" type="text" value="${priorURL}" />
+        </div>
+        <div class="browse-storage-actions">
+          <button class="cancel" type="button" data-i18n="dialog.browse-storage.cancel.button">${i18n.t('dialog.browse-storage.cancel.button.textContent')}</button>
+          <button class="create select-folder" type="button" data-i18n="dialog.browse-storage.select-folder.button">${i18n.t('dialog.browse-storage.select-folder.button.textContent')}</button>
+        </div>
+      </aside>
+    `));
+
+    var browseModal = document.getElementById('browse-storage');
+    var modalBody = browseModal.querySelector('.browse-storage-body');
+    var navActions = browseModal.querySelector('.browse-storage-nav-actions');
+    var breadcrumbEl = browseModal.querySelector('.browse-storage-breadcrumb');
+    var selectedPathInput = browseModal.querySelector('#browse-storage-selected-path');
+    var backBtn = browseModal.querySelector('.browse-nav-back');
+
+    if (listingEl) {
+      listingEl.classList.remove('save-as-listing-detached');
+      listingEl.style.display = '';
+      modalBody.appendChild(listingEl);
+    }
+    if (createDivEl) {
+      createDivEl.classList.remove('save-as-listing-detached');
+      createDivEl.style.display = '';
+      modalBody.appendChild(createDivEl);
+    }
+    if (createBtnEl) {
+      createBtnEl.classList.remove('save-as-listing-detached');
+      createBtnEl.style.display = '';
+      navActions.appendChild(createBtnEl);
+    }
+
+    var updateBreadcrumb = () => {
+      var cur = urlInputEl?.value || '';
+      var rootLabel = i18n.t('dialog.browse-storage.breadcrumb-root.textContent');
+      var crumbs = [];
+      try {
+        var u = new URL(cur);
+        crumbs.push({ label: rootLabel, url: u.origin + '/' });
+        var parts = u.pathname.split('/').filter(Boolean);
+        var accum = '';
+        parts.forEach((part) => {
+          accum += '/' + part;
+          crumbs.push({ label: decodeURIComponent(part), url: u.origin + accum + '/' });
+        });
+      } catch {
+        crumbs.push({ label: rootLabel, url: '' });
+      }
+      backBtn.disabled = crumbs.length <= 1;
+      while (breadcrumbEl.firstChild) breadcrumbEl.removeChild(breadcrumbEl.firstChild);
+      crumbs.forEach((crumb, idx) => {
+        var isLast = idx === crumbs.length - 1;
+        var isFirst = idx === 0;
+        if (idx > 0) {
+          var sep = document.createElement('span');
+          sep.className = 'browse-storage-breadcrumb-sep';
+          sep.textContent = '/';
+          breadcrumbEl.appendChild(sep);
+        }
+        var node;
+        if (isLast) {
+          node = document.createElement('span');
+          node.className = 'browse-storage-breadcrumb-current';
+        }
+        else {
+          node = document.createElement('a');
+          node.href = '#';
+          node.dataset.url = crumb.url;
+        }
+        if (isFirst) {
+          node.classList.add('browse-storage-breadcrumb-home');
+          node.innerHTML = iconHome;
+          var labelSpan = document.createElement('span');
+          labelSpan.textContent = crumb.label;
+          node.appendChild(labelSpan);
+        }
+        else {
+          node.textContent = crumb.label;
+        }
+        breadcrumbEl.appendChild(node);
+      });
+    };
+    updateBreadcrumb();
+
+    breadcrumbEl.addEventListener('click', (ev) => {
+      var link = ev.target.closest('a[data-url]');
+      if (!link) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      var targetURL = link.dataset.url;
+      if (!targetURL) return;
+      if (urlInputEl) {
+        urlInputEl.value = targetURL;
+        urlInputEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      triggerBrowse(targetURL, id, action);
+    });
+
+    var syncSelectedPath = () => {
+      selectedPathInput.value = urlInputEl?.value || '';
+      updateBreadcrumb();
+    };
+    urlInputEl?.addEventListener('input', syncSelectedPath);
+
+    backBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      var cur = urlInputEl?.value || '';
+      try {
+        var u = new URL(cur);
+        var parts = u.pathname.split('/').filter(Boolean);
+        if (parts.length === 0) return;
+        parts.pop();
+        u.pathname = parts.length ? '/' + parts.join('/') + '/' : '/';
+        var parentURL = u.toString();
+        if (urlInputEl) {
+          urlInputEl.value = parentURL;
+          urlInputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        triggerBrowse(parentURL, id, action);
+      } catch {}
+    });
+
+    var detachAndRestore = () => {
+      urlInputEl?.removeEventListener('input', syncSelectedPath);
+      if (listingHome && listingEl) {
+        listingEl.classList.add('save-as-listing-detached');
+        listingEl.style.display = 'none';
+        listingHome.appendChild(listingEl);
+      }
+      if (createDivHome && createDivEl) {
+        createDivEl.classList.add('save-as-listing-detached');
+        createDivEl.style.display = 'none';
+        createDivHome.appendChild(createDivEl);
+      }
+      if (createBtnHome && createBtnEl) {
+        createBtnEl.classList.add('save-as-listing-detached');
+        createBtnEl.style.display = 'none';
+        createBtnHome.appendChild(createBtnEl);
+      }
+      browseModal.parentNode?.removeChild(browseModal);
+    };
+
+    browseModal.addEventListener('click', (ev) => {
+      if (ev.target.closest('button.close') || ev.target.closest('button.cancel')) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (urlInputEl) {
+          urlInputEl.value = priorURL;
+          urlInputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        detachAndRestore();
+        return;
+      }
+      if (ev.target.closest('button.select-folder')) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        detachAndRestore();
+      }
+    });
+  });
 }
 
 function triggerBrowse(url, id, action){
@@ -1878,6 +2476,9 @@ function showErrorResponseMessage(node, response, context) {
 //TODO: Refactor, especially buttons.
 function initBrowse(baseUrl, input, browseButton, createButton, id, action){
   input.value = baseUrl;
+  if (baseUrl && /^https?:\/\//.test(baseUrl) && baseUrl.length > 10) {
+    browseButton?.removeAttribute('disabled');
+  }
 
   const gitforge = Config.Storage?.backend?.('gitforge');
   if (gitforge?.canList?.(baseUrl)) {
@@ -1906,14 +2507,14 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
       .then(() => {
         let sampNode = document.getElementById(id + '-' + action);
         if (sampNode) {
-          sampNode.textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
+          sampNode.textContent = (action == 'write') ? input.value + (document.getElementById(id + '-filename')?.value || generateAttributeId()) : input.value;
         }
       });
   }
 
 
 
-  if (Config['Session']?.isActive) {
+  if (createButton) {
     createButton.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -1929,6 +2530,7 @@ async function generateGitForgeBrowserList(url, id, action) {
 
   const inputEl = document.getElementById(id + '-input');
   inputEl.value = url;
+  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
 
   const containerNode = document.getElementById(id);
   containerNode.querySelectorAll('.response-message').forEach(n => n.parentNode.removeChild(n));
@@ -2002,7 +2604,9 @@ function generateBrowserList(g, url, id, action) {
   //TODO: This should be part of refactoring.
   var inputType = (id == 'location-generate-feed') ? 'checkbox' : 'radio';
 
-  document.getElementById(id + '-input').value = url;
+  var inputEl = document.getElementById(id + '-input');
+  inputEl.value = url;
+  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
 
   return new Promise((resolve, reject) => {
     var msgs = document.getElementById(id).querySelectorAll('.response-message');
@@ -2093,7 +2697,7 @@ function nextLevelButton(button, url, id, action) {
       headers = {'Accept': 'text/turtle, application/ld+json'};
       getResourceGraph(url, headers).then(({ graph: g }) => {
           if (actionNode) {
-            actionNode.textContent = (action == 'write') ? url + generateAttributeId() : url;
+            actionNode.textContent = (action == 'write') ? url + (document.getElementById(id + '-filename')?.value || generateAttributeId()) : url;
           }
           return generateBrowserList(g, url, id, action);
         },
@@ -2105,7 +2709,9 @@ function nextLevelButton(button, url, id, action) {
       );
     }
     else {
-      document.getElementById(id + '-input').value = url;
+      var leafInput = document.getElementById(id + '-input');
+      leafInput.value = url;
+      leafInput.dispatchEvent(new Event('input', { bubbles: true }));
       var alreadyChecked = button.parentNode.querySelector('input[type="radio"]').checked;
       var radios = button.parentNode.parentNode.querySelectorAll('input[checked="true"]');
 
@@ -2342,6 +2948,7 @@ export function openDocument(e) {
   setupResourceBrowser(openDocument , id, action);
   var idSamp = (typeof Config.User.Storage == 'undefined') ? '' : '<p><samp id="' + id + '-' + action + '">https://example.org/path/to/article</samp></p>';
   sanitizeInsertAdjacentHTML(openDocument, 'beforeend', `${idSamp}<button class="open" data-i18n="dialog.open-document.open.button" title="${i18n.t('dialog.open-document.open.button.title')}" type="submit">${i18n.t('dialog.open-document.open.button.textContent')}</button>`);
+  attachBrowseStoragePopup(id, action);
 
   openDocument.addEventListener('click', function (e) {
     if (e.target.closest('button.close')) {
@@ -2629,8 +3236,14 @@ export async function saveAsDocument(e) {
 
   var saveAsDocument = document.getElementById('save-as-document');
   saveAsDocument.addEventListener('click', (e) => {
-    if (e.target.closest('button.close')) {
-      document.querySelector('#document-do .resource-save-as').disabled = false;
+    if (e.target.closest('button.close') || e.target.closest('button.cancel')) {
+      var sa = document.querySelector('#document-do .resource-save-as');
+      if (sa) sa.disabled = false;
+    }
+  });
+  saveAsDocument.addEventListener('click', (e) => {
+    if (e.target.closest('button.cancel')) {
+      saveAsDocument.parentNode?.removeChild(saveAsDocument);
     }
   });
 
@@ -2638,7 +3251,6 @@ export async function saveAsDocument(e) {
 
   var locationInboxId = 'location-inbox';
   var locationInboxAction = 'read';
-  sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', `<div><input id="${locationInboxId}-set" name="${locationInboxId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-inbox.label" for="${locationInboxId}-set">${i18n.t('dialog.save-as-document.set-inbox.label.textContent')}</label></div>`);
 
   saveAsDocument.addEventListener('click', (e) => {
     if (e.target.closest('input#' + locationInboxId + '-set')) {
@@ -2651,20 +3263,20 @@ export async function saveAsDocument(e) {
       else {
         e.target.setAttribute('checked', 'checked');
 
-        sanitizeInsertAdjacentHTML(e.target.nextElementSibling, 'afterend', '<fieldset id="' + locationInboxId + '-fieldset"></fieldset>');
+        sanitizeInsertAdjacentHTML(e.target.closest('li, div, p') || e.target.parentNode, 'beforeend', '<fieldset id="' + locationInboxId + '-fieldset"></fieldset>');
         fieldset = saveAsDocument.querySelector('#' + locationInboxId + '-fieldset');
         setupResourceBrowser(fieldset, locationInboxId, locationInboxAction);
         sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.article-inbox.p">${i18n.t('dialog.save-as-document.article-inbox.p.textContent')} <samp id="${locationInboxId}-${locationInboxAction}"></samp></p>`);
         var lii = document.getElementById(locationInboxId + '-input');
         lii.focus();
         lii.placeholder = 'https://example.org/path/to/inbox/';
+        attachBrowseStoragePopup(locationInboxId, locationInboxAction);
       }
     }
   });
 
   var locationAnnotationServiceId = 'location-annotation-service';
   var locationAnnotationServiceAction = 'read';
-  sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', `<div><input id="${locationAnnotationServiceId}-set" name="${locationAnnotationServiceId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-annotation-service.label" for="${locationAnnotationServiceId}-set">${i18n.t('dialog.save-as-document.set-annotation-service.label.textContent')}</label></div>`);
 
   saveAsDocument.addEventListener('click', (e) => {
     if (e.target.closest('input#' + locationAnnotationServiceId + '-set')) {
@@ -2677,13 +3289,14 @@ export async function saveAsDocument(e) {
       else {
         e.target.setAttribute('checked', 'checked');
 
-        sanitizeInsertAdjacentHTML(e.target.nextElementSibling, 'afterend', '<fieldset id="' + locationAnnotationServiceId + '-fieldset"></fieldset>');
+        sanitizeInsertAdjacentHTML(e.target.closest('li, div, p') || e.target.parentNode, 'beforeend', '<fieldset id="' + locationAnnotationServiceId + '-fieldset"></fieldset>');
         fieldset = saveAsDocument.querySelector('#' + locationAnnotationServiceId + '-fieldset');
         setupResourceBrowser(fieldset, locationAnnotationServiceId, locationAnnotationServiceAction);
         sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.article-annotation-service.p">${i18n.t('dialog.save-as-document.article-annotation-service.p.textContent')} <samp id="${locationAnnotationServiceId}-${locationAnnotationServiceAction}"></samp></p>`);
         var lasi = document.getElementById(locationAnnotationServiceId + '-input');
         lasi.focus();
         lasi.placeholder = 'https://example.org/path/to/annotation/';
+        attachBrowseStoragePopup(locationAnnotationServiceId, locationAnnotationServiceAction);
       }
     }
   });
@@ -2776,32 +3389,164 @@ export async function saveAsDocument(e) {
   }
   accessibilityReport = `<details id="accessibility-report-save-as"><summary data-i18n="dialog.accessibility-report.summary">${i18n.t('dialog.accessibility-report.summary.textContent')}</summary>${accessibilityReport}</details>`;
 
-  let dokielizeResource = '';
-  let derivationData = '';
+  let sourceHistoryItem = '';
+  let dokielizeItem = '';
+
+  var isAlreadyDokielized = !!document.querySelector('head script[src*="/scripts/dokieli"], head link[rel~="stylesheet"][href*="dokieli.css"]');
+  var dokielizeChecked = isAlreadyDokielized ? ' checked="checked"' : '';
 
   if (Config.DocumentAction !== 'new') {
-    dokielizeResource = '<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource" /><label for="dokielize-resource">dokielize</label></li>';
-    derivationData = `<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label data-i18n="dialog.save-as-document.derivation-data.label" for="derivation-data">${i18n.t('dialog.save-as-document.derivation-data.label.textContent')}</label></li>`;
+    sourceHistoryItem = `<li><input type="checkbox" id="derivation-data" name="derivation-data" checked="checked" /><label data-i18n="dialog.save-as-document.source-history.label" for="derivation-data">${i18n.t('dialog.save-as-document.source-history.label.textContent')}</label> ${Config.Button.Info.Derivation}</li>`;
+    dokielizeItem = `<li><input type="checkbox" id="dokielize-resource" name="dokielize-resource"${dokielizeChecked} /><label data-i18n="dialog.save-as-document.dokielize.label" for="dokielize-resource">${i18n.t('dialog.save-as-document.dokielize.label.textContent')}</label> ${Config.Button.Info.Dokielize}</li>`;
   }
+
+  var currentURL = (Config.DocumentURL && /^https?:\/\//.test(Config.DocumentURL)) ? Config.DocumentURL : '';
+
+  var defaultLocalFilename = 'document';
+  try {
+    if (currentURL) {
+      var lu = new URL(currentURL);
+      var lastSeg = lu.pathname.split('/').pop();
+      var base = (lastSeg || '').replace(/\.[^./]+$/, '');
+      if (base) defaultLocalFilename = base;
+    }
+  } catch {}
 
   var id = 'location-save-as';
   var action = 'write';
-  sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', `<form><fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-to.legend">${i18n.t('dialog.save-as-document.save-to.legend.textContent')}</legend></fieldset></form>`);
+
+  var iconGlobe = Icon['.fas.fa-globe'];
+  var iconDownload = Icon['.fas.fa-download'];
+  var iconFile = Icon['.fas.fa-file'];
+  var iconCheck = Icon['.fas.fa-check'];
+
+  var saveAsBody = `
+    <form class="save-as-form">
+      <div class="tabs save-as-tabs">
+        <nav>
+          <ul>
+            <li class="selected"><a href="#save-as-web" data-tab="web" data-i18n="dialog.save-as-document.tab-web.a">${i18n.t('dialog.save-as-document.tab-web.a.textContent')}</a></li>
+            <li><a href="#save-as-local" data-tab="local" data-i18n="dialog.save-as-document.tab-local.a">${i18n.t('dialog.save-as-document.tab-local.a.textContent')}</a></li>
+          </ul>
+        </nav>
+
+        <div class="selected" id="save-as-web">
+          <fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-destination.legend">${i18n.t('dialog.save-as-document.save-destination.legend.textContent')}</legend></fieldset>
+          <fieldset class="save-as-asset-handling">
+            <legend data-i18n="dialog.save-as-document.asset-handling.legend">${i18n.t('dialog.save-as-document.asset-handling.legend.textContent')}</legend>
+            <ul class="save-as-cards">
+              <li>
+                <input type="radio" id="asset-reference" name="base-url" value="base-url-absolute" />
+                <label for="asset-reference">
+                  ${iconGlobe}
+                  <span class="save-as-card-text">
+                    <strong data-i18n="dialog.save-as-document.asset-reference-remote.label.strong">${i18n.t('dialog.save-as-document.asset-reference-remote.label.strong.textContent')}</strong>
+                    <span data-i18n="dialog.save-as-document.asset-reference-remote.desc.span">${i18n.t('dialog.save-as-document.asset-reference-remote.desc.span.textContent')}</span>
+                  </span>
+                  ${iconCheck}
+                </label>
+              </li>
+              <li>
+                <input type="radio" id="asset-bundle" name="base-url" value="base-url-relative" checked="checked" />
+                <label for="asset-bundle">
+                  ${iconDownload}
+                  <span class="save-as-card-text">
+                    <strong data-i18n="dialog.save-as-document.asset-bundle.label.strong">${i18n.t('dialog.save-as-document.asset-bundle.label.strong.textContent')}</strong>
+                    <span data-i18n="dialog.save-as-document.asset-bundle.desc.span">${i18n.t('dialog.save-as-document.asset-bundle.desc.span.textContent')}</span>
+                  </span>
+                  ${iconCheck}
+                </label>
+              </li>
+            </ul>
+          </fieldset>
+        </div>
+
+        <div id="save-as-local">
+          <p class="save-as-filename-row">
+            <label for="save-as-local-filename" data-i18n="dialog.save-as-document.local-filename.label">${i18n.t('dialog.save-as-document.local-filename.label.textContent')}</label>
+            <input id="save-as-local-filename" name="save-as-local-filename" type="text" value="${defaultLocalFilename}" />
+          </p>
+          <fieldset class="save-as-asset-handling">
+            <legend data-i18n="dialog.save-as-document.asset-handling.legend">${i18n.t('dialog.save-as-document.asset-handling.legend.textContent')}</legend>
+            <ul class="save-as-cards">
+              <li>
+                <input type="radio" id="local-asset-bundle" name="local-asset-handling" value="bundle" checked="checked" />
+                <label for="local-asset-bundle">
+                  ${iconDownload}
+                  <span class="save-as-card-text">
+                    <strong data-i18n="dialog.save-as-document.asset-bundle-local.label.strong">${i18n.t('dialog.save-as-document.asset-bundle-local.label.strong.textContent')}</strong>
+                    <span data-i18n="dialog.save-as-document.asset-bundle-local.desc.span">${i18n.t('dialog.save-as-document.asset-bundle-local.desc.span.textContent')}</span>
+                  </span>
+                  ${iconCheck}
+                </label>
+              </li>
+              <li>
+                <input type="radio" id="local-asset-reference" name="local-asset-handling" value="reference" />
+                <label for="local-asset-reference">
+                  ${iconGlobe}
+                  <span class="save-as-card-text">
+                    <strong data-i18n="dialog.save-as-document.asset-reference-local.label.strong">${i18n.t('dialog.save-as-document.asset-reference-local.label.strong.textContent')}</strong>
+                    <span data-i18n="dialog.save-as-document.asset-reference-local.desc.span">${i18n.t('dialog.save-as-document.asset-reference-local.desc.span.textContent')}</span>
+                  </span>
+                  ${iconCheck}
+                </label>
+              </li>
+              <li>
+                <input type="radio" id="local-asset-single" name="local-asset-handling" value="single" />
+                <label for="local-asset-single">
+                  ${iconFile}
+                  <span class="save-as-card-text">
+                    <strong data-i18n="dialog.save-as-document.asset-single.label.strong">${i18n.t('dialog.save-as-document.asset-single.label.strong.textContent')}</strong>
+                    <span data-i18n="dialog.save-as-document.asset-single.desc.span">${i18n.t('dialog.save-as-document.asset-single.desc.span.textContent')}</span>
+                  </span>
+                  ${iconCheck}
+                </label>
+              </li>
+            </ul>
+          </fieldset>
+        </div>
+      </div>
+
+      <details class="save-as-advanced">
+        <summary data-i18n="dialog.save-as-document.linked-data-features.summary">${i18n.t('dialog.save-as-document.linked-data-features.summary.textContent')}</summary>
+        <ul class="save-as-options">
+          <li><input id="${locationInboxId}-set" name="${locationInboxId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-inbox.label" for="${locationInboxId}-set">${i18n.t('dialog.save-as-document.set-inbox.label.textContent')}</label> ${Config.Button.Info.Inbox}</li>
+          <li><input id="${locationAnnotationServiceId}-set" name="${locationAnnotationServiceId}-set" type="checkbox" /> <label data-i18n="dialog.save-as-document.set-annotation-service.label" for="${locationAnnotationServiceId}-set">${i18n.t('dialog.save-as-document.set-annotation-service.label.textContent')}</label> ${Config.Button.Info.AnnotationService}</li>
+          ${sourceHistoryItem}
+          ${dokielizeItem}
+        </ul>
+      </details>
+
+      ${accessibilityReport}
+
+      <div class="save-as-actions">
+        <button class="cancel" type="button" data-i18n="dialog.save-as-document.cancel.button">${i18n.t('dialog.save-as-document.cancel.button.textContent')}</button>
+        <button class="create save-changes" type="submit" data-i18n="dialog.save-as-document.save-changes.button" title="${i18n.t('dialog.save-as-document.save-changes.button.title')}">${i18n.t('dialog.save-as-document.save-changes.button.textContent')}</button>
+      </div>
+    </form>
+  `;
+
+  sanitizeInsertAdjacentHTML(saveAsDocument, 'beforeend', saveAsBody);
+
   fieldset = saveAsDocument.querySelector('fieldset#' + id + '-fieldset');
   setupResourceBrowser(fieldset, id, action);
-  sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18n.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>${getBaseURLSelection()}<ul>${dokielizeResource}${derivationData}</ul>${accessibilityReport}<button class="create" data-i18n="dialog.save-as-document.save.button" title="${i18n.t('dialog.save-as-document.save.button.title')}" type="submit">${i18n.t('dialog.save-as-document.save.button.textContent')}</button> <button class="save-locally" data-i18n="dialog.save-as-document.save-locally.button" title="${i18n.t('dialog.save-as-document.save-locally.button.title')}" type="button">${i18n.t('dialog.save-as-document.save-locally.button.textContent')}</button>`);
+  sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.save-as-document.save-location.p" id="${id}-samp">${i18n.t('dialog.save-as-document.save-location.p.textContent')} <samp id="${id}-${action}"></samp></p>`);
   var bli = document.getElementById(id + '-input');
   bli.focus();
   bli.placeholder = 'https://example.org/path/to/article';
 
+  attachBrowseStoragePopup(id, action);
+
   saveAsDocument.addEventListener('click', (e) => {
-    if (!e.target.closest('button.save-locally')) return;
+    var tabLink = e.target.closest('.save-as-tabs nav a');
+    if (!tabLink) return;
     e.preventDefault();
-    e.stopPropagation();
-    exportAsDocument(getDocument(null, documentOptions));
-    saveAsDocument.parentNode?.removeChild(saveAsDocument);
-    var sa = document.querySelector('#document-do .resource-save-as');
-    if (sa) sa.disabled = false;
+    var tab = tabLink.dataset.tab;
+    saveAsDocument.querySelectorAll('.save-as-tabs nav li').forEach(li => li.classList.remove('selected'));
+    tabLink.closest('li').classList.add('selected');
+    saveAsDocument.querySelectorAll('.save-as-tabs > div').forEach(d => d.classList.remove('selected'));
+    var targetId = tab === 'local' ? 'save-as-local' : 'save-as-web';
+    saveAsDocument.querySelector('#' + targetId)?.classList.add('selected');
   });
 
   saveAsDocument.addEventListener('click', async (e) => {
@@ -2813,6 +3558,51 @@ export async function saveAsDocument(e) {
     e.stopPropagation();
 
     var saveAsDocument = document.getElementById('save-as-document')
+
+    var activeTab = saveAsDocument.querySelector('.save-as-tabs nav li.selected a')?.dataset.tab;
+    if (activeTab === 'local') {
+      var localFilenameInput = saveAsDocument.querySelector('#save-as-local-filename');
+      var localBase = (localFilenameInput?.value || 'document').trim().replace(/\.[^./]+$/, '') || 'document';
+      var localChoice = saveAsDocument.querySelector('input[name="local-asset-handling"]:checked')?.value || 'bundle';
+
+      var mdMode = !!document.querySelector('[data-markdown-mode]');
+      var localExtension = mdMode ? 'md' : 'html';
+      var localFilename = localBase + '.' + localExtension;
+
+      if (mdMode) {
+        var payload = getSavePayload(localFilename, documentOptions);
+        exportAsDocument(payload.data, { filename: localFilename, mediaType: payload.contentType });
+      }
+      else {
+        var localHtml = document.documentElement.cloneNode(true);
+        if (localChoice === 'single') {
+          localHtml.querySelectorAll('link[rel~="stylesheet"], style, script').forEach(n => n.parentNode.removeChild(n));
+          var strippedHtml = getDocument(localHtml, documentOptions);
+          exportAsDocument(strippedHtml, { filename: localFilename, mediaType: 'text/html' });
+        }
+        else if (localChoice === 'reference') {
+          rewriteAssetURLsToAbsolute(localHtml);
+          var referencedHtml = getDocument(localHtml, documentOptions);
+          exportAsDocument(referencedHtml, { filename: localFilename, mediaType: 'text/html' });
+        }
+        else {
+          var assetFiles = await bundleExternalAssets(localHtml);
+          var bundledHtml = getDocument(localHtml, documentOptions);
+          if (assetFiles.length === 0) {
+            exportAsDocument(bundledHtml, { filename: localFilename, mediaType: 'text/html' });
+          }
+          else {
+            var zipBlob = createZipBlob([{ name: localFilename, content: bundledHtml }, ...assetFiles]);
+            downloadBlobAsFile(zipBlob, localBase + '.zip');
+          }
+        }
+      }
+      saveAsDocument.parentNode?.removeChild(saveAsDocument);
+      var saButton = document.querySelector('#document-do .resource-save-as');
+      if (saButton) saButton.disabled = false;
+      return;
+    }
+
     var urlInputEl = saveAsDocument.querySelector('#' + id + '-input');
     var filenameInputEl = saveAsDocument.querySelector('#' + id + '-filename');
     var baseUrlValue = (urlInputEl?.value || '').trim();
@@ -2886,11 +3676,12 @@ export async function saveAsDocument(e) {
       blobImageMapping = rewriteBlobImagesToRelative(html);
     }
 
-    var baseURLSelectionChecked = saveAsDocument.querySelector('select[id="base-url"]');
+    var baseURLSelectionChecked = saveAsDocument.querySelector('input[name="base-url"]:checked');
     let baseURLType;
-    if (baseURLSelectionChecked.length) {
+    let nodes;
+    if (baseURLSelectionChecked) {
       baseURLType = baseURLSelectionChecked.value
-      var nodes = html.querySelectorAll('head link, [src], object[data]')
+      nodes = html.querySelectorAll('head link, [src], object[data]')
       var base = html.querySelector('head base[href]');
       var baseOptions = {'baseURLType': baseURLType};
       if (base) {
@@ -4237,6 +5028,7 @@ export function generateFeed(e) {
   setupResourceBrowser(fieldset, id, action);
   var feedTitlePlaceholder = (Config.User.IRI && Config.User.Name) ? Config.User.Name + "'s" : "Foo's";
   sanitizeInsertAdjacentHTML(fieldset, 'beforeend', `<p data-i18n="dialog.generate-feed.generate-location.p" id="${id}-samp">${i18n.t('dialog.generate-feed.generate-location.p.textContent')} <samp id="${id}-${action}"></samp></p><ul><li><label data-i18n="dialog.generate-feed.title.label" for="${id}-title">${i18n.t('dialog.generate-feed.title.label.textContent')}</label> <input type="text" placeholder="${feedTitlePlaceholder} Web Feed" name="${id}-title" value=""></li><li><label data-i18n="language.label" for="${id}-language">${i18n.t('language.label.textContent')}</label> <select id="${id}-language" name="${id}-language">${getLanguageOptionsHTML()}</select></li><li><label data-i18n="license.label" for="${id}-license">${i18n.t('license.label.textContent')}</label> <select id="${id}-license" name="${id}-license">${getLicenseOptionsHTML()}</select></li><li>${getFeedFormatSelection()}</li></ul><button class="create" data-i18n="dialog.generate-feed.generate.button" title="${i18n.t('dialog.generate-feed.generate.button.title')}" type="submit">${i18n.t('dialog.generate-feed.generate.button.textContent')}</button>`);
+  attachBrowseStoragePopup(id, action);
   var bli = document.getElementById(id + '-input');
   bli.focus();
   bli.placeholder = 'https://example.org/path/to/feed.xml';
