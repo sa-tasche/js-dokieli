@@ -4359,8 +4359,8 @@ export function getStorageSelfDescription(g) {
   Config.Resource[storageURL]['title'] = storageName;
   Config.Resource[storageURL]['description'] = g.out(ns.schema.abstract).values[0] || g.out(ns.dcterms.description).values[0] || g.out(ns.rdf.value).values[0] || g.out(ns.as.summary).values[0] || g.out(ns.schema.description).values[0] || g.out(ns.as.content).values[0] || undefined;
 
-  var storageTitle = '<dt>Storage name</dt><dd><a href="' + storageURL + '">' + storageName + '</a></dd>';
-  var storageDescription = (Config.Resource[storageURL]['description']) ? '<dt>Storage description</dt><dd>' + Config.Resource[storageURL]['description'] + '</dd>' : '';
+  var storageTitle = '<dt data-i18n="dialog.storage-location.dt">' + i18n.t('dialog.storage-location.dt.textContent') + '</dt><dd><a href="' + storageURL + '">' + storageName + '</a></dd>';
+  var storageDescription = (Config.Resource[storageURL]['description']) ? '<dt data-i18n="dialog.storage-self-description.dt">' + i18n.t('dialog.storage-self-description.dt') + '</dt><dd>' + Config.Resource[storageURL]['description'] + '</dd>' : '';
 
   s = '<dl id="storage-self-description">' + storageTitle + storageDescription + '</dl>';
 

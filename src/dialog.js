@@ -1575,7 +1575,7 @@ function setupResourceBrowser(parent, id, action){
   }
 
   var filenameField = action === 'write'
-    ? ` <label for="${id}-filename">Filename</label> <input dir="ltr" id="${id}-filename" name="${id}-filename" placeholder="my-document.html" type="text" value="${defaultFilename}" />`
+    ? ` <label data-i18n="browser.filename.label" for="${id}-filename">${i18n.t('browser.filename.label.textContent')}</label> <input dir="ltr" id="${id}-filename" name="${id}-filename" placeholder="document.html" type="text" value="${defaultFilename}" />`
     : '';
 
   var urlLabel = (action === 'write' && Config.User?.GitForge) ? 'URL or repo URL' : 'URL';
@@ -1602,7 +1602,9 @@ function setupResourceBrowser(parent, id, action){
     if (isValidBase(input.value)) {
       browseButton.removeAttribute('disabled');
       if(actionNode){
-        actionNode.textContent = withTrailingSlash(input.value) + (filenameInput ? filenameInput.value : generateAttributeId());
+        actionNode.textContent = action === 'read'
+          ? input.value
+          : withTrailingSlash(input.value) + (filenameInput ? filenameInput.value : generateAttributeId());
       }
     }
     else {
@@ -2110,8 +2112,8 @@ function attachBrowseStoragePopup(id, action) {
     createDivEl.style.display = 'none';
   }
 
-  var iconHome = '<svg class="browse-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3l9-8z"/></svg>';
-  var iconBack = '<svg class="browse-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20v-2z"/></svg>';
+  var iconHome = `<span class="browse-nav-icon">${Icon['.fas.fa-house']}</span>`;
+  var iconBack = `<span class="browse-nav-icon">${Icon['.fas.fa-arrow-left']}</span>`;
 
   var browseBtn = document.getElementById(id + '-update');
   browseBtn?.addEventListener('click', () => {
@@ -2181,6 +2183,7 @@ function attachBrowseStoragePopup(id, action) {
       } catch {
         crumbs.push({ label: rootLabel, url: '' });
       }
+      backBtn.disabled = crumbs.length <= 1;
       while (breadcrumbEl.firstChild) breadcrumbEl.removeChild(breadcrumbEl.firstChild);
       crumbs.forEach((crumb, idx) => {
         var isLast = idx === crumbs.length - 1;
@@ -2504,7 +2507,7 @@ function initBrowse(baseUrl, input, browseButton, createButton, id, action){
       .then(() => {
         let sampNode = document.getElementById(id + '-' + action);
         if (sampNode) {
-          sampNode.textContent = (action == 'write') ? input.value + generateAttributeId() : input.value;
+          sampNode.textContent = (action == 'write') ? input.value + (document.getElementById(id + '-filename')?.value || generateAttributeId()) : input.value;
         }
       });
   }
@@ -2694,7 +2697,7 @@ function nextLevelButton(button, url, id, action) {
       headers = {'Accept': 'text/turtle, application/ld+json'};
       getResourceGraph(url, headers).then(({ graph: g }) => {
           if (actionNode) {
-            actionNode.textContent = (action == 'write') ? url + generateAttributeId() : url;
+            actionNode.textContent = (action == 'write') ? url + (document.getElementById(id + '-filename')?.value || generateAttributeId()) : url;
           }
           return generateBrowserList(g, url, id, action);
         },
@@ -3398,9 +3401,6 @@ export async function saveAsDocument(e) {
   }
 
   var currentURL = (Config.DocumentURL && /^https?:\/\//.test(Config.DocumentURL)) ? Config.DocumentURL : '';
-  var currentLine = currentURL
-    ? `<p class="save-as-current" data-i18n="dialog.save-as-document.current.p"><span>${i18n.t('dialog.save-as-document.current.p.textContent')}</span> <a href="${currentURL}" rel="noopener" target="_blank">${currentURL}</a></p>`
-    : '';
 
   var defaultLocalFilename = 'document';
   try {
@@ -3415,10 +3415,10 @@ export async function saveAsDocument(e) {
   var id = 'location-save-as';
   var action = 'write';
 
-  var iconGlobe = '<svg class="save-as-card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm7.93 9h-3.05a15.7 15.7 0 0 0-1.27-5.27A8.04 8.04 0 0 1 19.93 11ZM12 4.07c.74 1.04 1.95 3.02 2.4 6.93H9.6c.45-3.91 1.66-5.89 2.4-6.93ZM4.07 13h3.05c.18 1.83.62 3.63 1.27 5.27A8.04 8.04 0 0 1 4.07 13Zm0-2a8.04 8.04 0 0 1 4.32-5.27A15.7 15.7 0 0 0 7.12 11H4.07ZM12 19.93c-.74-1.04-1.95-3.02-2.4-6.93h4.8c-.45 3.91-1.66 5.89-2.4 6.93Zm3.61-1.66c.65-1.64 1.09-3.44 1.27-5.27h3.05a8.04 8.04 0 0 1-4.32 5.27Z"/></svg>';
-  var iconDownload = '<svg class="save-as-card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14v-2H5v2ZM19 9h-4V3H9v6H5l7 7 7-7Z"/></svg>';
-  var iconFile = '<svg class="save-as-card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>';
-  var iconCheck = '<svg class="save-as-card-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17Z"/></svg>';
+  var iconGlobe = Icon['.fas.fa-globe'];
+  var iconDownload = Icon['.fas.fa-download'];
+  var iconFile = Icon['.fas.fa-file'];
+  var iconCheck = Icon['.fas.fa-check'];
 
   var saveAsBody = `
     <form class="save-as-form">
@@ -3432,7 +3432,6 @@ export async function saveAsDocument(e) {
 
         <div class="selected" id="save-as-web">
           <fieldset id="${id}-fieldset"><legend data-i18n="dialog.save-as-document.save-destination.legend">${i18n.t('dialog.save-as-document.save-destination.legend.textContent')}</legend></fieldset>
-          ${currentLine}
           <fieldset class="save-as-asset-handling">
             <legend data-i18n="dialog.save-as-document.asset-handling.legend">${i18n.t('dialog.save-as-document.asset-handling.legend.textContent')}</legend>
             <ul class="save-as-cards">
@@ -3442,7 +3441,7 @@ export async function saveAsDocument(e) {
                   ${iconGlobe}
                   <span class="save-as-card-text">
                     <strong data-i18n="dialog.save-as-document.asset-reference-remote.label.strong">${i18n.t('dialog.save-as-document.asset-reference-remote.label.strong.textContent')}</strong>
-                    <span data-i18n="dialog.save-as-document.asset-reference-remote.label.span">${i18n.t('dialog.save-as-document.asset-reference-remote.label.span.textContent')}</span>
+                    <span data-i18n="dialog.save-as-document.asset-reference-remote.desc.span">${i18n.t('dialog.save-as-document.asset-reference-remote.desc.span.textContent')}</span>
                   </span>
                   ${iconCheck}
                 </label>
@@ -3453,7 +3452,7 @@ export async function saveAsDocument(e) {
                   ${iconDownload}
                   <span class="save-as-card-text">
                     <strong data-i18n="dialog.save-as-document.asset-bundle.label.strong">${i18n.t('dialog.save-as-document.asset-bundle.label.strong.textContent')}</strong>
-                    <span data-i18n="dialog.save-as-document.asset-bundle.label.span">${i18n.t('dialog.save-as-document.asset-bundle.label.span.textContent')}</span>
+                    <span data-i18n="dialog.save-as-document.asset-bundle.desc.span">${i18n.t('dialog.save-as-document.asset-bundle.desc.span.textContent')}</span>
                   </span>
                   ${iconCheck}
                 </label>
@@ -3476,7 +3475,7 @@ export async function saveAsDocument(e) {
                   ${iconDownload}
                   <span class="save-as-card-text">
                     <strong data-i18n="dialog.save-as-document.asset-bundle-local.label.strong">${i18n.t('dialog.save-as-document.asset-bundle-local.label.strong.textContent')}</strong>
-                    <span data-i18n="dialog.save-as-document.asset-bundle-local.label.span">${i18n.t('dialog.save-as-document.asset-bundle-local.label.span.textContent')}</span>
+                    <span data-i18n="dialog.save-as-document.asset-bundle-local.desc.span">${i18n.t('dialog.save-as-document.asset-bundle-local.desc.span.textContent')}</span>
                   </span>
                   ${iconCheck}
                 </label>
@@ -3487,7 +3486,7 @@ export async function saveAsDocument(e) {
                   ${iconGlobe}
                   <span class="save-as-card-text">
                     <strong data-i18n="dialog.save-as-document.asset-reference-local.label.strong">${i18n.t('dialog.save-as-document.asset-reference-local.label.strong.textContent')}</strong>
-                    <span data-i18n="dialog.save-as-document.asset-reference-local.label.span">${i18n.t('dialog.save-as-document.asset-reference-local.label.span.textContent')}</span>
+                    <span data-i18n="dialog.save-as-document.asset-reference-local.desc.span">${i18n.t('dialog.save-as-document.asset-reference-local.desc.span.textContent')}</span>
                   </span>
                   ${iconCheck}
                 </label>
@@ -3498,7 +3497,7 @@ export async function saveAsDocument(e) {
                   ${iconFile}
                   <span class="save-as-card-text">
                     <strong data-i18n="dialog.save-as-document.asset-single.label.strong">${i18n.t('dialog.save-as-document.asset-single.label.strong.textContent')}</strong>
-                    <span data-i18n="dialog.save-as-document.asset-single.label.span">${i18n.t('dialog.save-as-document.asset-single.label.span.textContent')}</span>
+                    <span data-i18n="dialog.save-as-document.asset-single.desc.span">${i18n.t('dialog.save-as-document.asset-single.desc.span.textContent')}</span>
                   </span>
                   ${iconCheck}
                 </label>

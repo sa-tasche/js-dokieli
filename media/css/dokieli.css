@@ -1179,7 +1179,6 @@ margin-bottom:1em;
 #save-as-document .save-as-tabs nav ul {
 display:flex;
 gap:0.25em;
-padding:0.25em;
 margin:0 !important;
 background:#f5f5f5;
 border:1px solid #ccc;
@@ -1196,7 +1195,7 @@ display:block;
 padding:0.6em 1em;
 border-radius:0.25em;
 background:transparent;
-color:#555;
+color:#333;
 text-decoration:none;
 font-weight:bold;
 border-bottom-width:0 !important;
@@ -1221,8 +1220,7 @@ margin-top:0;
 display:block;
 }
 #save-as-document fieldset#location-save-as-fieldset,
-#save-as-document fieldset.save-as-asset-handling,
-#save-as-document fieldset.save-as-included-resources {
+#save-as-document fieldset.save-as-asset-handling {
 border:none;
 padding:0;
 margin:0 0 1em 0;
@@ -1271,18 +1269,6 @@ min-width:0;
 width:100%;
 box-sizing:border-box;
 }
-#save-as-document p.save-as-current {
-font-size:0.85em;
-color:#555;
-margin:0 0 1em 0 !important;
-}
-#save-as-document p.save-as-current span {
-font-family:monospace;
-}
-#save-as-document p.save-as-current a {
-font-family:monospace;
-color:#555 !important;
-}
 #save-as-document .save-as-cards {
 list-style:none;
 padding:0;
@@ -1320,13 +1306,16 @@ background:#efe;
 outline:2px solid #080;
 outline-offset:2px;
 }
-#save-as-document .save-as-cards .save-as-card-icon {
+#save-as-document .save-as-cards label > svg {
 flex-shrink:0;
+display:inline-flex;
+align-items:center;
+justify-content:center;
 width:1.5em;
 height:1.5em;
-fill:#555;
+fill:#333;
 }
-#save-as-document .save-as-cards input:checked + label .save-as-card-icon {
+#save-as-document .save-as-cards input:checked + label > svg {
 fill:#080;
 }
 #save-as-document .save-as-cards .save-as-card-text {
@@ -1347,12 +1336,18 @@ font-size:0.9em;
 }
 #save-as-document .save-as-cards .save-as-card-check {
 flex-shrink:0;
-width:1.25em;
-height:1.25em;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+visibility:hidden;
+}
+#save-as-document .save-as-cards label svg.fa-check {
+width:1em;
+height:1em;
 fill:#080;
 visibility:hidden;
 }
-#save-as-document .save-as-cards input:checked + label .save-as-card-check {
+#save-as-document .save-as-cards input:checked + label svg.fa-check {
 visibility:visible;
 }
 #save-as-document .save-as-filename-row {
@@ -1414,7 +1409,6 @@ padding-top:0.75em;
 #save-as-document details#accessibility-report-save-as > summary {
 cursor:pointer;
 font-weight:bold;
-color:#a60;
 }
 #save-as-document .save-as-actions {
 display:flex;
@@ -1473,6 +1467,11 @@ opacity:0.4;
 cursor:not-allowed;
 }
 #browse-storage .browse-nav-icon {
+display:inline-flex;
+align-items:center;
+justify-content:center;
+}
+#browse-storage .browse-nav-icon svg {
 width:1.1em;
 height:1.1em;
 fill:currentColor;
@@ -1608,8 +1607,8 @@ background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/20
 content:'';
 margin-left:auto;
 flex-shrink:0;
-width:0.8em;
-height:0.8em;
+width:1em;
+height:1em;
 background:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/contain no-repeat;
 }
 #browse-storage .browse-storage-body [id$="-listing"] ul li:has(#browser-up) {
