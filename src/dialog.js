@@ -3441,8 +3441,8 @@ export async function saveAsDocument(e) {
                 <label for="asset-reference">
                   ${iconGlobe}
                   <span class="save-as-card-text">
-                    <strong data-i18n="dialog.save-as-document.asset-reference.label.strong">${i18n.t('dialog.save-as-document.asset-reference.label.strong.textContent')}</strong>
-                    <span data-i18n="dialog.save-as-document.asset-reference.label.span">${i18n.t('dialog.save-as-document.asset-reference.label.span.textContent')}</span>
+                    <strong data-i18n="dialog.save-as-document.asset-reference-remote.label.strong">${i18n.t('dialog.save-as-document.asset-reference-remote.label.strong.textContent')}</strong>
+                    <span data-i18n="dialog.save-as-document.asset-reference-remote.label.span">${i18n.t('dialog.save-as-document.asset-reference-remote.label.span.textContent')}</span>
                   </span>
                   ${iconCheck}
                 </label>
