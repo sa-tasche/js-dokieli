@@ -1269,6 +1269,9 @@ min-width:0;
 width:100%;
 box-sizing:border-box;
 }
+#save-as-document .container-empty em {
+margin-left:1em;
+}
 #save-as-document .save-as-cards {
 list-style:none;
 padding:0;

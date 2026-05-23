@@ -2580,7 +2580,7 @@ async function generateGitForgeBrowserList(url, id, action) {
   sanitizeInsertAdjacentHTML(list, 'beforeend', html);
 
   if (items.length === 0) {
-    sanitizeInsertAdjacentHTML(list, 'beforeend', '<p><em>(empty)</em></p>');
+    sanitizeInsertAdjacentHTML(list, 'afterend', '<p class="container-empty"><em>(empty)</em></p>');
   }
 
   const actionNode = document.getElementById(id + '-' + action);
@@ -2662,7 +2662,7 @@ function generateBrowserList(g, url, id, action) {
 
     var buttons = list.querySelectorAll('label');
     if(buttons.length <= 1){
-      sanitizeInsertAdjacentHTML(list, 'beforeend', '<p><em>(empty)</em></p>');
+      sanitizeInsertAdjacentHTML(list, 'afterend', '<p class="container-empty"><em>(empty)</em></p>');
     }
 
     for(let i = 0; i < buttons.length; i++) {
