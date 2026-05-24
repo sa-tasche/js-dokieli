@@ -2744,15 +2744,15 @@ export function createLicenseRightsHTML(iri, options = {}) {
 
   const labelKey = options.label.toLowerCase().replace(/\s+/g, '-');
 
-  html = `<dl class="${labelKey}"><dt data-i18n="license.${labelKey}.dt">${i18n.t(`license.${labelKey}.dt.textContent`)}</dt><dd>`;
+  html = `<dl class="${labelKey}"><dt data-i18n="${labelKey}.label">${i18n.t(`${labelKey}.label.textContent`)}</dt><dd>`;
   // if ('name' in options) {
   //   name = options.name;
-  //   title = ('description' in options) ? ` title="${i18n.t(`license.${labelKey}.dt.title`)}"` : '';
+  //   title = ('description' in options) ? ` title="${i18n.t(`${labelKey}.dt.title`)}"` : '';
   // }
   // else
   if (Config.License[iri]) {
     name = Config.License[iri].name;
-    title = ` title="${i18n.t('licenses.' + Config.License[iri].code + '.option.title')}""`;
+    title = ` title="${i18n.t(`${labelKey}.${Config.License[iri].code}.option.title`)}"`;
   }
 
   html += '<a href="' + iri + '" rel="' + options.rel + '"' + title + '>' + name + '</a>';
