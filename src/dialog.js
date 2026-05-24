@@ -929,11 +929,9 @@ export function shareResource(listenerEvent, iri) {
         Object.keys(subjectsWithAccess).forEach(accessSubject => {
           if (accessSubject === ns.foaf.Agent.value) {
             showPermissions(null, accessSubject);
-            return;
           }
           else if (Config.User.Graph && accessSubject === Config.User.IRI) {
             showPermissions(Config.User.Graph, accessSubject);
-            return;
           }
           else {
             //Gets some information about the accessSubject that can be displayed besides their URI.
