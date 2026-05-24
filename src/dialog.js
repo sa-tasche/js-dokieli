@@ -4063,7 +4063,9 @@ function initSlideshowControlsHover(controls, indicator) {
     }
     if (e.target.closest('.slide-delete') && hoveredSlide) {
       // Refuse to delete the only slide — a slideshow needs at least one.
-      if (document.querySelectorAll('.shower .slide').length <= 1) return;
+      const real = Array.from(document.querySelectorAll('.shower .slide'))
+        .filter(s => !s.closest('#rail-active-placeholder'));
+      if (real.length <= 1) return;
       const id = hoveredSlide.id;
       ensureAuthorAndDo(() => { Config.Editor.deleteSlideById(id); relayoutIfSingle(); });
       controls.hidden = true;
