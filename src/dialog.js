@@ -886,8 +886,7 @@ export function shareResource(listenerEvent, iri) {
         var ul = document.querySelector('#share-resource-permissions ul');
 
         var showPermissions = function(s, accessSubject) {
-// console.log(accessSubject)
-          if (accessSubject != Config.User.IRI) {
+          // if (accessSubject != Config.User.IRI) {
             addAccessSubjectItem(ul, s, accessSubject);
 
             //XXX: Relies on knowledge in addAcessSubjectItem where it inserts li with a particular id
@@ -897,7 +896,9 @@ export function shareResource(listenerEvent, iri) {
 
             Object.keys(authorizations).forEach(authorization => {
               var authorizationModes = authorizations[authorization].mode;
-              if (authorizations[authorization].agent.includes(accessSubject) || authorizations[authorization].agentGroup.includes(accessSubject)) {
+              if (authorizations[authorization].agent.includes(accessSubject) ||
+                  authorizations[authorization].agentClass.includes(accessSubject) ||
+                  authorizations[authorization].agentGroup.includes(accessSubject)) {
                 authorizationModes.forEach(grantedMode => {
                   if (accessContextModes.includes(grantedMode)) {
                     verifiedAccessModes.push(grantedMode);
@@ -916,29 +917,39 @@ export function shareResource(listenerEvent, iri) {
             var options = options || {};
             options['accessContext'] = 'Share';
             options['selectedAccessMode'] = selectedAccessMode;
-// console.log(options)
+            if (accessSubject === Config.User.IRI) {
+              options['disabled'] = true;
+            }
+
+            // console.log(options)
             showAccessModeSelection(li, '', accessSubject, subjectsWithAccess[accessSubject]['subjectType'], options);
-          }
+          // }
         }
 
         Object.keys(subjectsWithAccess).forEach(accessSubject => {
-          if (accessSubject === ns.foaf.Agent.value || accessSubject === Config.User.IRI) {
+          if (accessSubject === ns.foaf.Agent.value) {
+            showPermissions(null, accessSubject);
             return;
           }
-
-          //Gets some information about the accessSubject that can be displayed besides their URI.
-          getResourceGraph(accessSubject)
-            .then(result => {
-              var s;
-              var g = result?.graph;
-              if (g && g.node) {
-                s = g.node(rdf.namedNode(accessSubject));
-              }
-              showPermissions(s, accessSubject);
-            })
-            .catch(e => {
-              showPermissions(null, accessSubject);
-            })
+          else if (Config.User.Graph && accessSubject === Config.User.IRI) {
+            showPermissions(Config.User.Graph, accessSubject);
+            return;
+          }
+          else {
+            //Gets some information about the accessSubject that can be displayed besides their URI.
+            getResourceGraph(accessSubject)
+              .then(result => {
+                var s;
+                var g = result?.graph;
+                if (g && g.node) {
+                  s = g.node(rdf.namedNode(accessSubject));
+                }
+                showPermissions(s, accessSubject);
+              })
+              .catch(e => {
+                showPermissions(null, accessSubject);
+              })
+          }
         })
     });
   }
@@ -1082,8 +1093,11 @@ function addAccessSubjectItem(node, s, url) {
   iri = domSanitize(iri);
 
   var id = encodeURIComponent(iri);
-  var name = Config.User?.Contacts?.[iri]?.Name || (s ? getAgentName(s) || iri : iri);
-  var img = Config.User?.Contacts?.[iri]?.Image || (s ? getGraphImage(s) : null);
+  var name = Config.User?.Contacts?.[iri]?.Name || (iri == ns.foaf.Agent.value ? 'Public' : null) || (s ? getAgentName(s) || iri : iri);
+  var img = Config.User?.Contacts?.[iri]?.Image || (iri == ns.foaf.Agent.value ? Config.IconBase64['.fas.fa-globe'] : null) || (s ? getGraphImage(s) : null);
+
+  //TODO, use fa-people-group for accessGroup, unless the group has its own icon in Contacts or s
+
   if (!(img && img.length)) {
     img = Config.IconBase64['.fas.fa-user-secret'];
   }
@@ -1096,13 +1110,20 @@ function addAccessSubjectItem(node, s, url) {
 
 function showAccessModeSelection(node, id, accessSubject, subjectType, options) {
   id = id || generateAttributeId('select-access-mode-');
+  const documentURL = currentLocation();
+  let disabled = '';
+
   options = options || {};
   options['accessContext'] = options.accessContext || 'Share';
   options['selectedAccessMode'] = options.selectedAccessMode || '';
 
-  const documentURL = currentLocation();
+  if (options.disabled) {
+    disabled = ' disabled="disabled"';
+  }
 
-  const selectNode = `<select aria-label="${i18n.t('dialog.share-resource.select-access-mode.select.aria-label')}" data-i18n="dialog.share-resource.select-access-mode.select" id="${id}">${getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode })}</select>`;
+  // console.log(options)
+
+  const selectNode = `<select aria-label="${i18n.t('dialog.share-resource.select-access-mode.select.aria-label')}" data-i18n="dialog.share-resource.select-access-mode.select"${disabled} id="${id}">${getAccessModeOptionsHTML({'context': options.accessContext, 'selected': options.selectedAccessMode })}</select>`;
 
   sanitizeInsertAdjacentHTML(node, 'beforeend', selectNode);
 
@@ -1157,10 +1178,14 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
 
   var authorizations = getAuthorizationsMatching(aclResourceGraph, matchers);
 
+  // console.log(authorizations);
+
   var insertGraph = '';
   var deleteGraph = '';
   // var whereGraph = '';
   var authorizationSubject;
+
+  var authorizationForAccessSubjectInserted = false;
 
   var patches = [];
 
@@ -1178,11 +1203,12 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
       break;
   }
 
-// console.log(authorizations);
   if (hasOwnACLResource) {
+    //Updates existing authorizations
     Object.keys(authorizations).forEach(authorization => {
-// console.log(authorizations[authorization], selectedMode, accessSubject, subjectType);
+      // console.log(authorizations[authorization], selectedMode, accessSubject, subjectType);
       if (authorizations[authorization][subjectType].includes(accessSubject)) {
+        // console.log(authorizations[authorization][subjectType])
         var multipleAccessSubjects = (authorizations[authorization][subjectType].length > 1) ? true : false;
         var deleteAccessObjectProperty = (hasOwnACLResource) ? 'accessTo' : 'default';
 
@@ -1192,6 +1218,7 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
         var accessModes = authorizations[authorization].mode;
         var deleteAccessModes = '<' + accessModes.join('>, <') + '>';
 
+        //Deletes the Authorization
         if (!multipleAccessSubjects) {
           deleteGraph += `
 <${authorization}>
@@ -1209,13 +1236,32 @@ acl:${deleteAccessSubjectProperty} <${deleteAccessSubject}> .
         }
 
         patches.push({ 'delete': deleteGraph });
+
+        //Inserts back in to the same Authorization
+        if (selectedMode.length) {
+          authorizationForAccessSubjectInserted = true;
+
+          insertGraph = `
+<${authorization}>
+a acl:Authorization ;
+acl:accessTo <${documentURL}> ;
+acl:mode <${updatedMode.join('>, <')}> ;
+acl:${subjectType} <${accessSubject}> .
+`;
+
+          patches.push({ 'insert': insertGraph });
+        }
       }
+
     })
 
-    if (selectedMode.length) {
+    // console.log(authorizationForAccessSubjectInserted)
+
+    //Only insert new Authorization if we did not change an existing Authoriztion from earlier (so we don't have duplicates)
+    if (selectedMode.length && !authorizationForAccessSubjectInserted) {
       authorizationSubject = '#' + generateAttributeId();
 
-      insertGraph += `
+      insertGraph = `
 <${authorizationSubject}>
 a acl:Authorization ;
 acl:accessTo <${documentURL}> ;
@@ -1226,38 +1272,46 @@ acl:${subjectType} <${accessSubject}> .
       patches.push({ 'insert': insertGraph });
     }
   }
+  //When the effective ACL resource is from a parent or ancestor container resource
+  //Copy the Authorizations from the effective ACL resource that needs to be preserved for the ACL resource that will be created later
   else {
-     
     var updatedAuthorizations = structuredClone(authorizations);
     var authorizationsToDelete = [];
 
     Object.keys(updatedAuthorizations).forEach(authorization => {
+      //If there are existing Authorizations in the effective ACL resource that has same access subject as the one in which we want to update its access.
       if (updatedAuthorizations[authorization][subjectType].includes(accessSubject)) {
         var updatedMode;
-
+        //Mark the Authorization for deletion
         if (selectedMode.length) {
           authorizationsToDelete.push(authorization);
         }
+        //Removes access mode (when selection is empty)
         else {
           updatedAuthorizations[authorization].mode = updatedMode;
         }
       }
     });
 
+    //Remove the Authorization that is going to be updated later
     authorizationsToDelete.forEach(authorization => {
       delete updatedAuthorizations[authorization];
     });
 
     //XXX: updatedAuthorizations may have different authorization objects with the same properties and values. This is essentially just duplicate authorization rules.
 
+    // console.log(updatedAuthorizations);
+
+    //First we insert the Authorizations from the effective ACL resource towards the new ACL resource
     insertGraph = '';
     Object.keys(updatedAuthorizations).forEach(authorization => {
+      // console.log(authorization)
       authorizationSubject = '#' + generateAttributeId();
 
       var additionalProperties = [];
       ['agent', 'agentClass', 'agentGroup', 'origin'].forEach(key => {
         if (updatedAuthorizations[authorization][key] && updatedAuthorizations[authorization][key].length) {
-          additionalProperties.push(`  acl:${key} <${updatedAuthorizations[authorization][key].join('>, <')}>`);
+          additionalProperties.push(`acl:${key} <${updatedAuthorizations[authorization][key].join('>, <')}>`);
         }
       })
       additionalProperties = additionalProperties.join(';\n');
@@ -1271,9 +1325,23 @@ ${additionalProperties} .
 `;
     });
 
+    //Here we add the new Authorization that needs to be added as per user's selection
+    if (selectedMode.length && !authorizationForAccessSubjectInserted) {
+      authorizationSubject = '#' + generateAttributeId();
+
+      insertGraph += `
+<${authorizationSubject}>
+a acl:Authorization ;
+acl:accessTo <${documentURL}> ;
+acl:mode <${updatedMode.join('>, <')}> ;
+acl:${subjectType} <${accessSubject}> .
+`;
+    }
+
     patches.push({ 'insert': insertGraph });
   }
 
+  // console.log(patches)
   if (!patches.length) {
     throw new Error("Check why the patch payload wasn't constructed in updateAuthorization." + patches);
   }

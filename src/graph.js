@@ -1864,7 +1864,7 @@ function getAuthorizationsMatching (g, matchers) {
       var allKeysMatched = Object.keys(matchers).every(key => Object.keys(candidateAuthorization).includes(key));
 
       if (allKeysMatched) {
-        var properties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin', 'condition'];
+        var properties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin'];
         var authorization = {};
         properties.forEach(p => {
           authorization[p] = s.out(ns.acl[p]).values;
@@ -1874,6 +1874,7 @@ function getAuthorizationsMatching (g, matchers) {
     }
   });
 
+  // console.log(authorizations)
   return authorizations;
 }
 

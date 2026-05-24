@@ -371,6 +371,8 @@ export function initSlideshow(options) {
 function initIcons() {
   Config['IconBase64'] = Config['IconBase64'] || {};
   Config.IconBase64['.fas.fa-user-secret'] = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-user-secret']);
+  Config.IconBase64['.fas.fa-globe'] = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-globe']);
+  Config.IconBase64['.fas.fa-people-group'] = generateDataURI('image/svg+xml', 'base64', Icon['.fas.fa-people-group']);
 }
 
 //TODO: Review grapoi
