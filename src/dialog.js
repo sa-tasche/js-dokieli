@@ -3960,20 +3960,25 @@ let hoveredSlide = null;
 let controlsHideTimer = null;
 let controlsInit = false;
 let draggingSlideId = null;
+let slideshowControlsEl = null;
+let slideDropIndicatorEl = null;
 
 export function updateSlideshowControls() {
-  const existing = document.getElementById('slideshow-controls');
   const isSlideshow = document.body.classList.contains('shower');
   const isAuthor = Config.Editor.mode === 'author';
 
   if (!isSlideshow) {
-    existing?.remove();
-    document.getElementById('slide-drop-indicator')?.remove();
+    slideshowControlsEl?.remove();
+    slideDropIndicatorEl?.remove();
     return;
   }
 
-  if (existing) {
-    existing.dataset.author = isAuthor ? 'true' : 'false';
+  // Re-attach if body.replaceChildren (e.g., setTemplateNewSlideshow) detached them.
+  if (slideshowControlsEl && !slideshowControlsEl.isConnected) document.body.appendChild(slideshowControlsEl);
+  if (slideDropIndicatorEl && !slideDropIndicatorEl.isConnected) document.body.appendChild(slideDropIndicatorEl);
+
+  if (slideshowControlsEl) {
+    slideshowControlsEl.dataset.author = isAuthor ? 'true' : 'false';
     return;
   }
 
@@ -3984,15 +3989,14 @@ export function updateSlideshowControls() {
   div.hidden = true;
   div.innerHTML = `<button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button>`;
   document.body.appendChild(div);
+  slideshowControlsEl = div;
 
-  let indicator = document.getElementById('slide-drop-indicator');
-  if (!indicator) {
-    indicator = document.createElement('div');
-    indicator.id = 'slide-drop-indicator';
-    indicator.className = 'do';
-    indicator.hidden = true;
-    document.body.appendChild(indicator);
-  }
+  const indicator = document.createElement('div');
+  indicator.id = 'slide-drop-indicator';
+  indicator.className = 'do';
+  indicator.hidden = true;
+  document.body.appendChild(indicator);
+  slideDropIndicatorEl = indicator;
 
   initSlideshowControlsHover(div, indicator);
 }
@@ -4154,7 +4158,7 @@ function newSlideFragment(template = 'normal') {
     case 'shout':
       return fragmentFromString(wrapper(`<h2 class="shout" property="schema:name"></h2>`));
     case 'cover':
-      return fragmentFromString(wrapper(`<h2 property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p><span about="" rel="bibo:presentedAt" resource="#event-presentation" rev="bibo:presents"></span></p><p resource="#event-presentation" typeof="schema:Event bibo:Conference"><span rel="schema:superEvent" resource="#conference" rev="schema:subEvent" typeof="bibo:Conference"><a href="" rel="schema:url"></a></span>, <a href="" rel="schema:location"></a>, <time datatype="xsd:dateTime" property="schema:startDate"></time><time datatype="xsd:dateTime" property="schema:endDate"></time></p><address><img alt="" height="96" src="" width="96"> <span></span> <a href="" rel="schema:performer"></a> <span></span></address><footer><dl><dt>Project</dt><dd><a href="" rel="schema:workFeatured"></a></dd><dt>Slides</dt><dd><a about="#event-presentation" href="" rel="schema:workFeatured"></a></dd></dl></footer></div>`));
+      return fragmentFromString(wrapper(`<h2 property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p><span about="" rel="bibo:presentedAt" resource="#event-presentation" rev="bibo:presents"></span></p><p resource="#event-presentation" typeof="schema:Event bibo:Conference"><span rel="schema:superEvent" resource="#conference" rev="schema:subEvent" typeof="bibo:Conference"><a href="" rel="schema:url"></a></span>, <a href="" rel="schema:location"></a>, <time datatype="xsd:dateTime" property="schema:startDate"></time><time datatype="xsd:dateTime" property="schema:endDate"></time></p><address><img alt="" height="96" src="" width="96"> <span></span> <a class="do-print-a-href-hide" href="" rel="schema:performer"></a> <span></span></address><footer><dl><dt>Project</dt><dd><a class="do-print-a-href-hide" href="" rel="schema:workFeatured"></a></dd><dt>Slides</dt><dd><a about="#event-presentation" class="do-print-a-href-hide" href="" rel="schema:workFeatured"></a></dd></dl></footer></div>`));
     default:
       return fragmentFromString(wrapper(`<h2 property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div>`));
   }

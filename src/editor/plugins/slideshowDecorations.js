@@ -36,7 +36,9 @@ function buildDecorations(doc, activeIndex) {
   doc.descendants((node, pos) => {
     if (!isSlideSection(node)) return true;
     if (idx === activeIndex) {
-      decos.push(Decoration.node(pos, pos + node.nodeSize, { class: "active" }));
+      // Explicitly set top:auto so PM overwrites any stale inline top from
+      // when this slide was a rail thumb.
+      decos.push(Decoration.node(pos, pos + node.nodeSize, { class: "active", style: "top:auto" }));
     } else {
       const top = THUMB_TOP_BASE + idx * THUMB_STRIDE;
       decos.push(Decoration.node(pos, pos + node.nodeSize, { style: `top:${top}px`, draggable: "true" }));

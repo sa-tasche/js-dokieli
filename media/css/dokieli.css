@@ -98,13 +98,22 @@ limitations under the License.
     display: block !important;
   }
 
+  .shower > main > article,
+  .shower > main > article > .ProseMirror {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    display: block !important;
+  }
+
   .slide {
     page: slide-page !important;
     font-size: 2em !important;
     /* border:1px solid #000 !important; */
     /* border-radius:0.5em !important; */
     padding: 0.5em 0.5em 0 0.5em !important;
-    margin-top: 2em !important;
+    margin: 2em 0 0 !important;
     position: static !important;
     display: block !important;
     width: auto !important;
@@ -113,8 +122,12 @@ limitations under the License.
     left: auto !important;
     right: auto !important;
     bottom: auto !important;
+    transform: none !important;
+    box-shadow: none !important;
     break-inside: avoid !important;
     break-after: always !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
     background-size: contain !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
@@ -126,6 +139,22 @@ limitations under the License.
     h1, h2, h3, h4 {
       font-weight: bold !important;
     }
+  }
+
+  #rail-active-placeholder { display: none !important; }
+
+  .shower.single > main > article > .ProseMirror,
+  .shower.single .caption,
+  .shower.single .slide,
+  .shower.single .slide.active,
+  .shower.single .slide:not(.active) {
+    position: static !important;
+    transform: none !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin-bottom: 0 !important;
   }
 
   .slide * {
@@ -5442,29 +5471,34 @@ font-size:2.25em;
 .shower.full .slide.active .shout::after { background-position: 0 0; }
 .shower.full .progress { display: block; }
 
-/* Single view: vertical thumbnail rail on the left, active slide in main area. */
+/* Single view: vertical thumbnail rail on the left, active slide in main flow. */
 .shower.single > main > article {
   display: block;
   position: relative;
   min-height: 100vh;
-  padding-left: 260px;
   background: #eee;
   overflow: hidden;
+  padding: 24px 24px 24px 260px;
 }
-.shower.single .caption {
+.shower.single > main > article > .ProseMirror {
   display: block;
-  position: absolute;
-  top: 0;
-  left: 260px;
-  right: 24px;
-  padding: 12px 0;
-  margin: 0;
-  z-index: 1;
+  padding: 0;
 }
-.shower.single .slide {
+.shower.single details#document-details { display: none; }
+.shower.single .caption {
+  position: relative;
+  display: block;
+  top: auto;
+  left: auto;
+  right: auto;
+  padding: 0;
+  margin: 0 0 16px;
+  z-index: auto;
+}
+.shower.single .slide:not(.active) {
   position: absolute;
   left: 24px;
-  /* top is set inline by layoutSingle() */
+  /* top is set by the decoration plugin */
   transform-origin: 0 0;
   transform: scale(0.215);
   margin: 0;
@@ -5473,20 +5507,31 @@ font-size:2.25em;
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
   cursor: pointer;
 }
-.shower.single .slide:hover {
+.shower.single .slide:not(.active):hover {
   box-shadow: 0 6px 14px rgba(0,0,0,0.25);
 }
 .shower.single .slide.active {
-  position: absolute;
-  top: 60px;
-  left: 280px;
-  transform-origin: 0 0;
+  position: relative;
+  top: auto;
+  left: auto;
   transform: scale(0.7);
+  transform-origin: 0 0;
+  width: 1024px;
+  height: 640px;
+  margin: 0 0 -192px;
   cursor: default;
   box-shadow: 0 16px 32px rgba(0,0,0,0.18);
-  z-index: 2;
+  z-index: auto;
 }
-.shower.single .slide footer { display: block; }
+.shower.single .slide footer {
+  display: block;
+  position: static;
+  bottom: auto;
+}
+.shower.single .slide address {
+  float: none;
+  width: auto;
+}
 /* Hide the corner ⛶ in single mode (use the controls panel button instead). */
 .shower.single .slide::before { display: none; }
 .shower.single .slide[draggable="true"],
