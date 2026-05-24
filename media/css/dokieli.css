@@ -5509,6 +5509,10 @@ margin-top:1em;
 .shower>main>article > .ProseMirror > [property="schema:description"] > :not(section.slide) {
 display:none;
 }
+.shower.single > main > article > .ProseMirror > :not(section.slide):not(.caption):not([property="schema:description"]),
+.shower.single > main > article > :not(.ProseMirror):not(section.slide):not(.caption):not([property="schema:description"]) {
+display:none;
+}
 .shower > main > article > [property="schema:description"],
 .shower > main > article > .ProseMirror > [property="schema:description"] {
 display:flex;
