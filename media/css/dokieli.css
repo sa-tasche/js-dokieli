@@ -5259,7 +5259,7 @@ font-size:2.25em;
 .shower .caption h1 { color: #212121; }
 .shower .caption a { color: inherit; }
 
-/* Slide canvas: 1024x640 reference geometry; scaled by .list/.full. */
+/* Slide canvas: 1024x640 reference geometry; scaled by .single/.full. */
 .shower .slide {
   position: relative;
   z-index: 1;
@@ -5336,18 +5336,7 @@ font-size:2.25em;
   tab-size: 4;
 }
 
-/* Slide-number badge: opt-in via .shower.numbered (toggle button). */
-.shower.numbered { counter-reset: slide; }
-.shower.numbered .slide::after {
-  position: absolute;
-  right: 112px;
-  bottom: 48px;
-  color: #bdbdbd;
-  counter-increment: slide;
-  content: counter(slide);
-}
-
-/* Slide footer: hidden in full mode, shown on hover in list. */
+/* Slide footer: hidden in full mode. */
 .shower .progress,
 .shower .slide footer {
   position: absolute;
@@ -5424,41 +5413,6 @@ font-size:2.25em;
     flex-wrap: wrap;
     background: #eee;
   }
-  .shower.list .caption { display: block; }
-  .shower.list .slide {
-    transform-origin: 0 0;
-    margin: 0 -768px -456px 24px;
-    transform: scale(.25);
-    border-radius: 2px;
-    box-shadow: 0 12px 4px -8px rgba(0,0,0,.2),
-                0 12px 4px -8px rgba(0,0,0,.14),
-                0 4px 20px 0 rgba(0,0,0,.12);
-  }
-  .shower.list .slide:hover {
-    box-shadow: 0 16px 20px 0 rgba(0,0,0,.2),
-                0 4px 40px 0 rgba(0,0,0,.14),
-                0 8px 16px -4px rgba(0,0,0,.12);
-  }
-  .shower.list .slide.active {
-    box-shadow: 0 32px 40px 4px rgba(0,0,0,.2),
-                0 12px 56px 8px rgba(0,0,0,.14),
-                0 20px 20px -12px rgba(0,0,0,.12);
-  }
-  .shower.list .slide footer { display: block; }
-}
-@media screen and (min-width: 1168px) {
-  .shower.list .slide {
-    margin: 0 -512px -272px 48px;
-    transform: scale(.5);
-    border-radius: 4px;
-  }
-}
-@media screen and (min-width: 2336px) {
-  .shower.list .slide {
-    margin: 0 0 96px 96px;
-    transform: scale(1);
-    border-radius: 8px;
-  }
 }
 
 /* Full view: one slide centered in the viewport. */
@@ -5487,12 +5441,57 @@ font-size:2.25em;
 .shower.full .slide.active .shout::after { background-position: 0 0; }
 .shower.full .progress { display: block; }
 
-.shower.list .slide {
-overflow:auto;
+/* Single view: vertical thumbnail rail on the left, active slide in main area. */
+.shower.single > main > article {
+  display: block;
+  position: relative;
+  min-height: 100vh;
+  padding-left: 260px;
+  background: #eee;
 }
-.shower.list {
-padding-top:0;
+.shower.single .caption {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 260px;
+  right: 24px;
+  padding: 12px 0;
+  margin: 0;
+  z-index: 1;
 }
+.shower.single .slide {
+  position: absolute;
+  left: 24px;
+  /* top is set inline by layoutSingle() */
+  transform-origin: 0 0;
+  transform: scale(0.215);
+  margin: 0;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+.shower.single .slide:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+}
+.shower.single .slide.active {
+  position: absolute;
+  top: 50%;
+  left: 280px;
+  transform-origin: 0 50%;
+  transform: translateY(-50%) scale(0.7);
+  cursor: default;
+  box-shadow: 0 16px 32px rgba(0,0,0,0.18);
+  z-index: 2;
+}
+.shower.single .slide footer { display: block; }
+/* Hide the corner ⛶ in single mode (use the controls panel button instead). */
+.shower.single .slide::before { display: none; }
+.shower.single .slide[draggable="true"],
+#rail-active-placeholder section.slide[draggable="true"] {
+  cursor: grab;
+}
+
 .shower.full>main>article > header,
 .shower.full>main>article > .ProseMirror > header {
 display:none;
@@ -5525,10 +5524,6 @@ background-color:#EEEEEE;
 margin: 0;
 padding: 0;
 max-width: initial;
-}
-.shower.list>main,
-.shower.list>main>article {
-height: stretch;
 }
 .shower>main>article {
 position: relative;
@@ -5818,6 +5813,37 @@ flex-direction: column;
 gap: 4px;
 }
 #slideshow-controls[hidden] { display: none; }
+
+#rail-active-placeholder {
+position: absolute;
+width: 220px;
+height: 138px;
+overflow: hidden;
+border: 2px solid #080;
+border-radius: 4px;
+background: #fff;
+z-index: 1;
+}
+#rail-active-placeholder section.slide,
+#rail-active-placeholder section.slide.active {
+position: relative;
+top: 0;
+left: 0;
+transform: scale(0.215);
+transform-origin: 0 0;
+width: 1024px;
+height: 640px;
+margin: 0;
+cursor: default;
+box-shadow: none;
+}
+#rail-active-placeholder::after {
+content: '';
+position: absolute;
+inset: 0;
+background: rgba(8,128,8,0.08);
+pointer-events: none;
+}
 #slideshow-controls[data-author="false"] .author-only { display: none; }
 #slideshow-controls .enter-slide-full {
 font-size: 1.2em;
@@ -5903,30 +5929,6 @@ pointer-events: none;
 }
 body.slide-dragging, body.slide-dragging .slide {
 cursor: grabbing;
-}
-
-.shower.list .slide::before {
-content: '⛶';
-position: absolute;
-top: 0.3em;
-right: 0.3em;
-font-size: 5em;
-line-height: 1;
-color: rgba(0,0,0,0.5);
-background: rgba(255,255,255,0.75);
-border-radius: 6px;
-padding: 2px 8px;
-opacity: 0;
-transition: opacity 0.15s;
-z-index: 10;
-pointer-events: none;
-}
-.shower.list .slide:hover::before {
-opacity: 1;
-}
-.shower.full .slide::before,
-.shower.list:has(.ProseMirror) .slide::before {
-display: none;
 }
 
 /*

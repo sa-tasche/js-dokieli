@@ -17,10 +17,11 @@ limitations under the License.
 
 import Config from './config.js';
 import { getDocumentContentNode } from './utils/html.js';
+import { setActiveSlideIndex } from './editor/plugins/slideshowDecorations.js';
 
-const MODES = { LIST: 'list', FULL: 'full', SINGLE: 'single' };
-// Vertical thumbnail rail layout (in single mode): each thumb's transformed
-// height (640px * 0.215 ≈ 138px) plus 14px gap.
+const MODES = { FULL: 'full', SINGLE: 'single' };
+// Vertical thumbnail rail layout: each thumb's transformed height
+// (640px * 0.215 ≈ 138px) plus 14px gap.
 const THUMB_TOP_BASE = 24;
 const THUMB_STRIDE = 152;
 
@@ -32,52 +33,54 @@ let started = false;
 let keyupHandler = null;
 let keydownHandler = null;
 let hashHandler = null;
+let railClickHandler = null;
+let decorationsUpdateHandler = null;
 
 function getSlides() {
-  return Array.from(document.querySelectorAll('.shower .slide'));
+  // Exclude the cloned active-slide thumbnail living inside #rail-active-placeholder.
+  return Array.from(document.querySelectorAll('.shower .slide'))
+    .filter(s => !s.closest('#rail-active-placeholder'));
 }
 
 function getProgress() {
   return document.querySelector('.shower .progress');
 }
 
-function isList() {
-  return document.body.classList.contains(MODES.LIST);
-}
-
 function isFull() {
   return document.body.classList.contains(MODES.FULL);
 }
 
-function inEditableTarget(target) {
-  return !!(target && target.closest && target.closest('[contenteditable=""], [contenteditable="true"]'));
+function getEditorView() {
+  return Config.Editor?.authorToolbarView?.editorView || null;
 }
 
 function setActive(idx, options = {}) {
   const slides = getSlides();
   if (!slides.length) return;
   activeIndex = Math.max(0, Math.min(idx, slides.length - 1));
-  slides.forEach((s, i) => s.classList.toggle('active', i === activeIndex));
+  const view = getEditorView();
+  if (view) {
+    // PM owns the slide DOM; route .active and rail tops through a decoration plugin.
+    setActiveSlideIndex(view, activeIndex);
+  } else {
+    slides.forEach((s, i) => s.classList.toggle('active', i === activeIndex));
+  }
   updateProgress();
-  if (isSingle()) layoutSingle();
+  if (!isFull()) layoutSingle();
   if (options.syncHash !== false) syncToHash(slides[activeIndex]);
 }
 
-function isSingle() {
-  return document.body.classList.contains(MODES.SINGLE);
-}
-
-// In single mode, lay slides out as a vertical rail. The active slide is
-// positioned by CSS in the main area; we leave its rail slot occupied by a
-// placeholder so the rail order doesn't shift when the active changes.
+// Active slide goes to the main area via CSS; placeholder holds its rail slot. In PM mode the decoration plugin owns rail tops; here we only manage the placeholder.
 export function layoutSingle() {
   const slides = getSlides();
-  for (let i = 0; i < slides.length; i++) {
-    const s = slides[i];
-    if (s.classList.contains('active')) {
-      s.style.top = '';
-    } else {
-      s.style.top = (THUMB_TOP_BASE + i * THUMB_STRIDE) + 'px';
+  if (!getEditorView()) {
+    for (let i = 0; i < slides.length; i++) {
+      const s = slides[i];
+      if (s.classList.contains('active')) {
+        s.style.top = '';
+      } else {
+        s.style.top = (THUMB_TOP_BASE + i * THUMB_STRIDE) + 'px';
+      }
     }
   }
   updateActivePlaceholder(slides);
@@ -96,6 +99,14 @@ function updateActivePlaceholder(slides) {
     placeholder.className = 'do';
     document.body.appendChild(placeholder);
   }
+  // Mirror the active slide into the placeholder so the rail shows it under the green overlay.
+  const activeSlide = slides[activeIdx];
+  const clone = activeSlide.cloneNode(true);
+  clone.removeAttribute('contenteditable');
+  clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+  clone.setAttribute('draggable', 'true');
+  placeholder.replaceChildren(clone);
+
   const article = document.querySelector('.shower > main > article');
   if (!article) return;
   const rect = article.getBoundingClientRect();
@@ -103,8 +114,10 @@ function updateActivePlaceholder(slides) {
   placeholder.style.left = (rect.left + window.scrollX + 24) + 'px';
 }
 
-function clearSingleLayout() {
-  for (const s of getSlides()) s.style.top = '';
+export function clearSingleLayout() {
+  if (!getEditorView()) {
+    for (const s of getSlides()) s.style.top = '';
+  }
   document.getElementById('rail-active-placeholder')?.remove();
 }
 
@@ -174,13 +187,8 @@ export function prev() {
   setActive(activeIndex - 1);
 }
 
-// Track the non-full mode to return to when exiting full.
-let preFullMode = MODES.LIST;
-
 export function enterFullMode() {
-  if (isSingle()) preFullMode = MODES.SINGLE;
-  else if (document.body.classList.contains(MODES.LIST)) preFullMode = MODES.LIST;
-  document.body.classList.remove(MODES.LIST, MODES.SINGLE);
+  document.body.classList.remove(MODES.SINGLE);
   document.body.classList.add(MODES.FULL);
   clearSingleLayout();
   setActive(activeIndex);
@@ -188,62 +196,65 @@ export function enterFullMode() {
 
 export function exitFullMode() {
   document.body.classList.remove(MODES.FULL);
-  document.body.classList.add(preFullMode);
-  if (preFullMode === MODES.SINGLE) layoutSingle();
-  clearSlideFromHash();
-}
-
-export function enterSingleMode() {
-  document.body.classList.remove(MODES.LIST, MODES.FULL);
   document.body.classList.add(MODES.SINGLE);
   layoutSingle();
-}
-
-export function exitSingleMode() {
-  document.body.classList.remove(MODES.SINGLE);
-  document.body.classList.add(MODES.LIST);
-  clearSingleLayout();
+  clearSlideFromHash();
 }
 
 function onKeyup(e) {
   if (!document.body.classList.contains('shower')) return;
-  if (inEditableTarget(e.target)) return;
-
-  if (isFull() && e.key === 'Escape') {
+  // Presentation keys override the editor cursor in fullscreen.
+  if (!isFull()) return;
+  if (e.key === 'Escape') {
     e.preventDefault();
+    e.stopPropagation();
     exitFullMode();
   }
 }
 
 function onKeydown(e) {
   if (!document.body.classList.contains('shower')) return;
-  if (inEditableTarget(e.target)) return;
+  if (!isFull()) return;
 
-  if (isFull()) {
-    switch (e.key) {
-      case 'ArrowRight':
-      case 'ArrowDown':
-      case 'PageDown':
-      case ' ':
-        e.preventDefault();
-        next();
-        return;
-      case 'ArrowLeft':
-      case 'ArrowUp':
-      case 'PageUp':
-        e.preventDefault();
-        prev();
-        return;
-      case 'Home':
-        e.preventDefault();
-        setActive(0);
-        return;
-      case 'End':
-        e.preventDefault();
-        setActive(getSlides().length - 1);
-        return;
-    }
+  switch (e.key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+    case 'PageDown':
+    case ' ':
+      e.preventDefault();
+      e.stopPropagation();
+      next();
+      return;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+    case 'PageUp':
+      e.preventDefault();
+      e.stopPropagation();
+      prev();
+      return;
+    case 'Home':
+      e.preventDefault();
+      e.stopPropagation();
+      setActive(0);
+      return;
+    case 'End':
+      e.preventDefault();
+      e.stopPropagation();
+      setActive(getSlides().length - 1);
+      return;
   }
+}
+
+// Rail click: clicking a non-active thumbnail makes it the active slide.
+function onRailClick(e) {
+  if (!document.body.classList.contains('shower')) return;
+  if (isFull()) return;
+  if (e.target.closest('#document-menu') || e.target.closest('.do')) return;
+  const slide = e.target.closest('.slide');
+  if (!slide || slide.classList.contains('active')) return;
+  e.preventDefault();
+  const idx = getSlides().indexOf(slide);
+  if (idx >= 0) setActive(idx);
 }
 
 // Resolves slide from #slide-id or #open=URL#slide-id; returns the element or null.
@@ -284,12 +295,11 @@ export function start() {
     content.appendChild(div);
   }
 
-  if (!document.body.classList.contains(MODES.LIST)
-      && !document.body.classList.contains(MODES.FULL)
+  if (!document.body.classList.contains(MODES.FULL)
       && !document.body.classList.contains(MODES.SINGLE)) {
-    document.body.classList.add(MODES.LIST);
+    document.body.classList.add(MODES.SINGLE);
   }
-  if (document.body.classList.contains(MODES.SINGLE)) layoutSingle();
+  if (!isFull()) layoutSingle();
 
   setActive(0, { syncHash: false });
   const deepLinked = syncFromHash();
@@ -301,18 +311,24 @@ export function start() {
   keydownHandler = onKeydown;
   keyupHandler = onKeyup;
   hashHandler = syncFromHash;
-  document.addEventListener('keydown', keydownHandler);
-  document.addEventListener('keyup', keyupHandler);
+  railClickHandler = onRailClick;
+  decorationsUpdateHandler = () => { if (!isFull()) layoutSingle(); };
+  document.addEventListener('keydown', keydownHandler, true);
+  document.addEventListener('keyup', keyupHandler, true);
   window.addEventListener('hashchange', hashHandler);
+  document.addEventListener('click', railClickHandler, true);
+  window.addEventListener('dokieli:slideshow-decorations-updated', decorationsUpdateHandler);
 }
 
 export function stop() {
   if (!started) return;
   started = false;
-  if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
-  if (keyupHandler) document.removeEventListener('keyup', keyupHandler);
+  if (keydownHandler) document.removeEventListener('keydown', keydownHandler, true);
+  if (keyupHandler) document.removeEventListener('keyup', keyupHandler, true);
   if (hashHandler) window.removeEventListener('hashchange', hashHandler);
-  keydownHandler = keyupHandler = hashHandler = null;
+  if (railClickHandler) document.removeEventListener('click', railClickHandler, true);
+  if (decorationsUpdateHandler) window.removeEventListener('dokieli:slideshow-decorations-updated', decorationsUpdateHandler);
+  keydownHandler = keyupHandler = hashHandler = railClickHandler = decorationsUpdateHandler = null;
 }
 
 export function isStarted() {
@@ -327,8 +343,7 @@ export default {
   prev,
   enterFullMode,
   exitFullMode,
-  enterSingleMode,
-  exitSingleMode,
   layoutSingle,
+  clearSingleLayout,
   isStarted,
 };

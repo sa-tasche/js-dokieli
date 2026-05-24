@@ -38,6 +38,7 @@ import { exportAsDocument, updateUILanguage } from './actions.js';
 import { parseMarkdown, htmlToMarkdown, fragmentFromString, removeSelectorFromNode, selectArticleNode, getNodeWithoutClasses } from "./utils/html.js";
 import { showUserSigninSignout } from './auth.js';
 import { initSlideshow } from './init.js';
+import * as Slideshow from './slideshow.js';
 import { generateGeoView } from './geo.js';
 import { csvStringToJson, jsonToHtmlTableString } from './csv.js';
 import { restoreYjsContent, addYjsVersion, getYjsVersions, getYjsVersionsFromIDB, getCurrentVersionKey, onYjsVersionsChanged } from "./editor/editor.js";
@@ -3948,64 +3949,11 @@ export function createNewSlideshow(e) {
 
   updateButtons();
 
-  updateSlideshowControls();
-
-  initSlideshowInteraction();
+  initSlideshow();
 }
 
-let _slideshowInteractionInit = false;
-let _slideshow = null;
-
-export function initSlideshowInteraction(slideshow) {
-  if (slideshow) _slideshow = slideshow;
-
+export function initSlideshowInteraction() {
   updateSlideshowControls();
-
-  if (_slideshowInteractionInit) return;
-  _slideshowInteractionInit = true;
-
-  document.addEventListener('click', (e) => {
-    if (!document.body.classList.contains('shower')) return;
-    if (!document.body.classList.contains('list')) return;
-    if (e.target.closest('#document-menu') || e.target.closest('.do')) return;
-    const slide = e.target.closest('.slide');
-    if (!slide) return;
-
-    const rect = slide.getBoundingClientRect();
-    const cornerPx = 60;
-    const inCorner = e.clientX >= rect.right - cornerPx && e.clientY <= rect.top + cornerPx;
-
-    if (!inCorner) {
-      e.preventDefault();
-      return;
-    }
-
-    e.preventDefault();
-    const slides = Array.from(document.querySelectorAll('.shower .slide'));
-    const idx = slides.indexOf(slide);
-    if (_slideshow) {
-      _slideshow.goTo(idx);
-      _slideshow.enterFullMode();
-    } else {
-      slides.forEach(s => s.classList.remove('active'));
-      slide.classList.add('active');
-      document.body.classList.remove('list');
-      document.body.classList.add('full');
-    }
-  }, true);
-
-  // Single mode: click any non-active thumbnail to make it the active slide.
-  document.addEventListener('click', (e) => {
-    if (!document.body.classList.contains('shower')) return;
-    if (!document.body.classList.contains('single')) return;
-    if (e.target.closest('#document-menu') || e.target.closest('.do')) return;
-    const slide = e.target.closest('.slide');
-    if (!slide || slide.classList.contains('active')) return;
-    e.preventDefault();
-    const slides = Array.from(document.querySelectorAll('.shower .slide'));
-    const idx = slides.indexOf(slide);
-    if (_slideshow && idx >= 0) _slideshow.goTo(idx);
-  }, true);
 }
 
 let hoveredSlide = null;
@@ -4021,17 +3969,10 @@ export function updateSlideshowControls() {
   if (!isSlideshow) {
     existing?.remove();
     document.getElementById('slide-drop-indicator')?.remove();
-    document.getElementById('slideshow-toggles')?.remove();
     return;
   }
 
-  updateSlideshowToggles();
-
-  // If a stale panel from a previous build is in the DOM (still containing the
-  // toggle buttons that now live in #slideshow-toggles), tear it down and rebuild.
-  if (existing && existing.querySelector('.toggle-slide-numbers, .toggle-single-view')) {
-    existing.remove();
-  } else if (existing) {
+  if (existing) {
     existing.dataset.author = isAuthor ? 'true' : 'false';
     return;
   }
@@ -4041,7 +3982,7 @@ export function updateSlideshowControls() {
   div.id = 'slideshow-controls';
   div.dataset.author = isAuthor ? 'true' : 'false';
   div.hidden = true;
-  div.innerHTML = `<button class="do slide-drag-handle" draggable="true" type="button" title="Drag to reorder" aria-label="Drag to reorder">${Icon['.fas.fa-grip-vertical']}</button><button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button>`;
+  div.innerHTML = `<button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button>`;
   document.body.appendChild(div);
 
   let indicator = document.getElementById('slide-drop-indicator');
@@ -4054,25 +3995,6 @@ export function updateSlideshowControls() {
   }
 
   initSlideshowControlsHover(div, indicator);
-}
-
-function updateSlideshowToggles() {
-  let el = document.getElementById('slideshow-toggles');
-  const singlePressed = document.body.classList.contains('single') ? 'true' : 'false';
-
-  if (!el) {
-    el = document.createElement('div');
-    el.className = 'do';
-    el.id = 'slideshow-toggles';
-    el.innerHTML = `<button class="do toggle-single-view" type="button" title="Toggle single-slide view" aria-label="Toggle single-slide view" aria-pressed="${singlePressed}">${Icon['.fas.fa-table']}</button>`;
-    (document.querySelector('main') || document.body).appendChild(el);
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.toggle-single-view')) toggleSingleView();
-    });
-    return;
-  }
-
-  el.querySelector('.toggle-single-view')?.setAttribute('aria-pressed', singlePressed);
 }
 
 function initSlideshowControlsHover(controls, indicator) {
@@ -4111,11 +4033,13 @@ function initSlideshowControlsHover(controls, indicator) {
 
   controls.addEventListener('click', (e) => {
     if (e.target.closest('.enter-slide-full') && hoveredSlide) {
-      const slides = Array.from(document.querySelectorAll('.shower .slide'));
-      const idx = slides.indexOf(hoveredSlide);
-      if (_slideshow && idx >= 0) {
-        _slideshow.goTo(idx);
-        _slideshow.enterFullMode();
+      // hoveredSlide may be the rail-active clone; resolve to the real slide by id.
+      const slides = Array.from(document.querySelectorAll('.shower .slide'))
+        .filter(s => !s.closest('#rail-active-placeholder'));
+      const idx = slides.findIndex(s => s.id === hoveredSlide.id);
+      if (idx >= 0) {
+        Slideshow.goTo(idx);
+        Slideshow.enterFullMode();
       }
       return;
     }
@@ -4138,6 +4062,8 @@ function initSlideshowControlsHover(controls, indicator) {
       return;
     }
     if (e.target.closest('.slide-delete') && hoveredSlide) {
+      // Refuse to delete the only slide — a slideshow needs at least one.
+      if (document.querySelectorAll('.shower .slide').length <= 1) return;
       const id = hoveredSlide.id;
       ensureAuthorAndDo(() => { Config.Editor.deleteSlideById(id); relayoutIfSingle(); });
       controls.hidden = true;
@@ -4145,25 +4071,29 @@ function initSlideshowControlsHover(controls, indicator) {
     }
   });
 
-  const handle = controls.querySelector('.slide-drag-handle');
-  handle.addEventListener('dragstart', (e) => {
+  document.addEventListener('dragstart', (e) => {
+    if (!document.body.classList.contains('shower')) return;
+    if (document.body.classList.contains('full')) return;
+    const slide = e.target.closest('.slide');
+    if (!slide) return;
+    // The rail clone is the draggable proxy for the active slide; the editable original isn't.
+    if (slide.classList.contains('active') && !slide.closest('#rail-active-placeholder')) return;
     if (Config.Editor.mode !== 'author') {
       e.preventDefault();
       Config.Editor.toggleEditor('author');
       return;
     }
-    if (!hoveredSlide) { e.preventDefault(); return; }
-    draggingSlideId = hoveredSlide.id;
+    draggingSlideId = slide.id;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('application/x-slide-id', draggingSlideId);
 
-    const rect = hoveredSlide.getBoundingClientRect();
+    const rect = slide.getBoundingClientRect();
     const ghostHost = document.createElement('div');
-    ghostHost.className = 'shower list';
+    ghostHost.className = 'shower single';
     ghostHost.style.cssText = `position:fixed;top:0;left:-10000px;width:${rect.width}px;height:${rect.height}px;pointer-events:none;`;
     const ghostArticle = document.createElement('article');
     ghostArticle.style.cssText = 'margin:0;padding:0;';
-    const clone = hoveredSlide.cloneNode(true);
+    const clone = slide.cloneNode(true);
     clone.style.margin = '0';
     ghostArticle.appendChild(clone);
     ghostHost.appendChild(ghostArticle);
@@ -4172,24 +4102,13 @@ function initSlideshowControlsHover(controls, indicator) {
     setTimeout(() => ghostHost.remove(), 0);
 
     document.body.classList.add('slide-dragging');
-  });
-  handle.addEventListener('dragend', (e) => {
+  }, true);
+  document.addEventListener('dragend', (e) => {
+    if (!draggingSlideId) return;
     draggingSlideId = null;
     document.body.classList.remove('slide-dragging');
     hideIndicator();
-    controls.hidden = true;
-    hoveredSlide = null;
-
-    const { clientX, clientY } = e;
-    setTimeout(() => {
-      const el = document.elementFromPoint(clientX, clientY);
-      const slide = el && el.closest && el.closest('.slide');
-      if (slide) {
-        hoveredSlide = slide;
-        positionAt(slide);
-      }
-    }, 0);
-  });
+  }, true);
 
   document.addEventListener('dragover', (e) => {
     if (!draggingSlideId) return;
@@ -4222,8 +4141,8 @@ function initSlideshowControlsHover(controls, indicator) {
 }
 
 function relayoutIfSingle() {
-  if (!document.body.classList.contains('single')) return;
-  requestAnimationFrame(() => _slideshow?.layoutSingle());
+  if (document.body.classList.contains('full')) return;
+  requestAnimationFrame(() => Slideshow.layoutSingle());
 }
 
 function newSlideFragment(template = 'normal') {
@@ -4233,7 +4152,7 @@ function newSlideFragment(template = 'normal') {
     case 'shout':
       return fragmentFromString(wrapper(`<h2 class="shout" property="schema:name"></h2>`));
     case 'cover':
-      return fragmentFromString(wrapper(`<h2 property="schema:name"></h2><figure><img class="cover" src="" alt=""></figure>`));
+      return fragmentFromString(wrapper(`<h2 property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p><span about="" rel="bibo:presentedAt" resource="#event-presentation" rev="bibo:presents"></span></p><p resource="#event-presentation" typeof="schema:Event bibo:Conference"><span rel="schema:superEvent" resource="#conference" rev="schema:subEvent" typeof="bibo:Conference"><a href="" rel="schema:url"></a></span>, <a href="" rel="schema:location"></a>, <time datatype="xsd:dateTime" property="schema:startDate"></time><time datatype="xsd:dateTime" property="schema:endDate"></time></p><address><img alt="" height="96" src="" width="96"> <span></span> <a href="" rel="schema:performer"></a> <span></span></address><footer><dl><dt>Project</dt><dd><a href="" rel="schema:workFeatured"></a></dd><dt>Slides</dt><dd><a about="#event-presentation" href="" rel="schema:workFeatured"></a></dd></dl></footer></div>`));
     default:
       return fragmentFromString(wrapper(`<h2 property="schema:name"></h2><div datatype="rdf:HTML" property="schema:description"><p></p></div>`));
   }
@@ -4241,7 +4160,14 @@ function newSlideFragment(template = 'normal') {
 
 export function addSlide(e) {
   hideDocumentMenu();
-  Config.Editor.insertSlideAtEnd(newSlideFragment());
+  const active = document.querySelector('.shower .slide.active');
+  const fragment = newSlideFragment();
+  if (active?.id) {
+    Config.Editor.insertSlideAfter(active.id, fragment);
+  } else {
+    Config.Editor.insertSlideAtEnd(fragment);
+  }
+  relayoutIfSingle();
 }
 
 export function addSlideAfter(targetId, template = 'normal') {
@@ -4252,6 +4178,7 @@ export function addSlideAfter(targetId, template = 'normal') {
   } else {
     Config.Editor.insertSlideAtEnd(fragment);
   }
+  relayoutIfSingle();
 }
 
 function ensureAuthorAndDo(action) {
@@ -4280,21 +4207,10 @@ function ensureAuthorAndDo(action) {
   tryRun();
 }
 
-export function toggleSingleView() {
-  if (!_slideshow) return;
-  if (document.body.classList.contains('single')) {
-    _slideshow.exitSingleMode();
-  } else {
-    _slideshow.enterSingleMode();
-  }
-  updateSlideshowControls();
-}
-
+// Strip inline rail artifacts so serialize/print sees a clean DOM; restore on next frame.
 function exitSingleBeforeSerialize() {
-  if (document.body.classList.contains('single')) {
-    _slideshow?.exitSingleMode();
-    updateSlideshowControls();
-  }
+  Slideshow.clearSingleLayout();
+  requestAnimationFrame(() => Slideshow.layoutSingle());
 }
 
 export function showEmbedData(e) {

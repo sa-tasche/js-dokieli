@@ -3715,7 +3715,7 @@ export function initCurrentStylesheet(e) {
     for(j = 0; j < slides.length; j++) {
       slides[j].classList.add('do');
     }
-    getDocumentContentNode(document).classList.add('on-slideshow', 'list');
+    getDocumentContentNode(document).classList.add('on-slideshow', 'single');
     sanitizeInsertAdjacentHTML(document.querySelector('head'), 'beforeend', '<meta content="width=792, user-scalable=no" name="viewport" />');
 
     var body = getDocumentContentNode(document);
@@ -3744,7 +3744,7 @@ export function initCurrentStylesheet(e) {
     for (var c = 0; c < slides.length; c++){
       slides[c].classList.remove('do');
     }
-    getDocumentContentNode(document).classList.remove('on-slideshow', 'list', 'full');
+    getDocumentContentNode(document).classList.remove('on-slideshow', 'single', 'full');
     getDocumentContentNode(document).removeAttribute('style');
     var mV = document.querySelector('head meta[name="viewport"][content="width=792, user-scalable=no"]');
     mV = (mV) ? mV.parentNode.removeChild(mV) : false;
