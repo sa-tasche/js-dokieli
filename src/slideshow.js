@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { TextSelection } from 'prosemirror-state';
 import Config from './config.js';
 import { getDocumentContentNode } from './utils/html.js';
 import { setActiveSlideIndex, setSlideshowMode } from './editor/plugins/slideshowDecorations.js';
@@ -68,6 +69,37 @@ function setActive(idx, options = {}) {
   updateProgress();
   if (!isFull()) layoutSingle();
   if (options.syncHash !== false) syncToHash(slides[activeIndex]);
+  if (options.focusEditor && view && Config.Editor?.mode === 'author') {
+    focusActiveSlideHeading(view, activeIndex);
+  }
+}
+
+// Place PM's cursor inside the active slide's first heading so typing lands in the slide.
+function focusActiveSlideHeading(view, idx) {
+  let sectionIdx = 0;
+  let targetPos = null;
+  view.state.doc.descendants((node, pos) => {
+    if (targetPos !== null) return false;
+    if (node.type.name !== 'section') return true;
+    const cls = node.attrs.originalAttributes?.class || '';
+    if (!cls.split(/\s+/).includes('slide')) return true;
+    if (sectionIdx === idx) {
+      node.descendants((child, childPos) => {
+        if (targetPos !== null) return false;
+        if (child.type.name === 'heading') {
+          targetPos = pos + 1 + childPos + 1;
+          return false;
+        }
+        return true;
+      });
+    }
+    sectionIdx++;
+    return false;
+  });
+  if (targetPos === null) return;
+  const tr = view.state.tr.setSelection(TextSelection.create(view.state.doc, targetPos));
+  view.dispatch(tr);
+  view.focus();
 }
 
 // Active slide goes to the main area via CSS; placeholder holds its rail slot. In PM mode the decoration plugin owns rail tops; here we only manage the placeholder.
@@ -176,7 +208,7 @@ function updateProgress() {
 }
 
 export function goTo(idx) {
-  setActive(idx);
+  setActive(idx, { focusEditor: true });
 }
 
 export function next() {
@@ -258,7 +290,7 @@ function onRailClick(e) {
   if (!slide || slide.classList.contains('active')) return;
   e.preventDefault();
   const idx = getSlides().indexOf(slide);
-  if (idx >= 0) setActive(idx);
+  if (idx >= 0) setActive(idx, { focusEditor: true });
 }
 
 // Resolves slide from #slide-id or #open=URL#slide-id; returns the element or null.
@@ -283,7 +315,7 @@ function syncFromHash() {
   return slide;
 }
 
-export function start() {
+export function start(options = {}) {
   if (started) return;
   started = true;
 
@@ -305,7 +337,7 @@ export function start() {
   }
   if (!isFull()) layoutSingle();
 
-  setActive(0, { syncHash: false });
+  setActive(0, { syncHash: false, focusEditor: options.focusEditor === true });
   const deepLinked = syncFromHash();
   // Deep-link entry: shared #slide-id URL lands in full mode (unless editing).
   if (deepLinked && Config.Editor?.mode !== 'author') {

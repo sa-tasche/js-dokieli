@@ -349,7 +349,7 @@ export async function initDocumentMode(mode) {
       const template = param === 'slideshow' ? 'new-slideshow' : (param || 'new');
       Config.Editor.toggleEditor('author', { template });
       Config.DocumentAction = 'new';
-      if (template === 'new-slideshow') initSlideshow();
+      if (template === 'new-slideshow') initSlideshow({ focusEditor: true });
     }
   // }
 }
@@ -369,7 +369,7 @@ export function initSlideshow(options) {
   const tryStart = () => {
     if (document.querySelectorAll('.shower .slide').length > 0) {
       Slideshow.stop();
-      Slideshow.start();
+      Slideshow.start({ focusEditor: options.focusEditor === true });
       initSlideshowInteraction();
       return;
     }

@@ -3949,7 +3949,7 @@ export function createNewSlideshow(e) {
 
   updateButtons();
 
-  initSlideshow();
+  initSlideshow({ focusEditor: true });
 }
 
 export function initSlideshowInteraction() {
