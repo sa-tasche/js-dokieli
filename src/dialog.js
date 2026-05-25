@@ -842,7 +842,7 @@ export function shareResource(listenerEvent, iri) {
 
             sanitizeInsertAdjacentHTML(suggestion, 'beforeend', img + '<span title="' + contact + '">' + name + '</span>');
 
-            var ul = document.querySelector('#share-resource-permissions ul');
+            var ul = document.querySelector('#share-resource-permissions ul.permissions');
 
             suggestion.addEventListener('click', () => {
               addAccessSubjectItem(ul, Config.User.Contacts[contact].Graph, contact);
@@ -883,7 +883,7 @@ export function shareResource(listenerEvent, iri) {
 
         const accessContextModes = Object.keys(accessContext);
 
-        var ul = document.querySelector('#share-resource-permissions ul');
+        var ul = document.querySelector('#share-resource-permissions ul.permissions');
 
         var showPermissions = function(s, accessSubject) {
           // if (accessSubject != Config.User.IRI) {
