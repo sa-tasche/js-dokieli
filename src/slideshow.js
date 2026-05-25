@@ -17,7 +17,7 @@ limitations under the License.
 
 import Config from './config.js';
 import { getDocumentContentNode } from './utils/html.js';
-import { setActiveSlideIndex } from './editor/plugins/slideshowDecorations.js';
+import { setActiveSlideIndex, setSlideshowMode } from './editor/plugins/slideshowDecorations.js';
 
 const MODES = { FULL: 'full', SINGLE: 'single' };
 // Vertical thumbnail rail layout: each thumb's transformed height
@@ -191,12 +191,16 @@ export function enterFullMode() {
   document.body.classList.remove(MODES.SINGLE);
   document.body.classList.add(MODES.FULL);
   clearSingleLayout();
+  const view = getEditorView();
+  if (view) setSlideshowMode(view, MODES.FULL);
   setActive(activeIndex);
 }
 
 export function exitFullMode() {
   document.body.classList.remove(MODES.FULL);
   document.body.classList.add(MODES.SINGLE);
+  const view = getEditorView();
+  if (view) setSlideshowMode(view, MODES.SINGLE);
   layoutSingle();
   clearSlideFromHash();
 }

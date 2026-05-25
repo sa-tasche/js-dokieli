@@ -30,15 +30,22 @@ function isSlideSection(node) {
   return cls.split(/\s+/).includes("slide");
 }
 
-function buildDecorations(doc, activeIndex) {
+function buildDecorations(doc, activeIndex, mode) {
   const decos = [];
   let idx = 0;
   doc.descendants((node, pos) => {
     if (!isSlideSection(node)) return true;
     if (idx === activeIndex) {
-      // Explicitly set top:auto so PM overwrites any stale inline top from
-      // when this slide was a rail thumb.
-      decos.push(Decoration.node(pos, pos + node.nodeSize, { class: "active", style: "top:auto" }));
+      // In single mode set top:auto so PM overwrites any stale inline top from
+      // when this slide was a rail thumb. In full mode leave style empty so
+      // the CSS rule `.shower.full .slide { top: 0 }` wins.
+      const attrs = mode === "full"
+        ? { class: "active", style: "" }
+        : { class: "active", style: "top:auto" };
+      decos.push(Decoration.node(pos, pos + node.nodeSize, attrs));
+    } else if (mode === "full") {
+      // Hidden off-screen via CSS; clear any leftover rail top from single mode.
+      decos.push(Decoration.node(pos, pos + node.nodeSize, { style: "" }));
     } else {
       const top = THUMB_TOP_BASE + idx * THUMB_STRIDE;
       decos.push(Decoration.node(pos, pos + node.nodeSize, { style: `top:${top}px`, draggable: "true" }));
@@ -53,16 +60,20 @@ export const slideshowDecorationsPlugin = new Plugin({
   key: slideshowDecorationsKey,
   state: {
     init(_, state) {
-      return { activeIndex: 0, decorations: buildDecorations(state.doc, 0) };
+      return { activeIndex: 0, mode: "single", decorations: buildDecorations(state.doc, 0, "single") };
     },
     apply(tr, value, _oldState, newState) {
       const meta = tr.getMeta(slideshowDecorationsKey);
       let activeIndex = value.activeIndex;
+      let mode = value.mode;
       if (meta && typeof meta.activeIndex === "number") {
         activeIndex = meta.activeIndex;
       }
-      if (tr.docChanged || activeIndex !== value.activeIndex) {
-        return { activeIndex, decorations: buildDecorations(newState.doc, activeIndex) };
+      if (meta && typeof meta.mode === "string") {
+        mode = meta.mode;
+      }
+      if (tr.docChanged || activeIndex !== value.activeIndex || mode !== value.mode) {
+        return { activeIndex, mode, decorations: buildDecorations(newState.doc, activeIndex, mode) };
       }
       return value;
     },
@@ -84,4 +95,9 @@ export const slideshowDecorationsPlugin = new Plugin({
 export function setActiveSlideIndex(view, activeIndex) {
   if (!view) return;
   view.dispatch(view.state.tr.setMeta(slideshowDecorationsKey, { activeIndex }));
+}
+
+export function setSlideshowMode(view, mode) {
+  if (!view) return;
+  view.dispatch(view.state.tr.setMeta(slideshowDecorationsKey, { mode }));
 }
