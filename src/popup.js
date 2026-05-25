@@ -20,6 +20,7 @@ import Config from './config.js';
 import { i18nextInit } from './i18n.js';
 import { initButtons } from './ui/buttons.js';
 import { renderMenuInner } from './ui/menu-builder.js';
+import { domSanitize } from './utils/sanitization.js';
 
 const WebExtension = (typeof globalThis.browser !== 'undefined') ? globalThis.browser : globalThis.chrome;
 
@@ -72,9 +73,9 @@ async function renderUserInfo() {
   const session = await getSession();
 
   if (session?.webId) {
-    node.innerHTML = renderAgent(session) + Config.Button.Menu.SignOut;
+    node.setHTMLUnsafe(domSanitize(renderAgent(session) + Config.Button.Menu.SignOut));
   } else {
-    node.innerHTML = Config.Button.Menu.SignIn;
+    node.setHTMLUnsafe(domSanitize(Config.Button.Menu.SignIn));
   }
 }
 
@@ -148,7 +149,7 @@ function initAuthHandlers() {
 
 function renderMenu() {
   const menu = document.getElementById('document-menu');
-  if (menu) menu.innerHTML = renderMenuInner();
+  if (menu) menu.setHTMLUnsafe(domSanitize(renderMenuInner()));
 }
 
 function initLanguageHandler() {

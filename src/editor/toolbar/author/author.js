@@ -608,7 +608,7 @@ nodeToHTML(node, schema) {
   const fragment = serializer.serializeFragment(node.content);
   const div = document.createElement('div');
   div.appendChild(fragment);
-  return div.innerHTML;
+  return div.getHTML();
 }
 
 

@@ -2278,7 +2278,7 @@ function attachBrowseStoragePopup(id, action) {
         }
         if (isFirst) {
           node.classList.add('browse-storage-breadcrumb-home');
-          node.innerHTML = iconHome;
+          node.setHTMLUnsafe(domSanitize(iconHome));
           var labelSpan = document.createElement('span');
           labelSpan.textContent = crumb.label;
           node.appendChild(labelSpan);
@@ -3985,7 +3985,7 @@ export function updateSlideshowControls() {
   div.id = 'slideshow-controls';
   div.dataset.author = isAuthor ? 'true' : 'false';
   div.hidden = true;
-  div.innerHTML = `<button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button>`;
+  div.setHTMLUnsafe(domSanitize(`<button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button>`));
   document.body.appendChild(div);
   slideshowControlsEl = div;
 
