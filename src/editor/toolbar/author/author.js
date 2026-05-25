@@ -675,6 +675,15 @@ nodeToHTML(node, schema) {
     dispatch(tr);
   }
 
+  insertSlideAfter(targetId, fragment) {
+    const target = this.findSlideById(targetId);
+    if (!target) return this.insertSlideAtEnd(fragment);
+    const { state, dispatch } = this.editorView;
+    const insertAt = target.pos + target.node.nodeSize;
+    const node = DOMParser.fromSchema(schema).parse(fragment);
+    dispatch(state.tr.insert(insertAt, node));
+  }
+
   findSlideById(id) {
     const { state } = this.editorView;
     let found = null;

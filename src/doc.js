@@ -2744,15 +2744,15 @@ export function createLicenseRightsHTML(iri, options = {}) {
 
   const labelKey = options.label.toLowerCase().replace(/\s+/g, '-');
 
-  html = `<dl class="${labelKey}"><dt data-i18n="license.${labelKey}.dt">${i18n.t(`license.${labelKey}.dt.textContent`)}</dt><dd>`;
+  html = `<dl class="${labelKey}"><dt data-i18n="${labelKey}.label">${i18n.t(`${labelKey}.label.textContent`)}</dt><dd>`;
   // if ('name' in options) {
   //   name = options.name;
-  //   title = ('description' in options) ? ` title="${i18n.t(`license.${labelKey}.dt.title`)}"` : '';
+  //   title = ('description' in options) ? ` title="${i18n.t(`${labelKey}.dt.title`)}"` : '';
   // }
   // else
   if (Config.License[iri]) {
     name = Config.License[iri].name;
-    title = ` title="${i18n.t('licenses.' + Config.License[iri].code + '.option.title')}""`;
+    title = ` title="${i18n.t(`${labelKey}.${Config.License[iri].code}.option.title`)}"`;
   }
 
   html += '<a href="' + iri + '" rel="' + options.rel + '"' + title + '>' + name + '</a>';
@@ -3715,7 +3715,7 @@ export function initCurrentStylesheet(e) {
     for(j = 0; j < slides.length; j++) {
       slides[j].classList.add('do');
     }
-    getDocumentContentNode(document).classList.add('on-slideshow', 'list');
+    getDocumentContentNode(document).classList.add('on-slideshow', 'single');
     sanitizeInsertAdjacentHTML(document.querySelector('head'), 'beforeend', '<meta content="width=792, user-scalable=no" name="viewport" />');
 
     var body = getDocumentContentNode(document);
@@ -3744,7 +3744,7 @@ export function initCurrentStylesheet(e) {
     for (var c = 0; c < slides.length; c++){
       slides[c].classList.remove('do');
     }
-    getDocumentContentNode(document).classList.remove('on-slideshow', 'list', 'full');
+    getDocumentContentNode(document).classList.remove('on-slideshow', 'single', 'full');
     getDocumentContentNode(document).removeAttribute('style');
     var mV = document.querySelector('head meta[name="viewport"][content="width=792, user-scalable=no"]');
     mV = (mV) ? mV.parentNode.removeChild(mV) : false;

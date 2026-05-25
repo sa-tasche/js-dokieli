@@ -98,13 +98,22 @@ limitations under the License.
     display: block !important;
   }
 
+  .shower > main > article,
+  .shower > main > article > .ProseMirror {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    display: block !important;
+  }
+
   .slide {
     page: slide-page !important;
     font-size: 2em !important;
     /* border:1px solid #000 !important; */
     /* border-radius:0.5em !important; */
     padding: 0.5em 0.5em 0 0.5em !important;
-    margin-top: 2em !important;
+    margin: 2em 0 0 !important;
     position: static !important;
     display: block !important;
     width: auto !important;
@@ -113,8 +122,12 @@ limitations under the License.
     left: auto !important;
     right: auto !important;
     bottom: auto !important;
+    transform: none !important;
+    box-shadow: none !important;
     break-inside: avoid !important;
     break-after: always !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
     background-size: contain !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
@@ -126,6 +139,22 @@ limitations under the License.
     h1, h2, h3, h4 {
       font-weight: bold !important;
     }
+  }
+
+  #rail-active-placeholder { display: none !important; }
+
+  .shower.single > main > article > .ProseMirror,
+  .shower.single .caption,
+  .shower.single .slide,
+  .shower.single .slide.active,
+  .shower.single .slide:not(.active) {
+    position: static !important;
+    transform: none !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin-bottom: 0 !important;
   }
 
   .slide * {
@@ -5259,7 +5288,7 @@ font-size:2.25em;
 .shower .caption h1 { color: #212121; }
 .shower .caption a { color: inherit; }
 
-/* Slide canvas: 1024x640 reference geometry; scaled by .list/.full. */
+/* Slide canvas: 1024x640 reference geometry; scaled by .single/.full. */
 .shower .slide {
   position: relative;
   z-index: 1;
@@ -5336,24 +5365,14 @@ font-size:2.25em;
   tab-size: 4;
 }
 
-/* Slide-number badge: opt-in via .shower.numbered (toggle button). */
-.shower.numbered { counter-reset: slide; }
-.shower.numbered .slide::after {
-  position: absolute;
-  left: 96px;
-  bottom: 48px;
-  color: #bdbdbd;
-  counter-increment: slide;
-  content: counter(slide);
-}
-
-/* Slide footer: hidden in full mode, shown on hover in list. */
+/* Slide footer: hidden in full mode. */
 .shower .progress,
 .shower .slide footer {
   position: absolute;
   left: 0;
   z-index: 1;
   display: none;
+  top: 0;
 }
 .shower .slide footer {
   right: 0;
@@ -5424,41 +5443,6 @@ font-size:2.25em;
     flex-wrap: wrap;
     background: #eee;
   }
-  .shower.list .caption { display: block; }
-  .shower.list .slide {
-    transform-origin: 0 0;
-    margin: 0 -768px -456px 24px;
-    transform: scale(.25);
-    border-radius: 2px;
-    box-shadow: 0 12px 4px -8px rgba(0,0,0,.2),
-                0 12px 4px -8px rgba(0,0,0,.14),
-                0 4px 20px 0 rgba(0,0,0,.12);
-  }
-  .shower.list .slide:hover {
-    box-shadow: 0 16px 20px 0 rgba(0,0,0,.2),
-                0 4px 40px 0 rgba(0,0,0,.14),
-                0 8px 16px -4px rgba(0,0,0,.12);
-  }
-  .shower.list .slide.active {
-    box-shadow: 0 32px 40px 4px rgba(0,0,0,.2),
-                0 12px 56px 8px rgba(0,0,0,.14),
-                0 20px 20px -12px rgba(0,0,0,.12);
-  }
-  .shower.list .slide footer { display: block; }
-}
-@media screen and (min-width: 1168px) {
-  .shower.list .slide {
-    margin: 0 -512px -272px 48px;
-    transform: scale(.5);
-    border-radius: 4px;
-  }
-}
-@media screen and (min-width: 2336px) {
-  .shower.list .slide {
-    margin: 0 0 96px 96px;
-    transform: scale(1);
-    border-radius: 8px;
-  }
 }
 
 /* Full view: one slide centered in the viewport. */
@@ -5487,12 +5471,74 @@ font-size:2.25em;
 .shower.full .slide.active .shout::after { background-position: 0 0; }
 .shower.full .progress { display: block; }
 
-.shower.list .slide {
-overflow:auto;
+/* Single view: vertical thumbnail rail on the left, active slide in main flow. */
+.shower.single > main > article {
+  display: block;
+  position: relative;
+  min-height: 100vh;
+  background: #eee;
+  overflow: hidden;
+  padding: 24px 24px 24px 260px;
 }
-.shower.list {
-padding-top:0;
+.shower.single > main > article > .ProseMirror {
+  display: block;
+  padding: 0;
 }
+.shower.single details#document-details { display: none; }
+.shower.single .caption {
+  position: relative;
+  display: block;
+  top: auto;
+  left: auto;
+  right: auto;
+  padding: 0;
+  margin: 0 0 16px;
+  z-index: auto;
+}
+.shower.single .slide:not(.active) {
+  position: absolute;
+  left: 24px;
+  /* top is set by the decoration plugin */
+  transform-origin: 0 0;
+  transform: scale(0.215);
+  margin: 0;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+.shower.single .slide:not(.active):hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+}
+.shower.single .slide.active {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: scale(0.7);
+  transform-origin: 0 0;
+  width: 1024px;
+  height: 640px;
+  margin: 0 0 -192px;
+  cursor: default;
+  box-shadow: 0 16px 32px rgba(0,0,0,0.18);
+  z-index: auto;
+}
+.shower.single .slide footer {
+  display: block;
+  position: static;
+  bottom: auto;
+}
+.shower.single .slide address {
+  float: none;
+  width: auto;
+}
+/* Hide the corner ⛶ in single mode (use the controls panel button instead). */
+.shower.single .slide::before { display: none; }
+.shower.single .slide[draggable="true"],
+#rail-active-placeholder section.slide[draggable="true"] {
+  cursor: grab;
+}
+
 .shower.full>main>article > header,
 .shower.full>main>article > .ProseMirror > header {
 display:none;
@@ -5506,6 +5552,10 @@ margin-top:1em;
 .shower>main>article header nav,
 .shower>main>article > [property="schema:description"] > :not(section.slide),
 .shower>main>article > .ProseMirror > [property="schema:description"] > :not(section.slide) {
+display:none;
+}
+.shower.single > main > article > .ProseMirror > :not(section.slide):not(.caption):not([property="schema:description"]),
+.shower.single > main > article > :not(.ProseMirror):not(section.slide):not(.caption):not([property="schema:description"]) {
 display:none;
 }
 .shower > main > article > [property="schema:description"],
@@ -5525,10 +5575,6 @@ background-color:#EEEEEE;
 margin: 0;
 padding: 0;
 max-width: initial;
-}
-.shower.list>main,
-.shower.list>main>article {
-height: stretch;
 }
 .shower>main>article {
 position: relative;
@@ -5810,37 +5856,52 @@ margin-left:-0.45em;
 }
 
 
-#add-slide-control {
-display: flex;
-justify-content: center;
-padding: 2em 0 3em;
-}
-
-#add-slide-control button {
-background-color: #080;
-color: #fff;
-border: none;
-border-radius: .25rem;
-box-shadow: rgba(0, 0, 0, 0.06) 0 0.4em 0.6em;
-cursor: pointer;
-font-size: 1.5em;
-font-weight: bold;
-line-height: 1;
-padding: 0.5em 1em;
-transition: opacity 0.3s;
-}
-
-#add-slide-control button:hover {
-opacity: 0.8;
-}
-
-#slide-overlay {
+#slideshow-controls {
 position: absolute;
+z-index: 25;
 display: flex;
+flex-direction: column;
 gap: 4px;
-z-index: 20;
 }
-#slide-overlay button {
+#slideshow-controls[hidden] { display: none; }
+
+#rail-active-placeholder {
+position: absolute;
+width: 220px;
+height: 138px;
+overflow: hidden;
+border: 2px solid #080;
+border-radius: 4px;
+background: #fff;
+z-index: 1;
+}
+#rail-active-placeholder section.slide,
+#rail-active-placeholder section.slide.active {
+position: relative;
+top: 0;
+left: 0;
+transform: scale(0.215);
+transform-origin: 0 0;
+width: 1024px;
+height: 640px;
+margin: 0;
+cursor: default;
+box-shadow: none;
+}
+#rail-active-placeholder::after {
+content: '';
+position: absolute;
+inset: 0;
+background: rgba(8,128,8,0.08);
+pointer-events: none;
+}
+#slideshow-controls[data-author="false"] .author-only { display: none; }
+#slideshow-controls .enter-slide-full {
+font-size: 1.2em;
+line-height: 1;
+font-weight: bold;
+}
+#slideshow-controls button {
 background: rgba(255,255,255,0.9);
 border: 1px solid rgba(0,0,0,0.15);
 border-radius: 4px;
@@ -5848,23 +5909,66 @@ padding: 6px 8px;
 cursor: pointer;
 box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
-#slide-overlay button:hover {
+#slideshow-controls button:hover {
 background: #fff;
 }
-#slide-overlay button svg {
+#slideshow-controls button[aria-pressed="true"] {
+background: #080;
+color: #fff;
+border-color: #060;
+}
+#slideshow-controls button[aria-pressed="true"] svg {
+fill: #fff;
+}
+#slideshow-controls button svg {
 width: 16px;
 height: 16px;
 display: block;
 }
-#slide-overlay .slide-drag-handle {
+#slideshow-controls .slide-drag-handle {
 cursor: grab;
 }
-#slide-overlay .slide-drag-handle:active {
+#slideshow-controls .slide-drag-handle:active {
 cursor: grabbing;
 }
-.shower:not(.list) #slide-overlay,
-.shower:not(:has(.ProseMirror)) #slide-overlay {
-display: none;
+#slideshow-controls .add-slide-menu {
+position: relative;
+}
+#slideshow-controls .add-slide-trigger[aria-expanded="true"] {
+background: #080;
+color: #fff;
+border-color: #060;
+}
+#slideshow-controls .add-slide-trigger[aria-expanded="true"] svg {
+fill: #fff;
+}
+#slideshow-controls .add-slide-options[hidden] { display: none; }
+#slideshow-controls .add-slide-options {
+position: absolute;
+top: 0;
+right: calc(100% + 6px);
+display: flex;
+flex-direction: column;
+gap: 4px;
+background: rgba(255,255,255,0.95);
+border: 1px solid rgba(0,0,0,0.15);
+border-radius: 4px;
+box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+padding: 4px;
+min-width: 110px;
+}
+#slideshow-controls .add-slide-options button {
+background: none;
+border: none;
+border-radius: 3px;
+padding: 6px 10px;
+text-align: left;
+cursor: pointer;
+font-size: 0.95em;
+white-space: nowrap;
+}
+#slideshow-controls .add-slide-options button:hover {
+background: #f0f0f0;
 }
 
 #slide-drop-indicator {
@@ -5876,30 +5980,6 @@ pointer-events: none;
 }
 body.slide-dragging, body.slide-dragging .slide {
 cursor: grabbing;
-}
-
-.shower.list .slide::before {
-content: '⛶';
-position: absolute;
-top: 0.3em;
-right: 0.3em;
-font-size: 5em;
-line-height: 1;
-color: rgba(0,0,0,0.5);
-background: rgba(255,255,255,0.75);
-border-radius: 6px;
-padding: 2px 8px;
-opacity: 0;
-transition: opacity 0.15s;
-z-index: 10;
-pointer-events: none;
-}
-.shower.list .slide:hover::before {
-opacity: 1;
-}
-.shower.full .slide::before,
-.shower.list:has(.ProseMirror) .slide::before {
-display: none;
 }
 
 /*

@@ -349,6 +349,7 @@ export async function initDocumentMode(mode) {
       const template = param === 'slideshow' ? 'new-slideshow' : (param || 'new');
       Config.Editor.toggleEditor('author', { template });
       Config.DocumentAction = 'new';
+      if (template === 'new-slideshow') initSlideshow({ focusEditor: true });
     }
   // }
 }
@@ -363,9 +364,18 @@ export function initSlideshow(options) {
 
   //TODO: Check if .bibo:Slide, and if there is no .slide, add .slide
 
-  Slideshow.stop();
-  Slideshow.start();
-  initSlideshowInteraction(Slideshow);
+  // PM may mount slides asynchronously (Yjs/IDB binding); poll briefly.
+  let attempts = 0;
+  const tryStart = () => {
+    if (document.querySelectorAll('.shower .slide').length > 0) {
+      Slideshow.stop();
+      Slideshow.start({ focusEditor: options.focusEditor === true });
+      initSlideshowInteraction();
+      return;
+    }
+    if (++attempts < 40) setTimeout(tryStart, 50);
+  };
+  tryStart();
 }
 
 function initIcons() {

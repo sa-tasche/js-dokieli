@@ -27,6 +27,7 @@ import { SlashMenu } from "./slashmenu/slashmenu.js";
 import { placeholderPlugin } from "./plugins/placeholder.js";
 import { autoIdPlugin } from "./plugins/autoId.js";
 import { slideStructurePlugin } from "./plugins/slideStructure.js";
+import { slideshowDecorationsPlugin } from "./plugins/slideshowDecorations.js";
 import { ImageResizeView } from "./nodeviews/imageResize.js";
 import Config from "./../config.js";
 import { addMessageToLog, showActionMessage, initCopyToClipboard, showRobustLinksDecoration } from "../doc.js";
@@ -266,7 +267,7 @@ export class Editor {
     document.body.prepend(documentMenu);
 
     document.body.removeAttribute('id');
-    document.body.className = 'shower list';
+    document.body.className = 'shower single';
   }
 
 
@@ -308,6 +309,10 @@ export class Editor {
   insertSlideAtEnd(fragment) {
     const toolbarView = this.authorToolbarView || this.socialToolbarView;
     return toolbarView?.insertSlideAtEnd(fragment);
+  }
+
+  insertSlideAfter(targetId, fragment) {
+    return this.authorToolbarView?.insertSlideAfter(targetId, fragment);
   }
 
   deleteSlideById(id) {
@@ -360,7 +365,7 @@ export class Editor {
     // not a collaborative session): skip Yjs/IndexedDB/remote-sync entirely.
     Config.Editor['collab'] = false;
     pmDoc = originalDoc;
-    editorPlugins = [history(), keymapPlugin, placeholderPlugin, slideStructurePlugin, autoIdPlugin, editorToolbarPlugin];
+    editorPlugins = [history(), keymapPlugin, placeholderPlugin, slideStructurePlugin, slideshowDecorationsPlugin, autoIdPlugin, editorToolbarPlugin];
   } else {
     Config.Editor['collab'] = true;
     ydoc = new Y.Doc();
@@ -491,6 +496,7 @@ export class Editor {
       keymapPlugin,
       placeholderPlugin,
       slideStructurePlugin,
+      slideshowDecorationsPlugin,
       autoIdPlugin,
       editorToolbarPlugin,
     ];
