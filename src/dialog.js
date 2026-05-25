@@ -4164,27 +4164,39 @@ function newSlideFragment(template = 'normal') {
   }
 }
 
+function activateSlideById(id) {
+  requestAnimationFrame(() => {
+    const slides = Array.from(document.querySelectorAll('.shower main article .slide'));
+    const idx = slides.findIndex(s => s.id === id);
+    if (idx >= 0) Slideshow.goTo(idx);
+  });
+}
+
 export function addSlide(e) {
   hideDocumentMenu();
   const active = document.querySelector('.shower .slide.active');
   const fragment = newSlideFragment();
+  const newId = fragment.querySelector('section.slide')?.id;
   if (active?.id) {
     Config.Editor.insertSlideAfter(active.id, fragment);
   } else {
     Config.Editor.insertSlideAtEnd(fragment);
   }
   relayoutIfSingle();
+  if (newId) activateSlideById(newId);
 }
 
 export function addSlideAfter(targetId, template = 'normal') {
   hideDocumentMenu();
   const fragment = newSlideFragment(template);
+  const newId = fragment.querySelector('section.slide')?.id;
   if (targetId) {
     Config.Editor.insertSlideAfter(targetId, fragment);
   } else {
     Config.Editor.insertSlideAtEnd(fragment);
   }
   relayoutIfSingle();
+  if (newId) activateSlideById(newId);
 }
 
 function ensureAuthorAndDo(action) {
