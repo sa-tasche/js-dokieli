@@ -5428,6 +5428,7 @@ font-size:2.25em;
 
 /* Progress bar (visible in full mode only). */
 .shower .progress {
+  top: auto;
   bottom: 0;
   height: 8px;
   background: #4caf50;
@@ -5470,6 +5471,11 @@ font-size:2.25em;
 }
 .shower.full .slide.active .shout::after { background-position: 0 0; }
 .shower.full .progress { display: block; }
+/* Slides are position:absolute so they don't contribute height; force the
+   containing main/article to fill the .shower.full box so the progress bar
+   (anchored at bottom:0 of its containing block, main) lands at the bottom. */
+.shower.full > main,
+.shower.full > main > article { height: 100%; }
 
 /* Single view: vertical thumbnail rail on the left, active slide in main flow. */
 .shower.single > main > article {
