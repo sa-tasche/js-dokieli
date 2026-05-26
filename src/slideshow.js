@@ -115,6 +115,13 @@ export function layoutSingle() {
       }
     }
   }
+  // Rail thumbs are position:absolute and don't grow the article. Without this
+  // the page can't scroll to thumbs past the viewport.
+  const article = document.querySelector('.shower > main > article');
+  if (article) {
+    const railBottom = THUMB_TOP_BASE + slides.length * THUMB_STRIDE;
+    article.style.minHeight = `max(100vh, ${railBottom}px)`;
+  }
   updateActivePlaceholder(slides);
 }
 
@@ -150,6 +157,8 @@ export function clearSingleLayout() {
   if (!getEditorView()) {
     for (const s of getSlides()) s.style.top = '';
   }
+  const article = document.querySelector('.shower > main > article');
+  if (article) article.style.minHeight = '';
   document.getElementById('rail-active-placeholder')?.remove();
 }
 
