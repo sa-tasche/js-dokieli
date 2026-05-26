@@ -91,6 +91,32 @@ function renderDocumentTools() {
     </section>`;
 }
 
+function renderDocumentViews() {
+  const items = [];
+  if (Config.GraphViewerAvailable) {
+    items.push(`<li><button class="resource-visualise" data-i18n="menu.document-views.graph.button" title="${i18n.t('menu.document-views.graph.button.title')}">${i18n.t('menu.document-views.graph.button.textContent')}</button></li>`);
+  }
+  items.push(`<li><button class="resource-native-style" data-i18n="menu.document-views.native-style.button" title="${i18n.t('menu.document-views.native-style.button.title')}">${i18n.t('menu.document-views.native-style.button.textContent')}</button></li>`);
+  items.push(`<li><button class="resource-edit-custom-style" data-i18n="menu.document-views.custom.button" title="${i18n.t('menu.document-views.custom.button.title')}">${i18n.t('menu.document-views.custom.button.textContent')}</button></li>`);
+
+  return `
+    <section aria-labelledby="document-views-label" id="document-views" rel="schema:hasPart" resource="#document-views">
+      <h2 id="document-views-label" property="schema:name" data-i18n="menu.document-views.h2">${i18n.t('menu.document-views.h2.textContent')}</h2>
+      ${Icon['.fas.fa-magic']}
+      <ul>${items.join('')}</ul>
+    </section>`;
+}
+
+function renderAboutDokieli() {
+  return `
+    <section id="about-dokieli">
+      <dl>
+        <dt data-i18n="menu.about-dokieli.dt">${i18n.t('menu.about-dokieli.dt.textContent')}</dt>
+        <dd data-i18n="menu.about-dokieli.dd"><img alt="" height="32" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAn1BMVEUAAAAAjwAAkAAAjwAAjwAAjwAAjwAAjwAAkAAAdwAAjwAAjQAAcAAAjwAAjwAAiQAAjwAAjAAAjwAAjwAAjwAAjwAAkAAAjwAAjwAAjwAAjQAAjQAAhQAAhQAAkAAAkAAAkAAAjgAAjwAAiQAAhAAAkAAAjwAAjwAAkAAAjwAAjgAAjgAAjQAAjwAAjQAAjwAAkAAAjwAAjQAAiwAAkABp3EJyAAAANHRSTlMA+fH89enaabMF4iADxJ4SiSa+uXztyoNvQDcsDgvl3pRiXBcH1M+ppJlWUUpFMq6OdjwbMc1+ZgAABAhJREFUeNrt29nSmkAQBeAGZBMUxH3f993/vP+zJZVKVZKCRhibyc3/XVt6SimYPjPSt28Vmt5W/fu2T/9B9HIf7Tp+0RsgDC6DY6OLvzxJj8341DnsakgZUNUmo2XsORYYS6rOeugukhnyragiq56JIs5UEQ/FXKgidRTzompEKOhG1biioDFV44mCAqrGAQWtqRptA8VMqCpR6zpo9iy84VO1opWHPBZVb9QAzyQN/D1YNungJ+DMSYsbOFvSIwGjR3p0wGiQHkMw2qRHC4w76RGBcSA9NmAcSY8QjAdpYiFbTJoYyNYnTWrI1iFNusj2JE1sZBuQJtyE5pImc3Y21cRhZ1NNtsh2Ik127HCsSY8djjVpINuVhPnjVefobee2adXqu2S/6FyivABDEjQ9Lxo1pDlNd5wg24ikRK5ngKGhHhg1DSgZk4RrD6pa9LlRAnUBfWp6xCe+6EOvOT6yrmrigZaCZHPAp6b0gaiBFKvRd0/D1rr1OrvxDqiyoZmmPt9onib0t/VybyEXqdu0Cw16rUNVAfZFlzdjr5KOaoAUK6JsrgWGQapuBlIS4gy70gEmTrk1fuAgU40UxWXv6wvZAC2Dqfx0BfBK1z1H0aJ0WH7Ub4oG8JDlpBCgK1l5tSjHQSoAf0HVfMqxF+yqpzVk2ZGuAGdk8ijPHZlmpOCg0vh5cgE2JtN3qQSoU3lXpbKlLRegrzTpt+U2TNpKY2YiFiA0kS1Q6QccweZ/oinASm2B3RML0AGDNAU4qq3udmIXYVttD3YrFsBR24N1xG5EJpTeaiYWwILS5WRKBfChFsCSehpOwKi/yS0V4AsMWym3TWUFgMqIsRYL8AVOSDlaYgEitbZnDKll+UatchyJBSC1c3lDuQA2VHYAL3KneHpgLCjHSS7AHYyEciwh1g88wDB94rlyAVxwhsR7ygW4gRMTry8XwDdUDkXFgjVdD5wRsRaCAWJwPGI1Baval8Ie3Hqn8AjjhHbZr2DzrInumDTBGlCG8xy8QPY3MNLX4TiRP1q+BWs2pn9ECwu5+qTABc+80h++28UbTkjlTW3wrM6Ufrtu8d5J9Svg1Vch/RTcUYQdUHm+g1z1x2gSGyjGGVN5F7xjoTCjE0ndC3jJMzfCftmiciZ1lNGe3vCGufOWVMLIQHHehi3X1O8JJxR236SalUzninbu937BlwfV/I3k4KdGk2xm+MHuLa8Z0i9TC280qLRrF+8cw9RSjrOg8oIG8j2YgULsbGPomsgR0x9nsOzkOLh+kZr1owZGbfC2JJl78fIV0Wei/gxZDl85XWVtt++cxhuSEQ6bdfzLjlvM86PbaD4vQUjSglV8385My7CdXtO9+ZSyrLcf7nBN376V8gMpRztyq6RXYQAAAABJRU5ErkJggg==" width="32" /><span data-i18n="menu.about-dokieli.dd.span">${i18n.t('menu.about-dokieli.dd.span.innerHTML')}</span></dd>
+      </dl>
+    </section>`;
+}
+
 function renderLanguageSelector() {
   const effectiveLanguage = Config.User?.UI?.Language || i18n.code();
   const options = [];
@@ -138,11 +164,11 @@ function renderTabs() {
         </ul>
       </nav>
       <section class="selected" id="menu-actions">${renderDocumentDo()}</section>
-      <section id="menu-tools">${renderDocumentTools()}</section>
+      <section id="menu-tools">${renderDocumentTools()}${renderDocumentViews()}</section>
       <section id="menu-settings">${renderSettings()}</section>
     </div>`;
 }
 
 export function renderMenuInner() {
-  return `<section id="user-info"></section>${renderTabs()}`;
+  return `<section id="user-info"></section>${renderTabs()}${renderAboutDokieli()}`;
 }

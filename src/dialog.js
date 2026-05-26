@@ -480,6 +480,19 @@ export function initDocumentDoEvents() {
       viewSource(e);
     }
 
+    if (e.target.closest('.resource-native-style')) {
+      initCurrentStylesheet({ target: { textContent: '' } });
+    }
+
+    if (e.target.closest('.resource-edit-custom-style')) {
+      editCustomStylesheet(e);
+    }
+
+    const stylesheetBtn = e.target.closest('#document-views button:not([class~="resource-visualise"]):not([class~="resource-edit-custom-style"]):not([class~="resource-native-style"])');
+    if (stylesheetBtn) {
+      initCurrentStylesheet(e);
+    }
+
     if (e.target.closest('.resource-markdown')) {
       toggleMarkdownMode(e);
     }
@@ -595,20 +608,6 @@ function showViews(node) {
   //   viewButtons[i].removeEventListener('click', initCurrentStylesheet);
   //   viewButtons[i].addEventListener('click', initCurrentStylesheet);
   // }
-
-  document.addEventListener('click', (e) => {
-    const button = e.target.closest('#document-views button:not([class~="resource-visualise"]):not([class~="resource-edit-custom-style"])');
-    if (!button) return;
-
-    initCurrentStylesheet(e);
-  });
-
-  document.addEventListener('click', (e) => {
-    const button = e.target.closest('#document-views .resource-edit-custom-style');
-    if (!button) return;
-
-    editCustomStylesheet(e);
-  });
 
   if(Config.GraphViewerAvailable) {
     document.addEventListener('click', (e) => {
@@ -2278,7 +2277,7 @@ function attachBrowseStoragePopup(id, action) {
         }
         if (isFirst) {
           node.classList.add('browse-storage-breadcrumb-home');
-          node.setHTMLUnsafe(domSanitize(iconHome));
+          node.innerHTML = iconHome;
           var labelSpan = document.createElement('span');
           labelSpan.textContent = crumb.label;
           node.appendChild(labelSpan);
@@ -3939,6 +3938,14 @@ export function createNewDocument(e) {
 export function createNewSlideshow(e) {
   hideDocumentMenu();
 
+  const liveEditor = Config.Editor?.mode === 'author' && Config.Editor.authorToolbarView?.editorView;
+  if (liveEditor) {
+    Config.Editor.wrapArticleAsSlideshow();
+    updateButtons();
+    initSlideshow({ focusEditor: true });
+    return;
+  }
+
   Config.Editor.toggleEditor('author', { template: 'new-slideshow' });
 
   Config.DocumentAction = 'new';
@@ -3985,7 +3992,7 @@ export function updateSlideshowControls() {
   div.id = 'slideshow-controls';
   div.dataset.author = isAuthor ? 'true' : 'false';
   div.hidden = true;
-  div.setHTMLUnsafe(domSanitize(`<button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button>`));
+  div.innerHTML = `<button class="do slide-delete" type="button" title="Delete slide" aria-label="Delete slide">${Icon['.fas.fa-trash-alt']}</button><div class="do add-slide-menu"><button class="do add-slide-trigger" type="button" title="Add slide after" aria-label="Add slide after" aria-expanded="false">${Icon['.fas.fa-plus']}</button><div class="add-slide-options" hidden><button class="do add-slide-option" data-template="normal" type="button">Normal</button><button class="do add-slide-option" data-template="shout" type="button">Shout</button><button class="do add-slide-option" data-template="cover" type="button">Cover</button></div></div><button class="do enter-slide-full author-only" type="button" title="Present this slide" aria-label="Present this slide">⛶</button>`;
   document.body.appendChild(div);
   slideshowControlsEl = div;
 
