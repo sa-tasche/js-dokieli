@@ -41,7 +41,7 @@ export function processResources(resources, options) {
   }
 }
 
-function getGraphFromData (data, options = {}) {
+export function getGraphFromData (data, options = {}) {
   options['contentType'] = options.contentType || 'text/turtle';
   if (!('subjectURI' in options)) {
     options['subjectURI'] = localhostUUID;
@@ -113,7 +113,7 @@ function getGraphFromData (data, options = {}) {
   //       })});
 }
 
-function getRDFParser(baseIRI, contentType) {
+export function getRDFParser(baseIRI, contentType) {
   var RDFaMediaTypes = ['text/html', 'application/xhtml+xml', 'image/svg+xml', 'application/xml', 'text/xml'];
 
   var profile = '';
@@ -143,7 +143,7 @@ function getRDFParser(baseIRI, contentType) {
   }
 }
 
-function getSubjectInfo(subjectIRI, options = {}) {
+export function getSubjectInfo(subjectIRI, options = {}) {
   if (!subjectIRI) {
     return Promise.reject(new Error('Could not set subject info - no subjectIRI'));
   }
@@ -201,7 +201,7 @@ function getSubjectInfo(subjectIRI, options = {}) {
     })
   }
 
-function getMatchFromData (data, spo = {}, options = {}) {
+export function getMatchFromData (data, spo = {}, options = {}) {
   if (!data) { return Promise.resolve({}) }
 
   spo['subject'] = spo.subject || currentLocation();
@@ -219,7 +219,7 @@ function getMatchFromData (data, spo = {}, options = {}) {
     })
 }
 
-function serializeDataToPreferredContentType(data, options) {
+export function serializeDataToPreferredContentType(data, options) {
   switch (options['preferredContentType']) {
     case 'text/html':
     case 'application/xhtml+xml':
@@ -241,7 +241,7 @@ function serializeDataToPreferredContentType(data, options) {
   }
 }
 
-function serializeData(data, fromContentType, toContentType, options = {}) {
+export function serializeData(data, fromContentType, toContentType, options = {}) {
   // if (!rdf.formats.serializers.get(toContentType)) { return Promise.reject('XXX: Should not be here'); }
   if (fromContentType === toContentType && !options.sanitize) {
     return Promise.resolve(data);
@@ -261,7 +261,7 @@ function serializeData(data, fromContentType, toContentType, options = {}) {
     });
 }
 
-function sanitizeGraph(g) {
+export function sanitizeGraph(g) {
   var quads = g.out().quads();
 
   const sanitizedQuads = [];
@@ -289,7 +289,7 @@ function sanitizeGraph(g) {
  *
  * @returns {Promise}
  */
-function XXXOLDserializeData(data, fromContentType, toContentType, options) {
+export function XXXOLDserializeData(data, fromContentType, toContentType, options) {
   if (fromContentType === toContentType) {
     return Promise.resolve(data)
   }
@@ -458,7 +458,7 @@ function XXXOLDserializeData(data, fromContentType, toContentType, options) {
     })
 }
 
-function isGraphValid(g) {
+export function isGraphValid(g) {
   if (!g) return false;
   if (g.resource || g.cause) return false;
   if (g.status?.toString().startsWith('4') || g.status?.toString().startsWith('5')) return false;
@@ -476,7 +476,7 @@ function streamToString(stream) {
   })
 }
 
-function serializeGraph(g, options = {}) {
+export function serializeGraph(g, options = {}) {
   if (!('contentType' in options)) {
     options['contentType'] = 'text/turtle'
   }
@@ -518,11 +518,11 @@ function serializeGraph(g, options = {}) {
     // })
 }
 
-function getRDFSerializer(mediaType) {
+export function getRDFSerializer(mediaType) {
   return rdf.formats.serializers.get(mediaType, { compact: true, prettyPrint: true });
 }
 
-function applyParserSerializerFixes(data, contentType) {
+export function applyParserSerializerFixes(data, contentType) {
   // FIXME: FUGLY because parser defaults to localhost. Using UUID to minimise conflict
 
   data = data.replace(new RegExp(escapeRegExp(localhostUUID), 'g'), '');
@@ -571,7 +571,7 @@ function applyParserSerializerFixes(data, contentType) {
   return data;
 }
 
-function skolem(data, options) {
+export function skolem(data, options) {
   //XXX: Perhaps this should just be part of applyParserSerializerFixes or an option of it
   //TODO: Reuse an existing function/library for this (from parsers?) instead of the hack here. Proper skolem for different options.contentType needed?
 
@@ -584,7 +584,7 @@ function skolem(data, options) {
   return data;
 }
 
-function* filterQuads(quads, options) {
+export function* filterQuads(quads, options) {
   for (const q of quads) {
     if (
       ('subjects' in options.filter && options.filter.subjects.includes(q.subject.value)) ||
@@ -595,7 +595,7 @@ function* filterQuads(quads, options) {
   }
 }
 
-function transformJsonldContextURLScheme(data) {
+export function transformJsonldContextURLScheme(data) {
   if (typeof data["@context"] === "string") {
     data["@context"] = data["@context"].replace(/^http:/, 'https:');
   }
@@ -609,7 +609,7 @@ function transformJsonldContextURLScheme(data) {
   return data;
 }
 
-function setDocumentBase(data, baseURI, contentType) {
+export function setDocumentBase(data, baseURI, contentType) {
   baseURI = stripFragmentFromString(baseURI)
   let template;
   let base;
@@ -667,7 +667,7 @@ function setDocumentBase(data, baseURI, contentType) {
   return data
 }
 
-function traverseRDFList(g, resource) {
+export function traverseRDFList(g, resource) {
   var b = g.node(rdf.namedNode(resource));
   var result = [];
 
@@ -683,7 +683,7 @@ function traverseRDFList(g, resource) {
 
 // Success resolves with { response, graph, error: undefined }
 // Failure rejects with { response, graph: undefined, error }
-function getResourceGraph(iri, headers, options = {}) {
+export function getResourceGraph(iri, headers, options = {}) {
   let wildCard = options.excludeMarkup ? '' : ',*/*;q=0.1';
   let defaultHeaders = {'Accept': setAcceptRDFTypes(options) + wildCard}
   headers = headers || defaultHeaders
@@ -736,7 +736,7 @@ function getResourceGraph(iri, headers, options = {}) {
       error
     }));
 }
-function getResourceOnlyRDF(url) {
+export function getResourceOnlyRDF(url) {
   return Config.Storage.head(url)
     .then(response => {
       var cT = response.headers.get('Content-Type');
@@ -768,7 +768,7 @@ function getResourceOnlyRDF(url) {
     });
 }
 
-function getLinkRelation(property, url, data) {
+export function getLinkRelation(property, url, data) {
   if (url) {
     return getLinkRelationFromHead(property, url)
       .catch(() => {
@@ -805,7 +805,7 @@ function getLinkRelation(property, url, data) {
     }
 }
 
-function getLinkRelationFromHead(property, url) {
+export function getLinkRelationFromHead(property, url) {
   var properties = (Array.isArray(property)) ? property : [property];
 
   return Config.Storage.head(url).then(
@@ -840,7 +840,7 @@ function getLinkRelationFromHead(property, url) {
   );
 }
 
-function getLinkRelationFromRDF(property, url) {
+export function getLinkRelationFromRDF(property, url) {
   if (!url) { return Promise.reject({'message': 'Missing url paramater' })}
 
   return getResourceGraph(url)
@@ -859,15 +859,15 @@ function getLinkRelationFromRDF(property, url) {
     )
 }
 
-function isActorType(s) {
+export function isActorType(s) {
   return Config.Actor.Type.hasOwnProperty(s)
 }
 
-function isActorProperty(s) {
+export function isActorProperty(s) {
   return Config.Actor.Property.hasOwnProperty(s)
 }
 
-function getAgentPreferencesInfo(g) {
+export function getAgentPreferencesInfo(g) {
   if (!g) { return; }
 
   var preferencesFile = getAgentPreferencesFile(g) || Config.User.PreferencesFile;
@@ -881,7 +881,7 @@ function getAgentPreferencesInfo(g) {
 }
 
 //TODO: Review grapoi
-function getAgentPreferredPolicyRule(s) {
+export function getAgentPreferredPolicyRule(s) {
   var preferredPolicyRule = {};
 
   var prohibitions = s.out(ns.odrl.prohibition).values;
@@ -908,14 +908,14 @@ function getAgentPreferredPolicyRule(s) {
 }
 
 //TODO: Review grapoi
-function setPreferredPolicyInfo(g) {
+export function setPreferredPolicyInfo(g) {
   Config.User['PreferredPolicy'] = getAgentPreferredPolicy(g);
   var s = g.node(rdf.namedNode(Config.User.PreferredPolicy));
   Config.User['PreferredPolicyRule'] = getAgentPreferredPolicyRule(s);
 }
 
 //TODO: Review grapoi
-function getAgentSupplementalInfo(iri) {
+export function getAgentSupplementalInfo(iri) {
   if (iri == Config.User.IRI) {
     return processSameAs(Config.User.Graph, getAgentSupplementalInfo);
   }
@@ -1001,7 +1001,7 @@ function getAgentSupplementalInfo(iri) {
   }
 }
 
-function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
+export function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
   if (!g) { return Promise.resolve([]); }
 
   subjectURI = subjectURI || g.term.value;
@@ -1111,7 +1111,7 @@ function getAgentSeeAlsoPrimaryTopicOf(g, subjectURI) {
   }
 }
 
-function getUserContacts(iri) {
+export function getUserContacts(iri) {
   var fyn = function(iri){
     if ((iri == Config.User.IRI) && Config.User.Graph) {
       return processSameAs(Config.User.Graph, getUserContacts);
@@ -1144,7 +1144,7 @@ function getUserContacts(iri) {
   return fyn(iri).then(i => { return Config.User.Knows || []; });
 }
 
-function getAgentTypeIndex(s) {
+export function getAgentTypeIndex(s) {
   //XXX: TypeRegistration forClasses of interest but for now lets store what we find without filtering.
   // const TypeRegistrationClasses = [ns.oa.Annotation, ns.as.Announce];
 
@@ -1228,7 +1228,7 @@ function getAgentTypeIndex(s) {
     });
 }
 
-function processSameAs(s, callback) {
+export function processSameAs(s, callback) {
   var sameAs = sanitizeIRIs(s.out(ns.owl.sameAs).values);
 
   if (sameAs.length){
@@ -1260,18 +1260,18 @@ function processSameAs(s, callback) {
   }
 }
 
-function getAgentPreferredProxy(s) {
+export function getAgentPreferredProxy(s) {
   const proxies = sanitizeIRIs(s.out(ns.solid.preferredProxy).values);
   return proxies[0];
 }
 
-function getAgentPreferredPolicy(s) {
+export function getAgentPreferredPolicy(s) {
   const policies = sanitizeIRIs(s.out(ns.solid.preferredPolicy).values);
   return policies[0];
 }
 
 //TODO: Separate agent knows and preferred languages. Explictly Preferred language for all applications or a particular application (e.g., dokieli) will be used in the future.
-function getAgentPreferredLanguages(s) {
+export function getAgentPreferredLanguages(s) {
   var vcardLanguages = s.out(ns.vcard.language).values;
   var knowsLanguages = s.out(ns.schema.knowsLanguage).values;
   var solidPreferredLanguages = s.out(ns.solid.preferredLanguage).values;
@@ -1285,12 +1285,12 @@ function getAgentPreferredLanguages(s) {
 }
 
 //TODO: undefined?
-function getAgentOIDCIssuer(s) {
+export function getAgentOIDCIssuer(s) {
   const idp = sanitizeIRIs(s.out(ns.solid.oidcIssuer).values);
   return idp[0];
 }
 
-function getAgentName(s) {
+export function getAgentName(s) {
   var name = s.out(ns.foaf.name).values[0] || s.out(ns.schema.name).values[0] || s.out(ns.vcard.fn).values[0] || s.out(ns.as.name).values[0] || s.out(ns.rdfs.label).values[0] || undefined;
   // var name = s.out([ns.foaf.name, ns.schema.name]).values[0]
   if (typeof name === 'undefined') {
@@ -1316,7 +1316,7 @@ function getAgentName(s) {
   return name === undefined ? undefined : domSanitize(name);
 }
 
-function getAgentURL(s) {
+export function getAgentURL(s) {
   const candidates = [
     ...s.out(ns.foaf.homepage).values,
     ...s.out(ns.foaf.weblog).values,
@@ -1327,26 +1327,26 @@ function getAgentURL(s) {
   return sanitized[0];
 }
 
-function getAgentDelegates(s) {
+export function getAgentDelegates(s) {
   const d = sanitizeIRIs(s.out(ns.acl.delegates).values);
   return d.length ? d : undefined;
 }
 
-function getAgentStorage(s) {
+export function getAgentStorage(s) {
   const d = sanitizeIRIs(s.out(ns.ws.storage).values);
   return d.length ? d : undefined;
 }
 
-function getAgentOutbox(s) {
+export function getAgentOutbox(s) {
   const d = sanitizeIRIs(s.out(ns.as.outbox).values);
   return d.length ? d : undefined;
 }
 
-function getAgentInbox(s) {
+export function getAgentInbox(s) {
   return getGraphInbox(s);
 }
 
-function getGraphInbox(s) {
+export function getGraphInbox(s) {
   const ldpinbox = s.out(ns.ldp.inbox).values;
   const asinbox = s.out(ns.as.inbox).values;
 
@@ -1360,7 +1360,7 @@ function getGraphInbox(s) {
   return inbox.length ? inbox : undefined;
 }
 
-function getAgentKnows(s) {
+export function getAgentKnows(s) {
   let knows = [
     ...(s.out(ns.foaf.knows).values || []),
     ...(s.out(ns.schema.knows).values || [])
@@ -1381,7 +1381,7 @@ function getAgentKnows(s) {
   return knows.length ? knows : undefined;
 }
 
-function getAgentFollowing(s) {
+export function getAgentFollowing(s) {
   const following = sanitizeIRIs(s.out(ns.as.following).values);
 
   if (following.length) {
@@ -1395,37 +1395,37 @@ function getAgentFollowing(s) {
   }
 }
 
-function getAgentPublicTypeIndex(s) {
+export function getAgentPublicTypeIndex(s) {
   const d = sanitizeIRIs(s.out(ns.solid.publicTypeIndex).values);
   return d.length ? d : undefined;
 }
 
-function getAgentPrivateTypeIndex(s) {
+export function getAgentPrivateTypeIndex(s) {
   const d = sanitizeIRIs(s.out(ns.solid.privateTypeIndex).values);
   return d.length ? d : undefined;
 }
 
-function getAgentPreferencesFile(s) {
+export function getAgentPreferencesFile(s) {
   const d = sanitizeIRIs(s.out(ns.ws.preferencesFile).values);
   return d.length ? d : undefined;
 }
 
-function getAgentLiked(s) {
+export function getAgentLiked(s) {
   const d = sanitizeIRIs(s.out(ns.as.liked).values);
   return d.length ? d : undefined;
 }
 
-function getAgentOccupations(s) {
+export function getAgentOccupations(s) {
   const d = sanitizeIRIs(s.out(ns.schema.hasOccupation).values);
   return d.length ? d : undefined;
 }
 
-function getGraphAudience(s) {
+export function getGraphAudience(s) {
   const d = sanitizeIRIs(s.out(ns.schema.audience).values);
   return d.length ? d : undefined;
 }
 
-function getGraphSkills(s) {
+export function getGraphSkills(s) {
   const ccoSkills = s.out(ns.cco.skill).values;
   const schemaSkills = s.out(ns.schema.skills).values;
   const d = uniqueArray(ccoSkills.concat(schemaSkills));
@@ -1433,17 +1433,17 @@ function getGraphSkills(s) {
   return sanitized.length ? sanitized : undefined;
 }
 
-function getAgentPublications(s) {
+export function getAgentPublications(s) {
   const d = sanitizeIRIs(s.out(ns.foaf.publications).values);
   return d.length ? d : undefined;
 }
 
-function getAgentMade(s) {
+export function getAgentMade(s) {
   const d = sanitizeIRIs(s.out(ns.foaf.made).values);
   return d.length ? d : undefined;
 }
 
-function getGraphImage(s) {
+export function getGraphImage(s) {
   const iconTerms = s.out(ns.as.icon).terms;
   const imageTerms = s.out(ns.as.image).terms;
 
@@ -1493,7 +1493,7 @@ function getGraphImage(s) {
   return sanitizeIRI(image) || undefined;
 }
 
-function getGraphEmail(s) {
+export function getGraphEmail(s) {
   const props = [ns.schema.email, ns.foaf.mbox];
 
   for (const prop of props) {
@@ -1511,17 +1511,17 @@ function getGraphEmail(s) {
   return undefined;
 }
 
-function getGraphContributors(s) {
+export function getGraphContributors(s) {
   let d = sanitizeIRIs(s.out(ns.schema.contributor).values);
   return d.length ? d : undefined;
 }
 
-function getGraphEditors(s) {
+export function getGraphEditors(s) {
   let d = sanitizeIRIs(s.out(ns.schema.editor).values);
   return d.length ? d : undefined;
 }
 
-function getGraphAuthors(s) {
+export function getGraphAuthors(s) {
   const props = [
     ns.schema.author,
     ns.schema.creator,
@@ -1539,12 +1539,12 @@ function getGraphAuthors(s) {
   return undefined;
 }
 
-function getGraphPerformers(s) {
+export function getGraphPerformers(s) {
   let d = sanitizeIRIs(s.out(ns.schema.performer).values);
   return d.length ? d : undefined;
 }
 
-function getGraphPublishers(s) {
+export function getGraphPublishers(s) {
   let schemaPublishers = s.out(ns.schema.publisher).values;
   let dctermsPublishers = s.out(ns.dcterms.publisher).values;
 
@@ -1558,56 +1558,56 @@ function getGraphPublishers(s) {
   return publishers.length ? publishers : undefined;
 }
 
-function getGraphDate(s) {
+export function getGraphDate(s) {
   return getGraphUpdated(s) || getGraphPublished(s) || getGraphCreated(s);
 }
 
-function getGraphPublished(s) {
+export function getGraphPublished(s) {
   var d = s.out(ns.schema.datePublished).values[0] || s.out(ns.as.published).values[0] || s.out(ns.dcterms.issued).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values [0] || undefined;
   return d === undefined ? undefined : domSanitize(d);
 }
 
-function getGraphUpdated(s) {
+export function getGraphUpdated(s) {
   var d = s.out(ns.schema.dateModified).values[0] || s.out(ns.as.updated).values[0] || s.out(ns.dcterms.modified).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values[0] || undefined;
   return d === undefined ? undefined : domSanitize(d);
 }
 
-function getGraphCreated(s) {
+export function getGraphCreated(s) {
   var d = s.out(ns.schema.dateCreated).values[0] || s.out(ns.dcterms.created).values[0] || s.out(ns.dcterms.date).values[0] || s.out(ns.prov.generatedAtTime).values[0] || undefined;
   return d === undefined ? undefined : domSanitize(d);
 }
 
-function getGraphLanguage(s) {
+export function getGraphLanguage(s) {
   return s.out(ns.dcterms.language).values[0] || s.out(ns.dcelements.language).values[0] || s.out(ns.schema.inLanguage).values[0] || undefined;
 }
 
-function getGraphLicense(s) {
+export function getGraphLicense(s) {
   let d = s.out(ns.dcterms.license).values || s.out(ns.schema.license).values || s.out(ns.cc.license).values || s.out(ns.xhv.license).values;
   d = sanitizeIRIs(d);
   return d[0];
 }
 
-function getGraphRights(s) {
+export function getGraphRights(s) {
   let d = s.out(ns.dcterms.rights).values[0] || getGraphLicense(s);
   d = sanitizeIRIs(d);
   return d[0];
 }
 
-function getGraphLabel(s) {
+export function getGraphLabel(s) {
   var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || getAgentName(s) || s.out(ns.as.summary).values[0] || undefined;
   return d === undefined ? undefined : domSanitize(d)
 }
 
-function getGraphTitle(s) {
+export function getGraphTitle(s) {
   var d = s.out(ns.schema.name).values[0] || s.out(ns.dcterms.title).values[0] || s.out(ns.dcelements.title).values[0] || s.out(ns.as.name).values[0] || s.out(ns.skos.prefLabel).values[0] || undefined;
   return d === undefined ? undefined : domSanitize(d)
 }
 
-function getGraphLabelOrIRI(s) {
+export function getGraphLabelOrIRI(s) {
   return getGraphLabel(s) || s.term.value;
 }
 
-function getUserLabelOrIRI(iri) {
+export function getUserLabelOrIRI(iri) {
   let name = iri;
 
   if (Config.User.Name && (iri == Config.User.IRI || Config.User?.SameAs.includes(iri))) {
@@ -1622,7 +1622,7 @@ function getUserLabelOrIRI(iri) {
 }
 
 //XXX: RDFa issue retaining markup on non `datatype` nodes: https://github.com/rubensworks/rdfa-streaming-parser.js/issues/49
-function getGraphConceptLabel(g, options) {
+export function getGraphConceptLabel(g, options) {
   var labels = {
     prefLabel: [],
     xlprefLabel: [],
@@ -1697,16 +1697,16 @@ function getGraphConceptLabel(g, options) {
   return labels;
 }
 
-function getGraphDescription(s) {
+export function getGraphDescription(s) {
   var d = s.out(ns.schema.description).value || s.out(ns.dcterms.description).value || s.out(ns.dcelements.description).value || s.out(ns.schema.name).value || s.out(ns.as.name).value || s.out(ns.skos.definition).value || undefined;
   return d === undefined ? undefined : domSanitize(d)
 }
 
-function getGraphTypes(s) {
+export function getGraphTypes(s) {
   return sanitizeIRIs(s.out(ns.rdf.type).values);
 }
 
-function sortGraphTriples(g, options) {
+export function sortGraphTriples(g, options) {
   options = options || {};
   if (!("sortBy" in options)) {
     options["sortBy"] = "object";
@@ -1723,7 +1723,7 @@ function sortGraphTriples(g, options) {
 }
 
 // https://solidproject.org/TR/2024/wac-20240512#effective-acl-resource-algorithm
-function getACLResourceGraph(documentURL, iri, options = {}) {
+export function getACLResourceGraph(documentURL, iri, options = {}) {
   iri = iri || documentURL;
   iri = sanitizeIRI(iri);
   // console.log(iri)
@@ -1801,7 +1801,7 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
 }
 
 
-function getAccessSubjects (authorizations, options) {
+export function getAccessSubjects (authorizations, options) {
   var accessSubjects = {};
   var subjectTypes = options || ['agent', 'agentClass', 'agentGroup'];
 
@@ -1820,7 +1820,7 @@ function getAccessSubjects (authorizations, options) {
 }
 
 
-function getAuthorizationsMatching (g, matchers) {
+export function getAuthorizationsMatching (g, matchers) {
   var authorizations = {};
 
   // console.log("getAuthorizationsMatching:", g.terms, g.out().values, matchers);
@@ -1865,7 +1865,7 @@ function getAuthorizationsMatching (g, matchers) {
   return authorizations;
 }
 
-function getItemsList(url, options) {
+export function getItemsList(url, options) {
   url = url || currentLocation();
   options = options || {};
   options['resourceItems'] = options.resourceItems || [];
@@ -2053,85 +2053,3 @@ WHERE {\n\
 }
 
 
-export {
-  getGraphFromData,
-  getMatchFromData,
-  serializeDataToPreferredContentType,
-  XXXOLDserializeData,
-  serializeData,
-  serializeGraph,
-  sanitizeGraph,
-  applyParserSerializerFixes,
-  skolem,
-  transformJsonldContextURLScheme,
-  setDocumentBase,
-  traverseRDFList,
-  getResourceGraph,
-  getResourceOnlyRDF,
-  getLinkRelation,
-  getLinkRelationFromHead,
-  getLinkRelationFromRDF,
-  isActorType,
-  isActorProperty,
-  getAgentPreferencesInfo,
-  getAgentPreferredPolicyRule,
-  setPreferredPolicyInfo,
-  getAgentSeeAlsoPrimaryTopicOf,
-  getAgentSupplementalInfo,
-  getUserContacts,
-  getAgentTypeIndex,
-  processSameAs,
-  getAgentPreferredProxy,
-  getAgentPreferredPolicy,
-  getAgentPreferredLanguages,
-  getAgentOIDCIssuer,
-  getAgentName,
-  getAgentURL,
-  getAgentDelegates,
-  getAgentStorage,
-  getAgentOutbox,
-  getAgentInbox,
-  getAgentKnows,
-  getAgentFollowing,
-  getAgentPublicTypeIndex,
-  getAgentPrivateTypeIndex,
-  getAgentPreferencesFile,
-  getAgentLiked,
-  getAgentOccupations,
-  getAgentPublications,
-  getAgentMade,
-  getGraphImage,
-  getGraphEmail,
-  getGraphContributors,
-  getGraphEditors,
-  getGraphAuthors,
-  getGraphPerformers,
-  getGraphPublishers,
-  getGraphDate,
-  getGraphPublished,
-  getGraphUpdated,
-  getGraphCreated,
-  getGraphLanguage,
-  getGraphLicense,
-  getGraphRights,
-  getGraphLabel,
-  getGraphTitle,
-  getGraphLabelOrIRI,
-  getGraphConceptLabel,
-  getGraphDescription,
-  getGraphTypes,
-  getGraphInbox,
-  sortGraphTriples,
-  getGraphAudience,
-  getGraphSkills,
-  getACLResourceGraph,
-  getAccessSubjects,
-  getAuthorizationsMatching,
-  getUserLabelOrIRI,
-  getRDFParser,
-  getRDFSerializer,
-  filterQuads,
-  getSubjectInfo,
-  getItemsList,
-  isGraphValid
-}
