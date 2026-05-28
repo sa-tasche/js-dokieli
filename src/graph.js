@@ -1750,22 +1750,9 @@ function getACLResourceGraph(documentURL, iri, options = {}) {
 
         return getResourceGraph(aclResource, {})
           .then(({ response, graph: g }) => {
-            const link = response.headers.get('Link');
-            const conditions = [];
-
-            if (link) {
-              const linkHeaders = LinkHeader.parse(link);
-              if (linkHeaders.has('rel', 'http://www.w3.org/ns/auth/acl#condition')) {
-                linkHeaders.rel('http://www.w3.org/ns/auth/acl#condition').forEach(l => {
-                  conditions.push(l.uri);
-                });
-              }
-            }
-
             Config.Resource[documentURL]['acl']['effectiveACLResource'] = aclResource;
             Config.Resource[aclResource] = {};
             Config.Resource[aclResource]['response'] = response;
-            Config.Resource[aclResource]['conditions'] = conditions;
             //TODO: We probably shouldn't use this approach here:
             Config.Resource[aclResource]['graph'] = g;
             return g;
