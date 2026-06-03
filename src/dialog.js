@@ -1224,38 +1224,34 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
         var accessModes = authorizations[authorization].mode;
         var deleteAccessModes = '<' + accessModes.join('>, <') + '>';
 
-        //Deletes the Authorization
-        if (!multipleAccessSubjects) {
-          deleteGraph += `
+        if (!multipleAccessSubjects && selectedMode.length) {
+          //Only the acl:mode triples change, the rest is untouched
+          authorizationForAccessSubjectInserted = true;
+          patches.push({
+            'delete': `\n<${authorization}> acl:mode ${deleteAccessModes} .\n`,
+            'insert': `\n<${authorization}> acl:mode <${updatedMode.join('>, <')}> .\n`
+          });
+        }
+        else {
+          //When only one particular agent uses this Authorization, remove the whole
+          if (!multipleAccessSubjects) {
+            deleteGraph += `
 <${authorization}>
 a acl:Authorization ;
 acl:${deleteAccessObjectProperty} <${documentURL}> ;
 acl:mode ${deleteAccessModes} ;
 acl:${deleteAccessSubjectProperty} <${deleteAccessSubject}> .
 `;
-        }
-        else {
-          deleteGraph += `
+          }
+          //When we need to remove the access of only one of the access subjects from an Authorization (and leave the rest untouched)
+          else {
+            deleteGraph += `
 <${authorization}>
 acl:${deleteAccessSubjectProperty} <${deleteAccessSubject}> .
 `;
-        }
+          }
 
-        patches.push({ 'delete': deleteGraph });
-
-        //Inserts back in to the same Authorization
-        if (selectedMode.length) {
-          authorizationForAccessSubjectInserted = true;
-
-          insertGraph = `
-<${authorization}>
-a acl:Authorization ;
-acl:accessTo <${documentURL}> ;
-acl:mode <${updatedMode.join('>, <')}> ;
-acl:${subjectType} <${accessSubject}> .
-`;
-
-          patches.push({ 'insert': insertGraph });
+          patches.push({ 'delete': deleteGraph });
         }
       }
 
@@ -1264,6 +1260,7 @@ acl:${subjectType} <${accessSubject}> .
     // console.log(authorizationForAccessSubjectInserted)
 
     //Only insert new Authorization if we did not change an existing Authorization from earlier (so we don't have duplicates)
+    //https://solid.github.io/web-access-control-spec/#authorization-rule
     if (selectedMode.length && !authorizationForAccessSubjectInserted) {
       authorizationSubject = '#' + generateAttributeId();
 
@@ -1286,14 +1283,25 @@ acl:${subjectType} <${accessSubject}> .
     Object.keys(updatedAuthorizations).forEach(authorization => {
       //If there are existing Authorizations in the effective ACL resource that has same access subject as the one in which we want to update its access.
       if (updatedAuthorizations[authorization][subjectType].includes(accessSubject)) {
-        //Update mode in place so condition and other properties are preserved through the additionalProperties serialization
-        if (selectedMode.length) {
-          updatedAuthorizations[authorization].mode = updatedMode;
-          authorizationForAccessSubjectInserted = true;
+        const multipleAccessSubjects = updatedAuthorizations[authorization][subjectType].length > 1;
+
+        if (multipleAccessSubjects) {
+          //Remove only this subject from the authorization, leaving the others untouched
+          updatedAuthorizations[authorization][subjectType] = updatedAuthorizations[authorization][subjectType].filter(s => s !== accessSubject);
+          //If updating mode: authorizationForAccessSubjectInserted stays false so the insert block below creates a fresh authorization for this subject with the new mode
+          //If removing access: removing the subject from the list is sufficient, no new authorization needed
         }
         //Removes access mode (when selection is no access)
         else {
-          delete updatedAuthorizations[authorization];
+          //Update mode in place so condition and other properties are preserved through the additionalProperties serialization
+          if (selectedMode.length) {
+            updatedAuthorizations[authorization].mode = updatedMode;
+            authorizationForAccessSubjectInserted = true;
+          }
+          //Removes access (when selection is no access)
+          else {
+            delete updatedAuthorizations[authorization];
+          }
         }
       }
     });
@@ -1303,6 +1311,7 @@ acl:${subjectType} <${accessSubject}> .
     // console.log(updatedAuthorizations);
 
     //First we insert the Authorizations from the effective ACL resource towards the new ACL resource
+    //https://solid.github.io/web-access-control-spec/#authorization-rule
     insertGraph = '';
     Object.keys(updatedAuthorizations).forEach(authorization => {
       // console.log(authorization)
