@@ -1146,6 +1146,7 @@ function showAccessModeSelection(node, id, accessSubject, subjectType, options) 
         .then(response => {
 // console.log(response)
 
+          //This also ensures that we track the current resource's effective ACL resource
           getACLResourceGraph(documentURL)
             .catch(g => {
               removeProgressIndicator(select);
@@ -1161,6 +1162,7 @@ function showAccessModeSelection(node, id, accessSubject, subjectType, options) 
   });
 }
 
+//TODO: Check environment variable for issuerCondition information that's enforced per dokieli instance.
 function updateAuthorization(accessContext, selectedMode, accessSubject, subjectType) {
   var documentURL = currentLocation();
 
@@ -1210,6 +1212,7 @@ function updateAuthorization(accessContext, selectedMode, accessSubject, subject
     //Updates existing authorizations
     Object.keys(authorizations).forEach(authorization => {
       // console.log(authorizations[authorization], selectedMode, accessSubject, subjectType);
+      //This is for the specific access subject that was selected
       if (authorizations[authorization][subjectType].includes(accessSubject)) {
         // console.log(authorizations[authorization][subjectType])
         var multipleAccessSubjects = (authorizations[authorization][subjectType].length > 1) ? true : false;
@@ -1260,7 +1263,7 @@ acl:${subjectType} <${accessSubject}> .
 
     // console.log(authorizationForAccessSubjectInserted)
 
-    //Only insert new Authorization if we did not change an existing Authoriztion from earlier (so we don't have duplicates)
+    //Only insert new Authorization if we did not change an existing Authorization from earlier (so we don't have duplicates)
     if (selectedMode.length && !authorizationForAccessSubjectInserted) {
       authorizationSubject = '#' + generateAttributeId();
 
@@ -1279,26 +1282,20 @@ acl:${subjectType} <${accessSubject}> .
   //Copy the Authorizations from the effective ACL resource that needs to be preserved for the ACL resource that will be created later
   else {
     var updatedAuthorizations = structuredClone(authorizations);
-    var authorizationsToDelete = [];
 
     Object.keys(updatedAuthorizations).forEach(authorization => {
       //If there are existing Authorizations in the effective ACL resource that has same access subject as the one in which we want to update its access.
       if (updatedAuthorizations[authorization][subjectType].includes(accessSubject)) {
-        var updatedMode;
-        //Mark the Authorization for deletion
+        //Update mode in place so condition and other properties are preserved through the additionalProperties serialization
         if (selectedMode.length) {
-          authorizationsToDelete.push(authorization);
-        }
-        //Removes access mode (when selection is empty)
-        else {
           updatedAuthorizations[authorization].mode = updatedMode;
+          authorizationForAccessSubjectInserted = true;
+        }
+        //Removes access mode (when selection is no access)
+        else {
+          delete updatedAuthorizations[authorization];
         }
       }
-    });
-
-    //Remove the Authorization that is going to be updated later
-    authorizationsToDelete.forEach(authorization => {
-      delete updatedAuthorizations[authorization];
     });
 
     //XXX: updatedAuthorizations may have different authorization objects with the same properties and values. This is essentially just duplicate authorization rules.
