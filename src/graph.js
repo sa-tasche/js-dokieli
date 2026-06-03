@@ -1823,6 +1823,8 @@ export function getAccessSubjects (authorizations, options) {
 export function getAuthorizationsMatching (g, matchers) {
   var authorizations = {};
 
+  const authorizationProperties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin'];
+
   // console.log("getAuthorizationsMatching:", g.terms, g.out().values, matchers);
 
   var subjects = [];
@@ -1851,11 +1853,12 @@ export function getAuthorizationsMatching (g, matchers) {
       var allKeysMatched = Object.keys(matchers).every(key => Object.keys(candidateAuthorization).includes(key));
 
       if (allKeysMatched) {
-        var properties = ['agent', 'agentClass', 'agentGroup', 'accessTo', 'default', 'mode', 'origin'];
         var authorization = {};
-        properties.forEach(p => {
+
+        authorizationProperties.forEach(p => {
           authorization[p] = s.out(ns.acl[p]).values;
         })
+
         authorizations[authorizationIRI] = authorization;
       }
     }
