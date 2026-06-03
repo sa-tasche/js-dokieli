@@ -423,6 +423,7 @@ function patchResourceGraph (url, patches, options = {}) {
   options['prefixes'] = options.prefixes || {};
   options['prefixes']['solid'] = 'http://www.w3.org/ns/solid/terms#';
   options['prefixes']['acl'] = 'http://www.w3.org/ns/auth/acl#';
+  options['prefixes']['foaf'] = 'http://xmlns.com/foaf/0.1/';
   var prefixes;
 
   switch(options.headers['Content-Type']) {
