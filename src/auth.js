@@ -236,7 +236,7 @@ export function showUserIdentityInput () {
             <div class="do-signin-provider-form" id="do-signin-github" hidden="">
               <p><label for="github-provider-url">Personal Access Token</label></p>
               <p><input id="github-provider-url" name="github-provider-url" placeholder="ghp_..." type="password" autocomplete="off"/> <button class="do-signin-provider-go" data-provider="github" type="button">Save</button></p>
-              <p><small>Create a token at <a href="https://github.com/settings/tokens" rel="noopener" target="_blank">github.com/settings/tokens</a> with <code>repo</code> scope. Stored locally in your browser.</small></p>
+              <p>Create a token at <a href="https://github.com/settings/tokens" rel="noopener" target="_blank">github.com/settings/tokens</a> with <code>repo</code> scope. The token is stored locally in your browser while signed in and removed on sign-out.</p>
             </div>
           </li>
           <li>
@@ -253,7 +253,7 @@ export function showUserIdentityInput () {
               <p><input id="forgejo-provider-server" name="forgejo-provider-server" placeholder="https://codeberg.org" type="url" value="https://codeberg.org"/></p>
               <p><label for="forgejo-provider-url">Personal Access Token</label></p>
               <p><input id="forgejo-provider-url" name="forgejo-provider-url" placeholder="access token" type="password" autocomplete="off"/> <button class="do-signin-provider-go" data-provider="forgejo" type="button">Save</button></p>
-              <p><small>Create a token in your account settings. Required scopes: <code>read:user</code> and <code>write:repository</code> (or <code>read:repository</code> for read-only). Stored locally in your browser.</small></p>
+              <p>Create a token at e.g., <a href="https://codeberg.org/user/settings/applications/tokens/new" rel="noopener" target="_blank">codeberg.org/user/settings/applications/tokens/new</a> with scopes <code>read:user</code> and <code>write:repository</code> (or <code>read:repository</code> for read-only). The token is stored locally in your browser while signed in and removed on sign-out.</p>
             </div>
           </li>
         </ul>
